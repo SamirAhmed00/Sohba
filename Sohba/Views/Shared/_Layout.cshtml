@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Sohba</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> *@
     <link rel="stylesheet" href="~/Sohba.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
+        <h1 class="text-3xl font-bold text-blue-500">Hello Tailwind!</h1>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded">Click Me</button>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Sohba</a>
@@ -25,6 +29,8 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <h1 class="text-3xl font-bold text-blue-500">Hello Tailwind!</h1>
+
                         </li>
                     </ul>
                 </div>
@@ -39,7 +45,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - Sohba - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - Sohba
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
