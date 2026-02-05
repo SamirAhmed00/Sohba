@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="Sohba.Application/Sohba.Application.csproj" Id="40416f37-a2c8-4cd5-bcd4-8e2b7a25f3ae" />
+  <Project Path="Sohba.Domain/Sohba.Domain.csproj" Id="2ddfc813-b533-495b-b943-3381c691e5f8" />
+  <Project Path="Sohba.Infrastructure/Sohba.Infrastructure.csproj" Id="ca2c6b34-3c79-4177-a3dd-c0ff74420a48" />
   <Project Path="Sohba/Sohba.csproj" />
 </Solution>
