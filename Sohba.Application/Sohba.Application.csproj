@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Sohba.Domain\Sohba.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

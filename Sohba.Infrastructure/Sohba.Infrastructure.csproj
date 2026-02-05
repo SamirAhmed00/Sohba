@@ -15,4 +15,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Sohba.Domain\Sohba.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

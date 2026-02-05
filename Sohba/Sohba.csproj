@@ -10,4 +10,16 @@
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sohba.Application\Sohba.Application.csproj" />
+    <ProjectReference Include="..\Sohba.Infrastructure\Sohba.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
