@@ -9,6 +9,11 @@ namespace Sohba
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            // Get Connection String From Configuration
+            //builder.Services.AddDbContext<AppDbContext>(options =>
+            //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

@@ -1,0 +1,55 @@
+﻿@* // Right Sidebar *@
+<div class="hidden xl:block col-span-4 sticky top-24 space-y-6 h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar pb-10">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-base">People You May Know</h3>
+            <button class="text-[#345e69] text-xs font-bold hover:underline">See All</button>
+        </div>
+        <div class="space-y-4">
+            @for (int k = 0; k < 3; k++)
+            {
+                <div class="flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name=Friend+@k&background=random" class="w-10 h-10 rounded-xl object-cover" alt="User">
+                        <div>
+                            <h5 class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors cursor-pointer">Sarah Connor</h5>
+                            <p class="text-xs text-gray-400">3 mutual friends</p>
+                        </div>
+                    </div>
+                    <button class="text-[#345e69] bg-[#345e69]/10 hover:bg-[#345e69] hover:text-white p-2 rounded-lg transition-all duration-300">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-base">Trends For You</h3>
+            <button class="text-gray-400 hover:text-gray-600"><i class="fas fa-cog"></i></button>
+        </div>
+        <div class="space-y-4">
+            @for (int t = 1; t <= 4; t++)
+            {
+                <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs text-gray-400 font-medium">Trending in Egypt</span>
+                        <button class="text-gray-300 hover:text-gray-500">•••</button>
+                    </div>
+                    <h4 class="font-bold text-gray-800 text-sm mt-0.5">#Sohba_Launch_Day</h4>
+                    <p class="text-xs text-gray-400 mt-1">@((t * 5) + 2)k Posts</p>
+                </div>
+            }
+        </div>
+        <button class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">Show More</button>
+    </div>
+
+    <div class="text-[11px] text-gray-400 px-2 leading-relaxed">
+        <a href="#" class="hover:underline">Privacy</a> •
+        <a href="#" class="hover:underline">Terms</a> •
+        <a href="#" class="hover:underline">Advertising</a> •
+        <a href="#" class="hover:underline">Cookies</a> •
+        <span>Sohba © 2026</span>
+    </div>
+</div>

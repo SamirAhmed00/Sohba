@@ -21,187 +21,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
-<body>
+<body class="bg-[#f0f2f5] text-slate-800 antialiased selection:bg-[#345e69] selection:text-white ">
+    <partial name="Partials/_Header" />
    
-    @* <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-solid border-slate-200 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
+    <div class="w-full px-0 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
+        <div class="flex flex-row gap-6 items-start">
 
-                <div class="flex-shrink-0 flex items-center group cursor-pointer">
-                    <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
-                        <span class="text-white text-2xl font-black">S</span>
-                    </div>
+            @* Left Sidebar (Partial) - Fixed width *@
+            <partial name="Partials/_Sidebar" />
 
-                    <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
-                        SOHBA
-                    </span>
-                </div>
-
-                <div class="flex-1 max-w-md mx-8 hidden sm:block">
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400 group-focus-within:text-[#345e69] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text"
-                               class="block w-full pl-10 pr-3 py-2 border border-solid border-gray-200 rounded-2xl bg-gray-50 leading-5 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#345e69] focus:border-transparent transition-all duration-300 sm:text-sm"
-                               placeholder="ابحث في صحبة...">
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-3 md:space-x-5">
-
-                    <button class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69] active:scale-90">
-                        <span class="absolute top-2 right-2.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </button>
-
-                    <div class="relative group cursor-pointer">
-                        <div class="p-0.5 rounded-full bg-gradient-to-tr from-[#345e69] to-indigo-400 group-hover:scale-110 transition-transform duration-300">
-                            <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
-                                 src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff"
-                                 alt="User profile">
-                        </div>
-                        <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"></span>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </header> *@
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-solid border-slate-200 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-
-                <div class="flex items-center">
-
-                    <button class="lg:hidden mr-3 p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69]">
-                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
-                        </svg>
-                    </button>
-
-                    <div class="flex-shrink-0 flex items-center group cursor-pointer">
-                        <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
-                            <span class="text-white text-2xl font-black">S</span>
-                        </div>
-
-                        <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[80%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
-                            SOHBA
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex-1 max-w-md mx-8 hidden sm:block">
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400 group-focus-within:text-[#345e69] transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text"
-                               class="block w-full pl-10 pr-3 py-2 border border-solid border-gray-200 rounded-2xl bg-gray-50 leading-5 placeholder-gray-400
-                      transition-all duration-300 ease-out
-                      focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69]
-                      focus:scale-[1.02] focus:shadow-[0_4px_20px_-4px_rgba(52,94,105,0.15)] origin-center sm:text-sm"
-                               placeholder="ابحث في صحبة...">
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-2 md:space-x-5">
-
-                    <button id="mobileSearchBtn" class="sm:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69] active:scale-90">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
-
-                    <button class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69] active:scale-90">
-                        <span class="absolute top-2 right-2.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </button>
-
-                    <div class="relative group cursor-pointer">
-                        <div class="p-0.5 rounded-full bg-gradient-to-tr from-[#345e69] to-indigo-400 group-hover:scale-110 transition-transform duration-300">
-                            <img class="h-9 w-9 rounded-full object-cover border-2 border-white"
-                                 src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff"
-                                 alt="User profile">
-                        </div>
-                        <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"></span>
-                    </div>
-
-                </div>
-            </div>
-
-            <div id="mobileSearchContainer"
-                 class="max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out sm:hidden bg-white/50 backdrop-blur-sm border-t border-transparent">
-
-                <div class="px-4 pb-4 pt-2">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text"
-                               class="block w-full pl-10 pr-3 py-2 border border-solid border-gray-200 rounded-xl bg-gray-50
-                          focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#345e69] focus:border-transparent transition-all duration-300"
-                               placeholder="ابحث...">
-                    </div>
-                </div>
-            </div>
+            @* Main Content Wrapper (Dynamic Width) *@
+            <main class="flex-1 min-w-0 py-6">
+                @RenderBody()
+            </main>
 
         </div>
-    </header>
-
-
-
-
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Sohba
-        </div>
-    </footer>
+
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchBtn = document.getElementById('mobileSearchBtn');
-            const searchContainer = document.getElementById('mobileSearchContainer');
-
-            if (searchBtn && searchContainer) {
-                searchBtn.addEventListener('click', function () {
-                    // Check if the container is currently collapsed using max-h-0 class
-                    const isClosed = searchContainer.classList.contains('max-h-0');
-
-                    if (isClosed) {
-                        // Open the container (Slide Down effect)
-                        searchContainer.classList.remove('max-h-0', 'opacity-0', 'border-transparent');
-                        searchContainer.classList.add('max-h-40', 'opacity-100', 'border-slate-100');
-
-                        // Set focus to the input field after a slight delay for smoother transition
-                        setTimeout(() => searchContainer.querySelector('input').focus(), 100);
-                    } else {
-                        // Close the container (Slide Up effect)
-                        searchContainer.classList.remove('max-h-40', 'opacity-100', 'border-slate-100');
-                        searchContainer.classList.add('max-h-0', 'opacity-0', 'border-transparent');
-                    }
-                });
-            }
-        });
-    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 
     

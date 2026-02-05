@@ -2,7 +2,98 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start relative">
+
+    <div class="col-span-1 xl:col-span-8 space-y-6">
+
+        <partial name="Partials/_Stories" />
+
+        <partial name="Partials/_CreatePost" />
+
+        <partial name="Partials/_PostCard" />
+    </div>
+
+    <partial name="Partials/_RightSidebar" />
 </div>
+
+<partial name="Partials/_CreateStoryModal" />
+
+
+
+
+@section Scripts {
+    <script>
+        // ==========================================
+        // 1. Logic for Story Scroll (Handles Left/Right)
+        // ==========================================
+        function scrollStories(direction) {
+            const container = document.getElementById('storiesContainer');
+            const scrollStep = 130;
+
+            if (direction === 'left') {
+                container.scrollBy({ left: -scrollStep, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollStep, behavior: 'smooth' });
+            }
+        }
+
+        // ==========================================
+        // 2. Logic for Dropdown Menu (Post Options)
+        // ==========================================
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            // إغلاق أي منيو مفتوحة تانية عشان ميبقاش فيه زحمة
+            document.querySelectorAll('[id^="menu-"]').forEach(el => {
+                if (el.id !== menuId) el.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        // إغلاق المنيو عند الضغط في أي مكان خارجها (طريقة احترافية)
+        window.addEventListener('click', function(event) {
+            if (!event.target.closest('button')) {
+                document.querySelectorAll('[id^="menu-"]').forEach(el => {
+                    el.classList.add('hidden');
+                });
+            }
+        });
+
+        // ==========================================
+        // 3. Logic for Create Story Modal
+        // ==========================================
+        function openModal() {
+            document.getElementById('storyModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // منع السكرول في الخلفية
+        }
+
+        function closeModal() {
+            document.getElementById('storyModal').classList.add('hidden');
+            document.body.style.overflow = 'auto'; // إعادة السكرول
+        }
+
+        // ==========================================
+        // 4. Logic for Comment Modal (Split-View)
+        // ==========================================
+        function openCommentModal(postId) {
+            // هنا ممكن مستقبلاً تبعت postId لـ API وتجيب الداتا
+            document.getElementById('commentModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCommentModal() {
+            document.getElementById('commentModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    </script>
+}
