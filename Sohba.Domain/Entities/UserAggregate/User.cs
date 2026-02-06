@@ -12,6 +12,8 @@ namespace Sohba.Domain.Entities.UserAggregate
         public int Id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
+        public string Bio { get; set; }
+        public bool IsDeleted { get; set; }
         public string PasswordHash { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
@@ -27,10 +29,12 @@ namespace Sohba.Domain.Entities.UserAggregate
         public virtual ICollection<Friend> Friends { get; set; } = new List<Friend>();
         public virtual ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();
         public virtual ICollection<PageFollower> FollowedPages { get; set; } = new List<PageFollower>();
-
+        public virtual ICollection<PostReport> SentReports { get; set; } = new List<PostReport>();
+        public virtual ICollection<SavedPost> SavedPosts { get; set; } = new List<SavedPost>();
         // Admin Roles
         public virtual ICollection<Group> AdministeredGroups { get; set; } = new List<Group>(); 
         public virtual ICollection<Page> AdministeredPages { get; set; } = new List<Page>();
+
 
     }
 }

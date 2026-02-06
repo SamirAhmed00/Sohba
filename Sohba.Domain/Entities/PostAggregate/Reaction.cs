@@ -1,4 +1,5 @@
 ﻿using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Sohba.Domain.Entities.PostAggregate
     public class Reaction
     {
         public int Id { get; set; }
-        public string Type { get; set; } // it Will Be an Enum 
+        public ReactionType Type { get; set; } 
         public DateTime CreatedAt { get; set; }
 
         // Navigation Properties

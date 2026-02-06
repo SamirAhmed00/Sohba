@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sohba.Infrastructure.Data;
+using Sohba.Infrastructure.DBInitializer;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,6 +19,10 @@ namespace Sohba.Infrastructure.DependencyInjection
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+
+            // Register The DBInitializer Service To Be Used In The Program.cs To Initialize The Database With Default Data
+            services.AddScoped<IDBInitializer, Sohba.Infrastructure.DBInitializer.DBInitializer>();
 
             return services;
         }

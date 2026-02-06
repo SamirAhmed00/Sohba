@@ -10,6 +10,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public int Id { get; set; }
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime DateUpdated { get; set; }
 
         // Navigation Properties
         public int UserId { get; set; }
