@@ -7,7 +7,7 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class Post
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Title { get; set; }
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -21,7 +21,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public string ?ImageUrl { get; set; }
 
         // Navigation Properties
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public virtual User User { get; set; } 
         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>(); 
         public virtual ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();

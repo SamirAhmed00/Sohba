@@ -36,6 +36,8 @@ namespace Sohba.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Apply all configurations from the assembly 
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             // Make Friends Table Composite Key of UserId and FriendUserId
             modelBuilder.Entity<Friend>()
                 .HasKey(f => new { f.UserId, f.FriendUserId });

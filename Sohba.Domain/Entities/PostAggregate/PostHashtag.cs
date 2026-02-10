@@ -6,12 +6,12 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class PostHashtag
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         // Navigation Properties
-        public int PostId { get; set; }
+        public Guid PostId { get; set; }
         public virtual Post Post { get; set; } 
-        public int HashtagId { get; set; }
+        public Guid HashtagId { get; set; }
         public virtual Hashtag Hashtag { get; set; }
     }
 }

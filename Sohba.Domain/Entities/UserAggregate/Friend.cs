@@ -7,8 +7,8 @@ namespace Sohba.Domain.Entities.UserAggregate
 {
     public class Friend
     {
-        public int UserId { get; set; }
-        public int FriendUserId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid FriendUserId { get; set; }
 
         public FriendshipStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }

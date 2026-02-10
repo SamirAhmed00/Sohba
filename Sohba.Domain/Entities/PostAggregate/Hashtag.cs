@@ -6,7 +6,7 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class Hashtag
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Tag { get; set; }
         public string Location { get; set; } 
 

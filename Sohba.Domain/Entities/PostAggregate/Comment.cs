@@ -7,15 +7,15 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class Comment
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime DateUpdated { get; set; }
 
         // Navigation Properties
-        public int UserId { get; set; }
-        public virtual User User { get; set; } // one to one
-        public int PostId { get; set; }
-        public virtual Post Post { get; set; } // one to one 
+        public Guid UserId { get; set; }
+        public virtual User User { get; set; } 
+        public Guid PostId { get; set; }
+        public virtual Post Post { get; set; }
     }
 }

@@ -7,9 +7,9 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class SavedPost
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public virtual UserAggregate.User User { get; set; }
-        public int PostId { get; set; }
+        public Guid PostId { get; set; }
         public virtual Post Post { get; set; }
         public DateTime SavedAt { get; set; }
         public SavedTag Tag { get; set; } 

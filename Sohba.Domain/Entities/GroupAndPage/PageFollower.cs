@@ -6,12 +6,12 @@ namespace Sohba.Domain.Entities.GroupAndPage
 {
     public class PageFollower
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public DateTime FollowedAt { get; set; }
         // Navigation Properties
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public virtual UserAggregate.User User { get; set; } 
-        public int PageId { get; set; }
+        public Guid PageId { get; set; }
         public virtual Page Page { get; set; }
     }
 }
