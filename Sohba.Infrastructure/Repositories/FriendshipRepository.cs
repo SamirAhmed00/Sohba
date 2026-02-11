@@ -5,51 +5,78 @@ using Sohba.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sohba.Infrastructure.Repositories
 {
-    public class FriendshipRepository : GenericRepository<Friend>, IFriendshipRepository
+    public class FriendshipRepository : IFriendshipRepository
     {
-        public FriendshipRepository(AppDbContext context) : base(context) { }
+        private readonly AppDbContext _context;
 
-        public bool AreFriends(Guid userId, Guid friendId)
+        public FriendshipRepository(AppDbContext context)
         {
-            // Check if a friendship exists in either direction with 'Accepted' status
-            return _context.Set<Friend>().Any(f =>
-                ((f.UserId == userId && f.FriendUserId == friendId) ||
-                 (f.UserId == friendId && f.FriendUserId == userId)) &&
-                f.Status == FriendshipStatus.Accepted);
+            _context = context;
         }
 
-        public bool IsUserBlocked(Guid userId, Guid targetId)
+        public void Add(Friend friendship)
         {
-            // Check if userId has blocked targetId
-            // Assuming there is a separate Block entity or a Status in Friendship
-            // Here assuming a 'Block' list or status
-            return _context.Set<Friend>().Any(f =>
-                f.UserId == userId &&
-                f.FriendUserId == targetId &&
-                f.Status == FriendshipStatus.Blocked);
+            _context.Friends.Add(friendship);
         }
 
-        public string GetFriendshipStatus(Guid userId, Guid otherId)
+        public void Update(Friend friendship)
         {
-            var friendship = _context.Set<Friend>().FirstOrDefault(f =>
-                (f.UserId == userId && f.FriendUserId == otherId) ||
-                (f.FriendUserId == otherId && f.UserId == userId));
-
-            if (friendship == null) return "None";
-
-            return friendship.Status.ToString(); // Returns "Accepted", "Pending", "Blocked"
+            _context.Friends.Update(friendship);
         }
 
-        public bool HasPendingRequest(Guid senderId, Guid receiverId)
+        public void Delete(Friend friendship)
         {
-            // Check specifically if sender sent a request to receiver that is still pending
-            return _context.Set<Friend>().Any(f =>
-                f.UserId == senderId &&
-                f.FriendUserId == receiverId &&
-                f.Status == FriendshipStatus.Pending);
+            _context.Friends.Remove(friendship);
+        }
+
+
+        public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
+        {
+            return await _context.Friends
+                .FirstOrDefaultAsync(f =>
+                    f.UserId == userId &&
+                    f.FriendUserId == friendId);
+        }
+
+        public async Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Where(f =>
+                    (f.UserId == userId || f.FriendUserId == userId) &&
+                    f.Status == FriendshipStatus.Accepted)
+                .ToListAsync();
+        }
+
+        public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    ((f.UserId == userId && f.FriendUserId == friendId) ||
+                     (f.UserId == friendId && f.FriendUserId == userId)) &&
+                    f.Status == FriendshipStatus.Accepted);
+        }
+
+        public async Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    f.UserId == userId &&
+                    f.FriendUserId == targetId &&
+                    f.Status == FriendshipStatus.Blocked);
+        }
+
+        public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    f.UserId == senderId &&
+                    f.FriendUserId == receiverId &&
+                    f.Status == FriendshipStatus.Pending);
         }
     }
+
 }

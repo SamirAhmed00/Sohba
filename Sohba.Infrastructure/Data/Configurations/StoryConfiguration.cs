@@ -17,7 +17,9 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.HasOne(s => s.User)
                    .WithMany(u => u.Stories)
                    .HasForeignKey(s => s.UserId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasQueryFilter(s => !s.IsDeleted);
         }
     }
 }

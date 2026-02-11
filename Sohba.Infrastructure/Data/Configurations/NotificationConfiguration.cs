@@ -18,7 +18,7 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.HasOne(n => n.Receiver)
                    .WithMany()
                    .HasForeignKey(n => n.ReceiverId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.Restrict);
 
             // Optional Sender (e.g., another user or system)
             builder.HasOne(n => n.Sender)

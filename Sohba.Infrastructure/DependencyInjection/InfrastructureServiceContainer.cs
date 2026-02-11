@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using Sohba.Infrastructure.DBInitializer;
+using Sohba.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,6 +25,8 @@ namespace Sohba.Infrastructure.DependencyInjection
 
             // Register The DBInitializer Service To Be Used In The Program.cs To Initialize The Database With Default Data
             services.AddScoped<IDBInitializer, Sohba.Infrastructure.DBInitializer.DBInitializer>();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             return services;
         }

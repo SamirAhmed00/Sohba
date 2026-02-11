@@ -16,7 +16,8 @@ namespace Sohba.Infrastructure.Data.Configurations
 
             builder.HasOne(ph => ph.Post)
                    .WithMany(p => p.PostHashtags)
-                   .HasForeignKey(ph => ph.PostId);
+                   .HasForeignKey(ph => ph.PostId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(ph => ph.Hashtag)
                    .WithMany(h => h.PostHashtags)

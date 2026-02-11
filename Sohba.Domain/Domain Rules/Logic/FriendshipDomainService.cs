@@ -10,97 +10,90 @@ namespace Sohba.Domain.Domain_Rules.Logic
 
     public class FriendshipDomainService : IFriendshipDomainService
     {
-        private readonly IUnitOfWork _uow;
+        public Result CanSendFriendRequest(
+            Guid senderId,
+            Guid receiverId,
+            bool alreadyFriends,
+            bool hasPendingRequest,
+            bool isBlocked)
+        {
+            if (senderId == receiverId)
+                return Result.Failure("You cannot send a friend request to yourself.");
 
-        public FriendshipDomainService(IUnitOfWork uow)
-        {
-            _uow = uow;
-        }
-        public Result CanAcceptFriendRequest(Guid senderId, Guid receiverId)
-        {
-            // Ensure there is an actual pending request sent to the current user
-            var hasRequest = _uow.Friendships.HasPendingRequest(senderId, receiverId);
-            if (!hasRequest)
-                return Result.Failure("No pending friend request found to accept.");
+            if (isBlocked)
+                return Result.Failure("Action denied due to blocking.");
+
+            if (alreadyFriends)
+                return Result.Failure("You are already friends.");
+
+            if (hasPendingRequest)
+                return Result.Failure("A pending friend request already exists.");
 
             return Result.Success();
         }
 
-        public Result CanBlockUser(Guid userId, Guid targetId)
+        public Result CanAcceptFriendRequest(
+            bool requestExists,
+            bool alreadyFriends)
         {
-            if (userId == targetId)
-                return Result.Failure("You cannot block yourself.");
+            if (!requestExists)
+                return Result.Failure("No pending friend request found.");
+
+            if (alreadyFriends)
+                return Result.Failure("You are already friends.");
 
             return Result.Success();
         }
 
-        public Result CanUnblockUser(Guid userId, Guid targetId)
+        public Result CanDeclineFriendRequest(
+            bool requestExists)
         {
-            // Unblocking attempt is generally allowed; logic is handled at the repo level
+            if (!requestExists)
+                return Result.Failure("No pending friend request found.");
+
             return Result.Success();
         }
 
-        public Result CanCancelFriendRequest(Guid userId, Guid friendId)
+        public Result CanCancelFriendRequest(
+            bool requestExists)
         {
-            // Only the initiator can cancel the request
-            var hasRequest = _uow.Friendships.HasPendingRequest(userId, friendId);
-            if (!hasRequest)
+            if (!requestExists)
                 return Result.Failure("No sent request found to cancel.");
 
             return Result.Success();
         }
 
-        public Result CanDeclineFriendRequest(Guid senderId, Guid receiverId)
+        public Result CanRemoveFriend(
+            bool alreadyFriends)
         {
-            var hasRequest = _uow.Friendships.HasPendingRequest(senderId, receiverId);
-            if (!hasRequest)
-                return Result.Failure("No pending friend request found to decline.");
-
-            return Result.Success();
-        }
-
-        public Result CanRemoveFriend(Guid userId, Guid friendId)
-        {
-            if (!IsFriend(userId, friendId))
+            if (!alreadyFriends)
                 return Result.Failure("You are not friends with this user.");
 
             return Result.Success();
         }
 
-        public Result CanSendFriendRequest(Guid senderId, Guid receiverId)
+        public Result CanBlockUser(
+            Guid userId,
+            Guid targetId,
+            bool alreadyBlocked)
         {
-            // Rule 1: Cannot send a request to self
-            if (senderId == receiverId)
-                return Result.Failure("You cannot send a friend request to yourself.");
+            if (userId == targetId)
+                return Result.Failure("You cannot block yourself.");
 
-            // Rule 2: Check for block constraints between users
-            if (IsBlocked(senderId, receiverId))
-                return Result.Failure("Action denied due to blocking.");
-
-            // Rule 3: Ensure no existing relationship or pending request
-            var status = _uow.Friendships.GetFriendshipStatus(senderId, receiverId);
-            if (status != "None")
-                return Result.Failure("A relationship or pending request already exists.");
+            if (alreadyBlocked)
+                return Result.Failure("User is already blocked.");
 
             return Result.Success();
         }
 
-        public Result HasPendingRequest(Guid userId, Guid friendId)
+        public Result CanUnblockUser(
+            bool alreadyBlocked)
         {
-            var exists = _uow.Friendships.HasPendingRequest(userId, friendId);
-            return exists ? Result.Success() : Result.Failure("No pending request found.");
-        }
+            if (!alreadyBlocked)
+                return Result.Failure("User is not blocked.");
 
-        public bool IsBlocked(Guid userId, Guid otherUserId)
-        {
-            // Accessing the blocking logic through the UOW
-            return _uow.Friendships.IsUserBlocked(userId, otherUserId);
+            return Result.Success();
         }
-
-        public bool IsFriend(Guid userId, Guid otherUserId)
-        {
-            return _uow.Friendships.AreFriends(userId, otherUserId);
-        }
-        
     }
+
 }

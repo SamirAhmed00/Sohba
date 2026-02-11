@@ -5,11 +5,20 @@ using System.Text;
 
 namespace Sohba.Domain.Interfaces
 {
-    public interface IFriendshipRepository : IGenericRepository<Friend>
+    public interface IFriendshipRepository
     {
-        bool AreFriends(Guid userId, Guid friendId);
-        bool IsUserBlocked(Guid userId, Guid targetId);
-        string GetFriendshipStatus(Guid userId, Guid otherId);
-        bool HasPendingRequest(Guid senderId, Guid receiverId);
+        // Commands
+        void Add(Friend friendship);
+        void Update(Friend friendship);
+        void Delete(Friend friendship);
+
+        // Queries
+        Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId);
+        Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId);
+
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
     }
+
 }

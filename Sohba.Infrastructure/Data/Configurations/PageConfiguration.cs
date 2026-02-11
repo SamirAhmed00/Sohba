@@ -16,7 +16,8 @@ namespace Sohba.Infrastructure.Data.Configurations
 
             builder.HasOne(p => p.Admin)
                    .WithMany(u => u.AdministeredPages)
-                   .HasForeignKey(p => p.AdminId);
+                   .HasForeignKey(p => p.AdminId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

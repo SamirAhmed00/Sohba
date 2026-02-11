@@ -20,7 +20,7 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.HasOne(c => c.Post)
                    .WithMany(p => p.Comments)
                    .HasForeignKey(c => c.PostId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(c => c.User)
                    .WithMany(u => u.Comments)

@@ -1,5 +1,6 @@
 using Sohba.Extensions;
 using Sohba.Infrastructure.DependencyInjection;
+using Sohba.Application.DependencyInjection;
 using System;
 
 namespace Sohba
@@ -15,6 +16,9 @@ namespace Sohba
 
             // Get Connection String From Configuration
             builder.Services.AddInfrastructureService(builder.Configuration);
+
+            // Add Application Services (AutoMapper)
+            builder.Services.AddApplicationServices();
 
 
             var app = builder.Build();

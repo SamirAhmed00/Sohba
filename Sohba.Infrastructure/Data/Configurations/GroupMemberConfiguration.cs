@@ -16,11 +16,13 @@ namespace Sohba.Infrastructure.Data.Configurations
 
             builder.HasOne(gm => gm.Group)
                    .WithMany(g => g.GroupMembers)
-                   .HasForeignKey(gm => gm.GroupId);
-
+                   .HasForeignKey(gm => gm.GroupId)
+                   .OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(gm => gm.User)
                    .WithMany(u => u.GroupMemberships)
-                   .HasForeignKey(gm => gm.UserId);
+                   .HasForeignKey(gm => gm.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

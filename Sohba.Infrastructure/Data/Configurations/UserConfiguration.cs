@@ -27,6 +27,12 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.Property(u => u.Bio).HasMaxLength(500);
 
             // Relationships managed in other configuration files to avoid redundancy
+
+            // 1. Global Query Filter for Soft Delete
+            builder.HasQueryFilter(u => !u.IsDeleted);
+            // 2. High-value Indexes (Performance)
+            builder.HasIndex(u => u.CreatedAt); // For sorting users by date
+            builder.HasIndex(u => u.IsDeleted); // Important for the Global Filter performance
         }
     }
 }

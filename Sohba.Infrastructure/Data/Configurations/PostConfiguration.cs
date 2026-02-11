@@ -21,6 +21,9 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany(u => u.Posts)
                    .HasForeignKey(p => p.UserId)
                    .OnDelete(DeleteBehavior.Restrict); // Avoid multiple cascade paths
+            
+            builder.HasQueryFilter(p => !p.IsDeleted);
+
         }
     }
 }

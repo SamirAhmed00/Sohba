@@ -22,6 +22,7 @@ namespace Sohba.Infrastructure.Data
         public DbSet<PostHashtag> PostHashtags { get; set; }
         public DbSet<PostReport> PostReports { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
+        public DbSet<SavedPost> SavedPost { get; set; }
 
         public DbSet<Group> Groups { get; set; }
         public DbSet<GroupMember> GroupMembers { get; set; }
@@ -38,11 +39,7 @@ namespace Sohba.Infrastructure.Data
         {
             // Apply all configurations from the assembly 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-            // Make Friends Table Composite Key of UserId and FriendUserId
-            modelBuilder.Entity<Friend>()
-                .HasKey(f => new { f.UserId, f.FriendUserId });
-
-            modelBuilder.Entity<SavedPost>().HasKey(sp => new { sp.UserId, sp.PostId });
+          
         }
     }
 }

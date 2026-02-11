@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sohba.Domain.Entities.PostAggregate;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace Sohba.Infrastructure.Data.Configurations
@@ -15,11 +16,13 @@ namespace Sohba.Infrastructure.Data.Configurations
 
             builder.HasOne(sp => sp.User)
                    .WithMany(u => u.SavedPosts)
-                   .HasForeignKey(sp => sp.UserId);
+                   .HasForeignKey(sp => sp.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(sp => sp.Post)
                    .WithMany()
-                   .HasForeignKey(sp => sp.PostId);
+                   .HasForeignKey(sp => sp.PostId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
