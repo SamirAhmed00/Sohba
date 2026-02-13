@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Interfaces;
 using System;
@@ -22,33 +23,36 @@ namespace Sohba.Application.Services
             _profileDomainService = profileDomainService;
         }
 
-        public async Task<UserResponseDto> GetProfileAsync(Guid userId)
+        public async Task<Result<UserResponseDto>> GetProfileAsync(Guid userId)
         {
+            
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            return _mapper.Map<UserResponseDto>(user);
+
+            if (user == null)
+                return Result<UserResponseDto>.Failure("User profile not found.");
+
+            
+            var response = _mapper.Map<UserResponseDto>(user);
+            return Result<UserResponseDto>.Success(response);
         }
 
-        public async Task<bool> UpdateProfileAsync(Guid userId, UserRequestDto userDto)
+        public async Task<Result<bool>> UpdateProfileAsync(Guid userId, UserRequestDto updateDto)
         {
+            
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            if (user == null) return false;
+            if (user == null)
+                return Result<bool>.Failure("User not found.");
 
-            // Check domain rules for profile update
             var validation = _profileDomainService.CanUpdateProfile(userId, user.Id);
-            if (!validation.IsSuccess) throw new Exception(validation.Error);
+            if (!validation.IsSuccess)
+                return Result<bool>.Failure(validation.Error);
 
-            _mapper.Map(userDto, user);
+            _mapper.Map(updateDto, user);
+
             _unitOfWork.Users.Update(user);
-            return await _unitOfWork.CompleteAsync() > 0;
-        }
+            var affectedRows = await _unitOfWork.CompleteAsync();
 
-        public async Task<IEnumerable<UserResponseDto>> SearchUsersAsync(string query)
-        {
-            // Simple search by username via repository
-            var user = await _unitOfWork.Users.GetByUsernameAsync(query);
-            if (user == null) return new List<UserResponseDto>();
-
-            return new List<UserResponseDto> { _mapper.Map<UserResponseDto>(user) };
+            return Result<bool>.Success(affectedRows > 0);
         }
     }
 }

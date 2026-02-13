@@ -14,7 +14,6 @@ namespace Sohba.Infrastructure.Repositories
 
         public bool IsMember(Guid userId, Guid groupId)
         {
-            // Assuming Group has a collection of Members
             return _context.Set<GroupMember>().Any(m =>
                 m.GroupId == groupId &&
                 m.UserId == userId &&
@@ -36,6 +35,16 @@ namespace Sohba.Infrastructure.Repositories
                 m.GroupId == groupId &&
                 m.UserId == userId &&
                 m.IsBanned);
+        }
+
+        public void AddMember(GroupMember member)
+        {
+            _context.Set<GroupMember>().Add(member);
+        }
+
+        public void RemoveMember(GroupMember member)
+        {
+            _context.Set<GroupMember>().Remove(member);
         }
     }
 }

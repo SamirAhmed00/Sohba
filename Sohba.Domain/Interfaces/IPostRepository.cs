@@ -9,5 +9,6 @@ namespace Sohba.Domain.Interfaces
     {
         Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
         bool IsPostDeleted(Guid postId);
+        Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags);
     }
 }

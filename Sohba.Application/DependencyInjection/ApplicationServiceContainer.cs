@@ -30,6 +30,7 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IFriendshipService, FriendshipService>();
             services.AddScoped<IPageService, PageService>();
             services.AddScoped<IInteractionService, IInteractionService>();
+            services.AddScoped<IReportingService, ReportingService>();
 
             // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();

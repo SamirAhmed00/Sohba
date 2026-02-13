@@ -15,5 +15,7 @@ namespace Sohba.Application.Interfaces
 
         Task<Result> DeleteCommentAsync(Guid userId, Guid commentId, bool isAdmin);
         Task<Result> AddReplyAsync(Guid userId, Guid commentId, string content);
+
+        Task<Result<string>> ToggleSavePostAsync(Guid userId, Guid postId);
     }
 }

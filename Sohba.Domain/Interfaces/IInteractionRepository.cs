@@ -19,5 +19,10 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Comment>> GetCommentsByPostIdAsync(Guid postId);
         void AddComment(Comment comment);
         void RemoveComment(Comment comment);
+
+        // SavedPost Methods
+        Task<SavedPost?> GetSavedPostAsync(Guid userId, Guid postId);
+        void AddSavedPost(SavedPost savedPost);
+        void RemoveSavedPost(SavedPost savedPost);
     }
 }

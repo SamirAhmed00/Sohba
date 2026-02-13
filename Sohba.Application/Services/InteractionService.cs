@@ -114,5 +114,37 @@ namespace Sohba.Application.Services
 
             return Result.Success();
         }
+
+        // --- Saved Posts Logic ---
+        public async Task<Result<string>> ToggleSavePostAsync(Guid userId, Guid postId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return Result<string>.Failure("Post not found.");
+
+            var existingSave = await _unitOfWork.Interactions.GetSavedPostAsync(userId, postId);
+
+            if (existingSave != null)
+            {
+                // Unsave
+                _unitOfWork.Interactions.RemoveSavedPost(existingSave);
+                await _unitOfWork.CompleteAsync();
+                return Result<string>.Success("Post unsaved.");
+            }
+            else
+            {
+                // Save
+                var savedPost = new SavedPost
+                {
+                    UserId = userId,
+                    PostId = postId,
+                    SavedAt = DateTime.UtcNow,
+                    //Tag = SavedPostTag.ReadLater // Default tag
+                };
+
+                _unitOfWork.Interactions.AddSavedPost(savedPost);
+                await _unitOfWork.CompleteAsync();
+                return Result<string>.Success("Post saved.");
+            }
+        }
     }
 }

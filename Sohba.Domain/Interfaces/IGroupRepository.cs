@@ -10,5 +10,8 @@ namespace Sohba.Domain.Interfaces
         bool IsMember(Guid userId, Guid groupId);
         string GetUserRoleInGroup(Guid userId, Guid groupId);
         bool IsUserBannedFromGroup(Guid userId, Guid groupId);
+
+        void AddMember(GroupMember member);
+        void RemoveMember(GroupMember member);
     }
 }

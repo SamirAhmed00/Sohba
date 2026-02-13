@@ -12,9 +12,13 @@ namespace Sohba.Infrastructure.Repositories
     {
         public ReportingRepository(AppDbContext context) : base(context) { }
 
-        public async Task<int> GetReportCountAsync(Guid entityId)
+        public async Task<bool> HasUserReportedEntityAsync(Guid userId, Guid entityId)
         {
-            // Count how many times a specific entity (e.g., Post) has been reported
+            return await _context.Set<PostReport>()
+                .AnyAsync(r => r.UserId == userId && r.PostId == entityId);
+        }
+        public async Task<int> GetReportCountForEntityAsync(Guid entityId)
+        {
             return await _context.Set<PostReport>()
                 .CountAsync(r => r.PostId == entityId);
         }

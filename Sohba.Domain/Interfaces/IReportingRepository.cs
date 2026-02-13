@@ -7,6 +7,7 @@ namespace Sohba.Domain.Interfaces
 {
     public interface IReportingRepository : IGenericRepository<PostReport>
     {
-        Task<int> GetReportCountAsync(Guid entityId);
+        Task<bool> HasUserReportedEntityAsync(Guid userId, Guid entityId);
+        Task<int> GetReportCountForEntityAsync(Guid entityId);
     }
 }

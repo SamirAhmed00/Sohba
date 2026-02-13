@@ -71,5 +71,22 @@ namespace Sohba.Infrastructure.Repositories
         {
             _context.Comments.Remove(comment);
         }
+
+        // --- SavedPost Implementation ---
+        public async Task<SavedPost?> GetSavedPostAsync(Guid userId, Guid postId)
+        {
+            return await _context.Set<SavedPost>()
+                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId);
+        }
+
+        public void AddSavedPost(SavedPost savedPost)
+        {
+            _context.Set<SavedPost>().Add(savedPost);
+        }
+
+        public void RemoveSavedPost(SavedPost savedPost)
+        {
+            _context.Set<SavedPost>().Remove(savedPost);
+        }
     }
 }
