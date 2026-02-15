@@ -15,6 +15,9 @@ namespace Sohba.Domain.Interfaces
         IUserRepository Users { get; }
         IReportingRepository Reports { get; }
 
+        IPageRepository Pages { get; }
+
+
         Task<int> CompleteAsync();
     }
 }

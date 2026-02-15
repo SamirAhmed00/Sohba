@@ -1,0 +1,109 @@
+﻿@model Sohba.ViewModels.Profile.ProfileViewModel
+@{
+    ViewData["Title"] = Model.Profile.Name;
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Cover & Profile Header -->
+    <div class="relative mb-20">
+        <!-- Cover Image -->
+        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden">
+            <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        </div>
+
+        <!-- Profile Picture -->
+        <div class="absolute -bottom-12 left-8">
+            <div class="relative">
+                <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")"
+                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl" />
+                @if (Model.IsOwnProfile)
+                {
+                    <button class="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="absolute bottom-4 right-8 flex gap-3">
+            @if (Model.IsOwnProfile)
+            {
+                <a asp-action="Edit" class="px-6 py-2.5 bg-white/90 backdrop-blur text-[#345e69] font-bold rounded-xl hover:bg-white transition-colors shadow-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Profile
+                </a>
+            }
+            else
+            {
+                <button class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Add Friend
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="px-8 mb-8">
+        <h1 class="text-3xl font-black text-gray-900">@Model.Profile.Name</h1>
+        <p class="text-gray-500 mt-1">@Model.Profile.Email</p>
+        <p class="text-gray-600 mt-3 max-w-2xl">@(Model.Profile.Bio ?? "No bio yet.")</p>
+
+        <div class="flex gap-6 mt-4 text-sm">
+            <span class="text-gray-500">
+                <strong class="text-gray-900">@Model.Friends.Count()</strong> Friends
+            </span>
+            <span class="text-gray-500">
+                <strong class="text-gray-900">@Model.Posts.Count()</strong> Posts
+            </span>
+            <span class="text-gray-500">
+                Joined <strong class="text-gray-900">@Model.Profile.CreatedAt.ToString("MMMM yyyy")</strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-8">
+        <!-- Left: Friends -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-900">Friends</h3>
+                    <a href="#" class="text-[#345e69] text-sm font-semibold hover:underline">See All</a>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    @foreach (var friend in Model.Friends.Take(6))
+                    {
+                        <div class="text-center group cursor-pointer">
+                            <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={friend.FriendName}&background=random")"
+                                 class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform" />
+                            <p class="text-xs font-semibold text-gray-700 mt-1 truncate">@friend.FriendName</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Posts -->
+        <div class="lg:col-span-2 space-y-6">
+            @if (Model.IsOwnProfile)
+            {
+                // TODO: Move This To A Shared Folder
+                <partial name="Partials/_CreatePost" />
+            }
+
+            @foreach (var post in Model.Posts)
+            {
+                <partial name="Partials/_PostCard" model="new[] { post }" />
+            }
+        </div>
+    </div>
+</div>

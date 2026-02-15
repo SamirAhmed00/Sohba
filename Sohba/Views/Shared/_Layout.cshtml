@@ -46,6 +46,93 @@
     
     @await RenderSectionAsync("Scripts", required: false)
 
-    
+    @* TODO: I Will Move It To App.JS File *@
+    <script>
+                // ==========================================
+        // Sohba App - Interactive Features
+        // ==========================================
+
+        const SohbaApp = {
+            // Toast Notifications
+            toast: (message, type = 'info') => {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-${type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue'}-500">
+                            ${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}
+                        </span>
+                        <span class="font-semibold text-gray-700">${message}</span>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+
+                requestAnimationFrame(() => toast.classList.add('show'));
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+            // Like Animation
+            animateLike: (button) => {
+                button.classList.add('like-animation');
+                const icon = button.querySelector('svg');
+                icon.classList.add('text-red-500', 'fill-current');
+                setTimeout(() => button.classList.remove('like-animation'), 300);
+            },
+
+            // AJAX Helper
+            post: async (url, data) => {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error:', error);
+                    return { success: false, error: 'Network error' };
+                }
+            },
+
+            // Initialize
+            init: () => {
+                // Dropdowns
+                document.querySelectorAll('[data-dropdown]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const menu = document.getElementById(btn.dataset.dropdown);
+                        menu.classList.toggle('hidden');
+                    });
+                });
+
+                // Close dropdowns on outside click
+                document.addEventListener('click', () => {
+                    document.querySelectorAll('[id$="Dropdown"]').forEach(el => {
+                        if (!el.classList.contains('hidden')) el.classList.add('hidden');
+                    });
+                });
+
+                // Auto-hide skeletons
+                setTimeout(() => {
+                    document.querySelectorAll('.skeleton').forEach(el => {
+                        el.classList.remove('skeleton');
+                    });
+                }, 1500);
+            }
+        };
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', SohbaApp.init);
+    </script>
 </body>
 </html>

@@ -11,8 +11,6 @@ namespace Sohba
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
 
             // Get Connection String From Configuration
             builder.Services.AddInfrastructureService(builder.Configuration);
@@ -20,8 +18,15 @@ namespace Sohba
             // Add Application Services (AutoMapper)
             builder.Services.AddApplicationServices();
 
+            // Add MVC Services
+            builder.Services.AddControllersWithViews();
 
-            var app = builder.Build();
+            // Layer registrations
+            builder.Services.AddApplicationServices();
+            builder.Services.AddInfrastructureService(builder.Configuration);
+
+
+            var app = builder.Build(); // Here
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

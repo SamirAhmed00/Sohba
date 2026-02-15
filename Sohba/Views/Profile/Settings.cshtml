@@ -1,0 +1,157 @@
+﻿@model Sohba.ViewModels.Profile.SettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="max-w-3xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <h1 class="text-2xl font-black text-gray-900 flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Settings
+        </h1>
+        <p class="text-gray-500 mt-1">Manage your account preferences</p>
+    </div>
+
+    <!-- Settings Sections -->
+    <div class="space-y-6">
+
+        <!-- Account Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Account
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Email Address</h3>
+                        <p class="text-sm text-gray-500">@Model.Email</p>
+                    </div>
+                    <button class="text-[#345e69] font-semibold text-sm hover:underline">Change</button>
+                </div>
+                <hr class="border-slate-100" />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Password</h3>
+                        <p class="text-sm text-gray-500">Last changed 3 months ago</p>
+                    </div>
+                    <button class="text-[#345e69] font-semibold text-sm hover:underline">Update</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Privacy
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <label class="flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Private Account</h3>
+                        <p class="text-sm text-gray-500">Only friends can see your posts</p>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" asp-for="IsPrivateAccount" class="peer sr-only" />
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
+                    </div>
+                </label>
+                <hr class="border-slate-100" />
+                <label class="flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Show Activity Status</h3>
+                        <p class="text-sm text-gray-500">Let friends see when you're online</p>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" asp-for="ShowActivityStatus" class="peer sr-only" checked />
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Notifications Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Notifications
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Email notifications for new followers</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Push notifications for messages</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Weekly digest email</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
+            <div class="p-6 border-b border-red-100">
+                <h2 class="font-bold text-red-600 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Danger Zone
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Deactivate Account</h3>
+                        <p class="text-sm text-gray-500">Temporarily disable your account</p>
+                    </div>
+                    <button class="px-4 py-2 border border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
+                        Deactivate
+                    </button>
+                </div>
+                <hr class="border-red-100" />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-red-600">Delete Account</h3>
+                        <p class="text-sm text-gray-500">Permanently delete all your data</p>
+                    </div>
+                    <button class="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-save toggle switches
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                SohbaApp.toast('Setting saved', 'success');
+            });
+        });
+    </script>
+}

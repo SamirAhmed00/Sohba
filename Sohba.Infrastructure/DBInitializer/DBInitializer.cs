@@ -31,13 +31,14 @@ namespace Sohba.Infrastructure.DBInitializer
                 {
                     Name = "Admin User",
                     Email = "Samir@Gmail.com",
+                    Bio = "Founder Of SOHBA",
                     PasswordHash = "Admin", // In a real application, use a proper password hashing mechanism
                     DateOfBirth = new DateTime(2003, 7, 24),
                     CreatedAt = DateTime.UtcNow,
                     ProfilePictureUrl = "https://images.unsplash.com/photo-1511367461989-f85a21fda167?q=80&w=1631&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 };
                 _context.Users.Add(newUser);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); 
 
                 var newPost = new Domain.Entities.PostAggregate.Post
                 {

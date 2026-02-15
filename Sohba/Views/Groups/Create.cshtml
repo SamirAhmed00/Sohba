@@ -1,0 +1,51 @@
+﻿@model Sohba.ViewModels.Group.GroupCreateViewModel
+@{
+    ViewData["Title"] = "Create Group";
+}
+
+<div class="max-w-2xl mx-auto page-transition">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#345e69] to-[#4a8291] p-6 text-white">
+            <h1 class="text-2xl font-bold flex items-center gap-3">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Create New Group
+            </h1>
+            <p class="text-white/80 mt-1">Build your community</p>
+        </div>
+
+        <!-- Form -->
+        <form asp-action="Create" method="post" class="p-6 space-y-6">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm"></div>
+
+            <!-- Name -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Group Name</label>
+                <input asp-for="Name"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all"
+                       placeholder="Enter group name..." />
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <textarea asp-for="Description" rows="4"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all resize-none"
+                          placeholder="What's this group about?"></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-4 border-t border-slate-100">
+                <a asp-action="Index" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="flex-1 py-2.5 bg-[#345e69] hover:bg-[#2a4b55] text-white font-semibold rounded-xl shadow-lg shadow-[#345e69]/30 transform active:scale-95 transition-all">
+                    Create Group
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

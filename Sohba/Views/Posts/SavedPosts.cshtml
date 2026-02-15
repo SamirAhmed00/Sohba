@@ -1,0 +1,116 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.PostAggregate.SavedPostDto>
+@{
+    ViewData["Title"] = "Saved Posts";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900">Saved Posts</h1>
+                    <p class="text-gray-500 mt-1">@Model.Count() posts saved</p>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <select class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                <option value="all">All Posts</option>
+                <option value="favorite">Favorites</option>
+                <option value="watchlater">Watch Later</option>
+                <option value="work">Work</option>
+                <option value="education">Education</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Saved Posts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var item in Model)
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift group">
+                <div class="p-5">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full uppercase">
+                                @item.Tag
+                            </span>
+                            @if (!string.IsNullOrEmpty(item.UserTag))
+                            {
+                                <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
+                                    @item.UserTag
+                                </span>
+                            }
+                        </div>
+                        <button onclick="unsavePost('@item.PostId')" class="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <h3 class="font-bold text-gray-900 mt-3 text-lg">@item.PostTitle</h3>
+
+                    <div class="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Saved @item.SavedAt.ToString("MMM dd, yyyy")
+                    </div>
+                </div>
+
+                <div class="px-5 pb-5 pt-2 border-t border-slate-100 flex gap-2">
+                    <a asp-action="Details" asp-route-id="@item.PostId" class="flex-1 py-2 bg-[#345e69] text-white text-center font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                        View Post
+                    </a>
+                    <button onclick="moveToCollection('@item.PostId')" class="px-4 py-2 border border-slate-200 text-gray-600 rounded-xl hover:bg-slate-50 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-20">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No saved posts</h3>
+            <p class="text-gray-500 mt-2">Posts you save will appear here</p>
+            <a asp-controller="Home" asp-action="Index" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Browse Feed
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function unsavePost(postId) {
+            if (!confirm('Remove from saved?')) return;
+
+            const result = await SohbaApp.post('/Interaction/ToggleSavePost', { postId });
+            if (result.success) {
+                SohbaApp.toast('Removed from saved', 'success');
+                location.reload();
+            }
+        }
+
+        function moveToCollection(postId) {
+            // Show dropdown or modal for collection selection
+            SohbaApp.toast('Feature coming soon!', 'info');
+        }
+    </script>
+}

@@ -85,8 +85,35 @@
         // ==========================================
         // 4. Logic for Comment Modal (Split-View)
         // ==========================================
-        function openCommentModal(postId) {
-            // هنا ممكن مستقبلاً تبعت postId لـ API وتجيب الداتا
+        // function openCommentModal(postId) {
+        //     هنا ممكن مستقبلاً تبعت postId لـ API وتجيب الداتا
+        //     document.getElementById('commentModal').classList.remove('hidden');
+        //     document.body.style.overflow = 'hidden';
+        // }
+
+        // function closeCommentModal() {
+        //     document.getElementById('commentModal').classList.add('hidden');
+        //     document.body.style.overflow = 'auto';
+        // }
+
+                // ==========================================
+        // 4. Logic for Comment Modal (Dynamic Data)
+        // ==========================================
+        function openCommentModal(imgUrl, authorName, content, time) {
+            // 1. Update Modal Elements with Real Data
+            const modalImg = document.getElementById('modalImg');
+            const modalUserName = document.getElementById('modalUserName');
+            const modalUserAvatar = document.getElementById('modalUserAvatar');
+            const modalDescription = document.getElementById('modalDescription');
+            const modalPostTime = document.getElementById('modalPostTime');
+
+            if(modalImg) modalImg.src = imgUrl || '';
+            if(modalUserName) modalUserName.innerText = authorName;
+            if(modalUserAvatar) modalUserAvatar.src = `https://ui-avatars.com/api/?name=${authorName}&background=345e69&color=fff`;
+            if(modalDescription) modalDescription.innerText = content;
+            if(modalPostTime) modalPostTime.innerText = "Published at " + time;
+
+            // 2. Show Modal
             document.getElementById('commentModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }

@@ -29,7 +29,7 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFriendshipService, FriendshipService>();
             services.AddScoped<IPageService, PageService>();
-            services.AddScoped<IInteractionService, IInteractionService>();
+            services.AddScoped<IInteractionService, InteractionService>();
             services.AddScoped<IReportingService, ReportingService>();
 
             // Domain Services Registration
@@ -42,6 +42,7 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IProfileDomainService, ProfileDomainService>();
             services.AddScoped<IReportingDomainService, ReportingDomainService>();
             services.AddScoped<IStoryDomainService, StoryDomainService>();
+            services.AddScoped<IPageDomainService, PageDomainService>();
 
 
             return services;

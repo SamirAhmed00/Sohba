@@ -23,6 +23,7 @@ namespace Sohba.Infrastructure.Repositories
             Notifications = new NotificationRepository(_context);
             Reports = new ReportingRepository(_context);
             Interactions = new InteractionRepository(_context);
+            Pages = new PageRepository(_context);
         }
 
         public IUserRepository Users { get; private set; }
@@ -33,6 +34,7 @@ namespace Sohba.Infrastructure.Repositories
         public INotificationRepository Notifications { get; private set; }
         public IReportingRepository Reports { get; private set; }
         public IInteractionRepository Interactions { get; private set; }
+        public IPageRepository Pages { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

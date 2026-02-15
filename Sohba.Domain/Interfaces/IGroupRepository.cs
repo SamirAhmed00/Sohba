@@ -7,7 +7,7 @@ namespace Sohba.Domain.Interfaces
 {
     public interface IGroupRepository : IGenericRepository<Group>
     {
-        bool IsMember(Guid userId, Guid groupId);
+        Task<bool> IsMemberAsync(Guid userId, Guid groupId);
         string GetUserRoleInGroup(Guid userId, Guid groupId);
         bool IsUserBannedFromGroup(Guid userId, Guid groupId);
 

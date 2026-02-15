@@ -88,6 +88,10 @@ namespace Sohba.Application.Services
                 return Result<IEnumerable<GroupMemberDto>>.Failure("Group not found.");
 
             var members = _mapper.Map<IEnumerable<GroupMemberDto>>(group.GroupMembers);
+            //var members = await _context.GroupMembers
+            //    .Where(gm => gm.GroupId == groupId)
+            //    .Include(gm => gm.User) // Eager Loading
+            //    .ToListAsync();
             return Result<IEnumerable<GroupMemberDto>>.Success(members);
         }
     }

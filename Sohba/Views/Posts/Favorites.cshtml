@@ -1,0 +1,45 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
+@{
+    ViewData["Title"] = "Favorites";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Favorites</h1>
+                <p class="text-gray-500 mt-1">@Model.Count() favorite posts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites List -->
+    <div class="space-y-6">
+        @foreach (var post in Model)
+        {
+            <partial name="_PostCard" model="post" />
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-20">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No favorites yet</h3>
+            <p class="text-gray-500 mt-2">Posts you mark as favorite will appear here</p>
+            <a asp-controller="Home" asp-action="Index" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Browse Feed
+            </a>
+        </div>
+    }
+</div>

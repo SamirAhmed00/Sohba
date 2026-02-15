@@ -12,7 +12,7 @@ namespace Sohba.Infrastructure.Repositories
     {
         public GroupRepository(AppDbContext context) : base(context) { }
 
-        public bool IsMember(Guid userId, Guid groupId)
+        public async Task<bool> IsMemberAsync(Guid userId, Guid groupId)
         {
             return _context.Set<GroupMember>().Any(m =>
                 m.GroupId == groupId &&
