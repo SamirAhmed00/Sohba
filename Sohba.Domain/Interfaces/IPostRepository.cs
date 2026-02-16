@@ -8,6 +8,8 @@ namespace Sohba.Domain.Interfaces
     public interface IPostRepository : IGenericRepository<Post>
     {
         Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
+        Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
+
         bool IsPostDeleted(Guid postId);
         Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags);
     }

@@ -47,92 +47,82 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     @* TODO: I Will Move It To App.JS File *@
-    <script>
-                // ==========================================
-        // Sohba App - Interactive Features
-        // ==========================================
 
-        const SohbaApp = {
-            // Toast Notifications
-            toast: (message, type = 'info') => {
+    <script>
+        window.SohbaApp = window.SohbaApp || {};
+
+        Object.assign(window.SohbaApp, {
+
+            toast: function (message, type = 'info') {
+
                 const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="text-${type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue'}-500">
-                            ${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}
-                        </span>
-                        <span class="font-semibold text-gray-700">${message}</span>
-                    </div>
-                `;
+                toast.className = 'sohba-toast ' + type;
+                toast.innerText = message;
+
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.right = '20px';
+                toast.style.padding = '10px 15px';
+                toast.style.backgroundColor = type === 'error' ? '#dc3545' :
+                                              type === 'success' ? '#28a745' :
+                                              '#333';
+                toast.style.color = '#fff';
+                toast.style.borderRadius = '5px';
+                toast.style.zIndex = '9999';
+
                 document.body.appendChild(toast);
 
-                requestAnimationFrame(() => toast.classList.add('show'));
-
                 setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
+                    toast.remove();
                 }, 3000);
             },
 
-            // Like Animation
-            animateLike: (button) => {
-                button.classList.add('like-animation');
-                const icon = button.querySelector('svg');
-                icon.classList.add('text-red-500', 'fill-current');
-                setTimeout(() => button.classList.remove('like-animation'), 300);
-            },
+            animateLike: function (button) {
+                if (!button) return;
 
-            // AJAX Helper
-            post: async (url, data) => {
-                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                button.classList.add('liked');
 
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': token
-                        },
-                        body: JSON.stringify(data)
-                    });
-
-                    return await response.json();
-                } catch (error) {
-                    console.error('Error:', error);
-                    return { success: false, error: 'Network error' };
-                }
-            },
-
-            // Initialize
-            init: () => {
-                // Dropdowns
-                document.querySelectorAll('[data-dropdown]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const menu = document.getElementById(btn.dataset.dropdown);
-                        menu.classList.toggle('hidden');
-                    });
-                });
-
-                // Close dropdowns on outside click
-                document.addEventListener('click', () => {
-                    document.querySelectorAll('[id$="Dropdown"]').forEach(el => {
-                        if (!el.classList.contains('hidden')) el.classList.add('hidden');
-                    });
-                });
-
-                // Auto-hide skeletons
                 setTimeout(() => {
-                    document.querySelectorAll('.skeleton').forEach(el => {
-                        el.classList.remove('skeleton');
-                    });
-                }, 1500);
-            }
-        };
+                    button.classList.remove('liked');
+                }, 300);
+            },
 
-        // Initialize on DOM ready
-        document.addEventListener('DOMContentLoaded', SohbaApp.init);
+            post: async function (url, data) {
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken':
+                            document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Request failed');
+                }
+
+                return await response.json();
+            },
+
+            init: function () {
+
+                document.querySelectorAll('[data-like]').forEach(button => {
+                    button.addEventListener('click', function () {
+                        window.SohbaApp.animateLike(this);
+                    });
+                });
+
+            }
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            window.SohbaApp.init();
+        });
     </script>
+
+    
 </body>
 </html>

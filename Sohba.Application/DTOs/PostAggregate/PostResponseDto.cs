@@ -14,5 +14,11 @@ namespace Sohba.Application.DTOs.PostAggregate
         public int CommentsCount { get; set; }
         public int ReactionsCount { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string? CurrentUserReaction { get; set; }
+
+        public bool IsSaved { get; set; }
+        public bool IsFavorite { get; set; }
+
+        public bool IsReportedByCurrentUser { get; set; }
     }
 }

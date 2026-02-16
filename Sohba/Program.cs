@@ -21,9 +21,9 @@ namespace Sohba
             // Add MVC Services
             builder.Services.AddControllersWithViews();
 
-            // Layer registrations
-            builder.Services.AddApplicationServices();
-            builder.Services.AddInfrastructureService(builder.Configuration);
+            //// Layer registrations
+            //builder.Services.AddApplicationServices();
+            //builder.Services.AddInfrastructureService(builder.Configuration);
 
 
             var app = builder.Build(); // Here
@@ -42,7 +42,7 @@ namespace Sohba
             app.UseRouting();
 
             app.UseAuthorization();
-
+            app.UseStaticFiles();
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",

@@ -4,6 +4,7 @@
     {
         public string Title { get; set; }
         public string Content { get; set; }
+        public IFormFile? ImageFile { get; set; }
         public string? ImageUrl { get; set; }
         public bool IsPrivate { get; set; }
     }

@@ -1,4 +1,5 @@
 ﻿using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,9 +10,11 @@ namespace Sohba.Domain.Interfaces
     {
         // Reaction Methods
         Task<Reaction?> GetReactionAsync(Guid userId, Guid postId);
+        Task<IEnumerable<Reaction>> GetUserReactionsForPostsAsync(Guid userId, IEnumerable<Guid> postIds);
         bool HasUserReacted(Guid userId, Guid entityId);
         Task<int> GetReactionCountAsync(Guid entityId);
         void AddReaction(Reaction reaction);
+        void UpdateReaction(Reaction reaction);
         void RemoveReaction(Reaction reaction);
 
         // Comment Methods
@@ -24,5 +27,8 @@ namespace Sohba.Domain.Interfaces
         Task<SavedPost?> GetSavedPostAsync(Guid userId, Guid postId);
         void AddSavedPost(SavedPost savedPost);
         void RemoveSavedPost(SavedPost savedPost);
+        Task<IEnumerable<SavedPost>> GetSavedPostsByUserAsync(Guid userId);
+        Task<IEnumerable<SavedPost>> GetSavedPostsByUserAndTagAsync(Guid userId, SavedTag tag);
+        void UpdateSavedPost(SavedPost savedPost); 
     }
 }

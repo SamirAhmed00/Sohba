@@ -4,11 +4,12 @@ using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
-using System.Text.RegularExpressions;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Sohba.Application.Services
 {
@@ -50,13 +51,61 @@ namespace Sohba.Application.Services
             return Result<PostResponseDto>.Success(response);
         }
 
+        // Sohba.Application.Services/PostService.cs
         public async Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId)
         {
             var posts = await _unitOfWork.Posts.GetTimelineAsync(userId);
-            var response = _mapper.Map<IEnumerable<PostResponseDto>>(posts);
+            var postList = posts.ToList();
+
+            if (!postList.Any())
+                return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
+
+            var ids = postList.Select(p => p.Id).ToList();
+
+            var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
+            var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(userId, ids);
+            var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
+
+            
+            var userReports = new List<PostReport>();
+            foreach (var postId in ids)
+            {
+                var hasReported = await _unitOfWork.Reports.HasUserReportedEntityAsync(userId, postId);
+                if (hasReported)
+                    userReports.Add(new PostReport { PostId = postId });
+            }
+            var reportedPostIds = new HashSet<Guid>(userReports.Select(r => r.PostId));
+
+            var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
+            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+
+            var response = postList.Select(p =>
+            {
+                counts.TryGetValue(p.Id, out var countData);
+                var dto = new PostResponseDto
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Content = p.Content,
+                    ImageUrl = p.ImageUrl,
+                    CreatedAt = p.CreatedAt,
+                    AuthorName = p.User?.Name,
+                    CommentsCount = countData.comments,
+                    ReactionsCount = countData.reactions,
+                    IsSaved = savedDict.ContainsKey(p.Id),
+                    IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite,
+                    IsReportedByCurrentUser = reportedPostIds.Contains(p.Id)
+                };
+
+                if (reactionDict.TryGetValue(p.Id, out var reaction))
+                    dto.CurrentUserReaction = reaction;
+
+                return dto;
+            }).ToList();
 
             return Result<IEnumerable<PostResponseDto>>.Success(response);
         }
+
 
         public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId)
         {

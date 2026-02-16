@@ -2285,3 +2285,65 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+
+/* Dropdown Menu Animation */
+[id^="menu-"] {
+    transform-origin: top right;
+    animation: dropdownFade 0.2s ease;
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Dropdown Items Hover Effect */
+[id^="menu-"] button {
+    position: relative;
+    overflow: hidden;
+}
+
+    [id^="menu-"] button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(52, 94, 105, 0.1);
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+    }
+
+    [id^="menu-"] button:hover::after {
+        width: 200%;
+        height: 200%;
+    }
+
+    [id^="menu-"] button svg {
+        transition: transform 0.2s ease;
+    }
+
+    [id^="menu-"] button:hover svg {
+        transform: scale(1.1);
+    }
+
+/* Better spacing */
+[id^="menu-"] .py-1.5 {
+    padding: 0.5rem 0.25rem;
+}
+
+[id^="menu-"] button {
+    margin: 0.125rem 0.5rem;
+    width: calc(100% - 1rem);
+    border-radius: 0.75rem;
+}

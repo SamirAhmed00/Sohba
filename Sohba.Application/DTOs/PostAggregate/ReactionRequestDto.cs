@@ -7,7 +7,6 @@ namespace Sohba.Application.DTOs.PostAggregate
     public class ReactionRequestDto
     {
         public Guid PostId { get; set; }
-        public Guid UserId { get; set; }
         public string ReactionType { get; set; } // Map from Enum
     }
 }

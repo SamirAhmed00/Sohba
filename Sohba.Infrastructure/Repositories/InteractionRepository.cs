@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using System;
@@ -25,7 +26,12 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Reactions
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.PostId == postId);
         }
-
+        public async Task<IEnumerable<Reaction>> GetUserReactionsForPostsAsync(Guid userId, IEnumerable<Guid> postIds)
+        {
+            return await _context.Reactions
+                .Where(r => r.UserId == userId && postIds.Contains(r.PostId))
+                .ToListAsync();
+        }
         public bool HasUserReacted(Guid userId, Guid entityId)
         {
             return _context.Reactions.Any(r => r.UserId == userId && r.PostId == entityId);
@@ -48,6 +54,7 @@ namespace Sohba.Infrastructure.Repositories
 
         // --- Comment Implementation ---
 
+        
         public async Task<Comment?> GetCommentByIdAsync(Guid commentId)
         {
             return await _context.Comments.FindAsync(commentId);
@@ -55,8 +62,8 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Comment>> GetCommentsByPostIdAsync(Guid postId)
         {
-            // Returning comments ordered by newest first
             return await _context.Comments
+                .Include(c => c.User)  // ✅ لجلب اسم المستخدم وصورته
                 .Where(c => c.PostId == postId)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
@@ -87,6 +94,36 @@ namespace Sohba.Infrastructure.Repositories
         public void RemoveSavedPost(SavedPost savedPost)
         {
             _context.Set<SavedPost>().Remove(savedPost);
+        }
+
+        public void UpdateReaction(Reaction reaction)
+        {
+            _context.Reactions.Update(reaction); 
+        }
+
+        public async Task<IEnumerable<SavedPost>> GetSavedPostsByUserAsync(Guid userId)
+        {
+            return await _context.Set<SavedPost>()
+                .Include(sp => sp.Post)
+                    .ThenInclude(p => p.User)
+                .Where(sp => sp.UserId == userId)
+                .OrderByDescending(sp => sp.SavedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<SavedPost>> GetSavedPostsByUserAndTagAsync(Guid userId, SavedTag tag)
+        {
+            return await _context.Set<SavedPost>()
+                .Include(sp => sp.Post)
+                    .ThenInclude(p => p.User)
+                .Where(sp => sp.UserId == userId && sp.Tag == tag)
+                .OrderByDescending(sp => sp.SavedAt)
+                .ToListAsync();
+        }
+
+        public void UpdateSavedPost(SavedPost savedPost)
+        {
+            _context.Set<SavedPost>().Update(savedPost);
         }
     }
 }
