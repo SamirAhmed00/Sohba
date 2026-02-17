@@ -3,9 +3,9 @@ using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.DTOs.UserAggregate;
-using Sohba.Domain.Entities;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.UserAggregate;
 using System;
 using System.Collections.Generic;
@@ -80,7 +80,9 @@ namespace Sohba.Application.Mappings
 
             // --- Story Mapping ---
             CreateMap<Story, StoryResponseDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name));
+             .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
+             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.User.Id))
+             .ForMember(dest => dest.UserProfilePicture, opt => opt.MapFrom(src => src.User.ProfilePictureUrl));
 
             // --- Hashtag Mapping ---
             CreateMap<Hashtag, HashtagDto>();

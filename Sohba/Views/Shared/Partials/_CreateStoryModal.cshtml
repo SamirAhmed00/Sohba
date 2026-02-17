@@ -1,43 +1,140 @@
-﻿@* // Modal for Creating Story *@
-<div id="storyModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+﻿<!-- Create Story Modal -->
+<div id="storyModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/60" onclick="closeStoryModal()"></div>
 
-    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-gray-100">
-
-            <div class="border-b border-gray-100 px-4 py-3 sm:px-6 flex justify-between items-center">
-                <h3 class="text-lg font-bold leading-6 text-gray-900" id="modal-title">Create a story</h3>
-                <button onclick="closeModal()" type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <!-- Modal Container -->
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Add to Story</h3>
+                <button onclick="closeStoryModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <div class="px-4 py-6 sm:px-6">
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-10 hover:bg-gray-50 transition-colors cursor-pointer group flex flex-col items-center justify-center">
-                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <svg class="w-8 h-8 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- Content -->
+            <div class="p-4">
+                <!-- Text Input -->
+                <textarea id="createStoryContent" rows="3"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20"
+                          placeholder="What's on your mind?"></textarea>
+
+                <!-- Image Upload -->
+                <div class="mt-4">
+                    <button onclick="document.getElementById('storyMedia').click()"
+                            class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-[#345e69] hover:bg-[#345e69]/5 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-[#345e69]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
+                        <span class="text-sm font-medium text-gray-600">Upload Photo</span>
+                    </button>
+                    <input type="file" id="storyMedia" accept="image/*,video/*" class="hidden" onchange="handleStoryMediaSelect(event)">
+                </div>
+
+                <!-- Preview -->
+                <div id="storyPreviewContainer" class="mt-4 hidden">
+                    <div class="relative">
+                        <img id="storyPreview" class="w-full rounded-xl object-cover max-h-64" src="" alt="Preview">
+                        <button onclick="removeStoryMedia()"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <p class="font-bold text-gray-700">Upload an image</p>
-                    <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
                 </div>
 
-                <div class="mt-4 flex items-center justify-center gap-2 text-gray-500">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-xs font-medium">Your status will be available for 24 hours</span>
+                <!-- Privacy -->
+                <div class="mt-4">
+                    <select id="storyPrivacy" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                        <option value="Public">Public</option>
+                        <option value="FriendsOnly">Friends Only</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                <button type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent bg-[#345e69] px-4 py-2 text-base font-bold text-white shadow-sm hover:bg-[#2a4b55] focus:outline-none focus:ring-2 focus:ring-[#345e69] focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
-                    Create
+                <!-- Post Button -->
+                <button onclick="submitStory()"
+                        class="w-full mt-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                    Share to Story
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    let selectedFile = null;
+
+    function handleStoryMediaSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('storyPreview').src = e.target.result;
+            document.getElementById('storyPreviewContainer').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeStoryMedia() {
+        selectedFile = null;
+        document.getElementById('storyMedia').value = '';
+        document.getElementById('storyPreviewContainer').classList.add('hidden');
+    }
+
+    async function submitStory() {
+        const content = document.getElementById('createStoryContent').value.trim();
+        const privacy = document.getElementById('storyPrivacy').value;
+
+        if (!content && !selectedFile) {
+            SohbaApp.toast('Please add text or media to your story', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('Content', content);
+        formData.append('Privacy', privacy);
+
+        if (selectedFile) {
+            formData.append('MediaFile', selectedFile);
+        }
+
+        try {
+            const response = await fetch('/Stories/Create', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                SohbaApp.toast('Story created successfully!', 'success');
+                closeStoryModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                SohbaApp.toast(result.error || 'Failed to create story', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            SohbaApp.toast('Network error', 'error');
+        }
+    }
+
+    function closeStoryModal() {
+        document.getElementById('storyModal').classList.add('hidden');
+        document.getElementById('createStoryContent').value = '';
+        document.getElementById('storyMedia').value = '';
+        document.getElementById('storyPreviewContainer').classList.add('hidden');
+        selectedFile = null;
+        document.body.style.overflow = '';
+    }
+</script>

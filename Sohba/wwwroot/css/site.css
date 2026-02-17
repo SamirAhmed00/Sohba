@@ -2347,3 +2347,25 @@
     width: calc(100% - 1rem);
     border-radius: 0.75rem;
 }
+
+.active-class {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem; /* px-4 py-3 */
+    background-color: rgba(52, 94, 105, 0.1); /* bg-[#345e69]/10 */
+    color: #345e69; /* text-[#345e69] */
+    border-radius: 0.75rem; /* rounded-xl */
+    font-weight: 500; /* font-medium */
+    transition: all 0.2s;
+}
+
+    .active-class svg {
+        color: #345e69; /* ·Ê‰ «·√ÌﬁÊ‰… */
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.75rem; /* mr-3 */
+    }
+
+    .active-class:hover {
+        background-color: rgba(52, 94, 105, 0.15);
+    }

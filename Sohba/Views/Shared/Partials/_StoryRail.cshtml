@@ -1,0 +1,112 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.StoryAggregate.StoryResponseDto>
+
+@{
+    var groupedStories = Model.GroupBy(s => s.UserId);
+}
+
+<div class="relative group">
+    <!-- Scroll Buttons -->
+    <button onclick="scrollStories('left')"
+            class="absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button>
+
+    <button onclick="scrollStories('right')"
+            class="absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+    </button>
+
+    <!-- Stories Container -->
+    <div id="storiesContainer" class="flex space-x-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory scroll-smooth">
+
+        <!-- Add Story Card -->
+        <div onclick="openStoryModal()"
+             class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-md border border-gray-100 bg-white group/story hover:shadow-lg transition-shadow">
+            <div class="h-32 w-full relative">
+                <img src="https://ui-avatars.com/api/?name=Me&background=345e69&color=fff"
+                     class="w-full h-full object-cover"
+                     alt="My Story">
+                <div class="absolute inset-0 bg-black/10"></div>
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-white h-16 text-center pt-6">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#345e69] border-[3px] border-white rounded-full p-1 shadow-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <p class="text-xs font-bold text-gray-800">Add Story</p>
+            </div>
+        </div>
+
+        <!-- User Stories -->
+        @foreach (var userStories in groupedStories)
+        {
+            var firstStory = userStories.First();
+            var unviewedCount = userStories.Count(s => !s.HasUserViewed);
+
+            <div onclick="openStoryViewer('@userStories.Key')"
+                 class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow duration-300">
+                
+                <div class="absolute inset-0 @(unviewedCount > 0 ? "border-2 border-[#345e69]" : "border border-gray-300") rounded-2xl z-10"></div>
+
+                <!-- Story Media -->
+                @if (!string.IsNullOrEmpty(firstStory.MediaUrl))
+                {
+                    <img src="@firstStory.MediaUrl" class="w-full h-full object-cover" alt="Story">
+                }
+                else
+                {
+                    <img src="https://ui-avatars.com/api/?name=@firstStory.UserName&background=random"
+                         class="w-full h-full object-cover" alt="Story">
+                }
+
+                <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60"></div>
+
+                <!-- User Info -->
+                <div class="absolute bottom-3 left-2 right-2 z-20">
+                    <span class="block text-white text-xs font-bold truncate text-center">
+                        @firstStory.UserName
+                    </span>
+                </div>
+
+                <!-- User Avatar -->
+                <div class="absolute top-3 left-3 w-8 h-8 rounded-full border-2 border-[#345e69] p-0.5 bg-white z-20">
+                    @if (!string.IsNullOrEmpty(firstStory.UserProfilePicture))
+                    {
+                        <img src="@firstStory.UserProfilePicture" class="w-full h-full rounded-full object-cover">
+                    }
+                    else
+                    {
+                        <img src="https://ui-avatars.com/api/?name=@firstStory.UserName&background=345e69&color=fff"
+                             class="w-full h-full rounded-full object-cover">
+                    }
+                </div>
+
+                <!-- Unviewed Count Badge -->
+                @if (unviewedCount > 1)
+                {
+                    <div class="absolute top-3 right-3 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center z-20">
+                        <span class="text-white text-xs font-bold">@unviewedCount</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    function scrollStories(direction) {
+        const container = document.getElementById('storiesContainer');
+        const scrollAmount = 200;
+
+        if (direction === 'left') {
+            container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        } else {
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }
+</script>

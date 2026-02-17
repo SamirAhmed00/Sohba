@@ -5,7 +5,7 @@ using Sohba.Domain.Entities.GroupAndPage;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Sohba.Domain.Entities;
+using Sohba.Domain.Entities.StoryAggregate;
 
 namespace Sohba.Infrastructure.Data
 {

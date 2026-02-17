@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Sohba.Domain.Entities;
+using Sohba.Domain.Entities.StoryAggregate;
 using System;
 using System.Collections.Generic;
 using System.Text;

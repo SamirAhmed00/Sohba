@@ -8,8 +8,10 @@ namespace Sohba.Application.Interfaces
 {
     public interface IStoryService
     {
-        Task<Result<StoryResponseDto>> CreateStoryAsync(string content, string? imageUrl, Guid userId);
+        Task<Result<StoryResponseDto>> CreateStoryAsync(StoryCreateDto storyDto, Guid userId);
         Task<Result> DeleteStoryAsync(Guid storyId, Guid userId);
-        Task<Result<IEnumerable<StoryResponseDto>>> GetActiveStoriesAsync(Guid userId);
+        Task<Result<IEnumerable<StoryResponseDto>>> GetStoriesForFeedAsync(Guid userId);
+        Task<Result<StoryResponseDto>> GetStoryByIdAsync(Guid storyId, Guid currentUserId);
+        Task<Result> MarkStoryAsViewedAsync(Guid storyId, Guid userId);
     }
 }
