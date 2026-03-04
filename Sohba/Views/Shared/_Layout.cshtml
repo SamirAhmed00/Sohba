@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var recommendedGroups = ViewBag.RecommendedGroups as IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupResponseDto>;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -6,15 +9,7 @@
     <title>@ViewData["Title"] - Sohba</title>
     <script type="importmap"></script>
     <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
-
-    @* <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> *@
-    @* <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" /> *@
-    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> *@
-    @* <link rel="stylesheet" href="~/Sohba.styles.css" asp-append-version="true" /> *@
-
-
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
     <link rel="stylesheet" href="~/css/tailwind.css" />
     <link rel="stylesheet" href="~/css/legacy.css" />
 
@@ -28,7 +23,7 @@
         <div class="flex flex-row gap-6 items-start">
 
             @* Left Sidebar (Partial) - Fixed width *@
-            <partial name="Partials/_Sidebar" />
+            <partial name="Partials/_Sidebar" model="recommendedGroups" />
 
             @* Main Content Wrapper (Dynamic Width) *@
             <main class="flex-1 min-w-0 py-6">
@@ -44,213 +39,15 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
+
+    <!-- Sohba Scripts -->
+    <script src="~/js/sohba-core.js"></script>
+    <script src="~/js/sohba-posts.js"></script>
+    <script src="~/js/sohba-modal.js"></script>
+    <script src="~/js/sohba-stories.js"></script>
+
+
     @await RenderSectionAsync("Scripts", required: false)
-
-    @* TODO: I Will Move It To App.JS File *@
-
-    <script>
-        window.SohbaApp = window.SohbaApp || {};
-
-        Object.assign(window.SohbaApp, {
-
-            toast: function (message, type = 'info') {
-
-                const toast = document.createElement('div');
-                toast.className = 'sohba-toast ' + type;
-                toast.innerText = message;
-
-                toast.style.position = 'fixed';
-                toast.style.bottom = '20px';
-                toast.style.right = '20px';
-                toast.style.padding = '10px 15px';
-                toast.style.backgroundColor = type === 'error' ? '#dc3545' :
-                                              type === 'success' ? '#28a745' :
-                                              '#333';
-                toast.style.color = '#fff';
-                toast.style.borderRadius = '5px';
-                toast.style.zIndex = '9999';
-
-                document.body.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.remove();
-                }, 3000);
-            },
-
-            animateLike: function (button) {
-                if (!button) return;
-
-                button.classList.add('liked');
-
-                setTimeout(() => {
-                    button.classList.remove('liked');
-                }, 300);
-            },
-
-            post: async function (url, data) {
-
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken':
-                            document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Request failed');
-                }
-
-                return await response.json();
-            },
-
-            init: function () {
-
-                document.querySelectorAll('[data-like]').forEach(button => {
-                    button.addEventListener('click', function () {
-                        window.SohbaApp.animateLike(this);
-                    });
-                });
-
-            }
-
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
-            window.SohbaApp.init();
-        });
-
-
-        // ------------------------------------------------
-        // -----------Stories-----------------
-        // Story Viewer State
-        let currentUserId = null;
-        let currentUserStories = [];
-        let currentStoryIndex = 0;
-        let progressInterval = null;
-
-        // Open Story Viewer
-        window.openStoryViewer = async function(userId) {
-            currentUserId = userId;
-            currentStoryIndex = 0;
-
-            // جلب stories الخاصه بالمستخدم
-            const response = await fetch(`/Stories/GetUserStories?userId=${userId}`);
-            const stories = await response.json();
-
-            if (stories && stories.length > 0) {
-                currentUserStories = stories;
-                showStory(0);
-                document.getElementById('storyViewerModal').classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-                startProgress();
-            }
-        };
-
-        // Show specific story
-        function showStory(index) {
-            if (index < 0 || index >= currentUserStories.length) {
-                closeStoryViewer();
-                return;
-            }
-
-            currentStoryIndex = index;
-            const story = currentUserStories[index];
-
-            // Update UI
-            document.getElementById('storyUserName').textContent = story.userName;
-            document.getElementById('storyUserAvatar').src = story.userProfilePicture ||
-                `https://ui-avatars.com/api/?name=${story.userName}&background=345e69&color=fff`;
-            document.getElementById('storyTime').textContent = timeAgo(story.createdAt);
-            document.getElementById('storyViewersCount').textContent = story.viewersCount || 0;
-
-            // Load media
-            const contentDiv = document.getElementById('storyContent');
-            if (story.mediaType === 'video') {
-                contentDiv.innerHTML = `<video src="${story.mediaUrl}" class="max-h-full max-w-full" autoplay></video>`;
-            } else {
-                contentDiv.innerHTML = `<img src="${story.mediaUrl || 'https://via.placeholder.com/600'}" class="max-h-full max-w-full object-contain">`;
-            }
-
-            // Mark as viewed
-            fetch('/Stories/MarkAsViewed', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ storyId: story.id })
-            });
-        }
-
-        // Progress bar
-        function startProgress() {
-            let progress = 0;
-            progressInterval = setInterval(() => {
-                progress += 1;
-                document.getElementById('storyProgress').style.width = progress + '%';
-
-                if (progress >= 100) {
-                    clearInterval(progressInterval);
-                    navigateStory('next');
-                }
-            }, 50); // 5 seconds total
-        }
-
-        // Navigation
-        window.navigateStory = function(direction) {
-            clearInterval(progressInterval);
-
-            if (direction === 'next') {
-                if (currentStoryIndex < currentUserStories.length - 1) {
-                    showStory(currentStoryIndex + 1);
-                    startProgress();
-                } else {
-                    closeStoryViewer();
-                }
-            } else if (direction === 'prev') {
-                if (currentStoryIndex > 0) {
-                    showStory(currentStoryIndex - 1);
-                    startProgress();
-                }
-            }
-        };
-
-        // Close viewer
-        window.closeStoryViewer = function() {
-            document.getElementById('storyViewerModal').classList.add('hidden');
-            document.body.style.overflow = '';
-            clearInterval(progressInterval);
-            currentUserId = null;
-            currentUserStories = [];
-        };
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            const modal = document.getElementById('storyViewerModal');
-            if (modal && !modal.classList.contains('hidden')) {
-                if (e.key === 'ArrowLeft') {
-                    navigateStory('prev');
-                } else if (e.key === 'ArrowRight') {
-                    navigateStory('next');
-                } else if (e.key === 'Escape') {
-                    closeStoryViewer();
-                }
-            }
-        });
-
-        // Time ago function
-        function timeAgo(date) {
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-
-            if (seconds < 60) return 'just now';
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return minutes + 'm ago';
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return hours + 'h ago';
-            return Math.floor(hours / 24) + 'd ago';
-        }
-    </script>
-
     
 </body>
 </html>

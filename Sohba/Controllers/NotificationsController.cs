@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.Interfaces;
+using Sohba.Controllers.Sohba.Controllers;
 
 namespace Sohba.Controllers
 {
-    public class NotificationsController : Controller
+    public class NotificationsController : BaseController
     {
         private readonly ISocialService _socialService;
 
@@ -28,13 +29,13 @@ namespace Sohba.Controllers
             return Json(new { count });
         }
 
-        private Guid GetCurrentUserId()
-        {
-            //var userIdStr = HttpContext.Session.GetString("UserId");
-            //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
-            return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
+        //private Guid GetCurrentUserId()
+        //{
+        //    //var userIdStr = HttpContext.Session.GetString("UserId");
+        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
+        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
 
-        }
+        //}
     }
 
 }

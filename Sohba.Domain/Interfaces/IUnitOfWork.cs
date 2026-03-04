@@ -14,6 +14,7 @@ namespace Sohba.Domain.Interfaces
         INotificationRepository Notifications { get; }
         IUserRepository Users { get; }
         IReportingRepository Reports { get; }
+        IHashtagRepository Hashtags { get; }
 
         IPageRepository Pages { get; }
 

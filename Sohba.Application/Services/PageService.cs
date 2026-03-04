@@ -43,6 +43,14 @@ namespace Sohba.Application.Services
             };
 
             _unitOfWork.Pages.Add(page);
+
+            var follower = new PageFollower
+            {
+                UserId = adminId,
+                PageId = page.Id,
+                FollowedAt = DateTime.UtcNow
+            };
+            _unitOfWork.Pages.AddFollower(follower);
             await _unitOfWork.CompleteAsync();
 
             var response = _mapper.Map<PageResponseDto>(page);
@@ -110,6 +118,75 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<PageResponseDto>>(pages);
 
             return Result<IEnumerable<PageResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result<IEnumerable<PageResponseDto>>> GetAllPagesAsync()
+        {
+            var pages = await _unitOfWork.Pages.GetAllAsync();
+
+            var dtos = _mapper.Map<IEnumerable<PageResponseDto>>(pages);
+
+            return Result<IEnumerable<PageResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result> DeletePageAsync(Guid adminId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+
+            if (page == null)
+                return Result.Failure("Page not found");
+
+            if (page.AdminId != adminId)
+                return Result.Failure("You are not authorized to delete this page.");
+
+            _unitOfWork.Pages.Delete(page);
+
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<bool>> ToggleFollowPageAsync(Guid userId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null)
+                return Result<bool>.Failure("Page not found");
+
+            // Check if already following
+            var isFollowing = await IsFollowingAsync(userId, pageId);
+
+            if (isFollowing.Value)
+            {
+                // Unfollow
+                await UnfollowPageAsync(userId, pageId);
+                return Result<bool>.Success(false);
+            }
+            else
+            {
+                // Follow
+                await FollowPageAsync(userId, pageId);
+                return Result<bool>.Success(true);
+            }
+        }
+
+        public async Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId)
+        {
+            var followedPages = await _unitOfWork.Pages.GetPagesByFollowerIdAsync(userId);
+            var isFollowing = followedPages.Any(p => p.Id == pageId);
+            return Result<bool>.Success(isFollowing);
+        }
+
+        public async Task<Result<int>> GetFollowersCountAsync(Guid pageId)
+        {
+            var count = await _unitOfWork.Pages.GetFollowersCountAsync(pageId);
+            return Result<int>.Success(count);
+        }
+
+        public async Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20)
+        {
+            var followers = await _unitOfWork.Pages.GetFollowersAsync(pageId, page, pageSize);
+            var dtos = _mapper.Map<IEnumerable<PageFollowerDto>>(followers);
+            return Result<IEnumerable<PageFollowerDto>>.Success(dtos);
         }
     }
 

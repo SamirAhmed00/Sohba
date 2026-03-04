@@ -13,5 +13,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
         Result CanKickMember(Guid actionUserId, string actionUserRole, Guid targetUserId, string targetUserRole);
         Result CanInviteToGroup(Guid inviterId, bool isMember, bool groupAllowsMemberInvites);
         Result CanDeleteGroup(Guid userId, Guid ownerId);
+        Result CanUpdateGroup(Guid userId, Guid groupId, Guid groupAdminId);
+        Result CanLeaveGroup(Guid userId, Guid groupId, bool isAdmin, int adminCount);
     }
 }

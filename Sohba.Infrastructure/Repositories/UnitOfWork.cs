@@ -1,4 +1,5 @@
-﻿using Sohba.Domain.Interfaces;
+﻿using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace Sohba.Infrastructure.Repositories
             Notifications = new NotificationRepository(_context);
             Reports = new ReportingRepository(_context);
             Interactions = new InteractionRepository(_context);
+            Hashtags = new HashtagRepository(_context);
             Pages = new PageRepository(_context);
         }
 
@@ -35,6 +37,7 @@ namespace Sohba.Infrastructure.Repositories
         public IReportingRepository Reports { get; private set; }
         public IInteractionRepository Interactions { get; private set; }
         public IPageRepository Pages { get; private set; }
+        public IHashtagRepository Hashtags { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

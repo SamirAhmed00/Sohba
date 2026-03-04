@@ -1,11 +1,11 @@
-﻿@model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
+﻿@* @model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
 @{
     ViewData["Title"] = "Favorites";
 }
 
 <div class="max-w-4xl mx-auto page-transition">
     <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 ">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center">
                 <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
@@ -23,7 +23,7 @@
     <div class="space-y-6">
         @foreach (var post in Model)
         {
-            <partial name="_PostCard" model="post" />
+            <partial name="Partials/_PostCard" model="post" />
         }
     </div>
 
@@ -42,4 +42,118 @@
             </a>
         </div>
     }
+</div> *@
+
+
+@model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
+@{
+    ViewData["Title"] = "Favorites";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-pink-100 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Favorites</h1>
+                <p class="text-gray-500 mt-1">@Model.Count() favorite posts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @foreach (var post in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift group" data-post-id="@post.Id">
+                    @if (!string.IsNullOrEmpty(post.ImageUrl))
+                    {
+                        <div class="h-48 overflow-hidden">
+                            <img src="@post.ImageUrl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        </div>
+                    }
+
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 bg-pink-100 text-pink-600 text-xs font-bold rounded-full">⭐ Favorite</span>
+                            </div>
+
+                            <button onclick="removeFromFavorites('@post.Id')"
+                                    class="text-gray-400 hover:text-pink-500 p-2 hover:bg-pink-50 rounded-xl transition-colors"
+                                    title="Remove from favorites">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <h3 class="font-bold text-gray-900 mt-3 text-lg">@post.Title</h3>
+
+                        <p class="text-sm text-gray-600 mt-2 line-clamp-2">@post.Content</p>
+
+                        <div class="flex items-center gap-2 mt-4 text-xs text-gray-500">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Favorited @post.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="flex items-center gap-2">
+                                <img src="https://ui-avatars.com/api/?name=@post.AuthorName&background=345e69&color=fff" class="w-6 h-6 rounded-full" />
+                                <span class="text-xs text-gray-600">@post.AuthorName</span>
+                            </div>
+
+                            <a asp-controller="Posts" asp-action="Details" asp-route-id="@post.Id"
+                               class="text-sm text-[#345e69] font-semibold hover:underline">
+                                View Post →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No favorites yet</h3>
+            <p class="text-gray-500 mt-2">Posts you mark as favorite will appear here</p>
+            <a asp-controller="Home" asp-action="Index" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Browse Feed
+            </a>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        async function removeFromFavorites(postId) {
+            if (!confirm('Remove from favorites?')) return;
+
+            const result = await SohbaApp.post('/Posts/RemoveSavedPost', { postId });
+
+            if (result.success) {
+                SohbaApp.toast('Removed from favorites', 'success');
+                document.querySelector(`[data-post-id="${postId}"]`).remove();
+
+                // Update count
+                const remainingCount = document.querySelectorAll('[data-post-id]').length;
+                document.querySelector('.text-gray-500.mt-1').textContent = `${remainingCount} favorite posts`;
+            }
+        }
+    </script>
+}

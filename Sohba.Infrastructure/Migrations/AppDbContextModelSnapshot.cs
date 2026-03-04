@@ -39,6 +39,9 @@ namespace Sohba.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -92,6 +95,9 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -205,6 +211,9 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -213,6 +222,15 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
+
+                    b.Property<Guid?>("PageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -225,6 +243,10 @@ namespace Sohba.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("PageId");
 
                     b.HasIndex("UserId");
 
@@ -380,7 +402,8 @@ namespace Sohba.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<Guid>("StoryId")
                         .HasColumnType("uniqueidentifier");
@@ -590,11 +613,23 @@ namespace Sohba.Infrastructure.Migrations
 
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.Post", b =>
                 {
+                    b.HasOne("Sohba.Domain.Entities.GroupAndPage.Group", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId");
+
+                    b.HasOne("Sohba.Domain.Entities.GroupAndPage.Page", "Page")
+                        .WithMany()
+                        .HasForeignKey("PageId");
+
                     b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Page");
 
                     b.Navigation("User");
                 });
@@ -701,7 +736,7 @@ namespace Sohba.Infrastructure.Migrations
                     b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Story");

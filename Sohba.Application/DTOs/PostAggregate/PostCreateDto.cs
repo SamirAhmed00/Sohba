@@ -10,6 +10,8 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string Content { get; set; }
         public string? ImageUrl { get; set; }
         public bool IsPrivate { get; set; }
+
+        public List<string> Hashtags { get; set; } = new List<string>();
         public Guid UserId { get; set; }
     }
 }

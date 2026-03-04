@@ -83,34 +83,6 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-        //public async Task<Result<string>> ToggleSavePostAsync(Guid userId, Guid postId)
-        //{
-        //    var post = await _unitOfWork.Posts.GetByIdAsync(postId);
-        //    if (post == null) return Result<string>.Failure("Post not found.");
-
-        //    var existingSave = await _unitOfWork.Interactions.GetSavedPostAsync(userId, postId);
-
-        //    if (existingSave != null)
-        //    {
-        //        _unitOfWork.Interactions.RemoveSavedPost(existingSave);
-        //        await _unitOfWork.CompleteAsync();
-        //        return Result<string>.Success("Post unsaved.");
-        //    }
-        //    else
-        //    {
-        //        var savedPost = new SavedPost
-        //        {
-        //            UserId = userId,
-        //            PostId = postId,
-        //            SavedAt = DateTime.UtcNow,
-        //        };
-
-        //        _unitOfWork.Interactions.AddSavedPost(savedPost);
-        //        await _unitOfWork.CompleteAsync();
-        //        return Result<string>.Success("Post saved.");
-        //    }
-        //}
-
         public async Task<Result> RemoveReactionAsync(Guid userId, Guid postId)
         {
             var reaction = await _unitOfWork.Interactions.GetReactionAsync(userId, postId);
@@ -157,18 +129,24 @@ namespace Sohba.Application.Services
             return await _unitOfWork.Interactions.GetReactionCountAsync(postId);
         }
 
-        public async Task<Result<IEnumerable<SavedPostDto>>> GetSavedPostsAsync(Guid userId)
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsAsync(Guid userId)
         {
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
-            var dtos = _mapper.Map<IEnumerable<SavedPostDto>>(savedPosts);
-            return Result<IEnumerable<SavedPostDto>>.Success(dtos);
+            var posts = savedPosts.Select(s => s.Post).ToList();
+
+            var dtos = await MapPostsToResponse(posts, userId);
+
+            return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
 
-        public async Task<Result<IEnumerable<SavedPostDto>>> GetFavoritePostsAsync(Guid userId)
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetFavoritePostsAsync(Guid userId)
         {
-            var favoritePosts = await _unitOfWork.Interactions.GetSavedPostsByUserAndTagAsync(userId, SavedTag.Favorite);
-            var dtos = _mapper.Map<IEnumerable<SavedPostDto>>(favoritePosts);
-            return Result<IEnumerable<SavedPostDto>>.Success(dtos);
+            var favoriteSaves = await _unitOfWork.Interactions.GetSavedPostsByUserAndTagAsync(userId, SavedTag.Favorite);
+            var posts = favoriteSaves.Select(s => s.Post).ToList();
+
+            var dtos = await MapPostsToResponse(posts, userId);
+
+            return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
 
         public async Task<Result<SavedPostDto>> SavePostAsync(Guid userId, Guid postId, SavedTag tag = SavedTag.General, string? userTag = null)
@@ -219,6 +197,53 @@ namespace Sohba.Application.Services
             _unitOfWork.Interactions.RemoveSavedPost(existingSave);
             await _unitOfWork.CompleteAsync();
             return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsByTagAsync(Guid userId, SavedTag tag)
+        {
+            var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAndTagAsync(userId, tag);
+            var posts = savedPosts.Select(s => s.Post).ToList();
+
+            var dtos = await MapPostsToResponse(posts, userId);
+
+            foreach (var dto in dtos)
+            {
+                dto.IsSaved = true;
+                dto.IsFavorite = tag == SavedTag.Favorite;
+            }
+
+            return Result<IEnumerable<PostResponseDto>>.Success(dtos);
+        }
+
+        // Helper method to fill interaction data (Likes, Comments, ..etc)
+        private async Task<IEnumerable<PostResponseDto>> MapPostsToResponse(IEnumerable<Post> posts, Guid userId)
+        {
+            var postList = posts.ToList();
+            if (!postList.Any()) return new List<PostResponseDto>();
+
+            var ids = postList.Select(p => p.Id).ToList();
+            var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
+            var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(userId, ids);
+            var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
+
+            var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
+            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+
+            return postList.Select(p => {
+                counts.TryGetValue(p.Id, out var countData);
+                var dto = _mapper.Map<PostResponseDto>(p);
+                dto.CommentsCount = countData.comments;
+                dto.ReactionsCount = countData.reactions;
+                dto.IsSaved = savedDict.ContainsKey(p.Id);
+
+                if (savedDict.TryGetValue(p.Id, out var tag))
+                {
+                    dto.SavedTag = tag.ToString(); 
+                    dto.IsFavorite = tag == SavedTag.Favorite;
+                }
+                dto.CurrentUserReaction = reactionDict.GetValueOrDefault(p.Id);
+                return dto;
+            });
         }
     }
 }

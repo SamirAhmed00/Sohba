@@ -11,9 +11,6 @@ namespace Sohba.Application.Interfaces
     public interface IInteractionService
     {
         // Reactions
-
-        // TODO: Deleted 
-        //Task<Result> ToggleReactionAsync(Guid userId, Guid postId, ReactionType type);
         Task<Result> AddReactionAsync(Guid userId, Guid postId, ReactionType type);
         Task<Result> RemoveReactionAsync(Guid userId, Guid postId);
         Task<Reaction?> GetUserReactionAsync(Guid userId, Guid postId);
@@ -27,9 +24,9 @@ namespace Sohba.Application.Interfaces
         Task<Result> AddReplyAsync(Guid userId, Guid commentId, string content);
 
         // Saved Posts
-        //Task<Result<string>> ToggleSavePostAsync(Guid userId, Guid postId);
-        Task<Result<IEnumerable<SavedPostDto>>> GetSavedPostsAsync(Guid userId);
-        Task<Result<IEnumerable<SavedPostDto>>> GetFavoritePostsAsync(Guid userId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsAsync(Guid userId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetFavoritePostsAsync(Guid userId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsByTagAsync(Guid userId, SavedTag tag);
         Task<Result<SavedPostDto>> SavePostAsync(Guid userId, Guid postId, SavedTag tag = SavedTag.General, string? userTag = null);
         Task<Result> RemoveSavedPostAsync(Guid userId, Guid postId);
     }

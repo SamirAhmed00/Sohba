@@ -1,0 +1,149 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
+@{
+    ViewData["Title"] = "Find Friends";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Find Friends</h1>
+                <p class="text-gray-500 mt-1">Search and connect with people</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mt-4 relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text" id="searchInput" placeholder="Search by name..."
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all" />
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex gap-2 mt-4">
+            <button onclick="filterUsers('all')" class="filter-btn active px-4 py-2 bg-[#345e69] text-white text-sm font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                All
+            </button>
+            <button onclick="filterUsers('mutual')" class="filter-btn px-4 py-2 bg-slate-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Mutual Friends
+            </button>
+            <button onclick="filterUsers('recent')" class="filter-btn px-4 py-2 bg-slate-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Recently Joined
+            </button>
+        </div>
+    </div>
+
+    <!-- Users Grid -->
+    <div id="usersContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var user in Model)
+            {
+                <div class="user-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift" data-user-id="@user.Id" data-name="@user.Name.ToLower()">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
+                                 class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-100" />
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-gray-900 truncate">@user.Name</h3>
+                            <p class="text-sm text-gray-500 mt-1">@user.Bio</p>
+                            <p class="text-xs text-gray-400 mt-1">Joined @user.CreatedAt.ToString("MMM yyyy")</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="sendFriendRequest('@user.Id')"
+                                class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                            Add Friend
+                        </button>
+                        <button onclick="viewProfile('@user.Id')"
+                                class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- No Results Message (hidden by default) -->
+    <div id="noResultsMessage" class="hidden text-center py-20 bg-white rounded-2xl border border-slate-100">
+        <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">No users found</h3>
+        <p class="text-gray-500 mt-2">Try searching with a different name</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const userCards = document.querySelectorAll('.user-card');
+            let visibleCount = 0;
+
+            userCards.forEach(card => {
+                const name = card.dataset.name;
+                if (name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            const noResults = document.getElementById('noResultsMessage');
+            if (visibleCount === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+
+        // Filter functionality
+        function filterUsers(filter) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-[#345e69]', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-gray-700');
+            });
+            event.target.classList.add('active', 'bg-[#345e69]', 'text-white');
+            event.target.classList.remove('bg-slate-100', 'text-gray-700');
+
+            // TODO: Implement actual filtering with AJAX
+            SohbaApp.toast('Filter by ' + filter + ' coming soon!', 'info');
+        }
+
+        async function sendFriendRequest(userId) {
+            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                // Remove user from list
+                document.querySelector(`[data-user-id="${userId}"]`).remove();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send request', 'error');
+            }
+        }
+
+        function viewProfile(userId) {
+            window.location.href = `/Profile/Index/${userId}`;
+        }
+    </script>
+}

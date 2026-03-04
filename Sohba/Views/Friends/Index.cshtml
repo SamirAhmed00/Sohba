@@ -5,18 +5,28 @@
 
 <div class="max-w-4xl mx-auto page-transition">
     <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 ">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-black text-gray-900">Friends</h1>
                 <p class="text-gray-500 mt-1">@Model.Count() friends in your network</p>
             </div>
-            <a asp-controller="Friends" asp-action="Find" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                Find Friends
-            </a>
+
+            <div class="flex gap-2">
+                <a asp-action="Requests" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Requests
+                    <span id="pendingRequestsBadge" class="hidden bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"></span>
+                </a>
+                <a asp-controller="Friends" asp-action="Suggestions" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Find Friends
+                </a>
+            </div>
         </div>
 
         <!-- Search -->
@@ -57,6 +67,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
+                    <button onclick="blockUser('@friend.FriendUserId')" class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors" title="Block">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         }
@@ -89,5 +104,29 @@
                 SohbaApp.toast(result.error || 'Failed to remove friend', 'error');
             }
         }
+        async function blockUser(userId) {
+            if (!confirm('Are you sure you want to block this user? They will be removed from your friends list.')) return;
+
+            const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+            if (result.success) {
+                SohbaApp.toast('User blocked', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to block user', 'error');
+            }
+        }
+
+
+        async function loadPendingRequestsCount() {
+            const response = await fetch('/Friends/GetPendingRequestsCount');
+            const data = await response.json();
+            if (data.count > 0) {
+                const badge = document.getElementById('pendingRequestsBadge');
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        loadPendingRequestsCount();
     </script>
 }

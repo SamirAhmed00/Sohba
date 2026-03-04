@@ -1,4 +1,6 @@
-﻿using Sohba.Domain.Entities.UserAggregate;
+﻿using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,6 +15,8 @@ namespace Sohba.Domain.Entities.PostAggregate
         public DateTime CreatedAt { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsPrivate { get; set; }
+        public PostSourceType SourceType { get; set; } = PostSourceType.User;
+        public Guid? SourceId { get; set; }
 
         // i think it will be nullable ?
         public DateTime? UpdatedAt { get; set; }
@@ -21,6 +25,12 @@ namespace Sohba.Domain.Entities.PostAggregate
         public string ?ImageUrl { get; set; }
 
         // Navigation Properties
+        public Guid? PageId { get; set; }
+        public virtual Page Page { get; set; }
+
+        public Guid? GroupId { get; set; }
+        public virtual Group? Group { get; set; }
+
         public Guid UserId { get; set; }
         public virtual User User { get; set; } 
         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>(); 

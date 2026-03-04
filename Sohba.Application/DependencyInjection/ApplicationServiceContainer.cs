@@ -31,6 +31,8 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IPageService, PageService>();
             services.AddScoped<IInteractionService, InteractionService>();
             services.AddScoped<IReportingService, ReportingService>();
+            services.AddScoped<IHashtagService, HashtagService>();
+            services.AddScoped<ISearchService, SearchService>();
 
             // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();

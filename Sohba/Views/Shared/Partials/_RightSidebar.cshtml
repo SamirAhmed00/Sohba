@@ -1,30 +1,18 @@
 ﻿@* // Right Sidebar *@
+
 <div class="hidden xl:block col-span-4 sticky top-24 space-y-6 h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar pb-10">
+
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-gray-900 text-base">People You May Know</h3>
-            <button class="text-[#345e69] text-xs font-bold hover:underline">See All</button>
+            <a asp-controller="Friends" asp-action="Suggestions" class="text-[#345e69] text-xs font-bold hover:underline">See All</a>
         </div>
-        <div class="space-y-4">
-            @for (int k = 0; k < 3; k++)
-            {
-                <div class="flex items-center justify-between group">
-                    <div class="flex items-center gap-3">
-                        <img src="https://ui-avatars.com/api/?name=Friend+@k&background=random" class="w-10 h-10 rounded-xl object-cover" alt="User">
-                        <div>
-                            <h5 class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors cursor-pointer">Sarah Connor</h5>
-                            <p class="text-xs text-gray-400">3 mutual friends</p>
-                        </div>
-                    </div>
-                    <button class="text-[#345e69] bg-[#345e69]/10 hover:bg-[#345e69] hover:text-white p-2 rounded-lg transition-all duration-300">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                    </button>
-                </div>
-            }
+        <div id="friendSuggestionsContainer" class="space-y-4">
+            <div class="text-xs text-center text-slate-400 py-2">Loading suggestions...</div>
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    @* <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-gray-900 text-base">Trends For You</h3>
             <button class="text-gray-400 hover:text-gray-600"><i class="fas fa-cog"></i></button>
@@ -43,6 +31,44 @@
             }
         </div>
         <button class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">Show More</button>
+    </div> *@
+    @* Trending Hashtags *@
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-900 text-base">Trends For You</h3>
+            <button class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="trendingHashtagsContainer" class="space-y-4">
+            @if (ViewBag.TrendingHashtags != null)
+            {
+                @foreach (var hashtag in ViewBag.TrendingHashtags)
+                {
+                    <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs text-gray-400 font-medium">Trending</span>
+                        </div>
+                        <a href="/Posts/Hashtag/@hashtag.Tag" class="block">
+                            <h4 class="font-bold text-gray-800 text-sm mt-0.5 hover:text-[#345e69]">#@hashtag.Tag</h4>
+                        </a>
+                        <p class="text-xs text-gray-400 mt-1">@(hashtag.Count.ToString("N0")) posts</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-xs text-center text-slate-400 py-4">No trends available</div>
+            }
+        </div>
+
+        <button class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">
+            Show More
+        </button>
     </div>
 
     <div class="text-[11px] text-gray-400 px-2 leading-relaxed">
@@ -53,3 +79,57 @@
         <span>Sohba © 2026</span>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        // Load friend suggestions
+        document.addEventListener('DOMContentLoaded', async function() {
+            const container = document.getElementById('friendSuggestionsContainer');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/Friends/GetFriendSuggestions?count=5');
+                const users = await response.json();
+
+                if (users && users.length > 0) {
+                    container.innerHTML = users.map(user => `
+                        <div class="flex items-center justify-between group">
+                            <div class="flex items-center gap-3">
+                                <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}"
+                                     class="w-10 h-10 rounded-xl object-cover" alt="${user.name}">
+                                <div>
+                                    <h5 class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors cursor-pointer">
+                                        ${user.name}
+                                    </h5>
+                                    <p class="text-xs text-gray-400">Suggest for you</p>
+                                </div>
+                            </div>
+                            <button onclick="sendFriendRequest('${user.id}')"
+                                    class="text-[#345e69] bg-[#345e69]/10 hover:bg-[#345e69] hover:text-white p-2 rounded-lg transition-all duration-300">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No suggestions</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load</div>';
+            }
+        });
+
+        async function sendFriendRequest(userId) {
+            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                // Refresh suggestions after sending
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send request', 'error');
+            }
+        }
+    </script>
+}

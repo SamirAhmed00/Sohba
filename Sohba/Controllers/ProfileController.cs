@@ -2,11 +2,12 @@
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Controllers.Sohba.Controllers;
 using Sohba.ViewModels.Profile;
 
 namespace Sohba.Controllers
 {
-    public class ProfileController : Controller
+    public class ProfileController : BaseController
     {
         private readonly IUserService _userService;
         private readonly ISocialService _socialService;
@@ -102,12 +103,12 @@ namespace Sohba.Controllers
             return View(viewModel);
         }
 
-        private Guid GetCurrentUserId()
-        {
-            //var userIdStr = HttpContext.Session.GetString("UserId");
-            //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
+        //private Guid GetCurrentUserId()
+        //{
+        //    //var userIdStr = HttpContext.Session.GetString("UserId");
+        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
 
-            return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-        }
+        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
+        //}
     }
 }

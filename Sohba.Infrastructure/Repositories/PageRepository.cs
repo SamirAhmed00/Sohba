@@ -32,11 +32,61 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Page>> GetPagesByFollowerIdAsync(Guid userId)
         {
-            return await _context.Set<PageFollower>()
-                .Where(f => f.UserId == userId)
-                .Select(f => f.Page)
+            var followers = await _context.Set<PageFollower>()
+               .Where(f => f.UserId == userId)
+               .Include(f => f.Page)        
+               .ThenInclude(p => p.Admin)   
+               .ToListAsync();
+
+            return followers.Select(f => f.Page);
+        }
+        public override async Task<IEnumerable<Page>> GetAllAsync()
+        {
+            return await _context.Set<Page>()
+                .Include(p => p.Admin)
                 .ToListAsync();
         }
+
+        public override async Task<Page> GetByIdAsync(Guid id)
+        {
+            return await _context.Set<Page>()
+               .Include(p => p.Admin)
+               .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<IEnumerable<Page>> SearchPagesAsync(string query, int limit = 10)
+        {
+            return await _context.Pages
+                .Include(p => p.Admin)
+                .Where(p => p.Name.Contains(query) ||
+                           p.Description.Contains(query))
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<bool> IsFollowingAsync(Guid userId, Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .AnyAsync(f => f.UserId == userId && f.PageId == pageId);
+        }
+
+        public async Task<int> GetFollowersCountAsync(Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .CountAsync(f => f.PageId == pageId);
+        }
+
+        public async Task<IEnumerable<PageFollower>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20)
+        {
+            return await _context.Set<PageFollower>()
+                .Include(f => f.User)
+                .Where(f => f.PageId == pageId)
+                .OrderBy(f => f.FollowedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
     }
 
 }

@@ -2,12 +2,14 @@
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
+using Sohba.Controllers.Sohba.Controllers;
+using Sohba.Domain.Common;
 using Sohba.Domain.Enums;
 using Sohba.ViewModels.Post;
 
 namespace Sohba.Controllers
 {
-    public class PostsController : Controller
+    public class PostsController : BaseController
     {
         private readonly IPostService _postService;
         private readonly IReportingService _reportingService;
@@ -80,6 +82,19 @@ namespace Sohba.Controllers
 
             var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
             return Json(new { post = postResult.Value, comments });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var result = await _postService.GetPostByIdAsync(id);
+
+            if (result.IsFailure || result.Value == null)
+            {
+                return NotFound();
+            }
+
+            return View(result.Value);
         }
 
         [HttpPost]
@@ -171,20 +186,13 @@ namespace Sohba.Controllers
             });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> SavedPosts()
-        {
-            var userId = GetCurrentUserId();
-            var result = await _interactionService.GetSavedPostsAsync(userId);
-            return View(result.Value ?? new List<SavedPostDto>());
-        }
 
         [HttpGet]
         public async Task<IActionResult> Favorites()
         {
             var userId = GetCurrentUserId();
             var result = await _interactionService.GetFavoritePostsAsync(userId);
-            return View(result.Value ?? new List<SavedPostDto>());
+            return View(result.Value ?? new List<PostResponseDto>());
         }
 
         [HttpPost]
@@ -197,7 +205,7 @@ namespace Sohba.Controllers
             var tag = request.IsFavorite ? SavedTag.Favorite : SavedTag.General;
 
             var existingSave = (await _interactionService.GetSavedPostsAsync(userId)).Value?
-                .FirstOrDefault(sp => sp.PostId == request.PostId);
+                .FirstOrDefault(sp => sp.Id == request.PostId); // here 
 
             if (existingSave != null)
             {
@@ -246,20 +254,102 @@ namespace Sohba.Controllers
             return Json(new { success = false, error = result.Error });
         }
 
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeSavedPostTag([FromBody] ChangeTagRequest request)
+        {
+            var userId = GetCurrentUserId();
+
+            if (!Enum.TryParse<SavedTag>(request.Tag, true, out var tag))
+                return Json(new { success = false, error = "Invalid tag" });
+
+            var result = await _interactionService.SavePostAsync(userId, request.PostId, tag);
+
+            if (result.IsSuccess)
+                return Json(new { success = true });
+
+            return Json(new { success = false, error = result.Error });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveSavedPost([FromBody] RemoveSavedRequest request)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _interactionService.RemoveSavedPostAsync(userId, request.PostId);
+
+            if (result.IsSuccess)
+                return Json(new { success = true });
+
+            return Json(new { success = false, error = result.Error });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SavedPosts(string tag = "all")
+        {
+            var userId = GetCurrentUserId();
+            Result<IEnumerable<PostResponseDto>> result;
+
+            if (tag == "all")
+                result = await _interactionService.GetSavedPostsAsync(userId);
+            else if (Enum.TryParse<SavedTag>(tag, true, out var savedTag))
+                result = await _interactionService.GetSavedPostsByTagAsync(userId, savedTag);
+            else
+                result = await _interactionService.GetSavedPostsAsync(userId);
+
+            ViewBag.CurrentTag = tag;
+            return View(result.Value ?? new List<PostResponseDto>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Hashtag(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag))
+                return RedirectToAction("Index", "Home");
+
+            ViewBag.Hashtag = tag;
+
+            // TODO: Implement getting posts by hashtag
+            // For now, return empty list
+            return View(new List<PostResponseDto>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchByHashtag(string tag)
+        {
+            if (string.IsNullOrWhiteSpace(tag))
+                return Json(new { success = false, error = "Tag is required" });
+
+            var userId = GetCurrentUserId();
+
+            // TODO: Implement getting posts by hashtag
+            // For now, return empty list
+
+            return Json(new { success = true, posts = new List<PostResponseDto>() });
+        }
         public class ToggleSaveRequest
         {
             public Guid PostId { get; set; }
             public bool IsFavorite { get; set; } // true = Favorite, false = General
         }
 
-        private Guid GetCurrentUserId()
+        public class ChangeTagRequest
         {
-            // Temporary until Identity is implemented
-            //var userIdStr = HttpContext.Session.GetString("UserId");
-            //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
-            return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-
+            public Guid PostId { get; set; }
+            public string Tag { get; set; }
         }
+
+        public class RemoveSavedRequest
+        {
+            public Guid PostId { get; set; }
+        }
+        //private Guid GetCurrentUserId()
+        //{
+        //    // Temporary until Identity is implemented
+        //    //var userIdStr = HttpContext.Session.GetString("UserId");
+        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
+        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
+
+        //}
     }
 }
 

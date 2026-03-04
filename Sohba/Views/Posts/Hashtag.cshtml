@@ -1,0 +1,47 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
+@{
+    ViewData["Title"] = $"#{ViewBag.Hashtag}";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-[#345e69]/10 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">#@ViewBag.Hashtag</h1>
+                <p class="text-gray-500 mt-1">@Model.Count() posts</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="space-y-6">
+            @foreach (var post in Model)
+            {
+                <partial name="Partials/_PostCard" model="new[] { post }" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No posts with #@ViewBag.Hashtag</h3>
+            <p class="text-gray-500 mt-2">Be the first to post about this topic!</p>
+            <a asp-controller="Posts" asp-action="Create" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Create Post
+            </a>
+        </div>
+    }
+</div>

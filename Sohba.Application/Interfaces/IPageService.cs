@@ -13,5 +13,12 @@ namespace Sohba.Application.Interfaces
         Task<Result> UnfollowPageAsync(Guid userId, Guid pageId);
         Task<Result<PageResponseDto>> GetPageByIdAsync(Guid pageId);
         Task<Result<IEnumerable<PageResponseDto>>> GetUserFollowedPagesAsync(Guid userId);
+        Task<Result<IEnumerable<PageResponseDto>>> GetAllPagesAsync();
+        Task<Result> DeletePageAsync(Guid adminId, Guid pageId);
+        Task<Result<bool>> ToggleFollowPageAsync(Guid userId, Guid pageId);        
+        Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId);
+        Task<Result<int>> GetFollowersCountAsync(Guid pageId);
+        Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
+
     }
 }

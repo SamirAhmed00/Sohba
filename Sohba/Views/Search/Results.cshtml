@@ -1,0 +1,373 @@
+﻿@model Sohba.ViewModels.Search.SearchViewModel
+@{
+    ViewData["Title"] = $"Search results for \"{Model.Query}\"";
+}
+
+<div class="max-w-6xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Search Results</h1>
+                <p class="text-gray-500 mt-1">
+                    @Model.Results.TotalCount results for "@Model.Query"
+                </p>
+            </div>
+            <div class="relative w-64">
+                <input type="text" 
+                       id="refineSearchInput"
+                       value="@Model.Query"
+                       class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20"
+                       placeholder="Refine search..."
+                       onkeypress="if(event.key === 'Enter') refineSearch()" />
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mt-6 border-b border-slate-100">
+            <button onclick="switchTab('all')" 
+                    class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "all" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
+                All (@Model.Results.TotalCount)
+            </button>
+            <button onclick="switchTab('posts')" 
+                    class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "posts" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
+                Posts (@Model.Results.Posts.Count)
+            </button>
+            <button onclick="switchTab('people')" 
+                    class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "people" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
+                People (@Model.Results.Users.Count)
+            </button>
+            <button onclick="switchTab('groups')" 
+                    class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "groups" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
+                Groups (@Model.Results.Groups.Count)
+            </button>
+            <button onclick="switchTab('pages')" 
+                    class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "pages" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
+                Pages (@Model.Results.Pages.Count)
+            </button>
+        </div>
+    </div>
+
+    <!-- All Results Tab -->
+    <div id="tab-all" class="tab-content @(Model.ActiveTab == "all" ? "" : "hidden")">
+        @if (Model.Results.TotalCount == 0)
+        {
+            <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+                <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No results found</h3>
+                <p class="text-gray-500 mt-2">Try searching with different keywords</p>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-8">
+                <!-- People Section -->
+                @if (Model.Results.Users.Any())
+                {
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">People</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var user in Model.Results.Users.Take(4))
+                            {
+                                <a href="@user.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                                    <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")" 
+                                         class="w-12 h-12 rounded-full object-cover" />
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900">@user.Name</h3>
+                                        <p class="text-sm text-gray-500">@(user.Bio ?? "User")</p>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.Results.Users.Count > 4)
+                        {
+                            <button onclick="switchTab('people')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                                See all @Model.Results.Users.Count people →
+                            </button>
+                        }
+                    </div>
+                }
+
+                <!-- Posts Section -->
+                @if (Model.Results.Posts.Any())
+                {
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Posts</h2>
+                        <div class="space-y-4">
+                            @foreach (var post in Model.Results.Posts.Take(3))
+                            {
+                                <a href="@post.Url" class="flex items-start gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                                    @if (!string.IsNullOrEmpty(post.ImageUrl))
+                                    {
+                                        <img src="@post.ImageUrl" class="w-16 h-16 rounded-lg object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                                            📝
+                                        </div>
+                                    }
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">@post.Title</h3>
+                                        <p class="text-sm text-gray-600 line-clamp-2">@post.Content</p>
+                                        <p class="text-xs text-gray-400 mt-1">@post.AuthorName · @post.CreatedAt.ToString("MMM dd")</p>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.Results.Posts.Count > 3)
+                        {
+                            <button onclick="switchTab('posts')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                                See all @Model.Results.Posts.Count posts →
+                            </button>
+                        }
+                    </div>
+                }
+
+                <!-- Groups Section -->
+                @if (Model.Results.Groups.Any())
+                {
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Groups</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var group in Model.Results.Groups.Take(4))
+                            {
+                                <a href="@group.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                                    @if (!string.IsNullOrEmpty(group.ImageUrl))
+                                    {
+                                        <img src="@group.ImageUrl" class="w-12 h-12 rounded-xl object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-[#345e69] font-bold">
+                                            @group.Name[0]
+                                        </div>
+                                    }
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900">@group.Name</h3>
+                                        <p class="text-xs text-gray-500">@group.MembersCount members</p>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.Results.Groups.Count > 4)
+                        {
+                            <button onclick="switchTab('groups')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                                See all @Model.Results.Groups.Count groups →
+                            </button>
+                        }
+                    </div>
+                }
+
+                <!-- Pages Section -->
+                @if (Model.Results.Pages.Any())
+                {
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Pages</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var pageItem in Model.Results.Pages.Take(4))
+                            {
+                                <a href="@pageItem.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                                    @if (!string.IsNullOrEmpty(pageItem.ImageUrl))
+                                    {
+                                        <img src="@pageItem.ImageUrl" class="w-12 h-12 rounded-xl object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-emerald-600 font-bold">
+                                            @pageItem.Name[0]
+                                        </div>
+                                    }
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900">@pageItem.Name</h3>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.Results.Pages.Count > 4)
+                        {
+                            <button onclick="switchTab('pages')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                                See all @Model.Results.Pages.Count pages →
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Posts Tab -->
+    <div id="tab-posts" class="tab-content @(Model.ActiveTab == "posts" ? "" : "hidden")">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Posts (@Model.Results.Posts.Count)</h2>
+            @if (Model.Results.Posts.Any())
+            {
+                <div class="space-y-4">
+                    @foreach (var post in Model.Results.Posts)
+                    {
+                        <a href="@post.Url" class="flex items-start gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                            @if (!string.IsNullOrEmpty(post.ImageUrl))
+                            {
+                                <img src="@post.ImageUrl" class="w-20 h-20 rounded-lg object-cover" />
+                            }
+                            else
+                            {
+                                <div class="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                                    📝
+                                </div>
+                            }
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">@post.Title</h3>
+                                <p class="text-sm text-gray-600 line-clamp-2">@post.Content</p>
+                                <p class="text-xs text-gray-400 mt-1">@post.AuthorName · @post.CreatedAt.ToString("MMM dd, yyyy")</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-center text-gray-500 py-8">No posts found</p>
+            }
+        </div>
+    </div>
+
+    <!-- People Tab -->
+    <div id="tab-people" class="tab-content @(Model.ActiveTab == "people" ? "" : "hidden")">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">People (@Model.Results.Users.Count)</h2>
+            @if (Model.Results.Users.Any())
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach (var user in Model.Results.Users)
+                    {
+                        <a href="@user.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")" 
+                                 class="w-12 h-12 rounded-full object-cover" />
+                            <div>
+                                <h3 class="font-semibold text-gray-900">@user.Name</h3>
+                                <p class="text-sm text-gray-500">@(user.Bio ?? "User")</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-center text-gray-500 py-8">No people found</p>
+            }
+        </div>
+    </div>
+
+    <!-- Groups Tab -->
+    <div id="tab-groups" class="tab-content @(Model.ActiveTab == "groups" ? "" : "hidden")">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Groups (@Model.Results.Groups.Count)</h2>
+            @if (Model.Results.Groups.Any())
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach (var group in Model.Results.Groups)
+                    {
+                        <a href="@group.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                            @if (!string.IsNullOrEmpty(group.ImageUrl))
+                            {
+                                <img src="@group.ImageUrl" class="w-12 h-12 rounded-xl object-cover" />
+                            }
+                            else
+                            {
+                                <div class="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-[#345e69] font-bold">
+                                    @group.Name[0]
+                                </div>
+                            }
+                            <div>
+                                <h3 class="font-semibold text-gray-900">@group.Name</h3>
+                                <p class="text-xs text-gray-500">@group.MembersCount members</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-center text-gray-500 py-8">No groups found</p>
+            }
+        </div>
+    </div>
+
+    <!-- Pages Tab -->
+    <div id="tab-pages" class="tab-content @(Model.ActiveTab == "pages" ? "" : "hidden")">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Pages (@Model.Results.Pages.Count)</h2>
+            @if (Model.Results.Pages.Any())
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach (var pageItem in Model.Results.Pages)
+                    {
+                        <a href="@pageItem.Url" class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                            @if (!string.IsNullOrEmpty(pageItem.ImageUrl))
+                            {
+                                <img src="@pageItem.ImageUrl" class="w-12 h-12 rounded-xl object-cover" />
+                            }
+                            else
+                            {
+                                <div class="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center text-emerald-600 font-bold">
+                                    @pageItem.Name[0]
+                                </div>
+                            }
+                            <div>
+                                <h3 class="font-semibold text-gray-900">@pageItem.Name</h3>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-center text-gray-500 py-8">No pages found</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchTab(tab) {
+            // Update URL
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.pushState({}, '', url);
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
+                btn.classList.add('text-gray-400');
+            });
+            
+            event.target.classList.add('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
+            event.target.classList.remove('text-gray-400');
+            
+            // Show selected tab
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+        }
+        
+        function refineSearch() {
+            const input = document.getElementById('refineSearchInput');
+            const query = input.value.trim();
+            if (query.length >= 2) {
+                window.location.href = `/Search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+}

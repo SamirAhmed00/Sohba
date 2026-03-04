@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Controllers.Sohba.Controllers;
 
 namespace Sohba.Controllers
 {
-    public class StoriesController : Controller
+    public class StoriesController : BaseController
     {
         private readonly IStoryService _storyService;
 
@@ -77,10 +78,10 @@ namespace Sohba.Controllers
             return Json(new List<StoryResponseDto>());
         }
 
-        private Guid GetCurrentUserId()
-        {
-            // Temporary until Identity is implemented
-            return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-        }
+        //private Guid GetCurrentUserId()
+        //{
+        //    // Temporary until Identity is implemented
+        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
+        //}
     }
 }

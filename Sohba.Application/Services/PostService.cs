@@ -37,74 +37,86 @@ namespace Sohba.Application.Services
             post.UserId = userId;
             post.CreatedAt = DateTime.UtcNow;
 
-            _unitOfWork.Posts.Add(post);
+            // Extract hashtags from content and combine with provided hashtags, ensuring uniqueness
+            var extractedTags = ExtractHashtags(postDto.Content).ToList();
 
-            // Extract hashtags and associate with post (if any)
-            var hashtags = ExtractHashtags(post.Content);
-            if (hashtags.Any())
-            {
-                await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, hashtags);
-            }
+            _unitOfWork.Posts.Add(post);
             await _unitOfWork.CompleteAsync();
 
-            var response = _mapper.Map<PostResponseDto>(post);
-            return Result<PostResponseDto>.Success(response);
+            // Extract hashtags and associate with post (if any)
+            if (extractedTags.Any())
+            {
+                // TODO: مستقبلاً نجيب اللوكيشن من الـ User Profile
+                // var user = await _unitOfWork.Users.GetByIdAsync(userId);
+                // string userLocation = user.Country ?? "Global";
+
+                string userLocation = "Egypt"; // قيمة افتراضية حالياً
+                await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
+                await _unitOfWork.CompleteAsync();
+            }
+            return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
 
-        // Sohba.Application.Services/PostService.cs
+
         public async Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId)
         {
             var posts = await _unitOfWork.Posts.GetTimelineAsync(userId);
-            var postList = posts.ToList();
+            return await MapPostsWithInteractions(posts, userId);
+        }
 
-            if (!postList.Any())
-                return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
+        //public async Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId)
+        //{
+        //    var posts = await _unitOfWork.Posts.GetTimelineAsync(userId);
+        //    var postList = posts.ToList();
 
-            var ids = postList.Select(p => p.Id).ToList();
+        //    if (!postList.Any())
+        //        return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
 
-            var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
-            var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(userId, ids);
-            var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
+        //    var ids = postList.Select(p => p.Id).ToList();
+
+        //    var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
+        //    var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(userId, ids);
+        //    var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
 
             
-            var userReports = new List<PostReport>();
-            foreach (var postId in ids)
-            {
-                var hasReported = await _unitOfWork.Reports.HasUserReportedEntityAsync(userId, postId);
-                if (hasReported)
-                    userReports.Add(new PostReport { PostId = postId });
-            }
-            var reportedPostIds = new HashSet<Guid>(userReports.Select(r => r.PostId));
+        //    var userReports = new List<PostReport>();
+        //    foreach (var postId in ids)
+        //    {
+        //        var hasReported = await _unitOfWork.Reports.HasUserReportedEntityAsync(userId, postId);
+        //        if (hasReported)
+        //            userReports.Add(new PostReport { PostId = postId });
+        //    }
+        //    var reportedPostIds = new HashSet<Guid>(userReports.Select(r => r.PostId));
 
-            var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
-            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+        //    var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
+        //    var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
 
-            var response = postList.Select(p =>
-            {
-                counts.TryGetValue(p.Id, out var countData);
-                var dto = new PostResponseDto
-                {
-                    Id = p.Id,
-                    Title = p.Title,
-                    Content = p.Content,
-                    ImageUrl = p.ImageUrl,
-                    CreatedAt = p.CreatedAt,
-                    AuthorName = p.User?.Name,
-                    CommentsCount = countData.comments,
-                    ReactionsCount = countData.reactions,
-                    IsSaved = savedDict.ContainsKey(p.Id),
-                    IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite,
-                    IsReportedByCurrentUser = reportedPostIds.Contains(p.Id)
-                };
+        //    var response = postList.Select(p =>
+        //    {
+        //        counts.TryGetValue(p.Id, out var countData);
+        //        var dto = new PostResponseDto
+        //        {
+        //            Id = p.Id,
+        //            Title = p.Title,
+        //            Content = p.Content,
+        //            ImageUrl = p.ImageUrl,
+        //            CreatedAt = p.CreatedAt,
+        //            AuthorName = p.User?.Name,
+        //            CommentsCount = countData.comments,
+        //            ReactionsCount = countData.reactions,
+        //            IsSaved = savedDict.ContainsKey(p.Id),
+        //            IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite,
+        //            IsReportedByCurrentUser = reportedPostIds.Contains(p.Id)
+        //        };
 
-                if (reactionDict.TryGetValue(p.Id, out var reaction))
-                    dto.CurrentUserReaction = reaction;
+        //        if (reactionDict.TryGetValue(p.Id, out var reaction))
+        //            dto.CurrentUserReaction = reaction;
 
-                return dto;
-            }).ToList();
+        //        return dto;
+        //    }).ToList();
 
-            return Result<IEnumerable<PostResponseDto>>.Success(response);
-        }
+        //    return Result<IEnumerable<PostResponseDto>>.Success(response);
+        //}
 
 
         public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId)
@@ -160,16 +172,65 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId)
+        {
+            var posts = await _unitOfWork.Posts.GetGroupPostsAsync(groupId);
+            return await MapPostsWithInteractions(posts, currentUserId);
+        }
+
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetPagePostsAsync(Guid pageId, Guid currentUserId)
+        {
+            var posts = await _unitOfWork.Posts.GetPagePostsAsync(pageId);
+            return await MapPostsWithInteractions(posts, currentUserId);
+        }
+
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetUserPostsAsync(Guid userId, Guid currentUserId)
+        {
+            var posts = await _unitOfWork.Posts.GetUserPostsAsync(userId);
+            return await MapPostsWithInteractions(posts, currentUserId);
+        }
+
+        
+
+        
+     
         // Helper Method
+        private async Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId)
+        {
+            var postList = posts.ToList();
+            if (!postList.Any())
+                return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
+
+            var ids = postList.Select(p => p.Id).ToList();
+            var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
+            var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(currentUserId, ids);
+            var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
+
+            var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
+            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+
+            var response = postList.Select(p =>
+            {
+                counts.TryGetValue(p.Id, out var countData);
+                var dto = _mapper.Map<PostResponseDto>(p);
+                dto.CommentsCount = countData.comments;
+                dto.ReactionsCount = countData.reactions;
+                dto.IsSaved = savedDict.ContainsKey(p.Id);
+                dto.IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite;
+
+                if (reactionDict.TryGetValue(p.Id, out var reaction))
+                    dto.CurrentUserReaction = reaction;
+
+                return dto;
+            }).ToList();
+
+            return Result<IEnumerable<PostResponseDto>>.Success(response);
+        }
         private IEnumerable<string> ExtractHashtags(string content)
         {
             if (string.IsNullOrEmpty(content)) return new List<string>();
-
-            // Regex to find words starting with #
             var regex = new Regex(@"#\w+");
-            var matches = regex.Matches(content);
-
-            return matches.Select(m => m.Value.TrimStart('#')).ToList();
+            return regex.Matches(content).Select(m => m.Value.Replace("#", "").ToLower()).Distinct();
         }
     }
 }

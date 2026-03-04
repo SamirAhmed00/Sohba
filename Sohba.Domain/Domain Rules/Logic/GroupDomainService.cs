@@ -89,5 +89,19 @@ namespace Sohba.Domain.Domain_Rules.Logic
 
             return Result.Success();
         }
+
+        public Result CanUpdateGroup(Guid userId, Guid groupId, Guid groupAdminId)
+        {
+            if (userId != groupAdminId)
+                return Result.Failure("Only the group admin can update the group.");
+            return Result.Success();
+        }
+
+        public Result CanLeaveGroup(Guid userId, Guid groupId, bool isAdmin, int adminCount)
+        {
+            if (isAdmin && adminCount <= 1)
+                return Result.Failure("You are the only admin. Please promote another member before leaving.");
+            return Result.Success();
+        }
     }
 }

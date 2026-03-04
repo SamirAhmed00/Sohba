@@ -34,6 +34,38 @@ namespace Sohba.Infrastructure.Repositories
         }
 
 
+        public async Task<IEnumerable<Friend>> GetPendingRequestsAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Pending)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetPendingRequestsCountAsync(Guid userId)
+        {
+            return await _context.Friends
+                .CountAsync(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending);
+        }
+
+        public async Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.FriendUser)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Blocked)
+                .ToListAsync();
+        }
+
         public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
         {
             return await _context.Friends

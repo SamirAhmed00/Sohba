@@ -1,0 +1,89 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
+@{
+    ViewData["Title"] = "Friend Suggestions";
+}
+
+<div class="max-w-4xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">People You May Know</h1>
+                <p class="text-gray-500 mt-1">Connect with new people</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    </div>
+
+    <!-- Suggestions Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var user in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group" data-user-id="@user.Id">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="relative mb-3">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
+                                 class="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 group-hover:border-[#345e69] transition-colors" />
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                        </div>
+
+                        <h3 class="font-bold text-gray-900 text-lg">@user.Name</h3>
+                        <p class="text-sm text-gray-500 mt-1">@user.Bio</p>
+
+                        <div class="flex gap-2 mt-4 w-full">
+                            <button onclick="sendFriendRequest('@user.Id')"
+                                    class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                Add Friend
+                            </button>
+                            <button onclick="viewProfile('@user.Id')"
+                                    class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No suggestions</h3>
+            <p class="text-gray-500 mt-2">We'll show you people you might know here</p>
+            <a asp-action="Index" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function sendFriendRequest(userId) {
+            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                // Remove user from suggestions
+                document.querySelector(`[data-user-id="${userId}"]`).remove();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send request', 'error');
+            }
+        }
+
+        function viewProfile(userId) {
+            window.location.href = `/Profile/Index/${userId}`;
+        }
+    </script>
+}

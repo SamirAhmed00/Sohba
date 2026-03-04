@@ -9,6 +9,10 @@ namespace Sohba.Application.DTOs.GroupAndPageAggregate
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public string? ImageUrl { get; set; }
         public string AdminName { get; set; }
+        public Guid AdminId { get; set; }  
+        public bool IsFollowing { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

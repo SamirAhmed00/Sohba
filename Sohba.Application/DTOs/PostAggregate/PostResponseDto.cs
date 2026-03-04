@@ -17,8 +17,13 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string? CurrentUserReaction { get; set; }
 
         public bool IsSaved { get; set; }
+        public string? SavedTag { get; set; }   
         public bool IsFavorite { get; set; }
 
         public bool IsReportedByCurrentUser { get; set; }
+
+        public string SourceType { get; set; } 
+        public string? SourceName { get; set; }
+        public Guid? SourceId { get; set; }
     }
 }

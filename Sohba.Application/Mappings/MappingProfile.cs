@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.SearchAggregate;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,7 +30,12 @@ namespace Sohba.Application.Mappings
             // --- Post Mapping ---
             CreateMap<PostCreateDto, Post>();
             CreateMap<Post, PostResponseDto>()
-                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name));
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.SourceType.ToString()))
+                .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
+                    src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
+                    src.SourceType == PostSourceType.Page && src.Page != null ? src.Page.Name :
+                    null));
 
             // --- Comment Mapping ---
             CreateMap<CommentRequestDto, Comment>();
@@ -37,6 +44,7 @@ namespace Sohba.Application.Mappings
 
             // --- Group Mapping ---
             CreateMap<GroupCreateDto, Group>();
+            CreateMap<GroupUpdateDto, Group>();
             CreateMap<Group, GroupResponseDto>()
                 .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin.Name));
 
@@ -47,7 +55,9 @@ namespace Sohba.Application.Mappings
             // --- Page Mapping ---
             CreateMap<PageCreateDto, Page>();
             CreateMap<Page, PageResponseDto>()
-                .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin.Name));
+                .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin.Name))
+                .ForMember(dest => dest.AdminId, opt => opt.MapFrom(src => src.AdminId))
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
 
             CreateMap<PageFollower, PageFollowerDto>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name));
@@ -86,6 +96,14 @@ namespace Sohba.Application.Mappings
 
             // --- Hashtag Mapping ---
             CreateMap<Hashtag, HashtagDto>();
+
+            // Search mappings
+            CreateMap<Post, PostSearchResultDto>()
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name));
+            CreateMap<User, UserSearchResultDto>();
+            CreateMap<Group, GroupSearchResultDto>()
+                .ForMember(dest => dest.MembersCount, opt => opt.MapFrom(src => src.GroupMembers.Count));
+            CreateMap<Page, PageSearchResultDto>();
         }
     }
 }

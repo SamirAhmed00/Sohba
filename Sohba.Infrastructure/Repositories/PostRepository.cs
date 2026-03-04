@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using System;
@@ -27,30 +28,32 @@ namespace Sohba.Infrastructure.Repositories
         }
 
 
-        public async Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtagTexts)
+        public async Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags, string location)
         {
-            if (!hashtagTexts.Any()) return;
-
-            var uniqueTags = hashtagTexts.Distinct().ToList();
-
-            foreach (var tagText in uniqueTags)
+            foreach (var tagText in hashtags)
             {
-                var hashtag = await _context.Set<Hashtag>()
-                    .FirstOrDefaultAsync(h => h.Tag == tagText);
+                var hashtag = await _context.Hashtags.FirstOrDefaultAsync(h => h.Tag == tagText);
 
                 if (hashtag == null)
                 {
-                    hashtag = new Hashtag { Tag = tagText, CreatedAt = DateTime.UtcNow };
-                    _context.Set<Hashtag>().Add(hashtag);
+                    hashtag = new Hashtag
+                    {
+                        Id = Guid.NewGuid(),
+                        Tag = tagText,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        Location = location,
+                        Count = 1
+                    };
+                    _context.Hashtags.Add(hashtag);
+                }
+                else
+                {
+                    hashtag.Count++; 
+                    hashtag.UpdatedAt = DateTime.UtcNow;
                 }
 
-                var postHashtag = new PostHashtag
-                {
-                    PostId = postId,
-                    Hashtag = hashtag 
-                };
-
-                _context.Set<PostHashtag>().Add(postHashtag);
+                _context.PostHashtags.Add(new PostHashtag { PostId = postId, HashtagId = hashtag.Id });
             }
         }
         public async Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds)
@@ -83,5 +86,43 @@ namespace Sohba.Infrastructure.Repositories
             return result;
         }
 
+        public async Task<IEnumerable<Post>> GetGroupPostsAsync(Guid groupId)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => p.SourceType == PostSourceType.Group && p.SourceId == groupId && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> GetPagePostsAsync(Guid pageId)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => p.SourceType == PostSourceType.Page && p.SourceId == pageId && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> GetUserPostsAsync(Guid userId)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => p.UserId == userId && p.SourceType == PostSourceType.User && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> SearchPostsAsync(string query, int limit = 10)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => !p.IsDeleted &&
+                           (p.Title.Contains(query) ||
+                            p.Content.Contains(query)))
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(limit)
+                .ToListAsync();
+        }
     }
 }
