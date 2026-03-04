@@ -102,5 +102,25 @@ namespace Sohba.Application.Services
 
             return Result<PostReportResponseDto>.Success(response);
         }
+
+        public async Task<Result<IEnumerable<PostReportResponseDto>>> GetAllReportsAsync()
+        {
+            var reports = await _unitOfWork.Reports.GetAllAsync();
+            var dtos = _mapper.Map<IEnumerable<PostReportResponseDto>>(reports);
+            return Result<IEnumerable<PostReportResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result> ResolveReportAsync(Guid reportId)
+        {
+            var report = await _unitOfWork.Reports.GetByIdAsync(reportId);
+            if (report == null)
+                return Result.Failure("Report not found");
+
+            report.IsResolved = true;
+            _unitOfWork.Reports.Update(report);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
     }
 }

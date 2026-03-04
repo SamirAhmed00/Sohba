@@ -1,0 +1,302 @@
+﻿@model Sohba.ViewModels.Dashboard.DashboardPostsViewModel
+@{
+    ViewData["Title"] = "Manage Posts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">Posts</h1>
+                <p class="text-gray-500 mt-1">Manage all posts in the platform</p>
+            </div>
+            <div class="text-sm text-gray-500">
+                Total: <span class="font-bold text-gray-900">@Model.TotalCount</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-4 mt-6">
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <input type="text"
+                           id="searchInput"
+                           value="@Model.SearchTerm"
+                           placeholder="Search by title or content..."
+                           class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20" />
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+            <select id="sourceFilter" class="px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                <option value="all" selected="@(Model.SourceFilter == "all")">All Sources</option>
+                <option value="User" selected="@(Model.SourceFilter == "User")">Users</option>
+                <option value="Group" selected="@(Model.SourceFilter == "Group")">Groups</option>
+                <option value="Page" selected="@(Model.SourceFilter == "Page")">Pages</option>
+            </select>
+            <button onclick="applyFilters()" class="px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Apply Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Posts Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Post</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Author</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Source</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Stats</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @if (Model.Posts.Any())
+                    {
+                        @foreach (var post in Model.Posts)
+                        {
+                            <tr class="hover:bg-slate-50 transition-colors" data-post-id="@post.Id">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(post.ImageUrl))
+                                        {
+                                            <img src="@post.ImageUrl" class="w-12 h-12 rounded-lg object-cover" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                                                📝
+                                            </div>
+                                        }
+                                        <div>
+                                            <div class="font-semibold text-gray-900">@post.Title</div>
+                                            <div class="text-xs text-gray-500 line-clamp-1">@post.Content</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <img src="https://ui-avatars.com/api/?name=@post.AuthorName&background=345e69&color=fff"
+                                             class="w-6 h-6 rounded-full" />
+                                        <span class="text-sm text-gray-600">@post.AuthorName</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
+                                        @post.SourceType
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">@post.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3 text-xs">
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                            @post.ReactionsCount
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                            @post.CommentsCount
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="viewPost('@post.Id')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="View">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
+                                        <button onclick="hidePost('@post.Id')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Hide">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                            </svg>
+                                        </button>
+                                        <button onclick="deletePost('@post.Id')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                No posts found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalCount > Model.PageSize)
+        {
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    Showing @(((Model.CurrentPage - 1) * Model.PageSize) + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)) of @Model.TotalCount posts
+                </div>
+                <div class="flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-action="Posts" asp-route-page="@(Model.CurrentPage - 1)" asp-route-search="@Model.SearchTerm" asp-route-source="@Model.SourceFilter"
+                           class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                            Previous
+                        </a>
+                    }
+                    @if (Model.CurrentPage < (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize))
+                    {
+                        <a asp-action="Posts" asp-route-page="@(Model.CurrentPage + 1)" asp-route-search="@Model.SearchTerm" asp-route-source="@Model.SourceFilter"
+                           class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                            Next
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+               (function () {
+            var searchTimeout;
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const searchInput = document.getElementById('searchInput');
+                const sourceFilter = document.getElementById('sourceFilter');
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', function () {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(function () {
+                            window.applyFilters();
+                        }, 500);
+                    });
+                }
+
+                if (sourceFilter) {
+                    sourceFilter.addEventListener('change', function () {
+                        window.applyFilters();
+                    });
+                }
+            });
+
+            // =========================
+            // Filters
+            // =========================
+            window.applyFilters = function () {
+                const search = document.getElementById('searchInput')?.value || '';
+                const source = document.getElementById('sourceFilter')?.value || 'all';
+                window.location.href = `/Dashboard/Posts?search=${encodeURIComponent(search)}&source=${source}`;
+            };
+
+            // =========================
+            // View Post
+            // =========================
+            window.viewPost = function (postId) {
+                if (!postId) return;
+                window.location.href = `/Posts/Details/${postId}`;
+            };
+
+            // =========================
+            // Hide Post with Modal
+            // =========================
+            window.hidePost = async function (postId) {
+                if (!postId) return;
+
+                showConfirmModal({
+                    title: 'Hide Post',
+                    message: 'Are you sure you want to hide this post? It will no longer be visible to users.',
+                    type: 'warning',
+                    confirmText: 'Hide Post',
+                    onConfirm: async function() {
+                        try {
+                            const result = await SohbaApp.post('/Dashboard/HidePost', { postId });
+
+                            if (!result.success) {
+                                SohbaApp.toast(result.error || 'Failed to hide post', 'error');
+                                return;
+                            }
+
+                            SohbaApp.toast('Post hidden successfully', 'success');
+
+                            const row = document.querySelector(`tr[data-post-id="${postId}"]`);
+                            if (!row) return;
+
+                            row.classList.add('opacity-50', 'bg-slate-50');
+
+                            const sourceCell = row.querySelector('td:nth-child(3)');
+                            if (sourceCell && !sourceCell.querySelector('.hidden-badge')) {
+                                sourceCell.insertAdjacentHTML(
+                                    'beforeend',
+                                    '<span class="hidden-badge ml-2 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">Hidden</span>'
+                                );
+                            }
+
+                            const hideBtn = row.querySelector('button[onclick*="hidePost"]');
+                            if (hideBtn) {
+                                hideBtn.disabled = true;
+                                hideBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                            }
+
+                        } catch (err) {
+                            console.error(err);
+                            SohbaApp.toast('Unexpected error occurred', 'error');
+                        }
+                    }
+                });
+            };
+
+            // =========================
+            // Delete Post with Modal
+            // =========================
+            window.deletePost = async function (postId) {
+                if (!postId) return;
+
+                showConfirmModal({
+                    title: 'Delete Post',
+                    message: 'Are you sure you want to delete this post? This action cannot be undone.',
+                    type: 'delete',
+                    confirmText: 'Delete Post',
+                    onConfirm: async function() {
+                        try {
+                            const result = await SohbaApp.post('/Dashboard/DeletePost', { postId });
+
+                            if (!result.success) {
+                                SohbaApp.toast(result.error || 'Failed to delete post', 'error');
+                                return;
+                            }
+
+                            SohbaApp.toast('Post deleted successfully', 'success');
+
+                            const row = document.querySelector(`tr[data-post-id="${postId}"]`);
+                            if (row) row.remove();
+
+                        } catch (err) {
+                            console.error(err);
+                            SohbaApp.toast('Unexpected error occurred', 'error');
+                        }
+                    }
+                });
+            };
+        })();
+    </script>
+}

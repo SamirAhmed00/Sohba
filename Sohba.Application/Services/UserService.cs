@@ -54,5 +54,26 @@ namespace Sohba.Application.Services
 
             return Result<bool>.Success(affectedRows > 0);
         }
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync()
+        {
+            var users = await _unitOfWork.Users.GetAllAsync();
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result<bool>> DeleteUserAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<bool>.Failure("User not found");
+
+            // Soft delete
+            user.IsDeleted = true;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Result<bool>.Success(true);
+        }
     }
 }

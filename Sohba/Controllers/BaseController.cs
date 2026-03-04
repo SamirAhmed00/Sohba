@@ -32,7 +32,7 @@
             protected Guid GetCurrentUserId()
             {
                 // Temporary until Identity is implemented
-                return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
+                return new Guid("D1B8F3DC-0E18-F111-8D20-902B34AC4276");
             }
 
             protected string GetCurrentUserName()

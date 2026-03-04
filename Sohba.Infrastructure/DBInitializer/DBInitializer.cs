@@ -1,5 +1,6 @@
-﻿using Sohba.Infrastructure.Data;
-using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Sohba.Infrastructure.Data;
+
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,6 +17,7 @@ namespace Sohba.Infrastructure.DBInitializer
         public async Task InitializeAsync()
         {
             //await ApplyMigrationsAsync();
+            await _context.Database.MigrateAsync();
             //await SeedRolesAsync();
             await SeedUsersAsync();
             //await SeedPostsAsync();

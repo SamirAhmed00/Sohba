@@ -1,0 +1,197 @@
+﻿@model Sohba.ViewModels.Dashboard.DashboardReportsViewModel
+@{
+    ViewData["Title"] = "Manage Reports";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">Reports</h1>
+                <p class="text-gray-500 mt-1">Manage user reports</p>
+            </div>
+            <div class="text-sm text-gray-500">
+                Total: <span class="font-bold text-gray-900">@Model.TotalCount</span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-4 mt-6">
+            <select id="statusFilter" class="px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                <option value="pending" selected="@(Model.StatusFilter == "pending")">Pending Reports</option>
+                <option value="resolved" selected="@(Model.StatusFilter == "resolved")">Resolved Reports</option>
+                <option value="all" selected="@(Model.StatusFilter == "all")">All Reports</option>
+            </select>
+            <button onclick="applyFilters()" class="px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Apply Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Reported Post</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Reporter</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Reason</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Status</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @if (Model.Reports.Any())
+                    {
+                        @foreach (var report in Model.Reports)
+                        {
+                            <tr class="hover:bg-slate-50 transition-colors" data-report-id="@report.Id">
+                                <td class="px-6 py-4">
+                                    <a asp-controller="Posts" asp-action="Details" asp-route-id="@report.PostId" class="text-sm text-blue-600 hover:underline">
+                                        Post @report.PostId.ToString().Substring(0, 8)...
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <img src="https://ui-avatars.com/api/?name=@report.ReporterName&background=345e69&color=fff"
+                                             class="w-6 h-6 rounded-full" />
+                                        <span class="text-sm text-gray-600">@report.ReporterName</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full">
+                                        @report.Reason
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">@report.ReportedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                <td class="px-6 py-4">
+                                    @if (report.IsResolved)
+                                    {
+                                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Resolved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Pending</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        @if (!report.IsResolved)
+                                        {
+                                            <button onclick="resolveReport('@report.Id')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors" title="Resolve">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </button>
+                                            <button onclick="dismissReport('@report.Id')" class="p-2 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors" title="Dismiss">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                            <button onclick="deleteReportedPost('@report.PostId', '@report.Id')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete Post">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs text-gray-400">No actions</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                No reports found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalCount > Model.PageSize)
+        {
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    Showing @(((Model.CurrentPage - 1) * Model.PageSize) + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)) of @Model.TotalCount reports
+                </div>
+                <div class="flex gap-2">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-action="Reports" asp-route-page="@(Model.CurrentPage - 1)" asp-route-status="@Model.StatusFilter"
+                           class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                            Previous
+                        </a>
+                    }
+                    @if (Model.CurrentPage < (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize))
+                    {
+                        <a asp-action="Reports" asp-route-page="@(Model.CurrentPage + 1)" asp-route-status="@Model.StatusFilter"
+                           class="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                            Next
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            applyFilters();
+        });
+
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            window.location.href = `/Dashboard/Reports?status=${status}`;
+        }
+
+        async function resolveReport(reportId) {
+            if (!confirm('Mark this report as resolved?')) return;
+
+            const result = await SohbaApp.post('/Dashboard/ResolveReport', { reportId });
+            if (result.success) {
+                SohbaApp.toast('Report resolved', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to resolve report', 'error');
+            }
+        }
+
+        async function dismissReport(reportId) {
+            if (!confirm('Dismiss this report?')) return;
+
+            const result = await SohbaApp.post('/Dashboard/DismissReport', { reportId });
+            if (result.success) {
+                SohbaApp.toast('Report dismissed', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to dismiss report', 'error');
+            }
+        }
+
+        async function deleteReportedPost(postId, reportId) {
+            if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
+
+            const result = await SohbaApp.post('/Dashboard/DeleteReportedPost', { postId, reportId });
+            if (result.success) {
+                SohbaApp.toast('Post deleted and report resolved', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to delete post', 'error');
+            }
+        }
+    </script>
+}

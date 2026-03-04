@@ -64,61 +64,7 @@ namespace Sohba.Application.Services
             return await MapPostsWithInteractions(posts, userId);
         }
 
-        //public async Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId)
-        //{
-        //    var posts = await _unitOfWork.Posts.GetTimelineAsync(userId);
-        //    var postList = posts.ToList();
-
-        //    if (!postList.Any())
-        //        return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
-
-        //    var ids = postList.Select(p => p.Id).ToList();
-
-        //    var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
-        //    var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(userId, ids);
-        //    var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
-
-            
-        //    var userReports = new List<PostReport>();
-        //    foreach (var postId in ids)
-        //    {
-        //        var hasReported = await _unitOfWork.Reports.HasUserReportedEntityAsync(userId, postId);
-        //        if (hasReported)
-        //            userReports.Add(new PostReport { PostId = postId });
-        //    }
-        //    var reportedPostIds = new HashSet<Guid>(userReports.Select(r => r.PostId));
-
-        //    var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
-        //    var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
-
-        //    var response = postList.Select(p =>
-        //    {
-        //        counts.TryGetValue(p.Id, out var countData);
-        //        var dto = new PostResponseDto
-        //        {
-        //            Id = p.Id,
-        //            Title = p.Title,
-        //            Content = p.Content,
-        //            ImageUrl = p.ImageUrl,
-        //            CreatedAt = p.CreatedAt,
-        //            AuthorName = p.User?.Name,
-        //            CommentsCount = countData.comments,
-        //            ReactionsCount = countData.reactions,
-        //            IsSaved = savedDict.ContainsKey(p.Id),
-        //            IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite,
-        //            IsReportedByCurrentUser = reportedPostIds.Contains(p.Id)
-        //        };
-
-        //        if (reactionDict.TryGetValue(p.Id, out var reaction))
-        //            dto.CurrentUserReaction = reaction;
-
-        //        return dto;
-        //    }).ToList();
-
-        //    return Result<IEnumerable<PostResponseDto>>.Success(response);
-        //}
-
-
+        
         public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
@@ -190,10 +136,16 @@ namespace Sohba.Application.Services
             return await MapPostsWithInteractions(posts, currentUserId);
         }
 
-        
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync()
+        {
+            var posts = await _unitOfWork.Posts.GetAllAsync();
+            return await MapPostsWithInteractions(posts, Guid.Empty);
+        }
 
-        
-     
+
+
+
+
         // Helper Method
         private async Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId)
         {

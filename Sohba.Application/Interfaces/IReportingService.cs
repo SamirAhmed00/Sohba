@@ -10,5 +10,9 @@ namespace Sohba.Application.Interfaces
     {
         Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId);
         Task<Result<PostReportResponseDto>> ReportPostWithDetailsAsync(PostReportRequestDto reportDto, Guid reporterId);
+
+        // Admin
+        Task<Result<IEnumerable<PostReportResponseDto>>> GetAllReportsAsync();
+        Task<Result> ResolveReportAsync(Guid reportId);
     }
 }

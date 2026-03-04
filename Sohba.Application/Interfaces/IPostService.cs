@@ -8,14 +8,20 @@ namespace Sohba.Application.Interfaces
 {
     public interface IPostService
     {
+        // Basic CRUD
         Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
         Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
         Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId);
         Task<Result> DeletePostAsync(Guid postId, Guid userId);
         Task<Result> UpdatePostAsync(Guid postId, PostCreateDto postDto, Guid userId);
+
+        // Filtered PostsS
         Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
         Task<Result<IEnumerable<PostResponseDto>>> GetPagePostsAsync(Guid pageId, Guid currentUserId);
         Task<Result<IEnumerable<PostResponseDto>>> GetUserPostsAsync(Guid userId, Guid currentUserId);
+
+        // Admin
+        Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
 
     }
 }
