@@ -1,0 +1,573 @@
+﻿@* 
+@{
+    ViewData["Title"] = "Sohba - Connect with the world";
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<style>
+    :root {
+        --brand-color: #345e69;
+        --brand-light: #4a8291;
+        --soft-bg: #f8fafc;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--soft-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--brand-color);
+        border-radius: 4px;
+    }
+
+    body {
+        background-color: var(--soft-bg);
+        color: #1e293b;
+        overflow-x: hidden;
+    }
+
+    .glass-header {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(52, 94, 105, 0.1);
+    }
+
+    .hero-gradient {
+        background: radial-gradient(circle at top right, rgba(52, 94, 105, 0.05), transparent), radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.05), transparent);
+    }
+
+    .feature-card {
+        background: white;
+        border: 1px solid rgba(52, 94, 105, 0.1);
+        transition: all 0.3s ease;
+    }
+
+        .feature-card:hover {
+            border-color: var(--brand-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(52, 94, 105, 0.2);
+        }
+
+    .text-gradient {
+        background: linear-gradient(to right, #345e69, #4a8291);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+
+<nav class="fixed top-0 w-full z-50 glass-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
+            <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
+                <span class="text-white text-2xl font-black">S</span>
+            </div>
+            <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
+                SOHBA
+            </span>
+        </a>
+
+        <div class="flex items-center gap-4">
+            <a asp-controller="Auth" asp-action="Login" class="text-slate-600 hover:text-[#345e69] transition-colors text-sm font-bold">تسجيل الدخول</a>
+            <a asp-controller="Auth" asp-action="Register" class="px-6 py-2 bg-[#345e69] hover:bg-[#4a8291] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-cyan-900/10">ابدأ الآن</a>
+        </div>
+    </div>
+</nav>
+
+<div class="relative min-h-screen flex items-center pt-20 hero-gradient">
+    <div id="canvas-container" class="absolute inset-0 z-0 opacity-30"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="text-center lg:text-left">
+                <h1 class="hero-anim text-5xl lg:text-7xl font-extrabold mb-6 leading-tight text-slate-900">
+                    تواصل، شارك <br />
+                    <span class="text-gradient">وابنِ مجتمعك</span>
+                </h1>
+                <p class="hero-anim text-lg text-slate-600 mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                    منصة "صحبة" هي بوابتك لتجربة اجتماعية فريدة، حيث تلتقي التكنولوجيا بالروابط الإنسانية الحقيقية في بيئة آمنة ومنظمة.
+                </p>
+                <div class="hero-anim flex flex-wrap gap-4 justify-center lg:justify-start">
+                    <a href="#features" class="px-8 py-4 bg-[#345e69] text-white font-bold rounded-2xl hover:bg-[#4a8291] transition-all shadow-xl shadow-cyan-900/20">اكتشف المميزات</a>
+                </div>
+            </div>
+
+            <div class="hero-anim hidden lg:block relative perspective-1000">
+                <div class="bg-white rounded-3xl p-4 shadow-2xl border border-slate-100 transform rotate-y-[-10deg] rotate-x-[5deg]">
+                    <div class="flex items-center gap-2 mb-4 border-b pb-4 border-slate-50">
+                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                        <div class="ml-4 h-4 w-32 bg-slate-100 rounded-full"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex gap-4">
+                            <div class="w-12 h-12 rounded-full bg-slate-200 animate-pulse"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 w-1/3 bg-slate-100 rounded-full"></div>
+                                <div class="h-4 w-full bg-slate-50 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="h-48 w-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center">
+                            <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div class="flex justify-around py-2 border-t border-slate-50">
+                            <div class="w-8 h-8 rounded-lg bg-[#345e69]/10"></div>
+                            <div class="w-8 h-8 rounded-lg bg-pink-500/10"></div>
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/10"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section id="features" class="py-24 bg-white relative">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-black text-slate-900 mb-4">كل ما تحتاجه في مكان واحد</h2>
+            <div class="w-20 h-1.5 bg-[#345e69] mx-auto rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="feature-card p-8 rounded-3xl">
+                <div class="w-14 h-14 bg-[#345e69]/10 rounded-2xl flex items-center justify-center mb-6 text-[#345e69]">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">التعبير عن النفس</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">أنشئ منشورات نصية وصورية، أضف الهاشتاجات، وتفاعل مع أصدقائك بـ 6 ردود فعل مختلفة (Like, Love, Haha...).</p>
+            </div>
+
+            <div class="feature-card p-8 rounded-3xl">
+                <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 text-amber-600">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">التنظيم الذكي</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">احفظ المنشورات الهامة وصنفها في مجلدات خاصة (عمل، تعليم، مفضلة) لتصل إليها لاحقاً بسهولة.</p>
+            </div>
+
+            <div class="feature-card p-8 rounded-3xl">
+                <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 text-emerald-600">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">المجتمعات والصفحات</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">أنشئ مجموعاتك الخاصة أو انضم لمجتمعات عامة، وتابع الصفحات الرسمية لتبقى على اطلاع بكل جديد.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-24 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+                <h2 class="text-4xl font-black mb-8 leading-tight">تحكم كامل في <span class="text-[#345e69]">تجربتك الرقمية</span></h2>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-full bg-[#345e69] text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">1</div>
+                        <div>
+                            <h4 class="font-bold mb-1">الخصوصية والأمان</h4>
+                            <p class="text-slate-500 text-sm">إمكانية الحظر، تأكيد البريد، وتحديد من يرى قصصك (Stories).</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-full bg-[#345e69] text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">2</div>
+                        <div>
+                            <h4 class="font-bold mb-1">بحث عالمي شامل</h4>
+                            <p class="text-slate-500 text-sm">ابحث عن أشخاص، منشورات، مجموعات، أو حتى هاشتاجات بضغطة واحدة.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-6 h-6 rounded-full bg-[#345e69] text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">3</div>
+                        <div>
+                            <h4 class="font-bold mb-1">إدارة احترافية</h4>
+                            <p class="text-slate-500 text-sm">لوحة تحكم كاملة للمشرفين لمراقبة الإحصائيات وإدارة التقارير والمحتوى.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-6 bg-white rounded-3xl shadow-sm border border-slate-100">
+                    <span class="text-3xl block mb-2">📱</span>
+                    <span class="font-bold block text-[#345e69]">تصميم متجاوب</span>
+                    <span class="text-xs text-slate-400">يعمل بسلاسة على كافة الأجهزة.</span>
+                </div>
+                <div class="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 mt-8">
+                    <span class="text-3xl block mb-2">🔥</span>
+                    <span class="font-bold block text-[#345e69]">Trending</span>
+                    <span class="text-xs text-slate-400">تابع أشهر الهاشتاجات الرائجة الآن.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="py-24 bg-white border-y border-slate-100">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <div class="relative inline-block mb-8">
+            <div class="w-32 h-32 bg-gradient-to-br from-[#345e69] to-[#4a8291] rounded-3xl rotate-12 absolute inset-0 opacity-20"></div>
+            <div class="w-32 h-32 bg-white border-2 border-[#345e69] rounded-3xl flex items-center justify-center relative z-10">
+                <span class="text-5xl font-black text-[#345e69]">SA</span>
+            </div>
+        </div>
+        <h2 class="text-3xl font-black mb-4">عن المطور</h2>
+        <p class="text-slate-600 mb-6 leading-relaxed">
+            تم تطوير منصة <strong>SOHBA</strong> بواسطة <span class="font-bold text-[#345e69]">Samir Ahmed</span>.
+            شغف ببناء حلول برمجية قوية وواجهات مستخدم تدمج بين البساطة والاحترافية.
+        </p>
+        <a href="https://github.com/SamirAhmed00" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-black transition-all font-bold">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" /></svg>
+            Follow on GitHub
+        </a>
+    </div>
+</section>
+
+<section class="py-16 bg-[#345e69] text-white">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div><div class="text-4xl font-black stat-num" data-target="100">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest">إمكانية المستخدم</div></div>
+            <div><div class="text-4xl font-black stat-num" data-target="50">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest">ميزة تقنية</div></div>
+            <div><div class="text-4xl font-black stat-num" data-target="12">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest">رد فعل تفاعلي</div></div>
+            <div><div class="text-4xl font-black stat-num" data-target="100">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest">أمان البيانات %</div></div>
+        </div>
+    </div>
+</section>
+
+<footer class="bg-white py-12 border-t border-slate-50">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-[#345e69] w-8 h-8 flex items-center justify-center rounded-lg shadow-lg">
+                <span class="text-white text-lg font-black">S</span>
+            </div>
+            <span class="font-bold text-slate-800">SOHBA.</span>
+        </div>
+        <p>© 2026 تم التطوير بكل فخر بواسطة سمير أحمد.</p>
+    </div>
+</footer>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Entrance Animations
+    gsap.from(".hero-anim", {
+        y: 40,
+        opacity: 0,
+        duration: 1.2,
+        stagger: 0.15,
+        ease: "power3.out"
+    });
+
+    // Stats Logic
+    const stats = document.querySelectorAll(".stat-num");
+    stats.forEach(stat => {
+        let target = parseInt(stat.getAttribute("data-target"));
+        gsap.to(stat, {
+            scrollTrigger: { trigger: stat, start: "top 90%" },
+            innerHTML: target,
+            duration: 2,
+            snap: { innerHTML: 1 },
+            ease: "expo.out"
+        });
+    });
+
+    // Background Particles
+    const canvasContainer = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    canvasContainer.appendChild(renderer.domElement);
+
+    const geometry = new THREE.BufferGeometry();
+    const count = 80;
+    const posArr = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) posArr[i] = (Math.random() - 0.5) * 15;
+    geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+
+    const material = new THREE.PointsMaterial({ color: 0x345e69, size: 0.1, transparent: true, opacity: 0.4 });
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+    camera.position.z = 5;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        points.rotation.y += 0.001;
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script> *@
+
+
+@{
+    ViewData["Title"] = "Sohba - Connect with the world";
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<style>
+    :root {
+        --brand-color: #345e69;
+        --brand-light: #4a8291;
+        --soft-bg: #f8fafc;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--soft-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--brand-color);
+        border-radius: 4px;
+    }
+
+    body {
+        background-color: var(--soft-bg);
+        color: #1e293b;
+        overflow-x: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .glass-header {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(52, 94, 105, 0.1);
+    }
+
+    .hero-gradient {
+        background: radial-gradient(circle at top right, rgba(52, 94, 105, 0.05), transparent), radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.05), transparent);
+    }
+
+    .feature-card {
+        background: white;
+        border: 1px solid rgba(52, 94, 105, 0.1);
+        transition: all 0.3s ease;
+    }
+
+        .feature-card:hover {
+            border-color: var(--brand-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(52, 94, 105, 0.2);
+        }
+
+    .text-gradient {
+        background: linear-gradient(to right, #345e69, #4a8291);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Direction Control */
+    .rtl-content {
+        direction: rtl;
+    }
+
+    .ltr-content {
+        direction: ltr;
+    }
+</style>
+
+<nav class="fixed top-0 w-full z-50 glass-header" dir="rtl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
+            <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
+                <span class="text-white text-2xl font-black">S</span>
+            </div>
+            <span class="mr-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
+                SOHBA
+            </span>
+        </a>
+
+        <div class="flex items-center gap-4">
+            <button onclick="toggleLanguage()" class="px-3 py-1 border border-[#345e69] text-[#345e69] rounded-lg text-xs font-bold hover:bg-[#345e69] hover:text-white transition-all">
+                <span id="langBtnText">English</span>
+            </button>
+
+            <a asp-controller="Auth" asp-action="Login" class="text-slate-600 hover:text-[#345e69] transition-colors text-sm font-bold">
+                <span data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</span>
+            </a>
+            <a asp-controller="Auth" asp-action="Register" class="px-6 py-2 bg-[#345e69] hover:bg-[#4a8291] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-cyan-900/10">
+                <span data-ar="ابدأ الآن" data-en="Get Started">ابدأ الآن</span>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div id="mainContent" class="rtl-content">
+
+    <div class="relative min-h-screen flex items-center pt-20 hero-gradient">
+        <div id="canvas-container" class="absolute inset-0 z-0 opacity-30"></div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="text-center lg:text-right" id="heroText">
+                    <h1 class="hero-anim text-5xl lg:text-7xl font-extrabold mb-6 leading-tight text-slate-900">
+                        <span data-ar="تواصل، شارك" data-en="Connect, Share">تواصل، شارك</span> <br />
+                        <span class="text-gradient" data-ar="وابنِ مجتمعك" data-en="Build your Community">وابنِ مجتمعك</span>
+                    </h1>
+                    <p class="hero-anim text-lg text-slate-600 mb-10 max-w-lg mx-auto lg:mr-0 leading-relaxed">
+                        <span data-ar="منصة 'صحبة' هي بوابتك لتجربة اجتماعية فريدة، حيث تلتقي التكنولوجيا بالروابط الإنسانية الحقيقية في بيئة آمنة ومنظمة."
+                              data-en="Sohba platform is your gateway to a unique social experience, where technology meets real human connections in a safe environment.">منصة "صحبة" هي بوابتك لتجربة اجتماعية فريدة، حيث تلتقي التكنولوجيا بالروابط الإنسانية الحقيقية في بيئة آمنة ومنظمة.</span>
+                    </p>
+                    <div class="hero-anim flex flex-wrap gap-4 justify-center lg:justify-start">
+                        <a href="#features" class="px-8 py-4 bg-[#345e69] text-white font-bold rounded-2xl hover:bg-[#4a8291] transition-all shadow-xl shadow-cyan-900/20">
+                            <span data-ar="اكتشف المميزات" data-en="Discover Features">اكتشف المميزات</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="hero-anim hidden lg:block relative perspective-1000">
+                    <div class="bg-white rounded-3xl p-4 shadow-2xl border border-slate-100 transform rotate-y-[-10deg] rotate-x-[5deg]">
+                        <div class="flex items-center gap-2 mb-4 border-b pb-4 border-slate-50">
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                        </div>
+                        <div class="h-48 w-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center">
+                            <span class="text-[#345e69] font-black text-2xl">SOHBA UI</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="features" class="py-24 bg-white relative">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-black text-slate-900 mb-4" data-ar="كل ما تحتاجه في مكان واحد" data-en="Everything you need in one place">كل ما تحتاجه في مكان واحد</h2>
+                <div class="w-20 h-1.5 bg-[#345e69] mx-auto rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="feature-card p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-3" data-ar="التعبير عن النفس" data-en="Self Expression">التعبير عن النفس</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed" data-ar="أنشئ منشورات نصية وصورية، أضف الهاشتاجات، وتفاعل مع أصدقائك بـ 6 ردود فعل مختلفة." data-en="Create text and image posts, add hashtags, and interact with friends using 6 different reactions.">أنشئ منشورات نصية وصورية، أضف الهاشتاجات، وتفاعل مع أصدقائك بـ 6 ردود فعل مختلفة.</p>
+                </div>
+                <div class="feature-card p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-3" data-ar="التنظيم الذكي" data-en="Smart Organization">التنظيم الذكي</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed" data-ar="احفظ المنشورات الهامة وصنفها في مجلدات خاصة لتصل إليها لاحقاً بسهولة." data-en="Save important posts and categorize them into private folders for easy access later.">احفظ المنشورات الهامة وصنفها في مجلدات خاصة لتصل إليها لاحقاً بسهولة.</p>
+                </div>
+                <div class="feature-card p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-3" data-ar="المجتمعات" data-en="Communities">المجتمعات</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed" data-ar="أنشئ مجموعاتك الخاصة أو انضم لمجتمعات عامة وتابع الصفحات الرسمية." data-en="Create your own groups or join public communities and follow official pages.">أنشئ مجموعاتك الخاصة أو انضم لمجتمعات عامة وتابع الصفحات الرسمية.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-24 bg-white border-y border-slate-100">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="relative inline-block mb-8">
+                <div class="w-24 h-24 bg-[#345e69] rounded-3xl flex items-center justify-center mx-auto shadow-lg">
+                    <span class="text-white text-3xl font-black">SA</span>
+                </div>
+            </div>
+            <h2 class="text-3xl font-black mb-6" data-ar="عن المطور" data-en="About Developer">عن المطور</h2>
+
+            <p class="text-slate-600 mb-6 leading-relaxed text-lg">
+                <span data-ar="تم تطوير منصة" data-en="SOHBA platform was developed by">تم تطوير منصة</span>
+                <strong>SOHBA</strong>
+                <span data-ar="بواسطة" data-en="">بواسطة</span>
+                <span class="font-bold text-[#345e69] inline-block" dir="ltr">Samir Ahmed</span>.
+                <br />
+                <span data-ar="شغف ببناء حلول برمجية قوية وواجهات مستخدم تدمج بين البساطة والاحترافية."
+                      data-en="Passionate about building robust software solutions and UI that blends simplicity and professionalism.">شغف ببناء حلول برمجية قوية وواجهات مستخدم تدمج بين البساطة والاحترافية.</span>
+            </p>
+
+            <a href="https://github.com/SamirAhmed00" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-black transition-all font-bold">
+                GitHub Profile
+            </a>
+        </div>
+    </section>
+
+    <section class="py-16 bg-[#345e69] text-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div><div class="text-4xl font-black stat-num" data-target="100">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest" data-ar="إمكانية المستخدم" data-en="User Capabilities">إمكانية المستخدم</div></div>
+                <div><div class="text-4xl font-black stat-num" data-target="50">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest" data-ar="ميزة تقنية" data-en="Technical Features">ميزة تقنية</div></div>
+                <div><div class="text-4xl font-black stat-num" data-target="12">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest" data-ar="رد فعل" data-en="Reactions">رد فعل</div></div>
+                <div><div class="text-4xl font-black stat-num" data-target="100">0</div><div class="text-xs opacity-70 mt-2 uppercase tracking-widest" data-ar="الأمان" data-en="Security">الأمان</div></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-white py-12 border-t border-slate-50">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
+            <p data-ar="© 2026 تم التطوير بكل فخر بواسطة سمير أحمد." data-en="© 2026 Proudly developed by Samir Ahmed.">© 2026 تم التطوير بكل فخر بواسطة سمير أحمد.</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Language Toggle Logic
+    let isArabic = true;
+    function toggleLanguage() {
+        isArabic = !isArabic;
+        const mainContent = document.getElementById('mainContent');
+        const langBtn = document.getElementById('langBtnText');
+
+        // تبديل الاتجاه للمحتوى فقط
+        mainContent.className = isArabic ? 'rtl-content' : 'ltr-content';
+        langBtn.innerText = isArabic ? 'English' : 'العربية';
+
+        // تبديل النصوص
+        document.querySelectorAll('[data-ar]').forEach(el => {
+            el.innerText = isArabic ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+        });
+    }
+
+    // GSAP Animations
+    gsap.from(".hero-anim", { y: 40, opacity: 0, duration: 1.2, stagger: 0.15, ease: "power3.out" });
+
+    const stats = document.querySelectorAll(".stat-num");
+    stats.forEach(stat => {
+        let target = parseInt(stat.getAttribute("data-target"));
+        gsap.to(stat, {
+            scrollTrigger: { trigger: stat, start: "top 90%" },
+            innerHTML: target,
+            duration: 2,
+            snap: { innerHTML: 1 },
+            ease: "expo.out"
+        });
+    });
+
+    // Three.js
+    const canvasContainer = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    canvasContainer.appendChild(renderer.domElement);
+    const geometry = new THREE.BufferGeometry();
+    const posArr = new Float32Array(80 * 3);
+    for (let i = 0; i < 80 * 3; i++) posArr[i] = (Math.random() - 0.5) * 15;
+    geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+    const points = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x345e69, size: 0.1, transparent: true, opacity: 0.4 }));
+    scene.add(points);
+    camera.position.z = 5;
+    function animate() { requestAnimationFrame(animate); points.rotation.y += 0.001; renderer.render(scene, camera); }
+    animate();
+</script>

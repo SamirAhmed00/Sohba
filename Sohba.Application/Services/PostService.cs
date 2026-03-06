@@ -143,11 +143,22 @@ namespace Sohba.Application.Services
         }
 
 
+        public async Task<Result> HidePostAsync(Guid postId, Guid userId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null)
+                return Result.Failure("Post not found");
 
+            post.IsHidden = true; 
+            _unitOfWork.Posts.Update(post);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
 
 
         // Helper Method
-        private async Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId)
+        public async Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId)
         {
             var postList = posts.ToList();
             if (!postList.Any())

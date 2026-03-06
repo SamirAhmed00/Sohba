@@ -1,68 +1,104 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Application.Services;
+using Sohba.Domain.Common;
 using Sohba.Domain.Entities.UserAggregate;
-using Sohba.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Sohba.Application.Services
+public class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private readonly UserManager<User> _userManager;
+    private readonly SignInManager<User> _signInManager;
+    private readonly JwtService _jwtService;
+    private readonly IMapper _mapper;
+
+    public AuthService(
+        UserManager<User> userManager,
+        SignInManager<User> signInManager,
+        JwtService jwtService,
+        IMapper mapper)
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _jwtService = jwtService;
+        _mapper = mapper;
+    }
 
-        public AuthService(IUnitOfWork unitOfWork, IMapper mapper)
+    public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterDto registerDto)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+        if (existingUser != null)
+            return Result<AuthResponseDto>.Failure("Email already registered.");
+
+        var user = new User
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            Id = Guid.NewGuid(),
+            Name = registerDto.Name,
+            UserName = registerDto.Email,
+            Email = registerDto.Email,
+            DateOfBirth = registerDto.DateOfBirth,
+            Bio = registerDto.Bio ?? "",
+            CreatedAt = DateTime.UtcNow,
+            EmailConfirmed = false
+        };
+
+        var result = await _userManager.CreateAsync(user, registerDto.Password);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return Result<AuthResponseDto>.Failure(errors);
         }
 
-        public async Task<UserResponseDto> RegisterAsync(UserRequestDto registerDto)
-        {
-            // Check if email already exists
-            if (_unitOfWork.Users.EmailExists(registerDto.Email))
-                throw new Exception("Email already registered.");
+        await _userManager.AddToRoleAsync(user, "User");
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = _jwtService.GenerateToken(user, roles);
 
-            // Map DTO to User Entity
-            var user = _mapper.Map<User>(registerDto);
+        var response = _mapper.Map<AuthResponseDto>(user);
+        response.Token = token;
+        response.Roles = roles.ToList();
 
-            /* * [IDENTITY_TRANSITION_NOTE]
-             * Currently, we are assigning the password directly to PasswordHash.
-             * This is temporary and insecure. Once ASP.NET Core Identity is integrated:
-             * 1. This manual assignment will be removed.
-             * 2. Identity's 'UserManager.CreateAsync' will handle hashing automatically.
-             * 3. Identity's 'PasswordOptions' will handle password complexity rules.
-             */
-            user.PasswordHash = registerDto.Password;
-            user.CreatedAt = DateTime.UtcNow;
+        return Result<AuthResponseDto>.Success(response);
+    }
 
-            _unitOfWork.Users.Add(user);
-            await _unitOfWork.CompleteAsync();
+    public async Task<Result<AuthResponseDto>> LoginAsync(LoginDto loginDto)
+    {
+        var user = await _userManager.FindByEmailAsync(loginDto.Email);
+        if (user == null)
+            return Result<AuthResponseDto>.Failure("Invalid email or password.");
 
-            return _mapper.Map<UserResponseDto>(user);
-        }
+        var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+            return Result<AuthResponseDto>.Failure("Account locked out. Try again later.");
+        if (!result.Succeeded)
+            return Result<AuthResponseDto>.Failure("Invalid email or password.");
 
-        public async Task<string> LoginAsync(string email, string password)
-        {
-            // Find user by email or username
-            var user = await _unitOfWork.Users.GetByUsernameAsync(email);
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = _jwtService.GenerateToken(user, roles);
 
-            if (user == null) throw new Exception("Invalid credentials.");
+        var response = _mapper.Map<AuthResponseDto>(user);
+        response.Token = token;
+        response.Roles = roles.ToList();
 
-            /* * [IDENTITY_TRANSITION_NOTE]
-             * Current verification is a simple string comparison.
-             * After Identity migration:
-             * 1. 'SignInManager.PasswordSignInAsync' will handle secure verification.
-             * 2. Features like Account Lockout and Two-Factor Auth will be enabled.
-             */
-            if (user.PasswordHash != password)
-                throw new Exception("Invalid credentials.");
+        return Result<AuthResponseDto>.Success(response);
+    }
 
-            // Placeholder for JWT Token Generation logic
-            return "Temporary_JWT_Token_Will_Be_Generated_Here";
-        }
+    public async Task<Result> LogoutAsync()
+    {
+        await _signInManager.SignOutAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result<AuthResponseDto>> GetCurrentUserAsync(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+            return Result<AuthResponseDto>.Failure("User not found");
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var response = _mapper.Map<AuthResponseDto>(user);
+        response.Roles = roles.ToList();
+
+        return Result<AuthResponseDto>.Success(response);
     }
 }

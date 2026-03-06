@@ -80,5 +80,16 @@ namespace Sohba.Infrastructure.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
+        {
+            var friendships = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .ToListAsync();
+
+            var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId).ToList();
+            return friendIds;
+        }
     }
 }

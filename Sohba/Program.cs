@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using Sohba.Application.DependencyInjection;
 using Sohba.Extensions;
 using Sohba.Infrastructure.DependencyInjection;
-using Sohba.Application.DependencyInjection;
 using System;
+using System.Text;
 
 namespace Sohba
 {
@@ -25,6 +29,40 @@ namespace Sohba
             //builder.Services.AddApplicationServices();
             //builder.Services.AddInfrastructureService(builder.Configuration);
 
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    //options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            //})
+            //.AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuer = true,
+            //        ValidateAudience = true,
+            //        ValidateLifetime = true,
+            //        ValidateIssuerSigningKey = true,
+            //        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            //        ValidAudience = builder.Configuration["Jwt:Audience"],
+            //        IssuerSigningKey = new SymmetricSecurityKey(
+            //            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            //    };
+
+            //    options.Events = new JwtBearerEvents
+            //    {
+            //        OnChallenge = context =>
+            //        {
+            //            context.HandleResponse();
+            //            context.Response.Redirect("/Auth/Login");
+            //            return Task.CompletedTask;
+            //        }
+            //    };
+            //});
+
+            //builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+
+            builder.Services.AddAuthorization();
+
 
             var app = builder.Build(); // Here
 
@@ -42,11 +80,16 @@ namespace Sohba
             app.UseStaticFiles();
             app.UseRouting();
 
+
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
+                //pattern: "{controller=Home}/{action=Index}/{id?}")
+                pattern: "{controller=Landing}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
             app.Run();

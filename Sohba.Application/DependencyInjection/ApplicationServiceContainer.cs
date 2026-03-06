@@ -33,6 +33,8 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IReportingService, ReportingService>();
             services.AddScoped<IHashtagService, HashtagService>();
             services.AddScoped<ISearchService, SearchService>();
+            services.AddScoped<JwtService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();

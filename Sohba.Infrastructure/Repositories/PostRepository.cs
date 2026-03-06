@@ -17,7 +17,7 @@ namespace Sohba.Infrastructure.Repositories
         {
             return await _context.Set<Post>()
                         .Include(p => p.User)
-                        .Where(p => !p.IsDeleted)
+                        .Where(p => !p.IsDeleted && !p.IsHidden)
                         .OrderByDescending(p => p.CreatedAt)
                         .ToListAsync();
         }
@@ -122,6 +122,16 @@ namespace Sohba.Infrastructure.Repositories
                             p.Content.Contains(query)))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag)
+        {
+            return await _context.Set<PostHashtag>()
+                .Include(ph => ph.Post)
+                    .ThenInclude(p => p.User)
+                .Where(ph => ph.Hashtag.Tag == tag && !ph.Post.IsDeleted)
+                .Select(ph => ph.Post)
+                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
     }

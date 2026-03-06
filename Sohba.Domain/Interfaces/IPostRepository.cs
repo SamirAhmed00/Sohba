@@ -9,6 +9,7 @@ namespace Sohba.Domain.Interfaces
     {
         Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
         Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
+        Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag);
         bool IsPostDeleted(Guid postId);
        
 

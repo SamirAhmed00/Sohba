@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.AspNetCore.Identity; // -- The Only Packacge In Domain Layer --
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
 
 namespace Sohba.Domain.Entities.UserAggregate
 {
-    public class User
+    public class User : IdentityUser<Guid>
     {
-        public Guid Id { get; set; }
+        //public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Email { get; set; }
+        //public string Email { get; set; }
         public string Bio { get; set; }
         public bool IsDeleted { get; set; }
-        public string PasswordHash { get; set; }
+        //public string PasswordHash { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public DateTime CreatedAt { get; set; }

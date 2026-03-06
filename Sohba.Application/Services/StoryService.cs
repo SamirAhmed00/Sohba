@@ -103,8 +103,21 @@ namespace Sohba.Application.Services
 
         public async Task<Result<IEnumerable<StoryResponseDto>>> GetStoriesForFeedAsync(Guid userId)
         {
+            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var friendIds = await _unitOfWork.Stories.GetFriendIdsAsync(userId);
+            var friendIdsList = friendIds.ToList();
+
             var stories = await _unitOfWork.Stories.GetStoriesForFeedAsync(userId);
-            var groupedStories = stories
+
+            var filteredStories = stories.Where(s =>
+                s.CreatedAt >= cutoffTime &&
+                !s.IsDeleted &&
+                (s.Privacy == StoryPrivacy.Public && (friendIdsList.Contains(s.UserId) || s.UserId == userId) ||
+                 s.UserId == userId))
+                .OrderByDescending(s => s.CreatedAt)
+                .ToList();
+
+            var groupedStories = filteredStories
                 .GroupBy(s => s.UserId)
                 .Select(g => g.OrderBy(s => s.CreatedAt).ToList())
                 .ToList();

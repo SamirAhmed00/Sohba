@@ -15,6 +15,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public DateTime CreatedAt { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsPrivate { get; set; }
+        public bool IsHidden { get; set; }
         public PostSourceType SourceType { get; set; } = PostSourceType.User;
         public Guid? SourceId { get; set; }
 

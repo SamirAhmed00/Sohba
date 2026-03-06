@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
@@ -9,17 +10,21 @@ using Sohba.ViewModels.Post;
 
 namespace Sohba.Controllers
 {
+
+    [Authorize]
     public class PostsController : BaseController
     {
         private readonly IPostService _postService;
         private readonly IReportingService _reportingService;
         private readonly IInteractionService _interactionService;
+        private readonly IHashtagService _hashtagService;
 
-        public PostsController(IPostService postService, IInteractionService interactionService, IReportingService reportingService)
+        public PostsController(IPostService postService, IInteractionService interactionService, IReportingService reportingService, IHashtagService hashtagService)
         {
             _postService = postService;
             _interactionService = interactionService;
             _reportingService = reportingService;
+            _hashtagService = hashtagService;
         }
 
         [HttpGet]
@@ -306,11 +311,11 @@ namespace Sohba.Controllers
             if (string.IsNullOrWhiteSpace(tag))
                 return RedirectToAction("Index", "Home");
 
-            ViewBag.Hashtag = tag;
+            var userId = GetCurrentUserId();
+            var result = await _hashtagService.GetPostsByHashtagAsync(tag, userId);
 
-            // TODO: Implement getting posts by hashtag
-            // For now, return empty list
-            return View(new List<PostResponseDto>());
+            ViewBag.Hashtag = tag;
+            return View(result.Value ?? new List<PostResponseDto>());
         }
 
         [HttpGet]
@@ -320,11 +325,9 @@ namespace Sohba.Controllers
                 return Json(new { success = false, error = "Tag is required" });
 
             var userId = GetCurrentUserId();
+            var result = await _hashtagService.GetPostsByHashtagAsync(tag, userId);
 
-            // TODO: Implement getting posts by hashtag
-            // For now, return empty list
-
-            return Json(new { success = true, posts = new List<PostResponseDto>() });
+            return Json(new { success = true, posts = result.Value });
         }
         public class ToggleSaveRequest
         {
@@ -342,14 +345,6 @@ namespace Sohba.Controllers
         {
             public Guid PostId { get; set; }
         }
-        //private Guid GetCurrentUserId()
-        //{
-        //    // Temporary until Identity is implemented
-        //    //var userIdStr = HttpContext.Session.GetString("UserId");
-        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
-        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-
-        //}
     }
 }
 

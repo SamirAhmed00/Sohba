@@ -16,5 +16,6 @@ namespace Sohba.Application.Interfaces
         // Admin
         Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync(); 
         Task<Result<bool>> DeleteUserAsync(Guid userId);
+        Task<Result<IEnumerable<UserResponseDto>>> GetUsersByStatusAsync(string status);
     }
 }

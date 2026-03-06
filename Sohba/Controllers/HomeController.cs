@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class HomeController : BaseController
     {
         private readonly IPostService _postService;

@@ -4,6 +4,7 @@
     using global::Sohba.Application.Interfaces;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.Filters;
+    using System.Security.Claims;
 
     namespace Sohba.Controllers
     {
@@ -29,10 +30,21 @@
                 await next(); // Continue to the action
             }
 
+            //protected Guid GetCurrentUserId()
+            //{
+            //    // Temporary until Identity is implemented
+            //    return new Guid("D1B8F3DC-0E18-F111-8D20-902B34AC4276");
+            //}
+            //protected Guid GetCurrentUserId()
+            //{
+            //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //    return userId != null ? Guid.Parse(userId) : Guid.Empty;
+            //}
+
             protected Guid GetCurrentUserId()
             {
-                // Temporary until Identity is implemented
-                return new Guid("D1B8F3DC-0E18-F111-8D20-902B34AC4276");
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                return userId != null ? Guid.Parse(userId) : Guid.Empty;
             }
 
             protected string GetCurrentUserName()

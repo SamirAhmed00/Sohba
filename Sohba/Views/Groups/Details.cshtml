@@ -1,10 +1,11 @@
 ﻿@model Sohba.ViewModels.Group.GroupDetailsViewModel
 @{
     ViewData["Title"] = Model.Group.Name;
+    Layout = "_AppLayout";
     var activeTab = ViewBag.ActiveTab ?? "posts";
 }
 
-<div class="max-w-6xl mx-auto page-transition px-4">
+<div class="max-w-7xl mx-auto page-transition px-4">
     <!-- Header -->
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div class="h-48 bg-gradient-to-r from-[#345e69] to-[#4a8291] relative">

@@ -14,12 +14,14 @@ namespace Sohba.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInteractionService _interactionService;
         private readonly IMapper _mapper;
+        private readonly IPostService _postService;
 
-        public HashtagService(IUnitOfWork unitOfWork, IInteractionService interactionService, IMapper mapper)
+        public HashtagService(IUnitOfWork unitOfWork, IInteractionService interactionService, IMapper mapper, IPostService postService)
         {
             _unitOfWork = unitOfWork;
             _interactionService = interactionService;
             _mapper = mapper;
+            _postService = postService;
         }
 
         public async Task<Result<IEnumerable<HashtagDto>>> GetTrendingHashtagsAsync(int count = 10)
@@ -31,9 +33,13 @@ namespace Sohba.Application.Services
 
         public async Task<Result<IEnumerable<PostResponseDto>>> GetPostsByHashtagAsync(string tag, Guid currentUserId)
         {
-            // TODO: Implement getting posts by hashtag
-            // This will need a method in PostRepository to get posts by hashtag
-            return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
+            if (string.IsNullOrWhiteSpace(tag))
+                return Result<IEnumerable<PostResponseDto>>.Failure("Tag is required");
+
+            var posts = await _unitOfWork.Posts.GetPostsByHashtagAsync(tag);
+
+            var result = await _postService.MapPostsWithInteractions(posts, currentUserId); 
+            return result;
         }
 
     }

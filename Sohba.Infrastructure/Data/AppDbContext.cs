@@ -1,15 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Sohba.Domain.Entities.PostAggregate;
-using Sohba.Domain.Entities.UserAggregate;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Entities.StoryAggregate;
+using Sohba.Domain.Entities.UserAggregate;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Sohba.Domain.Entities.StoryAggregate;
 
 namespace Sohba.Infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -37,6 +39,7 @@ namespace Sohba.Infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             // Apply all configurations from the assembly 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
           

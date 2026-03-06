@@ -12,12 +12,14 @@ namespace Sohba.Controllers
         private readonly IUserService _userService;
         private readonly ISocialService _socialService;
         private readonly IPostService _postService;
+        private readonly IUserSettingsService _userSettingsService;
 
-        public ProfileController(IUserService userService, ISocialService socialService, IPostService postService)
+        public ProfileController(IUserService userService, ISocialService socialService, IPostService postService, IUserSettingsService userSettingsService)
         {
             _userService = userService;
             _socialService = socialService;
             _postService = postService;
+            _userSettingsService = userSettingsService;
         }
 
         [HttpGet]
@@ -87,28 +89,58 @@ namespace Sohba.Controllers
         public async Task<IActionResult> Settings()
         {
             var userId = GetCurrentUserId();
-            var profileResult = await _userService.GetProfileAsync(userId);
+            var result = await _userSettingsService.GetSettingsAsync(userId);
 
-            if (profileResult.IsFailure) return NotFound();
+            if (result.IsFailure)
+                return NotFound();
 
             var viewModel = new SettingsViewModel
             {
-                Email = profileResult.Value.Email,
-                IsPrivateAccount = false, // TODO: Get from user settings
-                ShowActivityStatus = true,
-                EmailNotifications = true,
-                PushNotifications = true
+                Email = result.Value.Email,
+                Name = result.Value.Name,
+                Bio = result.Value.Bio,
+                ProfilePictureUrl = result.Value.ProfilePictureUrl,
+                IsPrivateAccount = result.Value.IsPrivateAccount,
+                ShowActivityStatus = result.Value.ShowActivityStatus,
+                EmailNotifications = result.Value.EmailNotifications,
+                PushNotifications = result.Value.PushNotifications,
+                WeeklyDigest = result.Value.WeeklyDigest
             };
 
             return View(viewModel);
         }
 
-        //private Guid GetCurrentUserId()
-        //{
-        //    //var userIdStr = HttpContext.Session.GetString("UserId");
-        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(SettingsViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
 
-        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-        //}
+            var userId = GetCurrentUserId();
+            var dto = new UserSettingsDto
+            {
+                Email = model.Email,
+                Name = model.Name,
+                Bio = model.Bio,
+                ProfilePictureUrl = model.ProfilePictureUrl,
+                IsPrivateAccount = model.IsPrivateAccount,
+                ShowActivityStatus = model.ShowActivityStatus,
+                EmailNotifications = model.EmailNotifications,
+                PushNotifications = model.PushNotifications,
+                WeeklyDigest = model.WeeklyDigest
+            };
+
+            var result = await _userSettingsService.UpdateSettingsAsync(userId, dto);
+            if (result.IsSuccess)
+            {
+                TempData["SuccessMessage"] = "Settings updated successfully";
+                return RedirectToAction("Settings");
+            }
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
     }
 }

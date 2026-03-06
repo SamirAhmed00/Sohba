@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.ViewModels.Dashboard;
 using Sohba.Controllers.Sohba.Controllers;
+using Sohba.Domain.Common;
+using Sohba.ViewModels.Dashboard;
 
 namespace Sohba.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class DashboardController : BaseController 
     {
         private readonly IUserService _userService;
@@ -95,7 +99,17 @@ namespace Sohba.Controllers
                 PageSize = 20
             };
 
-            var usersResult = await _userService.GetAllUsersAsync();
+            Result<IEnumerable<UserResponseDto>> usersResult;
+
+            if (status == "active" || status == "blocked")
+            {
+                usersResult = await _userService.GetUsersByStatusAsync(status);
+            }
+            else
+            {
+                usersResult = await _userService.GetAllUsersAsync();
+            }
+
             if (usersResult.IsSuccess)
             {
                 var query = usersResult.Value.AsQueryable();
@@ -106,16 +120,6 @@ namespace Sohba.Controllers
                     query = query.Where(u =>
                         u.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                         u.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
-                }
-
-                // Apply status filter
-                if (status == "active")
-                {
-                    // TODO: Filter by active users (not blocked)
-                }
-                else if (status == "blocked")
-                {
-                    // TODO: Filter by blocked users
                 }
 
                 viewModel.TotalCount = query.Count();
@@ -203,8 +207,8 @@ namespace Sohba.Controllers
         [HttpPost]
         public async Task<IActionResult> HidePost(Guid postId)
         {
-            // TODO: Implement hide post
-            return Json(new { success = true });
+            var result = await _postService.HidePostAsync(postId, GetCurrentUserId());
+            return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         // ==================== Reports Management ====================

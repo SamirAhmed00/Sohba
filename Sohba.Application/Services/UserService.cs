@@ -3,6 +3,7 @@ using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,34 @@ namespace Sohba.Application.Services
             await _unitOfWork.CompleteAsync();
 
             return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetUsersByStatusAsync(string status)
+        {
+            var allUsers = await _unitOfWork.Users.GetAllAsync();
+
+            IEnumerable<User> filteredUsers;
+
+            switch (status.ToLower())
+            {
+                case "active":
+                    var blockedUsers = await _unitOfWork.Friendships.GetBlockedUsersAsync(Guid.Empty); // Need Edit ?
+                    var blockedIds = blockedUsers.Select(b => b.FriendUserId).ToList();
+                    filteredUsers = allUsers.Where(u => !blockedIds.Contains(u.Id));
+                    break;
+
+                case "blocked":
+                    blockedUsers = await _unitOfWork.Friendships.GetBlockedUsersAsync(Guid.Empty);
+                    filteredUsers = allUsers.Where(u => blockedUsers.Any(b => b.FriendUserId == u.Id));
+                    break;
+
+                default: 
+                    filteredUsers = allUsers;
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(filteredUsers);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
         }
     }
 }

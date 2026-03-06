@@ -1,8 +1,9 @@
 ﻿using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.PostAggregate;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Sohba.Domain.Common;
 
 namespace Sohba.Application.Interfaces
 {
@@ -22,6 +23,9 @@ namespace Sohba.Application.Interfaces
 
         // Admin
         Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
+        Task<Result> HidePostAsync(Guid postId, Guid userId);
+        
+        Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
 
     }
 }
