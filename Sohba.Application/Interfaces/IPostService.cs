@@ -12,7 +12,7 @@ namespace Sohba.Application.Interfaces
         // Basic CRUD
         Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
         Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
-        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId);
+        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
         Task<Result> DeletePostAsync(Guid postId, Guid userId);
         Task<Result> UpdatePostAsync(Guid postId, PostCreateDto postDto, Guid userId);
 

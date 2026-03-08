@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -7,6 +8,7 @@ using Sohba.ViewModels.Profile;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class ProfileController : BaseController
     {
         private readonly IUserService _userService;
@@ -25,20 +27,22 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(Guid? id)
         {
-            var userId = id ?? GetCurrentUserId();
+            var currentUserId = GetCurrentUserId();
+            var profileUserId = id ?? currentUserId;
 
-            var profileResult = await _userService.GetProfileAsync(userId);
+            var profileResult = await _userService.GetProfileAsync(profileUserId);
             if (profileResult.IsFailure) return NotFound();
 
-            var friendsResult = await _socialService.GetFriendsListAsync(userId);
-            var postsResult = await _postService.GetFeedAsync(userId); // Should be GetUserPosts
+            var friendsResult = await _socialService.GetFriendsListAsync(profileUserId);
+
+            var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
 
             var viewModel = new ProfileViewModel
             {
                 Profile = profileResult.Value,
                 Friends = friendsResult.Value ?? new List<FriendDto>(),
                 Posts = postsResult.Value ?? new List<PostResponseDto>(),
-                IsOwnProfile = userId == GetCurrentUserId()
+                IsOwnProfile = profileUserId == currentUserId
             };
 
             return View(viewModel);

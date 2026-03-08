@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
@@ -7,6 +8,7 @@ using Sohba.ViewModels.Group;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class GroupsController : BaseController
     {
         private readonly IGroupService _groupService;
@@ -16,6 +18,27 @@ namespace Sohba.Controllers
         {
             _groupService = groupService;
             _postService = postService;
+        }
+
+        // في GroupsController.cs
+
+        [HttpGet]
+        public async Task<IActionResult> Discover()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _groupService.GetAllGroupsAsync(userId);
+
+            if (result.IsSuccess)
+            {
+                var groupsToJoin = result.Value
+                    .Where(g => !g.IsCurrentUserMember)
+                    .OrderByDescending(g => g.MembersCount)
+                    .Take(5)
+                    .ToList();
+
+                return Json(groupsToJoin);
+            }
+            return Json(new List<GroupResponseDto>());
         }
 
         [HttpGet]
@@ -159,14 +182,14 @@ namespace Sohba.Controllers
         public async Task<IActionResult> GetGroupPosts(Guid groupId)
         {
             var userId = GetCurrentUserId();
-            var postsResult = await _postService.GetGroupPostsAsync(groupId, userId); 
+            var postsResult = await _postService.GetGroupPostsAsync(groupId, userId);
 
-            if (postsResult.IsSuccess)
+            if (postsResult.IsSuccess && postsResult.Value != null && postsResult.Value.Any())
             {
                 return PartialView("Partials/_PostCard", postsResult.Value);
             }
 
-            return Content("No posts yet");
+            return Content("<div class='text-center py-10 text-gray-500'>No posts yet in this group</div>");
         }
 
         [HttpGet]
@@ -193,6 +216,68 @@ namespace Sohba.Controllers
         }
 
 
+        [HttpGet]
+        public async Task<IActionResult> GetGroupMembers(Guid groupId)
+        {
+            var membersResult = await _groupService.GetGroupMembersAsync(groupId);
+
+            if (!membersResult.IsSuccess)
+                return Content($"<div class='text-center py-10 text-red-500'>{membersResult.Error}</div>");
+
+            ViewBag.GroupId = groupId;
+            return PartialView("_MembersTab", membersResult.Value ?? new List<GroupMemberDto>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAboutTab(Guid groupId)
+        {
+            var groupResult = await _groupService.GetGroupByIdAsync(groupId);
+            if (!groupResult.IsSuccess)
+                return Content($"<div class='text-center py-10 text-red-500'>Group not found</div>");
+
+            var membersResult = await _groupService.GetGroupMembersAsync(groupId);
+            var postsResult = await _postService.GetGroupPostsAsync(groupId, Guid.Empty);
+            var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
+
+            var viewModel = new
+            {
+                Group = groupResult.Value,
+                Members = membersResult.Value ?? new List<GroupMemberDto>(),
+                PostsCount = postsCount
+            };
+
+            ViewBag.GroupId = groupId;
+            return PartialView("_AboutTab", viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Leave([FromBody] LeaveGroupRequest request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == Guid.Empty)
+                    return Json(new { success = false, error = "User not authenticated" });
+
+                var result = await _groupService.LeaveGroupAsync(request.GroupId, userId);
+
+                return Json(new
+                {
+                    success = result.IsSuccess,
+                    error = result.Error
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        public class LeaveGroupRequest
+        {
+            public Guid GroupId { get; set; }
+        }
 
         // Helper Methods
         //private Guid GetCurrentUserId()

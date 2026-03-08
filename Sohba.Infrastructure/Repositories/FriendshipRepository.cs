@@ -109,6 +109,16 @@ namespace Sohba.Infrastructure.Repositories
                     f.FriendUserId == receiverId &&
                     f.Status == FriendshipStatus.Pending);
         }
+
+        public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
+        {
+            var friendships = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .ToListAsync();
+
+            return friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId);
+        }
     }
 
 }

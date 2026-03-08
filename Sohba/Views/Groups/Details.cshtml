@@ -4,7 +4,7 @@
     Layout = "_AppLayout";
     var activeTab = ViewBag.ActiveTab ?? "posts";
 }
-
+@Html.AntiForgeryToken()
 <div class="max-w-7xl mx-auto page-transition px-4">
     <!-- Header -->
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
@@ -36,13 +36,13 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @if (User.Identity?.Name == Model.Group.AdminName)
-                {
+                @* @if (User.Identity?.Name == Model.Group.AdminName) *@
+                @* { *@
                     <a asp-action="Edit" asp-route-id="@Model.Group.Id" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         Edit Group
                     </a>
-                }
+                @* } *@
                 <button onclick="leaveGroup('@Model.Group.Id')" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all">
                     Leave
                 </button>
@@ -79,9 +79,10 @@
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
                 <div class="w-10 h-10 rounded-full bg-[#345e69]/10 flex items-center justify-center text-[#345e69] font-bold">U</div>
-                <button class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-5 py-2.5 rounded-xl text-gray-500 transition-all border border-slate-100">
+                <a asp-controller="Posts" asp-action="Create" asp-route-groupId="@Model.Group.Id"
+                   class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-5 py-2.5 rounded-xl text-gray-500 transition-all border border-slate-100">
                     Share something with the group...
-                </button>
+                </a>
             </div>
 
             <div id="group-content-area">
@@ -109,7 +110,9 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-black text-gray-900">Members (@Model.Members.Count())</h3>
-                    <a href="#" class="text-[#345e69] text-xs font-bold uppercase">View All</a>
+                    <button onclick="switchTab('members')" class="text-[#345e69] text-xs font-bold uppercase">
+                        View All
+                    </button>
                 </div>
                 <div class="grid grid-cols-5 gap-2">
                     @foreach (var member in Model.Members.Take(10))
@@ -127,20 +130,114 @@
 
 @section Scripts {
     <script>
+        // Load group posts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadGroupPosts('@Model.Group.Id');
+            updateActiveTab('posts');
+        });
+
+        function updateActiveTab(tab) {
+            document.querySelectorAll('.px-8.border-t button').forEach(btn => {
+                btn.classList.remove('border-[#345e69]', 'text-[#345e69]');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+
+            const activeBtn = Array.from(document.querySelectorAll('.px-8.border-t button'))
+                .find(btn => btn.textContent.toLowerCase().includes(tab));
+
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-gray-400');
+                activeBtn.classList.add('border-[#345e69]', 'text-[#345e69]');
+            }
+        }
+
+        async function loadGroupPosts(groupId) {
+            try {
+                const response = await fetch(`/Groups/GetGroupPosts?groupId=${groupId}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const html = await response.text();
+                document.getElementById('group-content-area').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                document.getElementById('group-content-area').innerHTML =
+                    '<div class="text-center py-10 text-red-500">Failed to load posts</div>';
+            }
+        }
+
         function switchTab(tab) {
-            // Logic to switch tabs and maybe fetch data via AJAX
+            updateActiveTab(tab);
+
+            if (tab === 'members') {
+                loadAllMembers('@Model.Group.Id');
+            } else if (tab === 'about') {
+                loadAboutTab('@Model.Group.Id');
+            } else {
+                loadGroupPosts('@Model.Group.Id');
+            }
+
             SohbaApp.toast('Switching to ' + tab, 'info');
         }
 
+        async function loadAboutTab(groupId) {
+            try {
+                const response = await fetch(`/Groups/GetAboutTab?groupId=${groupId}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const html = await response.text();
+                document.getElementById('group-content-area').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading about tab:', error);
+                document.getElementById('group-content-area').innerHTML =
+                    '<div class="text-center py-10 text-red-500">Failed to load about info</div>';
+            }
+        }
+
+        async function loadAllMembers(groupId) {
+            try {
+                const response = await fetch(`/Groups/GetGroupMembers?groupId=${groupId}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const html = await response.text();
+                document.getElementById('group-content-area').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading members:', error);
+                document.getElementById('group-content-area').innerHTML =
+                    '<div class="text-center py-10 text-red-500">Failed to load members</div>';
+            }
+        }
+
         async function leaveGroup(groupId) {
-            if(!confirm('Are you sure you want to leave this group?')) return;
+            if (!confirm('Are you sure you want to leave this group?')) return;
 
             const result = await SohbaApp.post('/Groups/Leave', { groupId });
             if (result.success) {
-                window.location.href = '/Groups';
+                SohbaApp.toast('Left group successfully', 'success');
+                setTimeout(() => window.location.href = '/Groups', 1000);
             } else {
                 SohbaApp.toast(result.error || 'Failed to leave group', 'error');
             }
+        }
+
+        async function leaveGroup(groupId) {
+            showConfirmModal({
+                title: 'Leave Group',
+                message: 'Are you sure you want to leave this group? You will no longer see posts from this group.',
+                type: 'warning',
+                confirmText: 'Leave Group',
+                onConfirm: async function() {
+                    try {
+                        const result = await SohbaApp.post('/Groups/Leave', { groupId });
+
+                        if (result.success) {
+                            SohbaApp.toast('Left group successfully', 'success');
+                            setTimeout(() => window.location.href = '/Groups', 1000);
+                        } else {
+                            SohbaApp.toast(result.error || 'Failed to leave group', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error leaving group:', error);
+                        SohbaApp.toast('Network error', 'error');
+                    }
+                }
+            });
         }
     </script>
 }

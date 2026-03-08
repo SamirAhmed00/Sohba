@@ -37,6 +37,17 @@ namespace Sohba.Application.Services
             post.UserId = userId;
             post.CreatedAt = DateTime.UtcNow;
 
+            if (postDto.SourceId.HasValue)
+            {
+                post.SourceType = postDto.SourceType;
+                post.SourceId = postDto.SourceId;
+
+                if (postDto.SourceType == PostSourceType.Group)
+                    post.GroupId = postDto.SourceId;
+                else if (postDto.SourceType == PostSourceType.Page)
+                    post.PageId = postDto.SourceId;
+            }
+
             // Extract hashtags from content and combine with provided hashtags, ensuring uniqueness
             var extractedTags = ExtractHashtags(postDto.Content).ToList();
 
@@ -65,14 +76,35 @@ namespace Sohba.Application.Services
         }
 
         
-        public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId)
+        
+        public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
 
             if (post == null || post.IsDeleted)
                 return Result<PostResponseDto>.Failure("Post not found or has been deleted.");
 
+            var ids = new List<Guid> { postId };
+            var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
+
+            var userReaction = await _unitOfWork.Interactions.GetReactionAsync(currentUserId, postId);
+
+            var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
+            var isSaved = savedPosts.Any(s => s.PostId == postId);
+            var isFavorite = savedPosts.Any(s => s.PostId == postId && s.Tag == SavedTag.Favorite);
+
             var response = _mapper.Map<PostResponseDto>(post);
+
+            if (counts.TryGetValue(postId, out var countData))
+            {
+                response.CommentsCount = countData.comments;
+                response.ReactionsCount = countData.reactions;
+            }
+
+            response.CurrentUserReaction = userReaction?.Type.ToString();
+            response.IsSaved = isSaved;
+            response.IsFavorite = isFavorite;
+
             return Result<PostResponseDto>.Success(response);
         }
 

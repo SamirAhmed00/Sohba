@@ -17,7 +17,8 @@ namespace Sohba.Application.Interfaces
         // Friends Management
         Task<Result> UnfriendAsync(Guid userId, Guid friendId);
         Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId);
-
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
 
         Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId);
         Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId);

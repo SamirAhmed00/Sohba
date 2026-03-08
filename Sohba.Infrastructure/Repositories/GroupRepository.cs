@@ -26,7 +26,8 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Groups
                 .Include(g => g.Admin)
                 .Include(g => g.GroupMembers)
-                .ThenInclude(m => m.User)   
+                .ThenInclude(m => m.User)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
         public async Task<bool> IsMemberAsync(Guid userId, Guid groupId)
@@ -82,7 +83,13 @@ namespace Sohba.Infrastructure.Repositories
                 .Take(limit)
                 .ToListAsync();
         }
-
+        public async Task<IEnumerable<GroupMember>> GetGroupMembersAsync(Guid groupId)
+        {
+            return await _context.Set<GroupMember>()
+                .Include(gm => gm.User) 
+                .Where(gm => gm.GroupId == groupId)
+                .ToListAsync();
+        }
 
     }
 }

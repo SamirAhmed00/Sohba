@@ -188,6 +188,27 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<PageFollowerDto>>(followers);
             return Result<IEnumerable<PageFollowerDto>>.Success(dtos);
         }
+
+        public async Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(updateDto.Id);
+            if (page == null)
+                return Result<PageResponseDto>.Failure("Page not found.");
+
+            if (page.AdminId != userId)
+                return Result<PageResponseDto>.Failure("You are not authorized to edit this page.");
+
+            // Update properties
+            page.Name = updateDto.Name;
+            page.Description = updateDto.Description;
+            page.ImageUrl = updateDto.ImageUrl ?? page.ImageUrl;
+
+            _unitOfWork.Pages.Update(page);
+            await _unitOfWork.CompleteAsync();
+
+            var response = _mapper.Map<PageResponseDto>(page);
+            return Result<PageResponseDto>.Success(response);
+        }
     }
 
 }

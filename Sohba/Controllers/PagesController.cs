@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
@@ -7,6 +8,7 @@ using Sohba.ViewModels.Page;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class PagesController : BaseController
     {
         private readonly IPageService _pageService;
@@ -19,11 +21,12 @@ namespace Sohba.Controllers
             _friendshipService = friendshipService;
         }
 
+        
+
         [HttpGet]
         public async Task<IActionResult> Discover()
         {
             var userId = GetCurrentUserId();
-
             var result = await _pageService.GetAllPagesAsync();
 
             if (result.IsSuccess)
@@ -182,15 +185,17 @@ namespace Sohba.Controllers
             return Json(new List<PageFollowerDto>());
         }
 
+       
         [HttpGet]
         public async Task<IActionResult> GetAllFollowers(Guid pageId, int page = 1, int pageSize = 20)
         {
-            var userId = GetCurrentUserId();
-
-            var followersResult = await _pageService.GetFollowersAsync(pageId, page, pageSize);
-
-            if (followersResult.IsSuccess)
+            try
             {
+                var followersResult = await _pageService.GetFollowersAsync(pageId, page, pageSize);
+
+                if (!followersResult.IsSuccess)
+                    return Json(new { success = false, error = followersResult.Error });
+
                 return Json(new
                 {
                     success = true,
@@ -200,8 +205,10 @@ namespace Sohba.Controllers
                     hasMore = followersResult.Value.Count() == pageSize
                 });
             }
-
-            return Json(new { success = false, error = followersResult.Error });
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
         }
 
         [HttpGet]
@@ -213,6 +220,127 @@ namespace Sohba.Controllers
 
             return Json(new { isFollowing = result.Value });
         }
+
+        
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            var pageResult = await _pageService.GetPageByIdAsync(id);
+
+            if (pageResult.IsFailure)
+                return NotFound();
+
+            if (pageResult.Value.AdminId != userId)
+                return Forbid();
+
+            var viewModel = new PageEditViewModel
+            {
+                Id = pageResult.Value.Id,
+                Name = pageResult.Value.Name,
+                Description = pageResult.Value.Description,
+                ImageUrl = pageResult.Value.ImageUrl
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(PageEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            string imageUrl = model.ImageUrl;
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                // Validate file extension
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    ModelState.AddModelError("ImageFile", "Only image files are allowed (jpg, jpeg, png, gif, webp)");
+                    return View(model);
+                }
+
+                // Validate file size (max 5MB)
+                if (model.ImageFile.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError("ImageFile", "Image size cannot exceed 5MB");
+                    return View(model);
+                }
+
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pages");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{fileExtension}";
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ImageFile.CopyToAsync(fileStream);
+                }
+
+                imageUrl = $"/uploads/pages/{uniqueFileName}";
+            }
+
+            var updateDto = new PageUpdateDto
+            {
+                Id = model.Id,
+                Name = model.Name,
+                Description = model.Description,
+                ImageUrl = imageUrl
+            };
+
+            var result = await _pageService.UpdatePageAsync(updateDto, userId);
+
+            if (result.IsSuccess)
+            {
+                TempData["SuccessMessage"] = "Page updated successfully";
+                return RedirectToAction("Details", new { id = model.Id });
+            }
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
+        
+
+        [HttpGet]
+        public async Task<IActionResult> GetPageStats(Guid pageId)
+        {
+            try
+            {
+                var postsResult = await _postService.GetPagePostsAsync(pageId, Guid.Empty);
+                var followersCount = await _pageService.GetFollowersCountAsync(pageId);
+
+                var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
+
+                return Json(new
+                {
+                    success = true,
+                    postsCount = postsCount,
+                    followersCount = followersCount.Value
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+       
 
         public class ToggleFollowRequest
         {

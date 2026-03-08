@@ -122,8 +122,9 @@
     </div>
 </div>
 
-@section Scripts {
+@* @section Scripts {
     <script>
+         console.log('✅ Friend Requests page loaded');
         function switchTab(tab) {
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -179,5 +180,153 @@
                 countElement.innerHTML = `Sent (${currentCount - 1})`;
             }
         }
+    </script>
+} *@
+
+@section Scripts {
+    <script>
+        console.log('✅ Friend Requests page loaded');
+
+        function switchTab(tab) {
+            console.log('Switching to tab:', tab);
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-[#345e69]', 'text-[#345e69]');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+
+            event.target.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
+            event.target.classList.remove('border-transparent', 'text-gray-400');
+
+            // Show/hide tabs
+            document.getElementById('pending-tab').classList.toggle('hidden', tab !== 'pending');
+            document.getElementById('sent-tab').classList.toggle('hidden', tab !== 'sent');
+        }
+
+        async function acceptRequest(userId) {
+            console.log('🔍 acceptRequest called with userId:', userId);
+
+            try {
+                console.log('📤 Sending POST request to /Friends/AcceptRequest with data:', { requesterId: userId });
+
+                const result = await SohbaApp.post('/Friends/AcceptRequest', { requesterId: userId });
+
+                console.log('📥 Response received:', result);
+
+                if (result.success) {
+                    console.log('✅ Request accepted successfully');
+                    SohbaApp.toast('Friend request accepted!', 'success');
+
+                    const element = document.querySelector(`[data-request-id="${userId}"]`);
+                    console.log('🗑️ Removing element:', element);
+                    if (element) element.remove();
+
+                    // Update counts
+                    const countElement = document.querySelector('.tab-btn:first-child');
+                    if (countElement) {
+                        const match = countElement.textContent.match(/\d+/);
+                        if (match) {
+                            const currentCount = parseInt(match[0]);
+                            countElement.innerHTML = `Received (${currentCount - 1})`;
+                            console.log('📊 Updated count to:', currentCount - 1);
+                        }
+                    }
+                } else {
+                    console.error('❌ Request failed:', result.error);
+                    SohbaApp.toast(result.error || 'Failed to accept request', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error in acceptRequest:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+
+        async function rejectRequest(userId) {
+            console.log('🔍 rejectRequest called with userId:', userId);
+
+            try {
+                console.log('📤 Sending POST request to /Friends/RejectRequest with data:', { requesterId: userId });
+
+                const result = await SohbaApp.post('/Friends/RejectRequest', { requesterId: userId });
+
+                console.log('📥 Response received:', result);
+
+                if (result.success) {
+                    console.log('✅ Request rejected successfully');
+                    SohbaApp.toast('Friend request declined', 'success');
+
+                    const element = document.querySelector(`[data-request-id="${userId}"]`);
+                    console.log('🗑️ Removing element:', element);
+                    if (element) element.remove();
+
+                    // Update counts
+                    const countElement = document.querySelector('.tab-btn:first-child');
+                    if (countElement) {
+                        const match = countElement.textContent.match(/\d+/);
+                        if (match) {
+                            const currentCount = parseInt(match[0]);
+                            countElement.innerHTML = `Received (${currentCount - 1})`;
+                            console.log('📊 Updated count to:', currentCount - 1);
+                        }
+                    }
+                } else {
+                    console.error('❌ Request failed:', result.error);
+                    SohbaApp.toast(result.error || 'Failed to decline request', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error in rejectRequest:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+
+        async function cancelRequest(userId) {
+            console.log('🔍 cancelRequest called with userId:', userId);
+
+            if (!confirm('Cancel this friend request?')) {
+                console.log('❌ User cancelled confirmation');
+                return;
+            }
+
+            try {
+                console.log('📤 Sending POST request to /Friends/CancelRequest with data:', { receiverId: userId });
+
+                const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
+
+                console.log('📥 Response received:', result);
+
+                if (result.success) {
+                    console.log('✅ Request cancelled successfully');
+                    SohbaApp.toast('Request cancelled', 'success');
+
+                    const element = document.querySelector(`[data-request-id="${userId}"]`);
+                    console.log('🗑️ Removing element:', element);
+                    if (element) element.remove();
+
+                    // Update counts
+                    const countElement = document.querySelectorAll('.tab-btn')[1];
+                    if (countElement) {
+                        const match = countElement.textContent.match(/\d+/);
+                        if (match) {
+                            const currentCount = parseInt(match[0]);
+                            countElement.innerHTML = `Sent (${currentCount - 1})`;
+                            console.log('📊 Updated count to:', currentCount - 1);
+                        }
+                    }
+                } else {
+                    console.error('❌ Request failed:', result.error);
+                    SohbaApp.toast(result.error || 'Failed to cancel request', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error in cancelRequest:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+
+        // Test if functions are defined
+        console.log('✅ Functions defined:', {
+            acceptRequest: typeof acceptRequest,
+            rejectRequest: typeof rejectRequest,
+            cancelRequest: typeof cancelRequest
+        });
     </script>
 }

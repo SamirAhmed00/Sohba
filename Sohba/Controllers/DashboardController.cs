@@ -290,8 +290,8 @@ namespace Sohba.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetPostDetails(Guid postId)
-        {
-            var result = await _postService.GetPostByIdAsync(postId);
+        {            
+            var result = await _postService.GetPostByIdAsync(postId, GetCurrentUserId());
             if (result.IsSuccess)
             {
                 return PartialView("Partials/_PostDetails", result.Value);

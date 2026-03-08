@@ -15,20 +15,27 @@ window.SohbaApp.toast = function (message, type = 'info') {
 
 // HTTP POST Request
 window.SohbaApp.post = async function (url, data) {
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-        },
-        body: JSON.stringify(data)
-    });
+    try {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
-    if (!response.ok) {
-        throw new Error('Request failed');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error('Request failed');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('POST Error:', error);
+        throw error;
     }
-
-    return await response.json();
 };
 
 // Toggle Menu

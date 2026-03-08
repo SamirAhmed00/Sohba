@@ -7,7 +7,7 @@
 <div class="max-w-7xl mx-auto page-transition px-4">
     <!-- Page Header -->
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-        <!-- Cover Image (يمكن إضافته لاحقًا) -->
+        <!-- Cover Image -->
         <div class="h-48 bg-gradient-to-r from-emerald-600 to-teal-600 relative">
             <div class="absolute -bottom-12 left-8">
                 <div class="w-32 h-32 bg-white p-2 rounded-3xl shadow-lg">
@@ -35,8 +35,8 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @if (User.Identity?.Name == Model.AdminName)
-                {
+                @* @if (User.Identity?.Name == Model.AdminName)
+                { *@
                     <a asp-action="Edit" asp-route-id="@Model.Id"
                        class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@
                         </svg>
                         Edit Page
                     </a>
-                }
+                @* } *@
 
                 <button onclick="toggleFollow()" id="followBtn"
                         class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2">
@@ -79,9 +79,9 @@
         <div id="posts-tab" class="tab-pane">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Create Post Box (للمشرف فقط) -->
-                    @if (User.Identity?.Name == Model.AdminName)
-                    {
+                    <!-- Create Post Box -->
+                    @* @if (User.Identity?.Name == Model.AdminName)
+                    { *@
                         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
                             <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,11 +93,10 @@
                                 Share something with your page followers...
                             </a>
                         </div>
-                    }
+                    @* } *@
 
                     <!-- Posts Container -->
                     <div id="page-posts">
-                        <!-- هنا هنجيب المنشورات عن طريق AJAX -->
                         <div class="text-center py-10 text-gray-500">Loading posts...</div>
                     </div>
                 </div>
@@ -113,7 +112,7 @@
                         <div class="mt-6 pt-6 border-t border-slate-50">
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-gray-400">Created</span>
-                                <span class="font-bold text-gray-700">@Model.CreatedAt.ToString("MMMM dd, yyyy")</span> // here
+                                <span class="font-bold text-gray-700">@Model.CreatedAt.ToString("MMMM dd, yyyy")</span> 
                             </div>
                         </div>
                     </div>
@@ -125,7 +124,7 @@
                             <a href="#" onclick="switchTab('followers'); return false;" class="text-emerald-600 text-xs font-bold uppercase">View All</a>
                         </div>
                         <div id="followersPreview" class="grid grid-cols-5 gap-2">
-                            <!-- هنجيبهم عن طريق AJAX -->
+                            
                             <div class="text-xs text-center text-slate-400 py-4 col-span-5">Loading...</div>
                         </div>
                     </div>
@@ -171,7 +170,7 @@
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <h2 class="text-lg font-black text-gray-900 mb-4">Followers</h2>
                 <div id="followersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    <!-- هنجيبهم عن طريق AJAX -->
+
                     <div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>
                 </div>
             </div>
@@ -188,8 +187,23 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadPagePosts();
             loadFollowersPreview();
+            loadPageStats(); 
             checkFollowStatus();
         });
+
+        async function loadPageStats() {
+            try {
+                const response = await fetch(`/Pages/GetPageStats?pageId=${currentPageId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('postsCount').textContent = data.postsCount;
+                    document.getElementById('followersCount').textContent = data.followersCount;
+                }
+            } catch (error) {
+                console.error('Error loading page stats:', error);
+            }
+        }
 
         // Switch tabs
         function switchTab(tab) {
@@ -210,6 +224,8 @@
             // Load tab content if needed
             if (tab === 'followers') {
                 loadAllFollowers();
+            } else if (tab === 'about') {
+                loadPageStats();
             }
         }
 
@@ -219,6 +235,9 @@
                 const response = await fetch(`/Pages/GetPagePosts?pageId=${currentPageId}`);
                 const html = await response.text();
                 document.getElementById('page-posts').innerHTML = html;
+                
+                const postsCount = document.querySelectorAll('#page-posts article').length;
+                document.getElementById('postsCount').textContent = postsCount;
             } catch (error) {
                 console.error('Error loading posts:', error);
                 document.getElementById('page-posts').innerHTML = '<div class="text-center py-10 text-red-500">Failed to load posts</div>';
@@ -252,16 +271,19 @@
         // Load all followers
         async function loadAllFollowers() {
             try {
-                const response = await fetch(`/Pages/GetAllFollowers?pageId=${currentPageId}`);
-                const followers = await response.json();
-
                 const container = document.getElementById('followersList');
-                if (followers && followers.length > 0) {
-                    container.innerHTML = followers.map(f => `
+                container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>';
+                
+                const response = await fetch(`/Pages/GetAllFollowers?pageId=${currentPageId}`);
+                const data = await response.json();
+
+                if (data.success && data.followers && data.followers.length > 0) {
+                    container.innerHTML = data.followers.map(f => `
                         <div class="text-center group cursor-pointer">
                             <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
                                  class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
                             <p class="text-xs font-semibold text-gray-700 mt-2 truncate">${f.userName}</p>
+                            <p class="text-xs text-gray-400">Joined ${new Date(f.followedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                         </div>
                     `).join('');
                 } else {
@@ -269,6 +291,7 @@
                 }
             } catch (error) {
                 console.error('Error loading followers:', error);
+                document.getElementById('followersList').innerHTML = '<div class="text-center text-red-500 py-8 col-span-full">Failed to load followers</div>';
             }
         }
 
@@ -278,7 +301,6 @@
                 const response = await fetch(`/Pages/CheckFollowStatus?pageId=${currentPageId}`);
                 const data = await response.json();
                 isFollowing = data.isFollowing;
-
                 updateFollowButton();
             } catch (error) {
                 console.error('Error checking follow status:', error);
@@ -293,14 +315,15 @@
                 if (result.success) {
                     isFollowing = result.isFollowing;
                     updateFollowButton();
-
-                    SohbaApp.toast(
-                        isFollowing ? 'Page followed!' : 'Page unfollowed',
-                        'success'
-                    );
-
-                    // Reload followers
-                    loadFollowersPreview();
+                    
+                    SohbaApp.toast(isFollowing ? 'Page followed!' : 'Page unfollowed', 'success');
+                    
+                    await loadFollowersPreview();
+                    await loadPageStats();
+                    
+                    if (!document.getElementById('followers-tab').classList.contains('hidden')) {
+                        await loadAllFollowers();
+                    }
                 }
             } catch (error) {
                 console.error('Error toggling follow:', error);

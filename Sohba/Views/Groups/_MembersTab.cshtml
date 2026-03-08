@@ -1,0 +1,103 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupMemberDto>
+@{
+    var groupId = ViewBag.GroupId;
+}
+
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-black text-gray-900">All Members (@Model.Count())</h2>
+        <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text"
+                   id="memberSearchInput"
+                   placeholder="Search members..."
+                   class="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20" />
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="membersGrid">
+        @foreach (var member in Model)
+        {
+            <div class="member-card text-center group cursor-pointer" 
+                 data-name="@member.UserName.ToLower()" 
+                 data-role="@member.Role.ToLower()">
+                <div class="relative">
+                    <img src="https://ui-avatars.com/api/?name=@member.UserName&background=345e69&color=fff"
+                         class="w-full aspect-square rounded-2xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" 
+                         alt="@member.UserName"
+                         onerror="this.src='https://ui-avatars.com/api/?name=User&background=345e69&color=fff'" />
+                    <span class="absolute -top-1 -right-1 w-4 h-4 @(member.Role == "Admin" ? "bg-purple-500" : member.Role == "Moderator" ? "bg-blue-500" : "bg-green-500") rounded-full border-2 border-white"></span>
+                </div>
+                <p class="text-sm font-semibold text-gray-900 mt-2 truncate" title="@member.UserName">@member.UserName</p>
+                <p class="text-xs text-gray-500">@member.Role</p>
+                <p class="text-xs text-gray-400">Joined @member.JoinedAt.ToString("MMM yyyy")</p>
+            </div>
+        }
+    </div>
+
+    <!-- No Results Message -->
+    <div id="noMembersMessage" class="hidden text-center py-12">
+        <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">No members found</h3>
+        <p class="text-gray-500 mt-2">Try a different search term</p>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Search function
+        function filterMembers(searchTerm) {
+            const cards = document.querySelectorAll('.member-card');
+            let visibleCount = 0;
+            const searchLower = searchTerm.toLowerCase().trim();
+
+            cards.forEach(card => {
+                const name = card.dataset.name || '';
+
+                if (name.includes(searchLower)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const noMessage = document.getElementById('noMembersMessage');
+            if (noMessage) {
+                if (visibleCount === 0) {
+                    noMessage.classList.remove('hidden');
+                } else {
+                    noMessage.classList.add('hidden');
+                }
+            }
+        }
+
+        // Add event listener when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('memberSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function(e) {
+                    filterMembers(this.value);
+                });
+            }
+        });
+
+        // Export to global if needed elsewhere
+        window.filterMembers = filterMembers;
+        window.clearMemberSearch = function() {
+            const searchInput = document.getElementById('memberSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                filterMembers('');
+            }
+        };
+    })();
+</script>

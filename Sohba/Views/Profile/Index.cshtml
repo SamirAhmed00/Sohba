@@ -42,11 +42,13 @@
             }
             else
             {
-                <button class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Add Friend
+                <button onclick="sendFriendRequest('@Model.Profile.Id')" 
+                        class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2"
+                        id="addFriendBtn">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        <span>Add Friend</span>
                 </button>
             }
         </div>
@@ -108,3 +110,75 @@
         </div>
     </div>
 </div>
+
+
+@section Scripts {
+    <script>
+        async function sendFriendRequest(userId) {
+            try {
+                const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
+
+
+                if (result.success) {
+                    SohbaApp.toast('Friend request sent!', 'success');
+
+
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Request Sent</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to send request', 'error');
+                }
+            } catch (error) {
+                console.error('Error sending friend request:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+
+        async function checkFriendshipStatus(targetUserId) {
+            try {
+                const response = await fetch(`/Friends/CheckStatus?userId=${targetUserId}`);
+                const data = await response.json();
+
+                if (data.status === 'pending') {
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Pending</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+                } else if (data.status === 'accepted') {
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Friends</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+                }
+            } catch (error) {
+                console.error('Error checking friendship status:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('@Model.IsOwnProfile' === 'False') {
+                checkFriendshipStatus('@Model.Profile.Id');
+            }
+        });
+    </script>
+}

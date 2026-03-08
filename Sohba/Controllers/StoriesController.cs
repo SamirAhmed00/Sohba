@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Controllers.Sohba.Controllers;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class StoriesController : BaseController
     {
         private readonly IStoryService _storyService;

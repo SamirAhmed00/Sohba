@@ -76,7 +76,7 @@
 
         <hr class="border-slate-200/60 mx-4" />
 
-        <div>
+        @* <div>
             <div class="flex justify-between items-center px-2 mb-3">
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Groups To Join</h3>
                 <a href="#" class="text-xs text-[#345e69] hover:underline font-semibold">See All</a>
@@ -116,6 +116,16 @@
                 {
                     <p class="text-sm text-gray-500 text-center py-4">No groups to show</p>
                 }
+            </div>
+        </div> *@
+        <div>
+            <div class="flex justify-between items-center px-2 mb-3">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Groups To Join</h3>
+                <a href="/Groups" class="text-xs text-[#345e69] hover:underline font-semibold">See All</a>
+            </div>
+
+            <div class="space-y-3" id="sidebarGroupsContainer">
+                <div class="text-xs text-center text-slate-400 py-2">Loading...</div>
             </div>
         </div>
 
@@ -218,35 +228,39 @@
 
     // Load 5 - Pages For You -  dynamically when the sidebar is ready
     document.addEventListener('DOMContentLoaded', async function () {
+        
         const pagesContainer = document.getElementById('sidebarPagesContainer');
-        if (!pagesContainer) return;
-        try {
-            const response = await fetch('/Pages/Discover');
-            const pages = await response.json();
-            if (pages && pages.length > 0) {
-                pagesContainer.innerHTML = pages.map(page => `
-                    <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
-                        <a href="/Pages/Details/${page.id}" class="flex items-center">
-                            <img src="${page.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.name)}&background=random`}"
-                                 class="w-9 h-9 rounded-lg object-cover shadow-sm" alt="Page Logo">
-                            <div class="ml-3">
-                                <p class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors line-clamp-1">${page.name}</p>
-                                <p class="text-xs text-gray-400">Page</p>
-                            </div>
-                        </a>
-                        <button type="button" onclick="followPageFromSidebar('${page.id}', this)" class="text-emerald-500 hover:bg-emerald-50 p-1.5 rounded-full transition-all">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
-                    </div>
-                `).join('');
-            } else {
-                pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No new pages.</div>';
+        if (pagesContainer) {
+            try {
+                const response = await fetch('/Pages/Discover');
+                const pages = await response.json();
+                if (pages && pages.length > 0) {
+                    pagesContainer.innerHTML = pages.map(page => `
+                        <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
+                            <a href="/Pages/Details/${page.id}" class="flex items-center">
+                                <img src="${page.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.name)}&background=random`}"
+                                     class="w-9 h-9 rounded-lg object-cover shadow-sm" alt="Page Logo">
+                                <div class="ml-3">
+                                    <p class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors line-clamp-1">${page.name}</p>
+                                    <p class="text-xs text-gray-400">Page</p>
+                                </div>
+                            </a>
+                            <button type="button" onclick="followPageFromSidebar('${page.id}', this)" class="text-emerald-500 hover:bg-emerald-50 p-1.5 rounded-full transition-all">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No new pages.</div>';
+                }
+            } catch (error) {
+                pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load.</div>';
             }
-        } catch (error) {
-            pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load.</div>';
         }
+        
+        loadGroupsToJoin();
     });
     
     // Follow page directly from the sidebar and remove it from the list
@@ -271,6 +285,102 @@
             setTimeout(() => location.reload(), 1000);
         } else {
             SohbaApp.toast(result.error || 'Failed to join', 'error');
+        }
+    }
+
+
+    // -------------------------------
+
+        // Load groups to join dynamically
+    async function loadGroupsToJoin() {
+        const groupsContainer = document.getElementById('sidebarGroupsContainer');
+        if (!groupsContainer) return;
+
+        try {
+            const response = await fetch('/Groups/Discover');
+            const groups = await response.json();
+
+            if (groups && groups.length > 0) {
+                groupsContainer.innerHTML = groups.map(group => `
+                    <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
+                        <a href="/Groups/Details/${group.id}" class="flex items-center">
+                            ${group.imageUrl ?
+                                `<img src="${group.imageUrl}" class="w-9 h-9 rounded-xl object-cover shadow-sm" alt="${group.name}">` :
+                                `<div class="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center text-[#345e69] font-bold shadow-sm">${group.name[0]}</div>`
+                            }
+                            <div class="ml-3">
+                                <p class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors line-clamp-1">${group.name}</p>
+                                <p class="text-xs text-gray-400">${group.membersCount} Members</p>
+                            </div>
+                        </a>
+                        <button onclick="joinGroupFromSidebar('${group.id}', this)" class="text-sky-500 hover:bg-sky-50 p-1.5 rounded-full transition-all">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                groupsContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No groups to join</div>';
+            }
+        } catch (error) {
+            groupsContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load.</div>';
+        }
+    }
+
+    // Join group from sidebar
+    async function joinGroupFromSidebar(groupId, buttonElement) {
+        const result = await SohbaApp.post('/Groups/Join', { groupId });
+        if (result.success) {
+            SohbaApp.toast('Joined group successfully!', 'success');
+
+            buttonElement.closest('.flex.items-center.justify-between').remove();
+            if (document.getElementById('sidebarGroupsContainer').children.length === 0) {
+                document.getElementById('sidebarGroupsContainer').innerHTML = '<div class="text-xs text-center text-slate-400 py-2">All caught up!</div>';
+            }
+
+            setTimeout(() => loadGroupsToJoin(), 2000);
+        } else {
+            SohbaApp.toast(result.error || 'Failed to join', 'error');
+        }
+    }
+
+    // Refresh both sections
+    function refreshSidebarSections() {
+        loadGroupsToJoin();
+        
+        const pagesContainer = document.getElementById('sidebarPagesContainer');
+        if (pagesContainer) {
+            setTimeout(() => {
+                fetch('/Pages/Discover')
+                    .then(res => res.json())
+                    .then(pages => {
+                        if (pages && pages.length > 0) {
+                            pagesContainer.innerHTML = pages.map(page => `
+                                <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
+                                    <a href="/Pages/Details/${page.id}" class="flex items-center">
+                                        <img src="${page.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(page.name)}&background=random`}"
+                                             class="w-9 h-9 rounded-lg object-cover shadow-sm" alt="Page Logo">
+                                        <div class="ml-3">
+                                            <p class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors line-clamp-1">${page.name}</p>
+                                            <p class="text-xs text-gray-400">Page</p>
+                                        </div>
+                                    </a>
+                                    <button type="button" onclick="followPageFromSidebar('${page.id}', this)" class="text-emerald-500 hover:bg-emerald-50 p-1.5 rounded-full transition-all">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            `).join('');
+                        } else {
+                            pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No new pages.</div>';
+                        }
+                    })
+                    .catch(() => {
+                        pagesContainer.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load.</div>';
+                    });
+            }, 500);
         }
     }
 </script>

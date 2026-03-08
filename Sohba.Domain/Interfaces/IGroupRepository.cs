@@ -16,5 +16,6 @@ namespace Sohba.Domain.Interfaces
         void RemoveMember(GroupMember member);
 
         Task<IEnumerable<Group>> SearchGroupsAsync(string query, int limit = 10);
+        Task<IEnumerable<GroupMember>> GetGroupMembersAsync(Guid groupId);
     }
 }

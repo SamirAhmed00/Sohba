@@ -31,6 +31,7 @@ namespace Sohba.Application.Services
         // Friend Requests
         public async Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId)
         {
+            Console.WriteLine($"📝 Sending friend request - Sender: {senderId}, Receiver: {receiverId}");
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
             var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(senderId, receiverId);
@@ -46,12 +47,24 @@ namespace Sohba.Application.Services
             if (!decision.IsSuccess)
                 return decision;
 
+            var sender = await _unitOfWork.Users.GetByIdAsync(senderId);
+            var receiver = await _unitOfWork.Users.GetByIdAsync(receiverId);
+
+            Console.WriteLine($"📝 Sender found: {sender != null}, Receiver found: {receiver != null}");
+            Console.WriteLine($"📝 Sender ID from DB: {sender?.Id}, Receiver ID from DB: {receiver?.Id}");
+
+
+            if (sender == null || receiver == null)
+                return Result.Failure("User not found");
+
             var friendRequest = new Friend
             {
                 UserId = senderId,
                 FriendUserId = receiverId,
                 Status = FriendshipStatus.Pending,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                //User = sender,          
+                //FriendUser = receiver
             };
 
             _unitOfWork.Friendships.Add(friendRequest);
@@ -150,6 +163,15 @@ namespace Sohba.Application.Services
             return Result<IEnumerable<FriendDto>>.Success(dto);
         }
 
+        public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+        {
+            return await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
+        }
+
+        public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
+        {
+            return await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+        }
 
         public async Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId)
         {

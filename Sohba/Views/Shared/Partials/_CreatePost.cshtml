@@ -187,6 +187,15 @@
                     window.SohbaApp.toast('Please add a title, content, or an image', 'error');
                     return;
                 }
+                if (!title) {
+                    window.SohbaApp.toast('Title is required', 'error');
+                    return;
+                }
+
+                if (!content) {
+                    window.SohbaApp.toast('Content is required', 'error');
+                    return;
+                }
 
                 try {
                     const formData = new FormData();

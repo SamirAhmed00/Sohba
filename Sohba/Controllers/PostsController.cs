@@ -10,7 +10,6 @@ using Sohba.ViewModels.Post;
 
 namespace Sohba.Controllers
 {
-
     [Authorize]
     public class PostsController : BaseController
     {
@@ -28,28 +27,55 @@ namespace Sohba.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create() => View();
-
-
+        public IActionResult Create(Guid? groupId = null, Guid? pageId = null)
+        {
+            ViewBag.GroupId = groupId;
+            ViewBag.PageId = pageId;
+            return View();
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PostCreateViewModel model)
+        public async Task<IActionResult> Create(PostCreateViewModel model, Guid? groupId = null, Guid? pageId = null)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+                }
+                return View(model);
+            }
 
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty) return RedirectToAction("Login", "Auth");
 
-            string imageUrl = model.ImageUrl; 
+            string imageUrl = null;
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
+                // Validate file extension
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    ModelState.AddModelError("ImageFile", "Only image files are allowed (jpg, jpeg, png, gif, webp)");
+                    return View(model);
+                }
+
+                // Validate file size (max 5MB)
+                if (model.ImageFile.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError("ImageFile", "Image size cannot exceed 5MB");
+                    return View(model);
+                }
+
                 string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);
 
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{Path.GetExtension(model.ImageFile.FileName)}";
+                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{fileExtension}";
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -57,7 +83,6 @@ namespace Sohba.Controllers
                     await model.ImageFile.CopyToAsync(fileStream);
                 }
 
-                // TODO : Change To DB
                 imageUrl = $"/uploads/posts/{uniqueFileName}";
             }
 
@@ -68,31 +93,96 @@ namespace Sohba.Controllers
                 ImageUrl = imageUrl,
                 IsPrivate = model.IsPrivate
             };
+            
+            if (groupId.HasValue)
+            {
+                dto.SourceType = PostSourceType.Group;
+                dto.SourceId = groupId.Value;
+            }
+            else if (pageId.HasValue)
+            {
+                dto.SourceType = PostSourceType.Page;
+                dto.SourceId = pageId.Value;
+            }
 
             var result = await _postService.CreatePostAsync(dto, userId);
 
             if (result.IsSuccess)
-                return RedirectToAction("Index", "Home");
+            {
+                if (groupId.HasValue)
+                    return RedirectToAction("Details", "Groups", new { id = groupId.Value });
+                else if (pageId.HasValue)
+                    return RedirectToAction("Details", "Pages", new { id = pageId.Value });
+                else
+                    return RedirectToAction("Index", "Home");
+            }
 
             ModelState.AddModelError("", result.Error);
             return View(model);
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> GetPostDetails(Guid postId)
+        //{
+        //    var postResult = await _postService.GetPostByIdAsync(postId);
+        //    if (postResult.IsFailure)
+        //        return NotFound(new { error = postResult.Error });
+
+        //    var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
+        //    return Json(new { post = postResult.Value, comments });
+        //}
         [HttpGet]
         public async Task<IActionResult> GetPostDetails(Guid postId)
         {
-            var postResult = await _postService.GetPostByIdAsync(postId);
-            if (postResult.IsFailure)
-                return NotFound(new { error = postResult.Error });
+            try
+            {
+                var userId = GetCurrentUserId();
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
-            return Json(new { post = postResult.Value, comments });
+                var postResult = await _postService.GetPostByIdAsync(postId, userId);
+                if (postResult.IsFailure)
+                    return NotFound(new { success = false, error = postResult.Error });
+
+                var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
+
+                return Json(new
+                {
+                    success = true,
+                    post = new
+                    {
+                        id = postResult.Value.Id,
+                        title = postResult.Value.Title,
+                        content = postResult.Value.Content,
+                        imageUrl = postResult.Value.ImageUrl,
+                        authorName = postResult.Value.AuthorName,
+                        createdAt = postResult.Value.CreatedAt,
+                        commentsCount = postResult.Value.CommentsCount,
+                        reactionsCount = postResult.Value.ReactionsCount,
+                        currentUserReaction = postResult.Value.CurrentUserReaction,
+                        isSaved = postResult.Value.IsSaved,
+                        isFavorite = postResult.Value.IsFavorite
+                    },
+                    comments = comments.Select(c => new
+                    {
+                        id = c.Id,
+                        content = c.Content,
+                        userName = c.UserName,
+                        createdAt = c.CreatedAt
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, error = ex.Message });
+            }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var result = await _postService.GetPostByIdAsync(id);
+            var userId = GetCurrentUserId(); 
+
+            var result = await _postService.GetPostByIdAsync(id, userId); 
 
             if (result.IsFailure || result.Value == null)
             {
@@ -124,7 +214,7 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty)
                 return Unauthorized(new { success = false, error = "User not authenticated." });
 
-            if (!Enum.TryParse<Domain.Enums.ReactionType>(request.ReactionType, true, out var type))
+            if (!Enum.TryParse<ReactionType>(request.ReactionType, true, out var type))
                 return BadRequest(new { success = false, error = "Invalid reaction type." });
 
             var existingReaction = await _interactionService.GetUserReactionAsync(userId, request.PostId);
@@ -164,7 +254,6 @@ namespace Sohba.Controllers
             }
         }
 
-
         [HttpPost]
         public async Task<IActionResult> Comment([FromBody] CommentRequestDto request)
         {
@@ -180,7 +269,6 @@ namespace Sohba.Controllers
             if (!result.IsSuccess)
                 return Json(new { success = false, error = result.Error });
 
-            
             var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId);
             var latest = comments.First();
 
@@ -190,7 +278,6 @@ namespace Sohba.Controllers
                 comment = latest
             });
         }
-
 
         [HttpGet]
         public async Task<IActionResult> Favorites()
@@ -210,7 +297,7 @@ namespace Sohba.Controllers
             var tag = request.IsFavorite ? SavedTag.Favorite : SavedTag.General;
 
             var existingSave = (await _interactionService.GetSavedPostsAsync(userId)).Value?
-                .FirstOrDefault(sp => sp.Id == request.PostId); // here 
+                .FirstOrDefault(sp => sp.Id == request.PostId);
 
             if (existingSave != null)
             {
@@ -231,10 +318,8 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        
         public async Task<IActionResult> ReportPost([FromBody] PostReportRequestDto request)
         {
-
             System.Diagnostics.Debug.WriteLine($"PostId: {request?.PostId}, Reason: {request?.Reason}, UserId: {request?.UserId}");
             if (request == null || request.PostId == Guid.Empty || string.IsNullOrWhiteSpace(request.Reason))
                 return BadRequest(new { success = false, error = "Invalid request data." });
@@ -258,7 +343,6 @@ namespace Sohba.Controllers
 
             return Json(new { success = false, error = result.Error });
         }
-
 
         [HttpPost]
         public async Task<IActionResult> ChangeSavedPostTag([FromBody] ChangeTagRequest request)
@@ -329,10 +413,11 @@ namespace Sohba.Controllers
 
             return Json(new { success = true, posts = result.Value });
         }
+
         public class ToggleSaveRequest
         {
             public Guid PostId { get; set; }
-            public bool IsFavorite { get; set; } // true = Favorite, false = General
+            public bool IsFavorite { get; set; }
         }
 
         public class ChangeTagRequest
@@ -347,4 +432,3 @@ namespace Sohba.Controllers
         }
     }
 }
-

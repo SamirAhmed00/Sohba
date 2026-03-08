@@ -15,11 +15,24 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Post>> GetTimelineAsync(Guid userId)
         {
+
+            var friendIds = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
+                .ToListAsync();
+
+
+            var visibleUserIds = new List<Guid> { userId };
+            visibleUserIds.AddRange(friendIds);
+
             return await _context.Set<Post>()
-                        .Include(p => p.User)
-                        .Where(p => !p.IsDeleted && !p.IsHidden)
-                        .OrderByDescending(p => p.CreatedAt)
-                        .ToListAsync();
+                .Include(p => p.User)
+                .Where(p => !p.IsDeleted && !p.IsHidden
+                            && visibleUserIds.Contains(p.UserId) 
+                            && (p.SourceType == PostSourceType.User || p.SourceId == null))
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
         }
 
         public bool IsPostDeleted(Guid postId)

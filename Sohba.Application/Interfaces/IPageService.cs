@@ -19,6 +19,7 @@ namespace Sohba.Application.Interfaces
         Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId);
         Task<Result<int>> GetFollowersCountAsync(Guid pageId);
         Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
+        Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId);
 
     }
 }

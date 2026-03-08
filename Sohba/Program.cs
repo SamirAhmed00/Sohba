@@ -25,44 +25,18 @@ namespace Sohba
             // Add MVC Services
             builder.Services.AddControllersWithViews();
 
-            //// Layer registrations
-            //builder.Services.AddApplicationServices();
-            //builder.Services.AddInfrastructureService(builder.Configuration);
-
-            //builder.Services.AddAuthentication(options =>
-            //{
-            //    //options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            //    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            //})
-            //.AddJwtBearer(options =>
-            //{
-            //    options.TokenValidationParameters = new TokenValidationParameters
-            //    {
-            //        ValidateIssuer = true,
-            //        ValidateAudience = true,
-            //        ValidateLifetime = true,
-            //        ValidateIssuerSigningKey = true,
-            //        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            //        ValidAudience = builder.Configuration["Jwt:Audience"],
-            //        IssuerSigningKey = new SymmetricSecurityKey(
-            //            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-            //    };
-
-            //    options.Events = new JwtBearerEvents
-            //    {
-            //        OnChallenge = context =>
-            //        {
-            //            context.HandleResponse();
-            //            context.Response.Redirect("/Auth/Login");
-            //            return Task.CompletedTask;
-            //        }
-            //    };
-            //});
-
-            //builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
 
             builder.Services.AddAuthorization();
-
+            builder.Services.ConfigureApplicationCookie(options => // ptoblem here
+            {
+                options.LoginPath = "/Auth/Login"; 
+                options.LogoutPath = "/Auth/Logout";
+                options.AccessDeniedPath = "/Home/AccessDenied";
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+                options.SlidingExpiration = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            });
 
             var app = builder.Build(); // Here
 

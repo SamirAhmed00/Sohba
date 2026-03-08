@@ -124,11 +124,28 @@ namespace Sohba.Application.Services
 
         public async Task<Result<IEnumerable<GroupMemberDto>>> GetGroupMembersAsync(Guid groupId)
         {
-            var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
-            if (group == null) return Result<IEnumerable<GroupMemberDto>>.Failure("Group not found.");
+            try
+            {
+                var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
+                if (group == null)
+                    return Result<IEnumerable<GroupMemberDto>>.Failure("Group not found.");
 
-            var members = _mapper.Map<IEnumerable<GroupMemberDto>>(group.GroupMembers);
-            return Result<IEnumerable<GroupMemberDto>>.Success(members);
+                var members = group.GroupMembers ?? new List<GroupMember>();
+
+                var memberDtos = members.Select(m => new GroupMemberDto
+                {
+                    UserId = m.UserId,
+                    UserName = m.User?.Name ?? "Unknown", 
+                    Role = m.Role.ToString(),
+                    JoinedAt = m.JoinedAt
+                }).ToList();
+
+                return Result<IEnumerable<GroupMemberDto>>.Success(memberDtos);
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<GroupMemberDto>>.Failure($"Error loading members: {ex.Message}");
+            }
         }
 
         public async Task<Result<bool>> KickMemberAsync(Guid groupId, Guid targetUserId, Guid adminId)

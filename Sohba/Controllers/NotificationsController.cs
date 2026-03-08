@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.Interfaces;
 using Sohba.Controllers.Sohba.Controllers;
 
 namespace Sohba.Controllers
 {
+    [Authorize]
     public class NotificationsController : BaseController
     {
         private readonly ISocialService _socialService;
