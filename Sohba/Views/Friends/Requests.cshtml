@@ -1,4 +1,4 @@
-﻿@model Sohba.ViewModels.Friend.FriendRequestsViewModel
+@model Sohba.ViewModels.Friend.FriendRequestsViewModel
 @{
     ViewData["Title"] = "Friend Requests";
     Layout = "_AppLayout";
@@ -39,28 +39,28 @@
             <div class="space-y-3">
                 @foreach (var request in Model.PendingRequests)
                 {
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover-lift" data-request-id="@request.FriendUserId">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
-                                     class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
-                                <div>
-                                    <h3 class="font-bold text-gray-900">@request.FriendName</h3>
-                                    <p class="text-sm text-gray-500">Wants to connect with you</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="acceptRequest('@request.FriendUserId')"
-                                        class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
-                                    Accept
-                                </button>
-                                <button onclick="rejectRequest('@request.FriendUserId')"
-                                        class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
-                                    Decline
-                                </button>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover-lift" data-request-id="@request.UserId">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
+                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                            <div>
+                                <h3 class="font-bold text-gray-900">@request.FriendName</h3>
+                                <p class="text-sm text-gray-500">Wants to connect with you</p>
                             </div>
                         </div>
+                        <div class="flex gap-2">
+                            <button onclick="acceptRequest('@request.UserId')"  
+                                    class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                Accept
+                            </button>
+                            <button onclick="rejectRequest('@request.UserId')" 
+                                    class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                Decline
+                            </button>
+                        </div>
                     </div>
+                </div>
                 }
             </div>
         }
@@ -91,7 +91,7 @@
                                 <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
                                      class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
                                 <div>
-                                    <h3 class="font-bold text-gray-900">@request.FriendName</h3>
+                                    <h3 class="font-bold text-gray-900">@request.ReceiverName</h3>
                                     <p class="text-sm text-gray-500">Request sent · Pending</p>
                                 </div>
                             </div>
@@ -122,211 +122,6 @@
     </div>
 </div>
 
-@* @section Scripts {
-    <script>
-         console.log('✅ Friend Requests page loaded');
-        function switchTab(tab) {
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'border-[#345e69]', 'text-[#345e69]');
-                btn.classList.add('border-transparent', 'text-gray-400');
-            });
-
-            event.target.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
-            event.target.classList.remove('border-transparent', 'text-gray-400');
-
-            // Show/hide tabs
-            document.getElementById('pending-tab').classList.toggle('hidden', tab !== 'pending');
-            document.getElementById('sent-tab').classList.toggle('hidden', tab !== 'sent');
-        }
-
-        async function acceptRequest(userId) {
-            const result = await SohbaApp.post('/Friends/AcceptRequest', { requesterId: userId });
-            if (result.success) {
-                SohbaApp.toast('Friend request accepted!', 'success');
-                document.querySelector(`[data-request-id="${userId}"]`).remove();
-
-                // Update counts
-                const countElement = document.querySelector('.tab-btn:first-child');
-                const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]);
-                countElement.innerHTML = `Received (${currentCount - 1})`;
-            }
-        }
-
-        async function rejectRequest(userId) {
-            const result = await SohbaApp.post('/Friends/RejectRequest', { requesterId: userId });
-            if (result.success) {
-                SohbaApp.toast('Friend request declined', 'success');
-                document.querySelector(`[data-request-id="${userId}"]`).remove();
-
-                // Update counts
-                const countElement = document.querySelector('.tab-btn:first-child');
-                const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]);
-                countElement.innerHTML = `Received (${currentCount - 1})`;
-            }
-        }
-
-        async function cancelRequest(userId) {
-            if (!confirm('Cancel this friend request?')) return;
-
-            const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
-            if (result.success) {
-                SohbaApp.toast('Request cancelled', 'success');
-                document.querySelector(`[data-request-id="${userId}"]`).remove();
-
-                // Update counts
-                const countElement = document.querySelectorAll('.tab-btn')[1];
-                const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]);
-                countElement.innerHTML = `Sent (${currentCount - 1})`;
-            }
-        }
-    </script>
-} *@
-
 @section Scripts {
-    <script>
-        console.log('✅ Friend Requests page loaded');
-
-        function switchTab(tab) {
-            console.log('Switching to tab:', tab);
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'border-[#345e69]', 'text-[#345e69]');
-                btn.classList.add('border-transparent', 'text-gray-400');
-            });
-
-            event.target.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
-            event.target.classList.remove('border-transparent', 'text-gray-400');
-
-            // Show/hide tabs
-            document.getElementById('pending-tab').classList.toggle('hidden', tab !== 'pending');
-            document.getElementById('sent-tab').classList.toggle('hidden', tab !== 'sent');
-        }
-
-        async function acceptRequest(userId) {
-            console.log('🔍 acceptRequest called with userId:', userId);
-
-            try {
-                console.log('📤 Sending POST request to /Friends/AcceptRequest with data:', { requesterId: userId });
-
-                const result = await SohbaApp.post('/Friends/AcceptRequest', { requesterId: userId });
-
-                console.log('📥 Response received:', result);
-
-                if (result.success) {
-                    console.log('✅ Request accepted successfully');
-                    SohbaApp.toast('Friend request accepted!', 'success');
-
-                    const element = document.querySelector(`[data-request-id="${userId}"]`);
-                    console.log('🗑️ Removing element:', element);
-                    if (element) element.remove();
-
-                    // Update counts
-                    const countElement = document.querySelector('.tab-btn:first-child');
-                    if (countElement) {
-                        const match = countElement.textContent.match(/\d+/);
-                        if (match) {
-                            const currentCount = parseInt(match[0]);
-                            countElement.innerHTML = `Received (${currentCount - 1})`;
-                            console.log('📊 Updated count to:', currentCount - 1);
-                        }
-                    }
-                } else {
-                    console.error('❌ Request failed:', result.error);
-                    SohbaApp.toast(result.error || 'Failed to accept request', 'error');
-                }
-            } catch (error) {
-                console.error('❌ Error in acceptRequest:', error);
-                SohbaApp.toast('Network error', 'error');
-            }
-        }
-
-        async function rejectRequest(userId) {
-            console.log('🔍 rejectRequest called with userId:', userId);
-
-            try {
-                console.log('📤 Sending POST request to /Friends/RejectRequest with data:', { requesterId: userId });
-
-                const result = await SohbaApp.post('/Friends/RejectRequest', { requesterId: userId });
-
-                console.log('📥 Response received:', result);
-
-                if (result.success) {
-                    console.log('✅ Request rejected successfully');
-                    SohbaApp.toast('Friend request declined', 'success');
-
-                    const element = document.querySelector(`[data-request-id="${userId}"]`);
-                    console.log('🗑️ Removing element:', element);
-                    if (element) element.remove();
-
-                    // Update counts
-                    const countElement = document.querySelector('.tab-btn:first-child');
-                    if (countElement) {
-                        const match = countElement.textContent.match(/\d+/);
-                        if (match) {
-                            const currentCount = parseInt(match[0]);
-                            countElement.innerHTML = `Received (${currentCount - 1})`;
-                            console.log('📊 Updated count to:', currentCount - 1);
-                        }
-                    }
-                } else {
-                    console.error('❌ Request failed:', result.error);
-                    SohbaApp.toast(result.error || 'Failed to decline request', 'error');
-                }
-            } catch (error) {
-                console.error('❌ Error in rejectRequest:', error);
-                SohbaApp.toast('Network error', 'error');
-            }
-        }
-
-        async function cancelRequest(userId) {
-            console.log('🔍 cancelRequest called with userId:', userId);
-
-            if (!confirm('Cancel this friend request?')) {
-                console.log('❌ User cancelled confirmation');
-                return;
-            }
-
-            try {
-                console.log('📤 Sending POST request to /Friends/CancelRequest with data:', { receiverId: userId });
-
-                const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
-
-                console.log('📥 Response received:', result);
-
-                if (result.success) {
-                    console.log('✅ Request cancelled successfully');
-                    SohbaApp.toast('Request cancelled', 'success');
-
-                    const element = document.querySelector(`[data-request-id="${userId}"]`);
-                    console.log('🗑️ Removing element:', element);
-                    if (element) element.remove();
-
-                    // Update counts
-                    const countElement = document.querySelectorAll('.tab-btn')[1];
-                    if (countElement) {
-                        const match = countElement.textContent.match(/\d+/);
-                        if (match) {
-                            const currentCount = parseInt(match[0]);
-                            countElement.innerHTML = `Sent (${currentCount - 1})`;
-                            console.log('📊 Updated count to:', currentCount - 1);
-                        }
-                    }
-                } else {
-                    console.error('❌ Request failed:', result.error);
-                    SohbaApp.toast(result.error || 'Failed to cancel request', 'error');
-                }
-            } catch (error) {
-                console.error('❌ Error in cancelRequest:', error);
-                SohbaApp.toast('Network error', 'error');
-            }
-        }
-
-        // Test if functions are defined
-        console.log('✅ Functions defined:', {
-            acceptRequest: typeof acceptRequest,
-            rejectRequest: typeof rejectRequest,
-            cancelRequest: typeof cancelRequest
-        });
-    </script>
+    <script src="~/js/features/friends.js"></script>
 }

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -40,40 +40,18 @@ namespace Sohba.Application.Services
             if (!validation.IsSuccess)
                 return Result<StoryResponseDto>.Failure(validation.Error);
 
-            string mediaUrl = storyDto.MediaUrl;
-            string mediaType = null;
-
-            if (storyDto.MediaFile != null)
-            {
-                var uploadsFolder = Path.Combine("wwwroot", "uploads", "stories");
-
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var fileName = Guid.NewGuid() + Path.GetExtension(storyDto.MediaFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await storyDto.MediaFile.CopyToAsync(stream);
-                }
-
-                mediaUrl = "/uploads/stories/" + fileName;
-                mediaType = "image";
-            }
-
-
+            // MediaUrl is resolved by the controller via IFileStorageService before this call.
+            // StoryService must NOT perform any file I/O (Application layer cannot touch Infrastructure).
+            var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
             var story = new Story
             {
                 UserId = userId,
                 Content = storyDto.Content,
-                MediaUrl = mediaUrl,
-                MediaType = mediaType,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddHours(24),
+                MediaUrl = storyDto.MediaUrl,
+                MediaType = storyDto.MediaUrl != null ? "image" : null,
+                CreatedAt = now,
+                ExpiresAt = now.AddHours(24),
                 IsDeleted = false,
                 Privacy = storyDto.Privacy == "FriendsOnly" ? StoryPrivacy.FriendsOnly : StoryPrivacy.Public
             };

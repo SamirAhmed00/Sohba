@@ -34,6 +34,8 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
+            Console.WriteLine($"🔐 Login attempt - Email: {loginDto.Email}, RememberMe: {loginDto.RememberMe}");
+
             if (!ModelState.IsValid)
                 return View(loginDto);
 
@@ -49,6 +51,8 @@ namespace Sohba.Controllers
                 loginDto.Password,
                 loginDto.RememberMe,
                 lockoutOnFailure: true);
+
+            Console.WriteLine($"📊 SignIn result: {result.Succeeded}, RememberMe: {loginDto.RememberMe}");
 
             if (!result.Succeeded)
             {

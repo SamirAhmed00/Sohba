@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -31,7 +31,7 @@ namespace Sohba.Application.Services
         // Friend Requests
         public async Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            Console.WriteLine($"📝 Sending friend request - Sender: {senderId}, Receiver: {receiverId}");
+            // Domain pre-checks: self-request, duplicate, blocked, already friends
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
             var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(senderId, receiverId);
@@ -47,24 +47,14 @@ namespace Sohba.Application.Services
             if (!decision.IsSuccess)
                 return decision;
 
-            var sender = await _unitOfWork.Users.GetByIdAsync(senderId);
-            var receiver = await _unitOfWork.Users.GetByIdAsync(receiverId);
-
-            Console.WriteLine($"📝 Sender found: {sender != null}, Receiver found: {receiver != null}");
-            Console.WriteLine($"📝 Sender ID from DB: {sender?.Id}, Receiver ID from DB: {receiver?.Id}");
-
-
-            if (sender == null || receiver == null)
-                return Result.Failure("User not found");
-
+            // Friend entity only stores two FK GUIDs; no navigation properties needed for insert.
+            // DB FK constraint enforces referential integrity — no need to fetch User entities.
             var friendRequest = new Friend
             {
                 UserId = senderId,
                 FriendUserId = receiverId,
                 Status = FriendshipStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
-                //User = sender,          
-                //FriendUser = receiver
             };
 
             _unitOfWork.Friendships.Add(friendRequest);
@@ -73,28 +63,67 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
+        //public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
+        //{
+        //    var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+        //    var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
+
+        //    var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
+
+        //    if (!decision.IsSuccess)
+        //        return decision;
+
+        //    var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+
+        //    if (friendship == null)
+        //        return Result.Failure("Friend request not found.");
+
+        //    friendship.Status = FriendshipStatus.Accepted;
+
+        //    _unitOfWork.Friendships.Update(friendship);
+        //    await _unitOfWork.CompleteAsync();
+
+        //    return Result.Success();
+        //}
+
         public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
         {
+            Console.WriteLine($"🔍 AcceptFriendRequest - senderId: {senderId}, receiverId: {receiverId}");
+            Console.WriteLine($"senderId == Ahmed? {senderId.ToString().ToUpper() == "0524C680-1A03-48AA-95E5-B881578D193E"}");
+            Console.WriteLine($"receiverId == Samir? {receiverId.ToString().ToUpper() == "0EF0DA58-4B3F-4775-87CF-4807CB1E38B4"}");
+
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+            Console.WriteLine($"📊 HasPending result: {hasPending}");
+
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
+            Console.WriteLine($"📊 AlreadyFriends result: {alreadyFriends}");
 
             var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
+            Console.WriteLine($"📊 Decision success: {decision.IsSuccess}, Error: {decision.Error}");
 
             if (!decision.IsSuccess)
                 return decision;
 
             var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+            Console.WriteLine($"📊 Friendship found: {friendship != null}");
+
+            if (friendship != null)
+            {
+                Console.WriteLine($"📊 Friendship status: {friendship.Status}");
+            }
 
             if (friendship == null)
                 return Result.Failure("Friend request not found.");
 
             friendship.Status = FriendshipStatus.Accepted;
-
             _unitOfWork.Friendships.Update(friendship);
-            await _unitOfWork.CompleteAsync();
+
+            var rowsAffected = await _unitOfWork.CompleteAsync();
+            Console.WriteLine($"💾 Rows affected: {rowsAffected}");
 
             return Result.Success();
         }
+
 
         public async Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId)
         {

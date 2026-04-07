@@ -1,4 +1,4 @@
-﻿@* // Right Sidebar *@
+@* // Right Sidebar *@
 
 <div class="hidden xl:block col-span-4 sticky top-24 space-y-6 h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar pb-10">
 
@@ -53,7 +53,10 @@
                         <div class="flex justify-between items-start">
                             <span class="text-xs text-gray-400 font-medium">Trending</span>
                         </div>
-                        <a href="/Posts/Hashtag/@hashtag.Tag" class="block">
+                        <!-- Hashtag link navigates to Search so results render in Results.cshtml
+                             instead of triggering a page refresh or a missing route. -->
+                             
+                        <a href="/Search/Index?q=%23@hashtag.Tag" class="block">
                             <h4 class="font-bold text-gray-800 text-sm mt-0.5 hover:text-[#345e69]">#@hashtag.Tag</h4>
                         </a>
                         <p class="text-xs text-gray-400 mt-1">@(hashtag.Count.ToString("N0")) posts</p>
@@ -82,54 +85,5 @@
 
 
 @section Scripts {
-    <script>
-        // Load friend suggestions
-        document.addEventListener('DOMContentLoaded', async function() {
-            const container = document.getElementById('friendSuggestionsContainer');
-            if (!container) return;
-
-            try {
-                const response = await fetch('/Friends/GetFriendSuggestions?count=5');
-                const users = await response.json();
-
-                if (users && users.length > 0) {
-                    container.innerHTML = users.map(user => `
-                        <div class="flex items-center justify-between group">
-                            <div class="flex items-center gap-3">
-                                <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}"
-                                     class="w-10 h-10 rounded-xl object-cover" alt="${user.name}">
-                                <div>
-                                    <h5 class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors cursor-pointer">
-                                        ${user.name}
-                                    </h5>
-                                    <p class="text-xs text-gray-400">Suggest for you</p>
-                                </div>
-                            </div>
-                            <button onclick="sendFriendRequest('${user.id}')"
-                                    class="text-[#345e69] bg-[#345e69]/10 hover:bg-[#345e69] hover:text-white p-2 rounded-lg transition-all duration-300">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
-                            </button>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No suggestions</div>';
-                }
-            } catch (error) {
-                container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Failed to load</div>';
-            }
-        });
-
-        async function sendFriendRequest(userId) {
-            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
-            if (result.success) {
-                SohbaApp.toast('Friend request sent!', 'success');
-                // Refresh suggestions after sending
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                SohbaApp.toast(result.error || 'Failed to send request', 'error');
-            }
-        }
-    </script>
+    <script src="~/js/features/sidebar.js"></script>
 }

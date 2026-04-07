@@ -22,6 +22,7 @@ namespace Sohba.Application.DTOs.PostAggregate
 
         public bool IsReportedByCurrentUser { get; set; }
 
+        public bool IsPrivate { get; set; }
         public string SourceType { get; set; } 
         public string? SourceName { get; set; }
         public Guid? SourceId { get; set; }

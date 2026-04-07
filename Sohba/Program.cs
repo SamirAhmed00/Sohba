@@ -35,7 +35,11 @@ namespace Sohba
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
                 options.SlidingExpiration = true;
                 options.Cookie.IsEssential = true;
+                options.SlidingExpiration = false;
                 options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.MaxAge = null;
+                options.Cookie.Name = ".SohbaAuth";
             });
 
             var app = builder.Build(); // Here

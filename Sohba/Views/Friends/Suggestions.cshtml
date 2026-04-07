@@ -73,7 +73,7 @@
 @section Scripts {
     <script>
         async function sendFriendRequest(userId) {
-            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
+            const result = await SohbaApp.post('/Friends/SendRequest', {receiverId: userId });
             if (result.success) {
                 SohbaApp.toast('Friend request sent!', 'success');
                 // Remove user from suggestions

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -28,10 +28,34 @@ namespace Sohba.Application.Services
 
         public async Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId)
         {
-
             var validation = _postDomainService.CanCreatePost(userId, postDto.Content, !string.IsNullOrEmpty(postDto.ImageUrl));
             if (!validation.IsSuccess)
                 return Result<PostResponseDto>.Failure(validation.Error);
+
+            // --- Access Control for Group/Page Posts ---
+            if (postDto.SourceId.HasValue)
+            {
+                if (postDto.SourceType == PostSourceType.Group)
+                {
+                    // Rule: Only active, non-banned group members can post in a group
+                    var isMember = await _unitOfWork.Groups.IsMemberAsync(userId, postDto.SourceId.Value);
+                    if (!isMember)
+                        return Result<PostResponseDto>.Failure(
+                            "Access denied: You must be an active member of this group to post in it.");
+                }
+                else if (postDto.SourceType == PostSourceType.Page)
+                {
+                    // Rule: Only the page admin can post on a page
+                    var page = await _unitOfWork.Pages.GetByIdAsync(postDto.SourceId.Value);
+                    if (page == null)
+                        return Result<PostResponseDto>.Failure("Page not found.");
+
+                    if (page.AdminId != userId)
+                        return Result<PostResponseDto>.Failure(
+                            "Access denied: Only the page administrator can post on this page.");
+                }
+            }
+            // --- End Access Control ---
 
             var post = _mapper.Map<Post>(postDto);
             post.UserId = userId;
@@ -48,23 +72,19 @@ namespace Sohba.Application.Services
                     post.PageId = postDto.SourceId;
             }
 
-            // Extract hashtags from content and combine with provided hashtags, ensuring uniqueness
+            // Extract hashtags from content
             var extractedTags = ExtractHashtags(postDto.Content).ToList();
 
             _unitOfWork.Posts.Add(post);
             await _unitOfWork.CompleteAsync();
 
-            // Extract hashtags and associate with post (if any)
             if (extractedTags.Any())
             {
-                // TODO: مستقبلاً نجيب اللوكيشن من الـ User Profile
-                // var user = await _unitOfWork.Users.GetByIdAsync(userId);
-                // string userLocation = user.Country ?? "Global";
-
-                string userLocation = "Egypt"; // قيمة افتراضية حالياً
+                string userLocation = "Egypt"; // Default — future: fetch from User.Country
                 await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
                 await _unitOfWork.CompleteAsync();
             }
+
             return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
 

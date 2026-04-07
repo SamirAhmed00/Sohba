@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Application.Services;
 using Sohba.Controllers.Sohba.Controllers;
 using Sohba.ViewModels.Group;
 
@@ -13,14 +12,18 @@ namespace Sohba.Controllers
     {
         private readonly IGroupService _groupService;
         private readonly IPostService _postService;
+        private readonly IFileStorageService _fileStorage;
 
-        public GroupsController(IGroupService groupService, IPostService postService)
+        public GroupsController(
+            IGroupService groupService,
+            IPostService postService,
+            IFileStorageService fileStorage)
         {
             _groupService = groupService;
             _postService = postService;
+            _fileStorage = fileStorage;
         }
 
-        // في GroupsController.cs
 
         [HttpGet]
         public async Task<IActionResult> Discover()
@@ -60,31 +63,23 @@ namespace Sohba.Controllers
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty) return RedirectToAction("Login", "Auth");
 
+            // Delegate all file I/O to IFileStorageService — no raw FileStream here.
             string imageUrl = null;
-
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            try
             {
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "groups");
-
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{Path.GetExtension(model.ImageFile.FileName)}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.ImageFile.CopyToAsync(fileStream);
-                }
-
-                imageUrl = $"/uploads/groups/{uniqueFileName}";
+                imageUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ImageFile", ex.Message);
+                return View(model);
             }
 
             var dto = new GroupCreateDto
             {
                 Name = model.Name,
                 Description = model.Description,
-                ImageUrl = imageUrl 
+                ImageUrl = imageUrl
             };
 
             var result = await _groupService.CreateGroupAsync(dto, userId);
@@ -149,17 +144,19 @@ namespace Sohba.Controllers
                 return View(model);
 
             var userId = GetCurrentUserId();
-            string imageUrl = model.ImageUrl;
 
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            // Delegate file I/O to IFileStorageService.
+            // If no new file is uploaded, imageUrl stays as the existing URL.
+            string imageUrl = model.ImageUrl;
+            try
             {
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "groups");
-                Directory.CreateDirectory(uploadsFolder);
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{Path.GetExtension(model.ImageFile.FileName)}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    await model.ImageFile.CopyToAsync(fileStream);
-                imageUrl = $"/uploads/groups/{uniqueFileName}";
+                var newUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
+                if (newUrl != null) imageUrl = newUrl;
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ImageFile", ex.Message);
+                return View(model);
             }
 
             var updateDto = new GroupUpdateDto

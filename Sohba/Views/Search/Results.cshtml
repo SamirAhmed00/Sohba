@@ -1,4 +1,4 @@
-﻿@model Sohba.ViewModels.Search.SearchViewModel
+@model Sohba.ViewModels.Search.SearchViewModel
 @{
     ViewData["Title"] = $"Search results for \"{Model.Query}\"";
     Layout = "_AppLayout";
@@ -340,35 +340,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        function switchTab(tab) {
-            // Update URL
-            const url = new URL(window.location);
-            url.searchParams.set('tab', tab);
-            window.history.pushState({}, '', url);
-            
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
-                btn.classList.add('text-gray-400');
-            });
-            
-            event.target.classList.add('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
-            event.target.classList.remove('text-gray-400');
-            
-            // Show selected tab
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-        }
-        
-        function refineSearch() {
-            const input = document.getElementById('refineSearchInput');
-            const query = input.value.trim();
-            if (query.length >= 2) {
-                window.location.href = `/Search?q=${encodeURIComponent(query)}`;
-            }
-        }
-    </script>
+    <script src="~/js/features/search.js"></script>
 }

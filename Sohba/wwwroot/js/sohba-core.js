@@ -1,4 +1,4 @@
-﻿// sohba-core.js - Shared core utility functions
+// sohba-core.js - Shared core utility functions
 window.SohbaApp = window.SohbaApp || {};
 
 // Toast Notification
@@ -14,6 +14,7 @@ window.SohbaApp.toast = function (message, type = 'info') {
 };
 
 // HTTP POST Request
+// Returns a standardised { success, error } object — never throws, never returns HTML.
 window.SohbaApp.post = async function (url, data) {
     try {
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -27,14 +28,29 @@ window.SohbaApp.post = async function (url, data) {
             body: JSON.stringify(data)
         });
 
-        if (!response.ok) {
-            throw new Error('Request failed');
+        // Guard: if the server returned HTML (e.g. Developer Exception page on 500,
+        // or the auth login-redirect resolved to a 200 HTML page), response.json()
+        // would throw a SyntaxError. Check Content-Type first.
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            const statusLabel = response.status === 401 || response.status === 302
+                ? 'Session expired. Please refresh and log in again.'
+                : `Server error (HTTP ${response.status}). Please try again.`;
+            console.error(`[SohbaApp.post] Non-JSON response from ${url}:`, response.status, contentType);
+            return { success: false, Success: false, error: statusLabel, Error: statusLabel };
         }
 
-        return await response.json();
+        const json = await response.json();
+
+        // Normalise casing so callers can use result.success or result.Success interchangeably.
+        if (json.Success !== undefined && json.success === undefined) json.success = json.Success;
+        if (json.Error   !== undefined && json.error   === undefined) json.error   = json.Error;
+
+        return json;
     } catch (error) {
-        console.error('POST Error:', error);
-        throw error;
+        // Network-level error (offline, CORS, DNS failure, etc.)
+        console.error('[SohbaApp.post] Network error:', error);
+        return { success: false, Success: false, error: 'Network error. Check your connection and try again.', Error: 'Network error.' };
     }
 };
 

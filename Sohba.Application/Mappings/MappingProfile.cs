@@ -31,6 +31,7 @@ namespace Sohba.Application.Mappings
             CreateMap<PostCreateDto, Post>();
             CreateMap<Post, PostResponseDto>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
                 .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.SourceType.ToString()))
                 .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
                     src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
@@ -84,9 +85,13 @@ namespace Sohba.Application.Mappings
                 .ForMember(dest => dest.NotificationType, opt => opt.MapFrom(src => src.Type.ToString())); //
 
             CreateMap<Friend, FriendDto>()
-                .ForMember(dest => dest.FriendName, opt => opt.MapFrom(src => src.FriendUser.Name))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.FriendUser.ProfilePictureUrl));
+                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId)) 
+                 .ForMember(dest => dest.FriendUserId, opt => opt.MapFrom(src => src.FriendUserId))
+                 .ForMember(dest => dest.FriendName, opt => opt.MapFrom(src => src.User.Name))  
+                 .ForMember(dest => dest.ReceiverName, opt => opt.MapFrom(src => src.FriendUser.Name))
+                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+                 .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.User.ProfilePictureUrl));
+
 
             // --- Story Mapping ---
             CreateMap<Story, StoryResponseDto>()

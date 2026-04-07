@@ -1,4 +1,4 @@
-﻿using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
@@ -45,7 +45,10 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId)
         {
+            // Include both User (sender) and FriendUser (recipient) so AutoMapper
+            // can resolve FriendName = src.User.Name without NullReferenceException.
             return await _context.Friends
+                .AsNoTracking()
                 .Include(f => f.User)
                 .Include(f => f.FriendUser)
                 .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Pending)
@@ -66,12 +69,31 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        //public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
+        //{
+        //    return await _context.Friends
+        //        .FirstOrDefaultAsync(f =>
+        //            f.UserId == userId &&
+        //            f.FriendUserId == friendId);
+        //}
+
         public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
         {
-            return await _context.Friends
-                .FirstOrDefaultAsync(f =>
-                    f.UserId == userId &&
-                    f.FriendUserId == friendId);
+            Console.WriteLine($"🔍 GetByUsersAsync - userId: {userId}, friendId: {friendId}");
+
+            var friendship = await _context.Friends
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendId);
+
+            Console.WriteLine($"📊 Friendship found: {friendship != null}");
+
+            if (friendship == null)
+            {
+                var reversed = await _context.Friends
+                    .FirstOrDefaultAsync(f => f.UserId == friendId && f.FriendUserId == userId);
+                Console.WriteLine($"📊 Reversed found: {reversed != null}");
+            }
+
+            return friendship;
         }
 
         public async Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId)
@@ -101,13 +123,37 @@ namespace Sohba.Infrastructure.Repositories
                     f.Status == FriendshipStatus.Blocked);
         }
 
+        //public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
+        //{
+        //    return await _context.Friends
+        //        .AnyAsync(f =>
+        //            f.UserId == senderId &&
+        //            f.FriendUserId == receiverId &&
+        //            f.Status == FriendshipStatus.Pending);
+        //}
+
         public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
         {
-            return await _context.Friends
-                .AnyAsync(f =>
-                    f.UserId == senderId &&
-                    f.FriendUserId == receiverId &&
-                    f.Status == FriendshipStatus.Pending);
+            Console.WriteLine($"🔍 HasPendingRequest - senderId: {senderId}, receiverId: {receiverId}");
+
+            var exists = await _context.Friends
+                .AnyAsync(f => f.UserId == senderId &&
+                               f.FriendUserId == receiverId &&
+                               f.Status == FriendshipStatus.Pending);
+
+            Console.WriteLine($"📊 Pending request exists: {exists}");
+
+            // لو مش موجود، شوف لو مقلوبين
+            if (!exists)
+            {
+                var reversedExists = await _context.Friends
+                    .AnyAsync(f => f.UserId == receiverId &&
+                                   f.FriendUserId == senderId &&
+                                   f.Status == FriendshipStatus.Pending);
+                Console.WriteLine($"📊 Reversed check: {reversedExists}");
+            }
+
+            return exists;
         }
 
         public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)

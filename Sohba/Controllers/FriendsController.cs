@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Controllers.Sohba.Controllers;
@@ -57,9 +58,29 @@ namespace Sohba.Controllers
         [HttpPost]
         public async Task<IActionResult> SendRequest([FromBody] SendRequestModel model)
         {
-            var currentUserId = GetCurrentUserId();
-            var result = await _friendshipService.SendFriendRequestAsync(currentUserId, model.receiverId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
+            try
+            {
+                // Guard: model binding can produce a null object or Guid.Empty if the
+                // JSON payload is missing / malformed — catch it before hitting the service.
+                if (model == null || model.receiverId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse(
+                        "Invalid request: receiver ID is missing or invalid."));
+
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse(
+                        "User not authenticated."));
+
+                var result = await _friendshipService.SendFriendRequestAsync(currentUserId, model.receiverId);
+                return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+            }
+            catch (Exception ex)
+            {
+                // Catches DbUpdateException (duplicate key), any service exception, etc.
+                // Returns JSON so the JS caller never receives an HTML error page.
+                return Json(BaseResponseDto.FailureResponse(
+                    $"An unexpected error occurred: {ex.Message}"));
+            }
         }
 
         public class SendRequestModel
@@ -73,7 +94,7 @@ namespace Sohba.Controllers
         {
             var currentUserId = GetCurrentUserId();
             var result = await _friendshipService.UnfriendAsync(currentUserId, friendId);
-            return Json(new { success = result.IsSuccess });
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
 
         [HttpPost]
@@ -81,7 +102,7 @@ namespace Sohba.Controllers
         {
             var currentUserId = GetCurrentUserId();
             var result = await _friendshipService.BlockUserAsync(currentUserId, userId);
-            return Json(new { success = result.IsSuccess });
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
 
         [HttpPost]
@@ -89,7 +110,7 @@ namespace Sohba.Controllers
         {
             var currentUserId = GetCurrentUserId();
             var result = await _friendshipService.UnblockUserAsync(currentUserId, userId);
-            return Json(new { success = result.IsSuccess });
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
 
         [HttpGet]
@@ -105,7 +126,7 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _friendshipService.GetFriendSuggestionsAsync(userId, count);
-            return Json(result.Value);
+            return Json(BaseResponseDto<IEnumerable<UserResponseDto>>.SuccessResponse(result.Value));
         }
 
         [HttpGet]
@@ -113,7 +134,7 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _friendshipService.GetPendingRequestsCountAsync(userId);
-            return Json(new { count = result.Value });
+            return Json(BaseResponseDto<int>.SuccessResponse(result.Value));
         }
 
         [HttpGet]
@@ -131,44 +152,73 @@ namespace Sohba.Controllers
 
             var areFriends = await _friendshipService.AreFriendsAsync(currentUserId, userId);
             if (areFriends)
-                return Json(new { status = "accepted" });
+                return Json(BaseResponseDto<string>.SuccessResponse("accepted"));
 
             var hasPending = await _friendshipService.HasPendingRequestAsync(currentUserId, userId);
             if (hasPending)
-                return Json(new { status = "pending" });
+                return Json(BaseResponseDto<string>.SuccessResponse("pending"));
 
-            return Json(new { status = "none" });
+            return Json(BaseResponseDto<string>.SuccessResponse("none"));
         }
 
         [HttpPost]
         public async Task<IActionResult> AcceptRequest([FromBody] AcceptRequestModel model)
         {
-            var currentUserId = GetCurrentUserId();
-            Console.WriteLine($"🔍 AcceptRequest - requesterId: {model.requesterId}, currentUserId: {currentUserId}");
-            var result = await _friendshipService.AcceptFriendRequestAsync(model.requesterId, currentUserId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
+            try
+            {
+                if (model == null || model.senderId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse("Invalid request: sender ID is missing."));
+
+                var currentUserId = GetCurrentUserId();
+                var result = await _friendshipService.AcceptFriendRequestAsync(model.senderId, currentUserId);
+                return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+            }
+            catch (Exception ex)
+            {
+                return Json(BaseResponseDto.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> RejectRequest([FromBody] RejectRequestModel model)
         {
-            var currentUserId = GetCurrentUserId();
-            var result = await _friendshipService.RejectFriendRequestAsync(model.requesterId, currentUserId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
+            try
+            {
+                if (model == null || model.requesterId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse("Invalid request: requester ID is missing."));
+
+                var currentUserId = GetCurrentUserId();
+                var result = await _friendshipService.RejectFriendRequestAsync(model.requesterId, currentUserId);
+                return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+            }
+            catch (Exception ex)
+            {
+                return Json(BaseResponseDto.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> CancelRequest([FromBody] CancelRequestModel model)
         {
-            var currentUserId = GetCurrentUserId();
-            var result = await _friendshipService.CancelFriendRequestAsync(currentUserId, model.receiverId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
+            try
+            {
+                if (model == null || model.receiverId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse("Invalid request: receiver ID is missing."));
+
+                var currentUserId = GetCurrentUserId();
+                var result = await _friendshipService.CancelFriendRequestAsync(currentUserId, model.receiverId);
+                return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+            }
+            catch (Exception ex)
+            {
+                return Json(BaseResponseDto.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+            }
         }
 
         // Models for binding
         public class AcceptRequestModel
         {
-            public Guid requesterId { get; set; }
+            public Guid senderId { get; set; }
         }
 
         public class RejectRequestModel

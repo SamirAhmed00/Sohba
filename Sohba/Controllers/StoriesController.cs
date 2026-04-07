@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
@@ -10,10 +10,12 @@ namespace Sohba.Controllers
     public class StoriesController : BaseController
     {
         private readonly IStoryService _storyService;
+        private readonly IFileStorageService _fileStorage;
 
-        public StoriesController(IStoryService storyService)
+        public StoriesController(IStoryService storyService, IFileStorageService fileStorage)
         {
             _storyService = storyService;
+            _fileStorage = fileStorage;
         }
 
         [HttpGet]
@@ -28,6 +30,21 @@ namespace Sohba.Controllers
         public async Task<IActionResult> Create([FromForm] StoryCreateDto model)
         {
             var userId = GetCurrentUserId();
+
+            // Resolve the media URL here in the controller (Infrastructure boundary).
+            // StoryService receives a plain string URL — no file I/O in the Application layer.
+            if (model.MediaFile != null && model.MediaFile.Length > 0)
+            {
+                try
+                {
+                    model.MediaUrl = await _fileStorage.SaveFileAsync(model.MediaFile, "stories");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Json(new { success = false, error = ex.Message });
+                }
+            }
+
             var result = await _storyService.CreateStoryAsync(model, userId);
 
             if (result.IsSuccess)

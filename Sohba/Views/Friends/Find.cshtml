@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
 @{
     ViewData["Title"] = "Find Friends";
     Layout = "_AppLayout";
@@ -92,59 +92,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            const userCards = document.querySelectorAll('.user-card');
-            let visibleCount = 0;
-
-            userCards.forEach(card => {
-                const name = card.dataset.name;
-                if (name.includes(searchTerm)) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Show/hide no results message
-            const noResults = document.getElementById('noResultsMessage');
-            if (visibleCount === 0) {
-                noResults.classList.remove('hidden');
-            } else {
-                noResults.classList.add('hidden');
-            }
-        });
-
-        // Filter functionality
-        function filterUsers(filter) {
-            // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-[#345e69]', 'text-white');
-                btn.classList.add('bg-slate-100', 'text-gray-700');
-            });
-            event.target.classList.add('active', 'bg-[#345e69]', 'text-white');
-            event.target.classList.remove('bg-slate-100', 'text-gray-700');
-
-            // TODO: Implement actual filtering with AJAX
-            SohbaApp.toast('Filter by ' + filter + ' coming soon!', 'info');
-        }
-
-        async function sendFriendRequest(userId) {
-            const result = await SohbaApp.post('/Friends/SendRequest', { userId });
-            if (result.success) {
-                SohbaApp.toast('Friend request sent!', 'success');
-                // Remove user from list
-                document.querySelector(`[data-user-id="${userId}"]`).remove();
-            } else {
-                SohbaApp.toast(result.error || 'Failed to send request', 'error');
-            }
-        }
-
-        function viewProfile(userId) {
-            window.location.href = `/Profile/Index/${userId}`;
-        }
-    </script>
+    <script src="~/js/features/friends.js"></script>
 }

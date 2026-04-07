@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -206,7 +206,12 @@ namespace Sohba.Application.Services
             if (!validation.IsSuccess)
                 return Result<GroupResponseDto>.Failure(validation.Error);
 
+            // Map updated fields onto the detached entity
             _mapper.Map(updateDto, group);
+
+            // Since GetByIdAsync uses AsNoTracking(), the entity is detached.
+            // Use Update() to attach it and mark all properties as modified.
+            // This is safe because we just fetched a fresh copy — no stale tracked instance exists.
             _unitOfWork.Groups.Update(group);
             await _unitOfWork.CompleteAsync();
 

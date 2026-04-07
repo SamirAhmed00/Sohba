@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Application.Services;
 using Sohba.Controllers.Sohba.Controllers;
 using Sohba.ViewModels.Page;
 
@@ -12,13 +11,20 @@ namespace Sohba.Controllers
     public class PagesController : BaseController
     {
         private readonly IPageService _pageService;
-        private readonly IPostService _postService; 
+        private readonly IPostService _postService;
         private readonly IFriendshipService _friendshipService;
-        public PagesController(IPageService pageService, IPostService postService, IFriendshipService friendshipService)
+        private readonly IFileStorageService _fileStorage;
+
+        public PagesController(
+            IPageService pageService,
+            IPostService postService,
+            IFriendshipService friendshipService,
+            IFileStorageService fileStorage)
         {
             _pageService = pageService;
             _postService = postService;
             _friendshipService = friendshipService;
+            _fileStorage = fileStorage;
         }
 
         
@@ -96,24 +102,18 @@ namespace Sohba.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var userId = GetCurrentUserId();
+
+            // Delegate all file I/O to IFileStorageService.
+            // Extension and size validation are enforced centrally in LocalFileStorageService.
             string imageUrl = null;
-
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            try
             {
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pages");
-
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{Path.GetExtension(model.ImageFile.FileName)}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.ImageFile.CopyToAsync(fileStream);
-                }
-
-                imageUrl = $"/uploads/pages/{uniqueFileName}";
+                imageUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ImageFile", ex.Message);
+                return View(model);
             }
 
             var dto = new PageCreateDto
@@ -259,40 +259,18 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty)
                 return RedirectToAction("Login", "Auth");
 
+            // Delegate file I/O to IFileStorageService (validation included).
+            // If no new file is provided, keep the existing image URL.
             string imageUrl = model.ImageUrl;
-
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            try
             {
-                // Validate file extension
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-                var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
-
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    ModelState.AddModelError("ImageFile", "Only image files are allowed (jpg, jpeg, png, gif, webp)");
-                    return View(model);
-                }
-
-                // Validate file size (max 5MB)
-                if (model.ImageFile.Length > 5 * 1024 * 1024)
-                {
-                    ModelState.AddModelError("ImageFile", "Image size cannot exceed 5MB");
-                    return View(model);
-                }
-
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "pages");
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{fileExtension}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.ImageFile.CopyToAsync(fileStream);
-                }
-
-                imageUrl = $"/uploads/pages/{uniqueFileName}";
+                var newUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+                if (newUrl != null) imageUrl = newUrl;
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("ImageFile", ex.Message);
+                return View(model);
             }
 
             var updateDto = new PageUpdateDto

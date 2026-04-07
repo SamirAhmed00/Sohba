@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,6 +53,12 @@ namespace Sohba.Infrastructure.DependencyInjection
             services.AddScoped<IDBInitializer, Sohba.Infrastructure.DBInitializer.DBInitializer>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            // File storage: maps IFileStorageService to the local wwwroot implementation.
+            // Swap this registration to use cloud storage (S3, Azure Blob) without
+            // touching any controller or application service code.
+            services.AddScoped<Sohba.Application.Interfaces.IFileStorageService,
+                               Sohba.Infrastructure.LocalFileStorageService>();
 
             return services;
         }

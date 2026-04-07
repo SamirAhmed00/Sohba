@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
@@ -15,7 +15,12 @@ namespace Sohba.Infrastructure.Repositories
 
         public override async Task<IEnumerable<Group>> GetAllAsync()
         {
+            // AsNoTracking is required here: sidebar pre-loads call this on every request,
+            // which would create tracked Group instances in the DbContext. If UpdateGroupAsync
+            // then attaches a fresh copy of the same Group (detached via its own AsNoTracking),
+            // EF's identity map throws an InvalidOperationException due to key conflict.
             return await _context.Groups
+                .AsNoTracking()
                 .Include(g => g.Admin)          
                 .Include(g => g.GroupMembers)
                 .ToListAsync();
