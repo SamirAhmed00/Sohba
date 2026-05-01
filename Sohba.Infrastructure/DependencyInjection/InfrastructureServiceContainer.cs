@@ -7,6 +7,8 @@ using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using Sohba.Infrastructure.DBInitializer;
 using Sohba.Infrastructure.Repositories;
+using Sohba.Infrastructure.DependencyInjection;
+using Sohba.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -52,6 +54,18 @@ namespace Sohba.Infrastructure.DependencyInjection
             // Register The DBInitializer Service To Be Used In The Program.cs To Initialize The Database With Default Data
             services.AddScoped<IDBInitializer, Sohba.Infrastructure.DBInitializer.DBInitializer>();
 
+            // Repositories Configuration (S-18)
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IPostRepository, PostRepository>();
+            services.AddScoped<IFriendshipRepository, FriendshipRepository>();
+            services.AddScoped<IGroupRepository, GroupRepository>();
+            services.AddScoped<IStoryRepository, StoryRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<IReportingRepository, ReportingRepository>();
+            services.AddScoped<IInteractionRepository, InteractionRepository>();
+            services.AddScoped<IHashtagRepository, HashtagRepository>();
+            services.AddScoped<IPageRepository, PageRepository>();
+            
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // File storage: maps IFileStorageService to the local wwwroot implementation.
@@ -59,6 +73,10 @@ namespace Sohba.Infrastructure.DependencyInjection
             // touching any controller or application service code.
             services.AddScoped<Sohba.Application.Interfaces.IFileStorageService,
                                Sohba.Infrastructure.LocalFileStorageService>();
+
+            // Register Mail Services
+            services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
+            services.AddTransient<Sohba.Application.Interfaces.IEmailService, MailtrapEmailService>();
 
             return services;
         }

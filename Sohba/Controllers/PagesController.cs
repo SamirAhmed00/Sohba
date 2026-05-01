@@ -106,15 +106,13 @@ namespace Sohba.Controllers
             // Delegate all file I/O to IFileStorageService.
             // Extension and size validation are enforced centrally in LocalFileStorageService.
             string imageUrl = null;
-            try
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+            if (!uploadResult.IsSuccess)
             {
-                imageUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("ImageFile", ex.Message);
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
                 return View(model);
             }
+            imageUrl = uploadResult.Value;
 
             var dto = new PageCreateDto
             {
@@ -262,16 +260,13 @@ namespace Sohba.Controllers
             // Delegate file I/O to IFileStorageService (validation included).
             // If no new file is provided, keep the existing image URL.
             string imageUrl = model.ImageUrl;
-            try
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+            if (!uploadResult.IsSuccess)
             {
-                var newUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
-                if (newUrl != null) imageUrl = newUrl;
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("ImageFile", ex.Message);
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
                 return View(model);
             }
+            if (uploadResult.Value != null) imageUrl = uploadResult.Value;
 
             var updateDto = new PageUpdateDto
             {

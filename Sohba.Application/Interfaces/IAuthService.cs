@@ -1,4 +1,4 @@
-﻿using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Domain.Common;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,8 @@ namespace Sohba.Application.Interfaces
         Task<Result<AuthResponseDto>> LoginAsync(LoginDto loginDto);
         Task<Result> LogoutAsync();
         Task<Result<AuthResponseDto>> GetCurrentUserAsync(Guid userId);
+        Task<Result> ForgotPasswordAsync(string email, string fallbackUrl);
+        Task<Result> ResetPasswordAsync(string email, string token, string newPassword);
 
     }
 }

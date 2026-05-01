@@ -128,7 +128,7 @@ namespace Sohba.Application.Services
             return Result<PostResponseDto>.Success(response);
         }
 
-        public async Task<Result> UpdatePostAsync(Guid postId, PostCreateDto postDto, Guid userId)
+        public async Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null || post.IsDeleted)
@@ -149,14 +149,14 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-        public async Task<Result> DeletePostAsync(Guid postId, Guid userId)
+        public async Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null)
                 return Result.Failure("Post not found.");
 
-            // 1. Check permission via Domain Service (Admin: false for now)
-            var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin: false);
+            // 1. Check permission via Domain Service
+            var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin);
             if (!result.IsSuccess)
                 return result;
 

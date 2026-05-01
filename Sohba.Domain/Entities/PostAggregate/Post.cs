@@ -1,4 +1,4 @@
-﻿using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
 using System;
@@ -14,7 +14,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsDeleted { get; set; }
-        public bool IsPrivate { get; set; }
+        public PostPrivacy Privacy { get; set; } = PostPrivacy.Public;
         public bool IsHidden { get; set; }
         public PostSourceType SourceType { get; set; } = PostSourceType.User;
         public Guid? SourceId { get; set; }

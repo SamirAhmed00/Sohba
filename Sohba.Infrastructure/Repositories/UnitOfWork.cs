@@ -1,4 +1,4 @@
-﻿using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using System;
@@ -11,21 +11,32 @@ namespace Sohba.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public UnitOfWork(AppDbContext context)
+        public UnitOfWork(
+            AppDbContext context,
+            IUserRepository users,
+            IPostRepository posts,
+            IFriendshipRepository friendships,
+            IGroupRepository groups,
+            IStoryRepository stories,
+            INotificationRepository notifications,
+            IReportingRepository reports,
+            IInteractionRepository interactions,
+            IHashtagRepository hashtags,
+            IPageRepository pages)
         {
             _context = context;
-
-            // Initialize Repositories
-            Users = new UserRepository(_context);
-            Posts = new PostRepository(_context);
-            Friendships = new FriendshipRepository(_context);
-            Groups = new GroupRepository(_context);
-            Stories = new StoryRepository(_context);
-            Notifications = new NotificationRepository(_context);
-            Reports = new ReportingRepository(_context);
-            Interactions = new InteractionRepository(_context);
-            Hashtags = new HashtagRepository(_context);
-            Pages = new PageRepository(_context);
+            
+            // Repositories are now provided via DI
+            Users = users;
+            Posts = posts;
+            Friendships = friendships;
+            Groups = groups;
+            Stories = stories;
+            Notifications = notifications;
+            Reports = reports;
+            Interactions = interactions;
+            Hashtags = hashtags;
+            Pages = pages;
         }
 
         public IUserRepository Users { get; private set; }

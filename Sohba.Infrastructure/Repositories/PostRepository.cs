@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
@@ -29,8 +29,21 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<Post>()
                 .Include(p => p.User)
                 .Where(p => !p.IsDeleted && !p.IsHidden
-                            && visibleUserIds.Contains(p.UserId) 
-                            && (p.SourceType == PostSourceType.User || p.SourceId == null))
+                            && (p.SourceType == PostSourceType.User || p.SourceId == null)
+                            && (
+                                // User can always see their own posts
+                                p.UserId == userId ||
+                                
+                                // Public posts from visible users (friends can be visible, or any user if Public means visible to all, 
+                                // but we previously checked 'visibleUserIds'. Let's ensure Public means 'any public post from friends or self' 
+                                // or if the platform is open, they can see all public posts. Based on old logic, visibleUserIds was used.
+                                (p.Privacy == PostPrivacy.Public && visibleUserIds.Contains(p.UserId)) ||
+                                
+                                // Friends only posts from friends
+                                (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))
+                                
+                                // Private posts are only covered by the first condition (p.UserId == userId)
+                            ))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }

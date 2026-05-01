@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Controllers.Sohba.Controllers;
@@ -32,25 +33,29 @@ namespace Sohba.Controllers
             var userId = GetCurrentUserId();
 
             // Resolve the media URL here in the controller (Infrastructure boundary).
-            // StoryService receives a plain string URL — no file I/O in the Application layer.
-            if (model.MediaFile != null && model.MediaFile.Length > 0)
+            try
             {
-                try
+                if (model.MediaFile != null && model.MediaFile.Length > 0)
                 {
-                    model.MediaUrl = await _fileStorage.SaveFileAsync(model.MediaFile, "stories");
+                    var uploadResult = await _fileStorage.SaveFileAsync(model.MediaFile, "stories");
+                    if (!uploadResult.IsSuccess)
+                        return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(uploadResult.Error));
+                    
+                    model.MediaUrl = uploadResult.Value;
                 }
-                catch (InvalidOperationException ex)
-                {
-                    return Json(new { success = false, error = ex.Message });
-                }
+
+                var result = await _storyService.CreateStoryAsync(model, userId);
+
+                if (result.IsSuccess)
+                    return Json(BaseResponseDto<StoryResponseDto>.SuccessResponse(result.Value));
+
+                return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(result.Error));
+            }
+            catch (Exception ex)
+            {
+                return Json(BaseResponseDto<StoryResponseDto>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
             }
 
-            var result = await _storyService.CreateStoryAsync(model, userId);
-
-            if (result.IsSuccess)
-                return Json(new { success = true, data = result.Value });
-
-            return Json(new { success = false, error = result.Error });
         }
 
         [HttpGet]
@@ -60,9 +65,9 @@ namespace Sohba.Controllers
             var result = await _storyService.GetStoryByIdAsync(id, userId);
 
             if (result.IsSuccess)
-                return Json(result.Value);
+                return Json(BaseResponseDto<StoryResponseDto>.SuccessResponse(result.Value));
 
-            return Json(new { success = false, error = result.Error });
+            return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(result.Error));
         }
 
         [HttpPost]
@@ -71,7 +76,7 @@ namespace Sohba.Controllers
             var userId = GetCurrentUserId();
             var result = await _storyService.MarkStoryAsViewedAsync(storyId, userId);
 
-            return Json(new { success = result.IsSuccess });
+            return Json(new BaseResponseDto { Success = result.IsSuccess });
         }
 
         [HttpPost]
@@ -79,7 +84,7 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _storyService.DeleteStoryAsync(id, userId);
-            return Json(new { success = result.IsSuccess });
+            return Json(new BaseResponseDto { Success = result.IsSuccess });
         }
 
         [HttpGet]
@@ -91,16 +96,11 @@ namespace Sohba.Controllers
             if (result.IsSuccess)
             {
                 var userStories = result.Value.Where(s => s.UserId == userId).ToList();
-                return Json(userStories);
+                return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(userStories));
             }
 
-            return Json(new List<StoryResponseDto>());
+            return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(new List<StoryResponseDto>()));
         }
 
-        //private Guid GetCurrentUserId()
-        //{
-        //    // Temporary until Identity is implemented
-        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-        //}
     }
 }

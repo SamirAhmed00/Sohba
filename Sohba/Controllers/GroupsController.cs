@@ -65,15 +65,13 @@ namespace Sohba.Controllers
 
             // Delegate all file I/O to IFileStorageService — no raw FileStream here.
             string imageUrl = null;
-            try
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
+            if (!uploadResult.IsSuccess)
             {
-                imageUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("ImageFile", ex.Message);
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
                 return View(model);
             }
+            imageUrl = uploadResult.Value;
 
             var dto = new GroupCreateDto
             {
@@ -148,16 +146,13 @@ namespace Sohba.Controllers
             // Delegate file I/O to IFileStorageService.
             // If no new file is uploaded, imageUrl stays as the existing URL.
             string imageUrl = model.ImageUrl;
-            try
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
+            if (!uploadResult.IsSuccess)
             {
-                var newUrl = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
-                if (newUrl != null) imageUrl = newUrl;
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("ImageFile", ex.Message);
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
                 return View(model);
             }
+            if (uploadResult.Value != null) imageUrl = uploadResult.Value;
 
             var updateDto = new GroupUpdateDto
             {

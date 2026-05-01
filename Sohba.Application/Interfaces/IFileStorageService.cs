@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Sohba.Domain.Common;
 
 namespace Sohba.Application.Interfaces
 {
@@ -12,10 +13,10 @@ namespace Sohba.Application.Interfaces
     {
         /// <summary>
         /// Saves an uploaded file to a sub-folder under wwwroot/uploads and returns
-        /// the relative URL (e.g. "/uploads/groups/abc123.jpg").
-        /// Returns null if the file is null or empty.
+        /// the relative URL (e.g. "/uploads/groups/abc123.jpg") inside a Result.
+        /// Returns Result.Failure if validation (5MB max or invalid type) fails.
         /// </summary>
-        Task<string> SaveFileAsync(IFormFile file, string subFolder);
+        Task<Result<string>> SaveFileAsync(IFormFile file, string subFolder);
 
         /// <summary>
         /// Deletes a previously saved file given its relative URL.

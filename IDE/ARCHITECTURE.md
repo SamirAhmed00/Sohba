@@ -5,8 +5,8 @@
 | Layer | Contains | Must NOT Contain |
 |---|---|---|
 | **Domain** | Entities, Enums, `Result<T>`, Domain Rule Interfaces + Logic, `IUnitOfWork` | Business orchestration, I/O, HTTP |
-| **Application** | Services (`IXService` → `XService`), DTOs, `MappingProfile`, FluentValidators | EF Core, file I/O, HTTP context |
-| **Infrastructure** | `AppDbContext`, EF Configurations, Repository implementations, `UnitOfWork`, `FileStorageService` | Domain rule decisions, service orchestration |
+| **Application** | Services (`IXService` → `XService`), DTOs, `MappingProfile`, FluentValidators (e.g. Comment validation) | EF Core, file I/O, HTTP context |
+| **Infrastructure** | `AppDbContext`, EF Configurations, Repository implementations, `UnitOfWork`, `FileStorageService` (w/ strict validation) | Domain rule decisions, service orchestration |
 | **Presentation (MVC)** | Controllers, ViewModels, Razor Views, `wwwroot/js`, Extension Methods | Business logic, file I/O, direct DB access |
 
 ## Canonical Request Flow

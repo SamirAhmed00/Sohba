@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.SearchAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Controllers.Sohba.Controllers;
 using Sohba.ViewModels.Search;
@@ -43,24 +45,24 @@ namespace Sohba.Controllers
         {
             if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
             {
-                return Json(new { success = false });
+                return Json(BaseResponseDto<SearchResultDto>.FailureResponse("Query too short or empty."));
             }
 
             var userId = GetCurrentUserId();
             var result = await _searchService.GlobalSearchAsync(q, userId);
 
-            return Json(new
+            if (!result.IsSuccess)
+                return Json(BaseResponseDto<SearchResultDto>.FailureResponse(result.Error));
+
+            var data = new SearchResultDto
             {
-                success = true,
-                results = new
-                {
-                    posts = result.Value.Posts.Take(3),
-                    users = result.Value.Users.Take(3),
-                    groups = result.Value.Groups.Take(3),
-                    pages = result.Value.Pages.Take(3),
-                    total = result.Value.TotalCount
-                }
-            });
+                Posts = result.Value.Posts.Take(3).ToList(),
+                Users = result.Value.Users.Take(3).ToList(),
+                Groups = result.Value.Groups.Take(3).ToList(),
+                Pages = result.Value.Pages.Take(3).ToList()
+            };
+
+            return Json(BaseResponseDto<SearchResultDto>.SuccessResponse(data));
         }
     }
 

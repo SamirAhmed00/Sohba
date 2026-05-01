@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
@@ -17,13 +18,20 @@ namespace Sohba.Controllers
         private readonly IReportingService _reportingService;
         private readonly IInteractionService _interactionService;
         private readonly IHashtagService _hashtagService;
+        private readonly IFileStorageService _fileStorage;
 
-        public PostsController(IPostService postService, IInteractionService interactionService, IReportingService reportingService, IHashtagService hashtagService)
+        public PostsController(
+            IPostService postService, 
+            IInteractionService interactionService, 
+            IReportingService reportingService, 
+            IHashtagService hashtagService,
+            IFileStorageService fileStorage)
         {
             _postService = postService;
             _interactionService = interactionService;
             _reportingService = reportingService;
             _hashtagService = hashtagService;
+            _fileStorage = fileStorage;
         }
 
         [HttpGet]
@@ -54,36 +62,13 @@ namespace Sohba.Controllers
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
-                // Validate file extension
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-                var fileExtension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
-
-                if (!allowedExtensions.Contains(fileExtension))
+                var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
+                if (!uploadResult.IsSuccess)
                 {
-                    ModelState.AddModelError("ImageFile", "Only image files are allowed (jpg, jpeg, png, gif, webp)");
+                    ModelState.AddModelError("ImageFile", uploadResult.Error);
                     return View(model);
                 }
-
-                // Validate file size (max 5MB)
-                if (model.ImageFile.Length > 5 * 1024 * 1024)
-                {
-                    ModelState.AddModelError("ImageFile", "Image size cannot exceed 5MB");
-                    return View(model);
-                }
-
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileNameWithoutExtension(model.ImageFile.FileName)}{fileExtension}";
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.ImageFile.CopyToAsync(fileStream);
-                }
-
-                imageUrl = $"/uploads/posts/{uniqueFileName}";
+                imageUrl = uploadResult.Value;
             }
 
             var dto = new PostCreateDto
@@ -91,7 +76,7 @@ namespace Sohba.Controllers
                 Title = model.Title,
                 Content = model.Content,
                 ImageUrl = imageUrl,
-                IsPrivate = model.IsPrivate
+                Privacy = model.Privacy
             };
             
             if (groupId.HasValue)
@@ -121,16 +106,6 @@ namespace Sohba.Controllers
             return View(model);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetPostDetails(Guid postId)
-        //{
-        //    var postResult = await _postService.GetPostByIdAsync(postId);
-        //    if (postResult.IsFailure)
-        //        return NotFound(new { error = postResult.Error });
-
-        //    var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
-        //    return Json(new { post = postResult.Value, comments });
-        //}
         [HttpGet]
         public async Task<IActionResult> GetPostDetails(Guid postId)
         {
@@ -192,16 +167,100 @@ namespace Sohba.Controllers
             return View(result.Value);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _postService.GetPostByIdAsync(id, userId);
+
+            if (result.IsFailure || result.Value == null)
+            {
+                return NotFound();
+            }
+
+            var post = result.Value;
+
+            // In an ideal scenario, AutoMapper should map PostResponseDto to PostEditViewModel
+            var vm = new PostEditViewModel
+            {
+                Id = post.Id,
+                Title = post.Title,
+                Content = post.Content,
+                ImageUrl = post.ImageUrl,
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(PostEditViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return Json(BaseResponseDto<object>.FailureResponse("Invalid form data submitted."));
+
+                var userId = GetCurrentUserId();
+                if (userId == Guid.Empty) 
+                    return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
+
+                string imageUrl = model.ImageUrl;
+
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
+                    if (!uploadResult.IsSuccess)
+                        return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
+                    
+                    if (uploadResult.Value != null) 
+                        imageUrl = uploadResult.Value;
+                }
+
+                var updateDto = new PostUpdateDto
+                {
+                    Id = model.Id,
+                    Title = model.Title,
+                    Content = model.Content,
+                    ImageUrl = imageUrl,
+                    Privacy = model.Privacy
+                };
+
+                var result = await _postService.UpdatePostAsync(model.Id, updateDto, userId);
+
+                if (result.IsSuccess)
+                    return Json(BaseResponseDto<object>.SuccessResponse(null));
+
+                return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+            }
+            catch (Exception ex)
+            {
+                return Json(BaseResponseDto<object>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = GetCurrentUserId();
-            var result = await _postService.DeletePostAsync(id, userId);
+            try
+            {
+                if (id == Guid.Empty)
+                    return Json(BaseResponseDto<object>.FailureResponse("Invalid post ID."));
 
-            if (result.IsSuccess)
-                return Json(new { success = true });
+                var userId = GetCurrentUserId();
+                bool isAdmin = User.IsInRole("Admin");
+                var result = await _postService.DeletePostAsync(id, userId, isAdmin);
 
-            return Json(new { success = false, error = result.Error });
+                if (result.IsSuccess)
+                    return Json(BaseResponseDto<object>.SuccessResponse(null));
+
+                return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+            }
+            catch (Exception ex)
+            {
+                // Global exception handling standard per RULES.md §6
+                return Json(BaseResponseDto<object>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+            }
         }
 
         [HttpPost]

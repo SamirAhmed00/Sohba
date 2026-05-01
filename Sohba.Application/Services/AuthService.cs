@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -12,17 +12,20 @@ public class AuthService : IAuthService
     private readonly SignInManager<User> _signInManager;
     private readonly JwtService _jwtService;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
 
     public AuthService(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         JwtService jwtService,
-        IMapper mapper)
+        IMapper mapper,
+        IEmailService emailService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterDto registerDto)
@@ -100,5 +103,42 @@ public class AuthService : IAuthService
         response.Roles = roles.ToList();
 
         return Result<AuthResponseDto>.Success(response);
+    }
+
+    public async Task<Result> ForgotPasswordAsync(string email, string fallbackUrl)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+            return Result.Failure("User not found.");
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        // Instead of hardcoding base url, we ideally want to construct callback URL properly. The controller will pass it. 
+        var resetLink = $"{fallbackUrl}?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+
+        await _emailService.SendEmailAsync(
+            email, 
+            "Sohba Password Reset", 
+            $"Please reset your password by clicking here: <a href='{resetLink}'>Reset Password</a>", 
+            isHtml: true);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ResetPasswordAsync(string email, string token, string newPassword)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+            return Result.Failure("User not found.");
+
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return Result.Failure(errors);
+        }
+
+        return Result.Success();
     }
 }

@@ -81,7 +81,7 @@ The project structure demonstrates a strong 80% completion of a standard enterpr
 
 ## Architectural Smells Register
 
-### ✅ RESOLVED (Sprint 1)
+### ✅ RESOLVED (Sprint 1 & Sprint 2)
 | # | Smell | File | Fix Applied |
 |---|---|---|---|
 | S-01 | Anonymous JSON objects returned from AJAX endpoints | `FriendsController` | Replaced with `BaseResponseDto` |
@@ -92,21 +92,23 @@ The project structure demonstrates a strong 80% completion of a standard enterpr
 | S-06 | No try-catch on AJAX POST actions → HTML 500 on exceptions | `FriendsController` | try-catch + null guards added |
 | S-07 | `sohba-core.js` calling `response.json()` on HTML pages → SyntaxError | `sohba-core.js` | Content-Type guard added |
 | S-08 | `PostService` missing access-control for Group/Page posts | `PostService.cs` | `IsMemberAsync` + `AdminId` checks added |
+| S-09 | File I/O in Application Layer (Story) | `StoryService.cs` | Extracted IFileStorageService |
+| S-10 | File I/O in Application Layer (Group/Page) | `GroupsController`, `PagesController` | Extracted IFileStorageService |
+| S-11 | Story Timezone Ambiguity | `StoryService.cs` | Applied `DateTime.SpecifyKind` UTC |
+| S-12 | Inline JS in `Search/Results.cshtml` | `Results.cshtml` | Migrated to `search.js` |
+| S-14 | Missing `Search/Index.cshtml` | `SearchController.cs` | Explicitly specify View("Results") |
+| S-13 | Anonymous objects in `SearchController.QuickSearch` (Done) | `SearchController.cs` | Replaced with `BaseResponseDto<SearchResultDto>` |
+| S-15 | `StoriesController.Create` returns raw anonymous DTO (Done) | `StoriesController.cs` | Replaced with `BaseResponseDto<StoryResponseDto>` |
+| S-16 | `SearchController.QuickSearch` `IsMemberAsync` missing `.AsNoTracking()` (Done) | `GroupRepository.cs` | Added `AsNoTracking` + `AnyAsync` |
+| S-17 | Missing Post Edit/Delete wired to API (Done) | `PostsController.cs` | Wired Edit/Delete explicitly via AJAX returning `BaseResponseDto` |
+| S-18 | `UnitOfWork` tightly constructs repositories via `new` (Done) | `UnitOfWork.cs` | Decoupled and registered in DI |
 
 ### 🔴 OPEN — HIGH SEVERITY
 | # | Smell | File | Root Cause | Impact |
 |---|---|---|---|---|
-| S-09 | **File I/O in Application Layer** | `StoryService.cs` lines 48-64 | `Directory.CreateDirectory` + `FileStream` inside Application service | Violates Clean Architecture; untestable; should be `IFileStorageService` in Infrastructure |
-| S-10 | **File I/O in Application Layer** | `GroupService.cs` (Create/Edit controllers) | Same pattern as S-09 | Same impact |
-| S-11 | **Story Timezone Ambiguity** | `StoryService.cs` lines 76, 106, 113 | `DateTime.UtcNow` used but `CanViewStory(createdAt)` receives an ambiguous value with no `DateTimeKind` guarantee | Stories may expire incorrectly based on server timezone config |
-| S-12 | **Inline JS in `Search/Results.cshtml`** | Lines 343-374 | `switchTab()` + `refineSearch()` functions inside `<script>` block | Violates Zero Inline JS rule; should be `wwwroot/js/features/search.js` |
-| S-13 | **Anonymous objects in `SearchController.QuickSearch`** | `SearchController.cs` lines 51-62 | `return Json(new { success, results })` | Inconsistent with `BaseResponseDto` standard |
-| S-14 | **Missing `Search/Index.cshtml`** | `Views/Search/` | `SearchController.Index` calls `return View(new SearchViewModel)` for empty queries but only `Results.cshtml` exists | 404 when navigating to `/Search` without a query |
-| S-15 | **`StoriesController.Create` returns raw anonymous DTO** | `StoriesController.cs` line 34 | `return Json(new { success = true, data = result.Value })` | Violates `BaseResponseDto` standard |
+| S-19 | Lack of centralized file validation | `IFileStorageService.cs` | Files are uploaded without strict extension or size checks | Security risk (malicious uploads like .exe or .php) |
 
 ### 🟡 OPEN — MEDIUM SEVERITY
 | # | Smell | File | Note |
 |---|---|---|---|
-| S-16 | `SearchController.QuickSearch` `IsMemberAsync` missing `.AsNoTracking()` | `SearchController.cs` | Not the primary issue but a performance smell |
-| S-17 | Missing Post Edit/Delete in `PostService` | `PostService.cs` | Methods exist (`UpdatePostAsync`, `DeletePostAsync`) but no controller actions wired |
-| S-18 | `UnitOfWork` tightly constructs repositories via `new` | `UnitOfWork.cs` | Reduces testability; prefer DI-registration |
+| (None currently)

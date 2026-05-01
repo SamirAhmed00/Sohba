@@ -37,10 +37,9 @@ namespace Sohba.Infrastructure.Repositories
         }
         public async Task<bool> IsMemberAsync(Guid userId, Guid groupId)
         {
-            return _context.Set<GroupMember>().Any(m =>
-                m.GroupId == groupId &&
-                m.UserId == userId &&
-                !m.IsBanned);
+            return await _context.Set<GroupMember>()
+                .AsNoTracking()
+                .AnyAsync(m => m.GroupId == groupId && m.UserId == userId && !m.IsBanned);
         }
 
         public string GetUserRoleInGroup(Guid userId, Guid groupId)

@@ -22,20 +22,26 @@ namespace Sohba
             // Add Application Services (AutoMapper)
             builder.Services.AddApplicationServices();
 
-            // Add MVC Services
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add<Sohba.Filters.ValidationFilter>();
+            })
+            // Configure FluentValidation to automatically validate and populate ModelState
+            .AddFluentValidationAutoValidation();
+
+            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Validators.PostCreateViewModelValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Application.Validators.CommentRequestDtoValidator>();
 
 
             builder.Services.AddAuthorization();
-            builder.Services.ConfigureApplicationCookie(options => // ptoblem here
+            builder.Services.ConfigureApplicationCookie(options => 
             {
                 options.LoginPath = "/Auth/Login"; 
                 options.LogoutPath = "/Auth/Logout";
-                options.AccessDeniedPath = "/Home/AccessDenied";
+                options.AccessDeniedPath = "/Auth/AccessDenied";
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-                options.SlidingExpiration = true;
                 options.Cookie.IsEssential = true;
-                options.SlidingExpiration = false;
+                options.SlidingExpiration = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.MaxAge = null;

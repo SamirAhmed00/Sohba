@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
 
 namespace Sohba.Infrastructure
 {
@@ -28,36 +29,28 @@ namespace Sohba.Infrastructure
         }
 
         /// <inheritdoc />
-        public async Task<string> SaveFileAsync(IFormFile file, string subFolder)
+        public async Task<Result<string>> SaveFileAsync(IFormFile file, string subFolder)
         {
-            // Return null for empty/missing files — callers may keep existing URL.
             if (file == null || file.Length == 0)
-                return null;
+                return Result<string>.Success(null);
 
-            // Validate extension
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!_allowedExtensions.Contains(extension))
-                throw new InvalidOperationException(
-                    $"File type '{extension}' is not allowed. Accepted types: {string.Join(", ", _allowedExtensions)}");
+                return Result<string>.Failure($"File type '{extension}' is not allowed. Accepted types: {string.Join(", ", _allowedExtensions)}");
 
-            // Validate size
             if (file.Length > MaxFileSizeBytes)
-                throw new InvalidOperationException(
-                    $"File size ({file.Length / 1024 / 1024:F1} MB) exceeds the 5 MB limit.");
+                return Result<string>.Failure($"File size ({file.Length / 1024.0 / 1024.0:F1} MB) exceeds the 5 MB limit.");
 
-            // Ensure destination folder exists under wwwroot/uploads/{subFolder}
             var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", subFolder);
             Directory.CreateDirectory(uploadsFolder);
 
-            // Generate a collision-safe file name
             var uniqueFileName = $"{Guid.NewGuid()}{extension}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             await using var stream = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(stream);
 
-            // Return a root-relative URL usable in <img src="...">
-            return $"/uploads/{subFolder}/{uniqueFileName}";
+            return Result<string>.Success($"/uploads/{subFolder}/{uniqueFileName}");
         }
 
         /// <inheritdoc />
