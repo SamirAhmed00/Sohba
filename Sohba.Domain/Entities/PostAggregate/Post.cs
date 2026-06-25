@@ -16,6 +16,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public bool IsDeleted { get; set; }
         public PostPrivacy Privacy { get; set; } = PostPrivacy.Public;
         public bool IsHidden { get; set; }
+        public bool IsPrivate { get; set; }
         public PostSourceType SourceType { get; set; } = PostSourceType.User;
         public Guid? SourceId { get; set; }
 

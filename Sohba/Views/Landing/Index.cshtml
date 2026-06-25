@@ -2,6 +2,36 @@
     ViewData["Title"] = "Sohba - Connect with the world";
 }
 
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: {
+                        DEFAULT: '#3d8b8b', [cite: 1, 2]
+                        50: '#f0f9f9', [cite: 1, 2]
+                        100: '#d9f0f0', [cite: 1, 2]
+                        200: '#b3e0e0', [cite: 1, 2]
+                        300: '#80c9c9', [cite: 1, 2]
+                        400: '#5aadad', [cite: 1, 2]
+                        500: '#3d8b8b', [cite: 1, 2]
+                        600: '#317070', [cite: 1, 2]
+                        700: '#295959', [cite: 1, 2]
+                        800: '#234848', [cite: 1, 2]
+                        900: '#1d3c3c', [cite: 1, 2]
+                    },
+                    background: '#f7fafa', [cite: 1, 2]
+                    foreground: '#1a2e35', [cite: 1, 2]
+                    card: '#ffffff', [cite: 1, 2]
+                    muted: '#f1f5f5', [cite: 1, 2]
+                    'muted-foreground': '#64748b', [cite: 1, 2]
+                    border: '#e2eaea', [cite: 1, 2]
+                },
+            },
+        },
+    }
+</script>
+
 <!-- Three.js & GSAP -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -9,880 +39,922 @@
 
 <style>
     :root {
-        --brand-color: #345e69;
-        --brand-light: #4a8291;
-        --brand-dark: #2a4a52;
-        --accent-color: #4a8291;
-        --soft-bg: #f8fafc;
-        --surface: #ffffff;
-        --text-primary: #1e293b;
-        --text-secondary: #64748b;
+    --brand-color: #345e69;
+    --brand-light: #4a8291;
+    --brand-dark: #2a4a52;
+    --accent-color: #4a8291;
+    --soft-bg: #f8fafc;
+    --surface: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
     }
 
     * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
     }
 
     html {
-        scroll-behavior: smooth;
+    scroll-behavior: smooth;
     }
 
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        background-color: var(--soft-bg);
-        color: var(--text-primary);
-        line-height: 1.6;
-        overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--soft-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
     }
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
-        width: 6px;
+    width: 6px;
     }
 
     ::-webkit-scrollbar-track {
-        background: transparent;
+    background: transparent;
     }
 
     ::-webkit-scrollbar-thumb {
-        background: var(--brand-color);
-        border-radius: 3px;
+    background: var(--brand-color);
+    border-radius: 3px;
     }
 
     /* Language Toggle Button */
     .lang-toggle {
-        /* position: fixed;  --> Removed */
-        /* top: 24px;       --> Removed */
-        /* left: 24px;      --> Removed */
-        /* z-index: 100;    --> Removed */
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(52, 94, 105, 0.1);
-        padding: 8px 16px; /* Optimized padding */
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        /* Add these properties: */
-        display: inline-block;
-        color: var(--text-primary);
-        text-decoration: none;
+    /* position: fixed; --> Removed */
+    /* top: 24px; --> Removed */
+    /* left: 24px; --> Removed */
+    /* z-index: 100; --> Removed */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(52, 94, 105, 0.1);
+    padding: 8px 16px;
+    /* Optimized padding */
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Add these properties: */
+    display: inline-block;
+    color: var(--text-primary);
+    text-decoration: none;
     }
 
-        .lang-toggle:hover {
-            background: var(--brand-color);
-            color: white;
-            transform: translateY(-2px);
-        }
+    .lang-toggle:hover {
+    background: var(--brand-color);
+    color: white;
+    transform: translateY(-2px);
+    }
 
     /* Glass Header - Always LTR */
     .glass-header {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(52, 94, 105, 0.08);
-        position: fixed;
-        top: 0;
-        width: 100%;
-        z-index: 50;
-        height: 72px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(52, 94, 105, 0.08);
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 50;
+    height: 72px;
     }
 
-        .glass-header .nav-container {
-            direction: ltr !important;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+    .glass-header .nav-container {
+    direction: ltr !important;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    }
 
     /* Logo Styles - Exact Match */
     .logo-link {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        text-decoration: none;
-        cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
     }
 
     .logo-icon {
-        width: 40px;
-        height: 40px;
-        background: var(--brand-color);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 900;
-        font-size: 20px;
-        box-shadow: 0 10px 15px -3px rgba(52, 94, 105, 0.3);
-        transition: all 0.3s ease-in-out;
+    width: 40px;
+    height: 40px;
+    background: var(--brand-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+    box-shadow: 0 10px 15px -3px rgba(52, 94, 105, 0.3);
+    transition: all 0.3s ease-in-out;
     }
 
     .logo-link:hover .logo-icon {
-        transform: rotate(12deg) scale(1.1);
+    transform: rotate(12deg) scale(1.1);
     }
 
     .logo-text {
-        margin-left: 12px;
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: -0.025em;
-        background: linear-gradient(to right, var(--brand-color) 0%, var(--brand-color) 20%, var(--brand-light) 100%);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        transition: all 0.3s ease;
-        display: none;
+    margin-left: 12px;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    background: linear-gradient(to right, var(--brand-color) 0%, var(--brand-color) 20%, var(--brand-light) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+    display: none;
     }
 
     @@media (min-width: 768px) {
-        .logo-text {
-            display: block;
-        }
+    .logo-text {
+    display: block;
+    }
     }
 
     .logo-link:hover .logo-text {
-        background-position: right center;
+    background-position: right center;
     }
 
     /* Auth Buttons */
     .auth-links {
-        display: flex;
-        align-items: center;
-        gap: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
     }
 
     .auth-link-login {
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 700;
-        transition: color 0.2s;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    transition: color 0.2s;
     }
 
-        .auth-link-login:hover {
-            color: var(--brand-color);
-        }
+    .auth-link-login:hover {
+    color: var(--brand-color);
+    }
 
     .auth-link-register {
-        background: var(--brand-color);
-        color: white;
-        padding: 10px 24px;
-        border-radius: 12px;
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 700;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(52, 94, 105, 0.2);
+    background: var(--brand-color);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(52, 94, 105, 0.2);
     }
 
-        .auth-link-register:hover {
-            background: var(--brand-light);
-            transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(52, 94, 105, 0.3);
-        }
+    .auth-link-register:hover {
+    background: var(--brand-light);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(52, 94, 105, 0.3);
+    }
 
     /* Hero Section */
     .hero {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        padding-top: 72px;
-        position: relative;
-        background: radial-gradient(circle at top right, rgba(52, 94, 105, 0.05), transparent), radial-gradient(circle at bottom left, rgba(74, 130, 145, 0.05), transparent), linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-top: 72px;
+    position: relative;
+    background: radial-gradient(circle at top right, rgba(52, 94, 105, 0.05), transparent), radial-gradient(circle at bottom left, rgba(74, 130, 145, 0.05), transparent), linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    overflow: hidden;
     }
 
     #canvas-container {
-        position: absolute;
-        inset: 0;
-        opacity: 0.3;
-        pointer-events: none;
+    position: absolute;
+    inset: 0;
+    opacity: 0.3;
+    pointer-events: none;
     }
 
     .hero-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 40px 24px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 80px;
-        align-items: center;
-        position: relative;
-        z-index: 10;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    position: relative;
+    z-index: 10;
     }
 
     .hero-text h1 {
-        font-size: 56px;
-        font-weight: 800;
-        line-height: 1.1;
-        color: var(--text-primary);
-        margin-bottom: 24px;
-        letter-spacing: -1.5px;
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    letter-spacing: -1.5px;
     }
 
     .hero-text .highlight {
-        background: linear-gradient(to right, var(--brand-color), var(--brand-light));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+    background: linear-gradient(to right, var(--brand-color), var(--brand-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     }
 
     .hero-text p {
-        font-size: 18px;
-        color: var(--text-secondary);
-        margin-bottom: 32px;
-        max-width: 480px;
-        line-height: 1.7;
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    max-width: 480px;
+    line-height: 1.7;
     }
 
     .hero-cta {
-        display: flex;
-        gap: 16px;
+    display: flex;
+    gap: 16px;
     }
 
     .btn-large {
-        padding: 16px 32px;
-        font-size: 16px;
-        border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 16px;
+    border-radius: 12px;
     }
 
     .btn-secondary {
-        background: white;
-        color: var(--text-primary);
-        border: 1px solid rgba(52, 94, 105, 0.15);
-        padding: 16px 32px;
-        border-radius: 12px;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 600;
-        transition: all 0.3s ease;
+    background: white;
+    color: var(--text-primary);
+    border: 1px solid rgba(52, 94, 105, 0.15);
+    padding: 16px 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
     }
 
-        .btn-secondary:hover {
-            background: var(--soft-bg);
-            border-color: var(--brand-color);
-            color: var(--brand-color);
-        }
+    .btn-secondary:hover {
+    background: var(--soft-bg);
+    border-color: var(--brand-color);
+    color: var(--brand-color);
+    }
 
     .btn-primary {
-        background: var(--brand-color);
-        color: white;
-        padding: 16px 32px;
-        border-radius: 12px;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        display: inline-block;
+    background: var(--brand-color);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
     }
 
-        .btn-primary:hover {
-            background: var(--brand-light);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px -5px rgba(52, 94, 105, 0.3);
-        }
+    .btn-primary:hover {
+    background: var(--brand-light);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(52, 94, 105, 0.3);
+    }
 
     /* Hero Visual */
     .hero-visual {
-        position: relative;
-        perspective: 1000px;
+    position: relative;
+    perspective: 1000px;
     }
 
     .phone-mockup {
-        background: white;
-        border-radius: 24px;
-        padding: 16px;
-        box-shadow: 0 25px 50px -12px rgba(52, 94, 105, 0.2), 0 0 0 1px rgba(52, 94, 105, 0.05);
-        transform: rotateY(-8deg) rotateX(4deg);
-        transition: transform 0.6s ease;
+    background: white;
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 25px 50px -12px rgba(52, 94, 105, 0.2), 0 0 0 1px rgba(52, 94, 105, 0.05);
+    transform: rotateY(-8deg) rotateX(4deg);
+    transition: transform 0.6s ease;
     }
 
-        .phone-mockup:hover {
-            transform: rotateY(-4deg) rotateX(2deg);
-        }
+    .phone-mockup:hover {
+    transform: rotateY(-4deg) rotateX(2deg);
+    }
 
     .phone-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #f1f5f9;
-        margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 16px;
     }
 
     .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
     }
 
     .dot-red {
-        background: #ef4444;
+    background: #ef4444;
     }
 
     .dot-yellow {
-        background: #f59e0b;
+    background: #f59e0b;
     }
 
     .dot-green {
-        background: #10b981;
+    background: #10b981;
     }
 
     .post-skeleton {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
     }
 
     .avatar {
-        width: 40px;
-        height: 40px;
-        background: #e2e8f0;
-        border-radius: 50%;
-        flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    flex-shrink: 0;
     }
 
     .post-lines {
-        flex: 1;
+    flex: 1;
     }
 
     .line {
-        height: 8px;
-        background: #f1f5f9;
-        border-radius: 4px;
-        margin-bottom: 8px;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    margin-bottom: 8px;
     }
 
     .line-short {
-        width: 40%;
+    width: 40%;
     }
 
     .image-placeholder {
-        height: 160px;
-        background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #94a3b8;
+    height: 160px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
     }
 
     /* Features Section */
     .features {
-        padding: 120px 24px;
-        background: white;
+    padding: 120px 24px;
+    background: white;
     }
 
     .container {
-        max-width: 1200px;
-        margin: 0 auto;
+    max-width: 1200px;
+    margin: 0 auto;
     }
 
     .section-header {
-        text-align: center;
-        margin-bottom: 64px;
+    text-align: center;
+    margin-bottom: 64px;
     }
 
-        .section-header h2 {
-            font-size: 40px;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-        }
+    .section-header h2 {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    }
 
-        .section-header p {
-            color: var(--text-secondary);
-            font-size: 18px;
-        }
+    .section-header p {
+    color: var(--text-secondary);
+    font-size: 18px;
+    }
 
     .features-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
     }
 
     .feature-card {
-        padding: 32px;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-        background: white;
+    padding: 32px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    background: white;
     }
 
-        .feature-card:hover {
-            border-color: var(--brand-color);
-            box-shadow: 0 10px 40px -10px rgba(52, 94, 105, 0.15);
-            transform: translateY(-4px);
-        }
+    .feature-card:hover {
+    border-color: var(--brand-color);
+    box-shadow: 0 10px 40px -10px rgba(52, 94, 105, 0.15);
+    transform: translateY(-4px);
+    }
 
     .feature-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-        font-size: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 24px;
     }
 
     .feature-card h3 {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
     }
 
     .feature-card p {
-        color: var(--text-secondary);
-        font-size: 15px;
-        line-height: 1.6;
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.6;
     }
 
     /* Control Section */
     .control-section {
-        padding: 120px 24px;
-        background: #f8fafc;
+    padding: 120px 24px;
+    background: #f8fafc;
     }
 
     .control-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 80px;
-        align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
     }
 
     .control-content h2 {
-        font-size: 40px;
-        font-weight: 800;
-        margin-bottom: 40px;
-        line-height: 1.2;
+    font-size: 40px;
+    font-weight: 800;
+    margin-bottom: 40px;
+    line-height: 1.2;
     }
 
     .control-item {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
     }
 
     .control-number {
-        width: 32px;
-        height: 32px;
-        background: var(--brand-color);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 14px;
-        flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--brand-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
     }
 
     .control-item h4 {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
     }
 
     .control-item p {
-        color: var(--text-secondary);
-        font-size: 15px;
+    color: var(--text-secondary);
+    font-size: 15px;
     }
 
     .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     }
 
     .stat-card {
-        background: white;
-        padding: 24px;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     }
 
-        .stat-card:nth-child(2) {
-            margin-top: 32px;
-        }
+    .stat-card:nth-child(2) {
+    margin-top: 32px;
+    }
 
     .stat-icon {
-        font-size: 32px;
-        margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 12px;
     }
 
     .stat-card h4 {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--brand-color);
-        margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--brand-color);
+    margin-bottom: 4px;
     }
 
     .stat-card p {
-        font-size: 13px;
-        color: var(--text-secondary);
+    font-size: 13px;
+    color: var(--text-secondary);
     }
 
     /* Detailed Features */
     .detailed-features {
-        padding: 120px 24px;
-        background: white;
+    padding: 120px 24px;
+    background: white;
     }
 
     .features-cards-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
     }
 
     .story-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 20px;
-        max-height: 400px;
-        overflow-y: auto;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
     }
 
-        .story-card::-webkit-scrollbar {
-            width: 4px;
-        }
+    .story-card::-webkit-scrollbar {
+    width: 4px;
+    }
 
     .story-card-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding-bottom: 16px;
-        margin-bottom: 16px;
-        border-bottom: 1px solid #f1f5f9;
-        position: sticky;
-        top: 0;
-        background: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+    position: sticky;
+    top: 0;
+    background: white;
     }
 
     .story-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
     }
 
     .story-card h3 {
-        font-size: 16px;
-        font-weight: 700;
+    font-size: 16px;
+    font-weight: 700;
     }
 
     .story-item {
-        margin-bottom: 16px;
+    margin-bottom: 16px;
     }
 
     .story-item-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
     }
 
     .story-dot {
-        width: 6px;
-        height: 6px;
-        background: var(--brand-color);
-        border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--brand-color);
+    border-radius: 50%;
     }
 
-        .story-dot.admin {
-            background: #ef4444;
-        }
+    .story-dot.admin {
+    background: #ef4444;
+    }
 
     .story-code {
-        font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 11px;
-        color: var(--brand-color);
-        font-weight: 600;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--brand-color);
+    font-weight: 600;
     }
 
     .story-desc {
-        font-size: 12px;
-        color: var(--text-secondary);
-        padding-right: 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding-right: 14px;
     }
 
     /* About Section */
     .about {
-        padding: 120px 24px;
-        background: #f8fafc;
-        text-align: center;
+    padding: 120px 24px;
+    background: #f8fafc;
+    text-align: center;
     }
 
     .about-avatar {
-        width: 120px;
-        height: 120px;
-        background: white;
-        border: 3px solid var(--brand-color);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 32px;
-        font-size: 48px;
-        font-weight: 800;
-        color: var(--brand-color);
-        transform: rotate(-6deg);
-        box-shadow: 0 20px 40px -10px rgba(52, 94, 105, 0.15);
+    width: 120px;
+    height: 120px;
+    background: white;
+    border: 3px solid var(--brand-color);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 32px;
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--brand-color);
+    transform: rotate(-6deg);
+    box-shadow: 0 20px 40px -10px rgba(52, 94, 105, 0.15);
     }
 
     .about h2 {
-        font-size: 32px;
-        font-weight: 800;
-        margin-bottom: 16px;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 16px;
     }
 
     .about p {
-        color: var(--text-secondary);
-        max-width: 500px;
-        margin: 0 auto 32px;
-        font-size: 16px;
-        line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 32px;
+    font-size: 16px;
+    line-height: 1.7;
     }
 
     .github-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: var(--brand-color);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--brand-color);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
     }
 
-        .github-link:hover {
-            background: var(--brand-light);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(52, 94, 105, 0.25);
-        }
+    .github-link:hover {
+    background: var(--brand-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(52, 94, 105, 0.25);
+    }
 
     /* Stats Bar */
     .stats-bar {
-        background: var(--brand-color);
-        color: white;
-        padding: 60px 24px;
+    background: var(--brand-color);
+    color: white;
+    padding: 60px 24px;
     }
 
     .stats-bar-grid {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 40px;
-        text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    text-align: center;
     }
 
     .stats-bar-item .number {
-        font-size: 48px;
-        font-weight: 800;
-        margin-bottom: 8px;
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 8px;
     }
 
     .stats-bar-item .label {
-        font-size: 13px;
-        opacity: 0.8;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    font-size: 13px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     }
 
     /* Footer */
     footer {
-        background: white;
-        padding: 40px 24px;
-        border-top: 1px solid #e2e8f0;
+    background: white;
+    padding: 40px 24px;
+    border-top: 1px solid #e2e8f0;
     }
 
     .footer-content {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     }
 
     .footer-logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     }
 
     .footer-logo-icon {
-        width: 32px;
-        height: 32px;
-        background: var(--brand-color);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
+    width: 32px;
+    height: 32px;
+    background: var(--brand-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
     }
 
     .footer-logo-text {
-        font-weight: 700;
-        color: var(--text-primary);
+    font-weight: 700;
+    color: var(--text-primary);
     }
 
     .copyright {
-        color: var(--text-secondary);
-        font-size: 14px;
+    color: var(--text-secondary);
+    font-size: 14px;
     }
 
     /* RTL Specific Styles */
     [dir="rtl"] .hero-text h1,
     [dir="rtl"] .hero-text p {
-        text-align: right;
+    text-align: right;
     }
 
     [dir="rtl"] .hero-cta {
-        justify-content: flex-start;
+    justify-content: flex-start;
     }
 
     [dir="rtl"] .control-content {
-        text-align: right;
+    text-align: right;
     }
 
     [dir="rtl"] .control-item {
-        flex-direction: row-reverse;
+    flex-direction: row-reverse;
     }
 
     [dir="rtl"] .story-desc {
-        padding-right: 0;
-        padding-left: 14px;
+    padding-right: 0;
+    padding-left: 14px;
     }
 
     [dir="rtl"] .logo-text {
-        margin-left: 0;
-        margin-right: 12px;
+    margin-left: 0;
+    margin-right: 12px;
     }
 
     /* Responsive */
     @@media (max-width: 1024px) {
-        .hero-content,
-        .control-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-        }
 
-        .hero-visual {
-            display: none;
-        }
+    .hero-content,
+    .control-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    }
 
-        .features-grid {
-            grid-template-columns: 1fr;
-        }
+    .hero-visual {
+    display: none;
+    }
 
-        .features-cards-grid {
-            grid-template-columns: 1fr 1fr;
-        }
+    .features-grid {
+    grid-template-columns: 1fr;
+    }
 
-        .stats-bar-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-        }
+    .features-cards-grid {
+    grid-template-columns: 1fr 1fr;
+    }
 
-        .hero-text h1 {
-            font-size: 40px;
-        }
+    .stats-bar-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    }
+
+    .hero-text h1 {
+    font-size: 40px;
+    }
     }
 
     @@media (max-width: 640px) {
-        .features-cards-grid {
-            grid-template-columns: 1fr;
-        }
+    .features-cards-grid {
+    grid-template-columns: 1fr;
+    }
 
-        .stats-bar-grid {
-            grid-template-columns: 1fr 1fr;
-        }
+    .stats-bar-grid {
+    grid-template-columns: 1fr 1fr;
+    }
 
-        .auth-links {
-            gap: 12px;
-        }
+    .auth-links {
+    gap: 12px;
+    }
 
-        .auth-link-login {
-            font-size: 13px;
-        }
+    .auth-link-login {
+    font-size: 13px;
+    }
 
-        .auth-link-register {
-            padding: 8px 16px;
-            font-size: 13px;
-        }
+    .auth-link-register {
+    padding: 8px 16px;
+    font-size: 13px;
+    }
 
-        .lang-toggle {
-            top: 80px;
-            left: 16px;
-        }
+    .lang-toggle {
+    top: 80px;
+    left: 16px;
+    }
 
-        .hero-text h1 {
-            font-size: 32px;
-        }
+    .hero-text h1 {
+    font-size: 32px;
+    }
 
-        .hero-cta {
-            flex-direction: column;
-        }
+    .hero-cta {
+    flex-direction: column;
+    }
 
-        .btn-large, .btn-secondary {
-            width: 100%;
-            text-align: center;
-        }
+    .btn-large,
+    .btn-secondary {
+    width: 100%;
+    text-align: center;
+    }
 
-        .footer-content {
-            flex-direction: column;
-            gap: 16px;
-            text-align: center;
-        }
-        /* User Welcome Style */
-        .auth-links span {
-            padding: 8px 16px;
-            background: rgba(52, 94, 105, 0.1);
-            border-radius: 20px;
-            color: var(--brand-color);
-            font-weight: 600;
-            font-size: 14px;
-        }
+    .footer-content {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    }
+
+    /* User Welcome Style */
+    .auth-links span {
+    padding: 8px 16px;
+    background: rgba(52, 94, 105, 0.1);
+    border-radius: 20px;
+    color: var(--brand-color);
+    font-weight: 600;
+    font-size: 14px;
+    }
+    }
+
+    .bg-gradient-hero {
+    background: linear-gradient(135deg, rgba(61, 139, 139, 0.08) 0%, rgba(61, 139, 139, 0.02) 50%, transparent 100%);
+    }
+
+    .animate-float {
+    animation: float 3s ease-in-out infinite;
+    }
+
+    .animate-float-delayed {
+    animation: float 3s ease-in-out infinite 1s;
+    }
+
+    @@keyframes float {
+
+    0%,
+    100% {
+    transform: translateY(0);
+    }
+
+    50% {
+    transform: translateY(-10px);
+    }
+    }
+
+    /* تنسيق حاوية الـ Canvas بتاعة الـ 3D Particles القديمة */
+    #bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    }
+
+    /* التأكد من أن محتوى الصفحة يظهر فوق الـ Canvas */
+    .content-wrapper {
+    position: relative;
+    z-index: 10;
     }
 </style>
-
 
 
 <!-- Header - Always LTR with New Logo -->
 <nav class="glass-header">
     <div class="nav-container">
-        @* <!-- New Logo -->
-        <a asp-controller="Landing" asp-action="Index" class="logo-link">
-            <div class="logo-icon">S</div>
-            <span class="logo-text">SOHBA</span>
-        </a> *@
-        <!-- Logo  -->
+        <!-- Logo -->
         <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
-            <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
+            <div
+                class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
                 <span class="text-white text-2xl font-black">S</span>
             </div>
-            <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
+            <span
+                class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
                 SOHBA
             </span>
         </a>
@@ -892,21 +964,22 @@
             @if (ViewBag.IsAuthenticated == true)
             {
                 <!-- If User Are Login Show Him -->
-                <span class="text-gray-600 font-bold text-sm" data-en="Welcome, @ViewBag.UserName" data-ar="مرحباً، @ViewBag.UserName">
+                <span class="text-gray-600 font-bold text-sm" data-en="Welcome, @ViewBag.UserName"
+                        data-ar="مرحباً، @ViewBag.UserName">
                     Welcome, @ViewBag.UserName
                 </span>
-                <a asp-controller="Home" asp-action="Index"
-                   class="auth-link-register"
-                   data-en="Go to Feed"
-                   data-ar="الصفحة الرئيسية">
+                <a asp-controller="Home" asp-action="Index" class="auth-link-register" data-en="Go to Feed"
+                    data-ar="الصفحة الرئيسية">
                     Go to Feed
                 </a>
             }
             else
             {
                 <!-- If User Not In System -- Login/Register -->
-                <a asp-controller="Auth" asp-action="Login" class="auth-link-login" data-en="Login" data-ar="تسجيل الدخول">Login</a>
-                <a asp-controller="Auth" asp-action="Register" class="auth-link-register" data-en="Register" data-ar="إنشاء حساب">Register</a>
+                <a asp-controller="Auth" asp-action="Login" class="auth-link-login" data-en="Login"
+                    data-ar="تسجيل الدخول">Login</a>
+                <a asp-controller="Auth" asp-action="Register" class="auth-link-register" data-en="Register"
+                    data-ar="إنشاء حساب">Register</a>
             }
             <!-- Language Toggle -->
             <button class="lang-toggle" onclick="toggleLanguage()" id="langBtn">
@@ -915,47 +988,199 @@
         </div>
     </div>
 </nav>
+@*
+<!-- Hero Section - Old -->
+// <section class="hero">
+// <div id="canvas-container"></div>
 
-<!-- Hero Section -->
-<section class="hero">
-    <div id="canvas-container"></div>
+// <div class="hero-content">
+// <div class="hero-text">
+//     <h1 class="hero-anim">
+//         <span data-en="Connect, Share" data-ar="تواصل، شارك">Connect, Share</span><br>
+//         <span class="highlight" data-en="Build Your Community" data-ar="وابنِ مجتمعك">Build Your
+//             Community</span>
+//         </h1>
+//         <p class="hero-anim"
+//             data-en="SOHBA is your gateway to a unique social experience, where technology meets real human connections in a safe and organized environment."
+//             data-ar="منصة 'صحبة' هي بوابتك لتجربة اجتماعية فريدة، حيث تلتقي التكنولوجيا بالروابط الإنسانية الحقيقية في بيئة آمنة ومنظمة.">
+//             SOHBA is your gateway to a unique social experience, where technology meets real human connections in a
+//             safe and organized environment.
+//         </p>
+//         <div class="hero-anim hero-cta">
+//             <a href="#features" class="btn-primary btn-large" data-en="Discover Features"
+//                 data-ar="اكتشف المميزات">Discover Features</a>
+//             <a href="#" class="btn-secondary" data-en="Learn More" data-ar="اعرف المزيد">Learn More</a>
+//         </div>
+//     </div>
 
-    <div class="hero-content">
-        <div class="hero-text">
-            <h1 class="hero-anim">
-                <span data-en="Connect, Share" data-ar="تواصل، شارك">Connect, Share</span><br>
-                <span class="highlight" data-en="Build Your Community" data-ar="وابنِ مجتمعك">Build Your Community</span>
-            </h1>
-            <p class="hero-anim" data-en="SOHBA is your gateway to a unique social experience, where technology meets real human connections in a safe and organized environment." data-ar="منصة 'صحبة' هي بوابتك لتجربة اجتماعية فريدة، حيث تلتقي التكنولوجيا بالروابط الإنسانية الحقيقية في بيئة آمنة ومنظمة.">
-                SOHBA is your gateway to a unique social experience, where technology meets real human connections in a safe and organized environment.
-            </p>
-            <div class="hero-anim hero-cta">
-                <a href="#features" class="btn-primary btn-large" data-en="Discover Features" data-ar="اكتشف المميزات">Discover Features</a>
-                <a href="#" class="btn-secondary" data-en="Learn More" data-ar="اعرف المزيد">Learn More</a>
-            </div>
-        </div>
+//     <div class="hero-visual hero-anim">
+//         <div class="phone-mockup">
+//             <div class="phone-header">
+//                 <div class="dot dot-red"></div>
+//                 <div class="dot dot-yellow"></div>
+//                 <div class="dot dot-green"></div>
+//             </div>
+//             <div class="phone-content">
+//                 <div class="post-skeleton">
+//                     <div class="avatar"></div>
+//                     <div class="post-lines">
+//                         <div class="line" style="width: 60%;"></div>
+//                         <div class="line line-short"></div>
+//                     </div>
+//                 </div>
+//                 <div class="image-placeholder">
+//                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+//                             stroke-width="1.5">
+//                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+//                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
+//                         <polyline points="21 15 16 10 5 21"></polyline>
+//                     </svg>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+// </div>
+// </section>
 
-        <div class="hero-visual hero-anim">
-            <div class="phone-mockup">
-                <div class="phone-header">
-                    <div class="dot dot-red"></div>
-                    <div class="dot dot-yellow"></div>
-                    <div class="dot dot-green"></div>
+*@
+<!-- Hero Section - Updated -->
+<section class="relative overflow-hidden">
+    @* Background gradient *@
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/30"></div>
+
+    @* Decorative elements *@
+    <div class="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl"></div>
+
+    <div class="container relative px-4 md:px-6 py-20 md:py-32">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            @* Content *@
+            <div class="flex flex-col gap-6 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary w-fit mx-auto lg:mx-0">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    New Features Available
                 </div>
-                <div class="phone-content">
-                    <div class="post-skeleton">
-                        <div class="avatar"></div>
-                        <div class="post-lines">
-                            <div class="line" style="width: 60%;"></div>
-                            <div class="line line-short"></div>
+
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground text-balance">
+                    Connect, Share
+                    <br />
+                    <span class="text-primary">Build Your Community</span>
+                </h1>
+
+                <p class="text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0 text-pretty">
+                    SOHBA is your gateway to a unique social experience, where technology meets real human connections in a safe and organized environment.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
+                    <a asp-controller="Home" asp-action="Register" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-medium">
+                        Get Started Free
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <a href="#" class="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border bg-background rounded-lg hover:bg-muted transition-all font-medium">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                        Watch Demo
+                    </a>
+                </div>
+
+                @* Social Proof *@
+                <div class="flex items-center gap-4 pt-6 justify-center lg:justify-start">
+                    <div class="flex -space-x-3">
+                        @for (int i = 1; i <= 4; i++)
+                        {
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/60 to-primary border-2 border-background flex items-center justify-center text-xs font-medium text-primary-foreground">
+                                @((char)(64 + i))
+                            </div>
+                        }
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        <span class="font-semibold text-foreground">1,200+</span> users joined this month
+                    </div>
+                </div>
+            </div>
+
+            @* Hero Image/Mockup *@
+            <div class="relative lg:pl-8">
+                <div class="relative bg-card rounded-2xl shadow-2xl border border-border overflow-hidden">
+                    @* Browser Chrome *@
+                    <div class="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        </div>
+                        <div class="flex-1 mx-4">
+                            <div class="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground">
+                                sohba.app/feed
+                            </div>
                         </div>
                     </div>
-                    <div class="image-placeholder">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
+
+                    @* Mock Feed Content *@
+                    <div class="p-4 space-y-4 bg-gradient-to-b from-background to-muted/20 min-h-[300px]">
+                        @* Post Card *@
+                        <div class="bg-card rounded-xl p-4 shadow-sm border border-border">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
+                                    SA
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm text-foreground">Samir Ahmed</p>
+                                    <p class="text-xs text-muted-foreground">Just now</p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-foreground mb-3">Welcome to SOHBA! Excited to connect with everyone here.</p>
+                            <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span class="flex items-center gap-1">
+                                    <span class="text-red-500">❤</span> 24 reactions
+                                </span>
+                                <span>8 comments</span>
+                            </div>
+                        </div>
+
+                        @* Story Bar *@
+                        <div class="flex gap-3">
+                            @{
+                                string[] labels = { "Add Story", "User 1", "User 2" };
+                            }
+                            @for (int i = 0; i < labels.Length; i++)
+                            {
+                                <div class="flex flex-col items-center gap-1">
+                                    <div class="w-14 h-14 rounded-xl @(i == 0 ? "bg-primary/10 border-2 border-dashed border-primary/30" : "bg-gradient-to-br from-primary to-primary/60") flex items-center justify-center">
+                                        @if (i == 0)
+                                        {
+                                            <span class="text-primary text-xl">+</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-primary-foreground text-xs font-medium">@labels[i][0]</span>
+                                        }
+                                    </div>
+                                    <span class="text-[10px] text-muted-foreground">@labels[i]</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @* Floating Elements *@
+                <div class="absolute -right-4 top-1/4 bg-card rounded-lg shadow-lg border border-border p-3 animate-pulse">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <span class="text-xs font-medium text-foreground">New Friend Request</span>
+                    </div>
+                </div>
+
+                <div class="absolute -left-4 bottom-1/4 bg-card rounded-lg shadow-lg border border-border p-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="text-primary text-sm">★</span>
+                        </div>
+                        <span class="text-xs font-medium text-foreground">Trending Now</span>
                     </div>
                 </div>
             </div>
@@ -963,201 +1188,353 @@
     </div>
 </section>
 
-<!-- Features Section -->
+<!-- Features Section - Old -->
+@*
 <section id="features" class="features">
     <div class="container">
         <div class="section-header">
-            <h2 data-en="Everything You Need in One Place" data-ar="كل ما تحتاجه في مكان واحد">Everything You Need in One Place</h2>
-            <p data-en="Powerful features designed for modern social interaction" data-ar="ميزات قوية مصممة للتفاعل الاجتماعي الحديث">Powerful features designed for modern social interaction</p>
+            <h2 data-en="Everything You Need in One Place" data-ar="كل ما تحتاجه في مكان واحد">Everything You Need in
+                One Place</h2>
+                <p data-en="Powerful features designed for modern social interaction"
+                    data-ar="ميزات قوية مصممة للتفاعل الاجتماعي الحديث">Powerful features designed for modern social
+                    interaction</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background: rgba(52, 94, 105, 0.1); color: #345e69;">✍️</div>
+                        <h3 data-en="Self Expression" data-ar="التعبير عن النفس">Self Expression</h3>
+                        <p data-en="Create text and image posts, add hashtags, and interact with friends through 6 different reactions."
+                            data-ar="أنشئ منشورات نصية وصورية، أضف الهاشتاجات، وتفاعل مع أصدقائك بـ 6 ردود فعل مختلفة.">Create
+                            text and image posts, add hashtags, and interact with friends through 6 different reactions.</p>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon" style="background: rgba(74, 130, 145, 0.1); color: #4a8291;">🔖</div>
+                            <h3 data-en="Smart Organization" data-ar="التنظيم الذكي">Smart Organization</h3>
+                            <p data-en="Save important posts and categorize them in private folders (Work, Education, Favorites) for easy access later."
+                                data-ar="احفظ المنشورات الهامة وصنفها في مجلدات خاصة (عمل، تعليم، مفضلة) لتصل إليها لاحقاً بسهولة.">
+                                Save important posts and categorize them in private folders (Work, Education, Favorites) for easy
+                                access later.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon" style="background: rgba(52, 94, 105, 0.1); color: #345e69;">👥</div>
+                                <h3 data-en="Communities & Pages" data-ar="المجتمعات والصفحات">Communities & Pages</h3>
+                                <p data-en="Create your own groups or join public communities, and follow official pages to stay updated."
+                                    data-ar="أنشئ مجموعاتك الخاصة أو انضم لمجتمعات عامة، وتابع الصفحات الرسمية لتبقى على اطلاع بكل جديد.">
+                                    Create your own groups or join public communities, and follow official pages to stay updated.</p>
+                                </div>
+                            </div>
+                        </div>
+</section>
+*@
+
+<!-- Features Section - updated -->
+<section id="features" class="py-20 md:py-28 bg-background">
+    <div class="container px-4 md:px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
+                Everything You Need in One Place
+            </h2>
+            <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Powerful features designed for modern social interaction
+            </p>
         </div>
 
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(52, 94, 105, 0.1); color: #345e69;">✍️</div>
-                <h3 data-en="Self Expression" data-ar="التعبير عن النفس">Self Expression</h3>
-                <p data-en="Create text and image posts, add hashtags, and interact with friends through 6 different reactions." data-ar="أنشئ منشورات نصية وصورية، أضف الهاشتاجات، وتفاعل مع أصدقائك بـ 6 ردود فعل مختلفة.">Create text and image posts, add hashtags, and interact with friends through 6 different reactions.</p>
-            </div>
+        @{
+            var features = new[]
+            {
+                new {
+                    Title = "Self Expression",
+                    Description = "Create text and image posts, add hashtags, and interact with friends through 6 different reactions.",
+                    Icon = "palette"
+                },
+                new {
+                    Title = "Smart Organization",
+                    Description = "Save important posts and categorize them in private folders (Work, Education, Favorites) for easy access later.",
+                    Icon = "folder-open"
+                },
+                new {
+                    Title = "Communities & Pages",
+                    Description = "Create your own groups or join public communities, and follow official pages to stay updated.",
+                    Icon = "users"
+                }
+            };
+        }
 
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(74, 130, 145, 0.1); color: #4a8291;">🔖</div>
-                <h3 data-en="Smart Organization" data-ar="التنظيم الذكي">Smart Organization</h3>
-                <p data-en="Save important posts and categorize them in private folders (Work, Education, Favorites) for easy access later." data-ar="احفظ المنشورات الهامة وصنفها في مجلدات خاصة (عمل، تعليم، مفضلة) لتصل إليها لاحقاً بسهولة.">Save important posts and categorize them in private folders (Work, Education, Favorites) for easy access later.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(52, 94, 105, 0.1); color: #345e69;">👥</div>
-                <h3 data-en="Communities & Pages" data-ar="المجتمعات والصفحات">Communities & Pages</h3>
-                <p data-en="Create your own groups or join public communities, and follow official pages to stay updated." data-ar="أنشئ مجموعاتك الخاصة أو انضم لمجتمعات عامة، وتابع الصفحات الرسمية لتبقى على اطلاع بكل جديد.">Create your own groups or join public communities, and follow official pages to stay updated.</p>
-            </div>
+        <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+            @foreach (var feature in features)
+            {
+                <div class="group relative bg-card rounded-2xl p-6 lg:p-8 border border-border hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+                    <div class="mb-5">
+                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                            <i data-lucide="@feature.Icon" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-foreground mb-3">
+                        @feature.Title
+                    </h3>
+                    <p class="text-muted-foreground leading-relaxed">
+                        @feature.Description
+                    </p>
+                </div>
+            }
         </div>
     </div>
 </section>
 
-<!-- Control Section -->
+
+@*
+<!-- Control Section - Old -->
 <section class="control-section">
     <div class="container">
         <div class="control-grid">
             <div class="control-content">
-                <h2 data-en="Complete Control Over Your Digital Experience" data-ar="تحكم كامل في تجربتك الرقمية">Complete Control Over Your <span style="color: #345e69;">Digital Experience</span></h2>
+                <h2 data-en="Complete Control Over Your Digital Experience" data-ar="تحكم كامل في تجربتك الرقمية">
+                    Complete Control Over Your <span style="color: #345e69;">Digital Experience</span></h2>
 
                 <div class="control-list">
-                    <div class="control-item">
-                        <div class="control-number">1</div>
-                        <div>
-                            <h4 data-en="Privacy & Security" data-ar="الخصوصية والأمان">Privacy & Security</h4>
-                            <p data-en="Blocking capabilities, email verification, and control over who sees your stories." data-ar="إمكانية الحظر، تأكيد البريد، وتحديد من يرى قصصك.">Blocking capabilities, email verification, and control over who sees your stories.</p>
-                        </div>
+                <div class="control-item">
+                    <div class="control-number">1</div>
+                    <div>
+                        <h4 data-en="Privacy & Security" data-ar="الخصوصية والأمان">Privacy & Security</h4>
+                        <p data-en="Blocking capabilities, email verification, and control over who sees your stories."
+                            data-ar="إمكانية الحظر، تأكيد البريد، وتحديد من يرى قصصك.">Blocking capabilities, email
+                            verification, and control over who sees your stories.</p>
                     </div>
+                </div>
 
-                    <div class="control-item">
-                        <div class="control-number">2</div>
-                        <div>
-                            <h4 data-en="Global Search" data-ar="بحث عالمي شامل">Global Search</h4>
-                            <p data-en="Search for people, posts, groups, or even hashtags with one click." data-ar="ابحث عن أشخاص، منشورات، مجموعات، أو حتى هاشتاجات بضغطة واحدة.">Search for people, posts, groups, or even hashtags with one click.</p>
-                        </div>
+                <div class="control-item">
+                    <div class="control-number">2</div>
+                    <div>
+                        <h4 data-en="Global Search" data-ar="بحث عالمي شامل">Global Search</h4>
+                        <p data-en="Search for people, posts, groups, or even hashtags with one click."
+                            data-ar="ابحث عن أشخاص، منشورات، مجموعات، أو حتى هاشتاجات بضغطة واحدة.">Search for
+                            people, posts, groups, or even hashtags with one click.</p>
                     </div>
+                </div>
 
-                    <div class="control-item">
-                        <div class="control-number">3</div>
-                        <div>
-                            <h4 data-en="Professional Management" data-ar="إدارة احترافية">Professional Management</h4>
-                            <p data-en="Complete admin dashboard to monitor statistics and manage reports and content." data-ar="لوحة تحكم كاملة للمشرفين لمراقبة الإحصائيات وإدارة التقارير والمحتوى.">Complete admin dashboard to monitor statistics and manage reports and content.</p>
-                        </div>
+                <div class="control-item">
+                    <div class="control-number">3</div>
+                    <div>
+                        <h4 data-en="Professional Management" data-ar="إدارة احترافية">Professional Management</h4>
+                        <p data-en="Complete admin dashboard to monitor statistics and manage reports and content."
+                            data-ar="لوحة تحكم كاملة للمشرفين لمراقبة الإحصائيات وإدارة التقارير والمحتوى.">Complete
+                            admin dashboard to monitor statistics and manage reports and content.</p>
                     </div>
                 </div>
             </div>
+            </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">📱</div>
-                    <h4 data-en="Responsive Design" data-ar="تصميم متجاوب">Responsive Design</h4>
-                    <p data-en="Works smoothly on all devices" data-ar="يعمل بسلاسة على كافة الأجهزة">Works smoothly on all devices</p>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🔥</div>
-                    <h4>Trending</h4>
-                    <p data-en="Follow popular hashtags now" data-ar="تابع أشهر الهاشتاجات الرائجة الآن">Follow popular hashtags now</p>
-                </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <h4 data-en="Responsive Design" data-ar="تصميم متجاوب">Responsive Design</h4>
+                        <p data-en="Works smoothly on all devices" data-ar="يعمل بسلاسة على كافة الأجهزة">Works smoothly on
+                            all devices</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                            <h4>Trending</h4>
+                            <p data-en="Follow popular hashtags now" data-ar="تابع أشهر الهاشتاجات الرائجة الآن">Follow popular
+                                hashtags now</p>
+                    </div>
+            </div>
+        </div>
+    </div>
+</section>
+*@
+<!-- Control Section - Updated -->
+<section class="py-20 md:py-28 bg-muted/30">
+    <div class="container px-4 md:px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
+                Complete Control Over Your
+                <br />
+                Digital Experience
+            </h2>
+        </div>
+
+        @{
+            // البيانات الخاصة بالـ Capabilities
+            var capabilities = new[]
+            {
+                new { Number = "1", Title = "Privacy & Security", Description = "Blocking capabilities, email verification, and control over who sees your stories.", Icon = "shield" },
+                new { Number = "2", Title = "Global Search", Description = "Search for people, posts, groups, or even hashtags with one click.", Icon = "search" },
+                new { Number = "3", Title = "Professional Management", Description = "Complete admin dashboard to monitor statistics and manage reports and content.", Icon = "settings" }
+            };
+
+            // البيانات الخاصة بالـ Highlights
+            var highlights = new[]
+            {
+                new { Title = "Responsive Design", Description = "Works smoothly on all devices", Icon = "smartphone" },
+                new { Title = "Trending", Description = "Follow popular hashtags now", Icon = "trending-up" }
+            };
+        }
+
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            @* Left: Capability List *@
+            <div class="space-y-6">
+                @foreach (var cap in capabilities)
+                {
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                            @cap.Number
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-foreground mb-1">@cap.Title</h3>
+                            <p class="text-muted-foreground text-sm leading-relaxed">@cap.Description</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* Right: Highlight Cards *@
+            <div class="grid sm:grid-cols-2 gap-4">
+                @foreach (var highlight in highlights)
+                {
+                    <div class="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-3">
+                            <i data-lucide="@highlight.Icon" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-semibold text-foreground mb-1">@highlight.Title</h4>
+                        <p class="text-sm text-muted-foreground">@highlight.Description</p>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </section>
 
-<!-- Detailed Features -->
+
+<!-- All Detailed Features - Old -->
+@*
 <section id="detailed-features" class="detailed-features">
     <div class="container">
         <div class="section-header">
-            <h2 data-en="Complete Application Features" data-ar="مميزات التطبيق الكاملة">Complete Application Features</h2>
-            <p data-en="Advanced software architecture ensuring a comprehensive and professional social experience" data-ar="بنية برمجية متطورة تضمن تقديم تجربة اجتماعية متكاملة واحترافية">Advanced software architecture ensuring a comprehensive and professional social experience</p>
+            <h2 data-en="Complete Application Features" data-ar="مميزات التطبيق الكاملة">Complete Application Features
+            </h2>
+            <p data-en="Advanced software architecture ensuring a comprehensive and professional social experience"
+                data-ar="بنية برمجية متطورة تضمن تقديم تجربة اجتماعية متكاملة واحترافية">Advanced software architecture
+                ensuring a comprehensive and professional social experience</p>
+            </div>
+
+            <div class="features-cards-grid">
+                <!-- Auth -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">🔐</div>
+                        <h3 data-en="Authentication" data-ar="المصادقة">Authentication</h3>
+                    </div>
+                    <div class="story-list">
+                        <div class="story-item">
+                            <div class="story-item-header">
+                                <div class="story-dot"></div>
+                                <span class="story-code">User Can Register</span>
+                            </div>
+                            <p class="story-desc" data-en="Create new account" data-ar="إنشاء حساب جديد">Create new account
+                            </p>
+                        </div>
+                        <div class="story-item">
+                            <div class="story-item-header">
+                                <div class="story-dot"></div>
+                                <span class="story-code">User Can Login</span>
+                            </div>
+                            <p class="story-desc" data-en="Sign in and out" data-ar="تسجيل الدخول والخروج">Sign in and out
+                            </p>
+                        </div>
+                        <div class="story-item">
+                            <div class="story-item-header">
+                                <div class="story-dot"></div>
+                                <span class="story-code">Reset Password</span>
+                            </div>
+                            <p class="story-desc" data-en="Password recovery" data-ar="استعادة كلمة المرور">Password
+                                recovery</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="story-card">
+                        <div class="story-card-header">
+                            <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">👤</div>
+                            <h3 data-en="Profile" data-ar="الملف الشخصي">Profile</h3>
+                        </div>
+                        <div class="story-list">
+                            <div class="story-item">
+                                <div class="story-item-header">
+                                    <div class="story-dot"></div>
+                                    <span class="story-code">View/Edit Profile</span>
+                                </div>
+                                <p class="story-desc" data-en="Name, bio, photo" data-ar="الاسم، البايو، الصورة">Name, bio,
+                                    photo</p>
+                                </div>
+                                <div class="story-item">
+                                    <div class="story-item-header">
+                                        <div class="story-dot"></div>
+                                        <span class="story-code">Change Password</span>
+                                    </div>
+                                    <p class="story-desc" data-en="Update password" data-ar="تغيير كلمة المرور">Update password</p>
+                                </div>
+                                <div class="story-item">
+                                    <div class="story-item-header">
+                                        <div class="story-dot"></div>
+                                        <span class="story-code">Update Settings</span>
+                                    </div>
+                                    <p class="story-desc" data-en="Privacy & notifications" data-ar="تحديث إعدادات الخصوصية">Privacy
+                                        & notifications</p>
+                                    </div>
+                                </div>
+                            </div>
+
+<!-- Posts -->
+<div class="story-card">
+    <div class="story-card-header">
+        <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📝</div>
+        <h3 data-en="Posts" data-ar="المنشورات">Posts</h3>
+    </div>
+    <div class="story-list">
+        <div class="story-item">
+            <div class="story-item-header">
+                <div class="story-dot"></div>
+                <span class="story-code">Create/Edit Post</span>
+            </div>
+            <p class="story-desc" data-en="Text and image posts" data-ar="إنشاء وتعديل منشور">Text and image
+                posts</p>
+            </div>
+            <div class="story-item">
+                <div class="story-item-header">
+                    <div class="story-dot"></div>
+                    <span class="story-code">Delete Post</span>
+                </div>
+                <p class="story-desc" data-en="Soft delete" data-ar="حذف المنشور">Soft delete</p>
+            </div>
+            <div class="story-item">
+                <div class="story-item-header">
+                    <div class="story-dot"></div>
+                    <span class="story-code">View Feed</span>
+                </div>
+                <p class="story-desc" data-en="Latest posts and details" data-ar="عرض آخر المنشورات">Latest
+                    posts and details</p>
+                </div>
+            </div>
         </div>
 
-        <div class="features-cards-grid">
-            <!-- Auth -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">🔐</div>
-                    <h3 data-en="Authentication" data-ar="المصادقة">Authentication</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">User Can Register</span>
-                        </div>
-                        <p class="story-desc" data-en="Create new account" data-ar="إنشاء حساب جديد">Create new account</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">User Can Login</span>
-                        </div>
-                        <p class="story-desc" data-en="Sign in and out" data-ar="تسجيل الدخول والخروج">Sign in and out</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Reset Password</span>
-                        </div>
-                        <p class="story-desc" data-en="Password recovery" data-ar="استعادة كلمة المرور">Password recovery</p>
-                    </div>
-                </div>
+        <!-- Interactions -->
+        <div class="story-card">
+            <div class="story-card-header">
+                <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">❤️</div>
+                <h3 data-en="Interactions" data-ar="التفاعلات">Interactions</h3>
             </div>
-
-            <!-- Profile -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">👤</div>
-                    <h3 data-en="Profile" data-ar="الملف الشخصي">Profile</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">View/Edit Profile</span>
-                        </div>
-                        <p class="story-desc" data-en="Name, bio, photo" data-ar="الاسم، البايو، الصورة">Name, bio, photo</p>
+            <div class="story-list">
+                <div class="story-item">
+                    <div class="story-item-header">
+                        <div class="story-dot"></div>
+                        <span class="story-code">React to Post</span>
                     </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Change Password</span>
-                        </div>
-                        <p class="story-desc" data-en="Update password" data-ar="تغيير كلمة المرور">Update password</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Update Settings</span>
-                        </div>
-                        <p class="story-desc" data-en="Privacy & notifications" data-ar="تحديث إعدادات الخصوصية">Privacy & notifications</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Posts -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📝</div>
-                    <h3 data-en="Posts" data-ar="المنشورات">Posts</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Create/Edit Post</span>
-                        </div>
-                        <p class="story-desc" data-en="Text and image posts" data-ar="إنشاء وتعديل منشور">Text and image posts</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Delete Post</span>
-                        </div>
-                        <p class="story-desc" data-en="Soft delete" data-ar="حذف المنشور">Soft delete</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">View Feed</span>
-                        </div>
-                        <p class="story-desc" data-en="Latest posts and details" data-ar="عرض آخر المنشورات">Latest posts and details</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Interactions -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">❤️</div>
-                    <h3 data-en="Interactions" data-ar="التفاعلات">Interactions</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">React to Post</span>
-                        </div>
-                        <p class="story-desc" data-en="6 reactions (Like, Love...)" data-ar="6 ردود فعل مختلفة">6 reactions (Like, Love...)</p>
+                    <p class="story-desc" data-en="6 reactions (Like, Love...)" data-ar="6 ردود فعل مختلفة">6
+                        reactions (Like, Love...)</p>
                     </div>
                     <div class="story-item">
                         <div class="story-item-header">
@@ -1171,7 +1548,8 @@
                             <div class="story-dot"></div>
                             <span class="story-code">Reply to Comment</span>
                         </div>
-                        <p class="story-desc" data-en="Reply to comments" data-ar="الرد على التعليقات">Reply to comments</p>
+                        <p class="story-desc" data-en="Reply to comments" data-ar="الرد على التعليقات">Reply to comments
+                        </p>
                     </div>
                 </div>
             </div>
@@ -1188,205 +1566,314 @@
                             <div class="story-dot"></div>
                             <span class="story-code">Save/Remove Post</span>
                         </div>
-                        <p class="story-desc" data-en="Save and remove posts" data-ar="حفظ وإزالة المنشورات">Save and remove posts</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Categorize</span>
+                        <p class="story-desc" data-en="Save and remove posts" data-ar="حفظ وإزالة المنشورات">Save and
+                            remove posts</p>
                         </div>
-                        <p class="story-desc" data-en="Organize in folders" data-ar="تصنيف المنشورات">Organize in folders</p>
+                        <div class="story-item">
+                            <div class="story-item-header">
+                                <div class="story-dot"></div>
+                                <span class="story-code">Categorize</span>
+                            </div>
+                            <p class="story-desc" data-en="Organize in folders" data-ar="تصنيف المنشورات">Organize in
+                                folders</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Friends -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">👥</div>
-                    <h3 data-en="Friends" data-ar="الأصدقاء">Friends</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Friend Requests</span>
+                    <!-- Friends -->
+                    <div class="story-card">
+                        <div class="story-card-header">
+                            <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">👥</div>
+                            <h3 data-en="Friends" data-ar="الأصدقاء">Friends</h3>
                         </div>
-                        <p class="story-desc" data-en="Send, accept, reject" data-ar="إرسال، قبول، رفض">Send, accept, reject</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Block/Unblock</span>
+                        <div class="story-list">
+                            <div class="story-item">
+                                <div class="story-item-header">
+                                    <div class="story-dot"></div>
+                                    <span class="story-code">Friend Requests</span>
+                                </div>
+                                <p class="story-desc" data-en="Send, accept, reject" data-ar="إرسال، قبول، رفض">Send, accept,
+                                    reject</p>
+                                </div>
+                                <div class="story-item">
+                                    <div class="story-item-header">
+                                        <div class="story-dot"></div>
+                                        <span class="story-code">Block/Unblock</span>
+                                    </div>
+                                    <p class="story-desc" data-en="Block users" data-ar="حظر المستخدمين">Block users</p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="story-desc" data-en="Block users" data-ar="حظر المستخدمين">Block users</p>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Groups -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">👪</div>
-                    <h3 data-en="Groups" data-ar="المجموعات">Groups</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Create Group</span>
-                        </div>
-                        <p class="story-desc" data-en="Manage groups" data-ar="إدارة المجموعات">Manage groups</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Join/Leave</span>
-                        </div>
-                        <p class="story-desc" data-en="Join and leave groups" data-ar="الانضمام ومغادرة المجموعات">Join and leave groups</p>
-                    </div>
-                </div>
-            </div>
+                        <!-- Groups -->
+                        <div class="story-card">
+                            <div class="story-card-header">
+                                <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">👪</div>
+                                <h3 data-en="Groups" data-ar="المجموعات">Groups</h3>
+                            </div>
+                            <div class="story-list">
+                                <div class="story-item">
+                                    <div class="story-item-header">
+                                        <div class="story-dot"></div>
+                                        <span class="story-code">Create Group</span>
+                                    </div>
+                                    <p class="story-desc" data-en="Manage groups" data-ar="إدارة المجموعات">Manage groups</p>
+                                </div>
+                                <div class="story-item">
+                                    <div class="story-item-header">
+                                        <div class="story-dot"></div>
+                                        <span class="story-code">Join/Leave</span>
+                                    </div>
+                                    <p class="story-desc" data-en="Join and leave groups" data-ar="الانضمام ومغادرة المجموعات">Join
+                                        and leave groups</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            <!-- Pages -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">📄</div>
-                    <h3 data-en="Pages" data-ar="الصفحات">Pages</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Create Page</span>
-                        </div>
-                        <p class="story-desc" data-en="Full page management" data-ar="إدارة كاملة للصفحات">Full page management</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Follow/Unfollow</span>
-                        </div>
-                        <p class="story-desc" data-en="Follow pages" data-ar="متابعة الصفحات">Follow pages</p>
-                    </div>
-                </div>
-            </div>
+                            <!-- Pages -->
+                            <div class="story-card">
+                                <div class="story-card-header">
+                                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">📄</div>
+                                    <h3 data-en="Pages" data-ar="الصفحات">Pages</h3>
+                                </div>
+                                <div class="story-list">
+                                    <div class="story-item">
+                                        <div class="story-item-header">
+                                            <div class="story-dot"></div>
+                                            <span class="story-code">Create Page</span>
+                                        </div>
+                                        <p class="story-desc" data-en="Full page management" data-ar="إدارة كاملة للصفحات">Full page
+                                            management</p>
+                                        </div>
+                                        <div class="story-item">
+                                            <div class="story-item-header">
+                                                <div class="story-dot"></div>
+                                                <span class="story-code">Follow/Unfollow</span>
+                                            </div>
+                                            <p class="story-desc" data-en="Follow pages" data-ar="متابعة الصفحات">Follow pages</p>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <!-- Stories -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📖</div>
-                    <h3 data-en="Stories" data-ar="القصص">Stories</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Create Story</span>
-                        </div>
-                        <p class="story-desc" data-en="Text, image, video" data-ar="إنشاء قصص متعددة">Text, image, video</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Story Privacy</span>
-                        </div>
-                        <p class="story-desc" data-en="Public or friends only" data-ar="تحديد خصوصية القصة">Public or friends only</p>
-                    </div>
-                </div>
-            </div>
+                                <!-- Stories -->
+                                <div class="story-card">
+                                    <div class="story-card-header">
+                                        <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📖</div>
+                                        <h3 data-en="Stories" data-ar="القصص">Stories</h3>
+                                    </div>
+                                    <div class="story-list">
+                                        <div class="story-item">
+                                            <div class="story-item-header">
+                                                <div class="story-dot"></div>
+                                                <span class="story-code">Create Story</span>
+                                            </div>
+                                            <p class="story-desc" data-en="Text, image, video" data-ar="إنشاء قصص متعددة">Text, image, video
+                                            </p>
+                                        </div>
+                                        <div class="story-item">
+                                            <div class="story-item-header">
+                                                <div class="story-dot"></div>
+                                                <span class="story-code">Story Privacy</span>
+                                            </div>
+                                            <p class="story-desc" data-en="Public or friends only" data-ar="تحديد خصوصية القصة">Public or
+                                                friends only</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-            <!-- Search -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">🔍</div>
-                    <h3 data-en="Search" data-ar="البحث">Search</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Global Search</span>
-                        </div>
-                        <p class="story-desc" data-en="Search everything" data-ar="بحث شامل في كل شيء">Search everything</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Filter Results</span>
-                        </div>
-                        <p class="story-desc" data-en="Advanced filtering" data-ar="تصفية متقدمة للنتائج">Advanced filtering</p>
-                    </div>
-                </div>
-            </div>
+                                    <!-- Search -->
+                                    <div class="story-card">
+                                        <div class="story-card-header">
+                                            <div class="story-icon" style="background: rgba(74, 130, 145, 0.1);">🔍</div>
+                                            <h3 data-en="Search" data-ar="البحث">Search</h3>
+                                        </div>
+                                        <div class="story-list">
+                                            <div class="story-item">
+                                                <div class="story-item-header">
+                                                    <div class="story-dot"></div>
+                                                    <span class="story-code">Global Search</span>
+                                                </div>
+                                                <p class="story-desc" data-en="Search everything" data-ar="بحث شامل في كل شيء">Search everything
+                                                </p>
+                                            </div>
+                                            <div class="story-item">
+                                                <div class="story-item-header">
+                                                    <div class="story-dot"></div>
+                                                    <span class="story-code">Filter Results</span>
+                                                </div>
+                                                <p class="story-desc" data-en="Advanced filtering" data-ar="تصفية متقدمة للنتائج">Advanced
+                                                    filtering</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-            <!-- Admin -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(239, 68, 68, 0.1);">📊</div>
-                    <h3 data-en="Admin" data-ar="لوحة التحكم">Admin</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot admin"></div>
-                            <span class="story-code">Dashboard</span>
-                        </div>
-                        <p class="story-desc" data-en="Statistics and charts" data-ar="الإحصائيات والرسوم البيانية">Statistics and charts</p>
-                    </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot admin"></div>
-                            <span class="story-code">Manage Users</span>
-                        </div>
-                        <p class="story-desc" data-en="Block, delete users" data-ar="حظر وحذف المستخدمين">Block, delete users</p>
-                    </div>
-                </div>
-            </div>
+                                        <!-- Admin -->
+                                        <div class="story-card">
+                                            <div class="story-card-header">
+                                                <div class="story-icon" style="background: rgba(239, 68, 68, 0.1);">📊</div>
+                                                <h3 data-en="Admin" data-ar="لوحة التحكم">Admin</h3>
+                                            </div>
+                                            <div class="story-list">
+                                                <div class="story-item">
+                                                    <div class="story-item-header">
+                                                        <div class="story-dot admin"></div>
+                                                        <span class="story-code">Dashboard</span>
+                                                    </div>
+                                                    <p class="story-desc" data-en="Statistics and charts" data-ar="الإحصائيات والرسوم البيانية">
+                                                        Statistics and charts</p>
+                                                    </div>
+                                                    <div class="story-item">
+                                                        <div class="story-item-header">
+                                                            <div class="story-dot admin"></div>
+                                                            <span class="story-code">Manage Users</span>
+                                                        </div>
+                                                        <p class="story-desc" data-en="Block, delete users" data-ar="حظر وحذف المستخدمين">Block, delete
+                                                            users</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-            <!-- General -->
-            <div class="story-card">
-                <div class="story-card-header">
-                    <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📱</div>
-                    <h3 data-en="General" data-ar="مزايا عامة">General</h3>
-                </div>
-                <div class="story-list">
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Trending</span>
+                                                <!-- General -->
+                                                <div class="story-card">
+                                                    <div class="story-card-header">
+                                                        <div class="story-icon" style="background: rgba(52, 94, 105, 0.1);">📱</div>
+                                                        <h3 data-en="General" data-ar="مزايا عامة">General</h3>
+                                                    </div>
+                                                    <div class="story-list">
+                                                        <div class="story-item">
+                                                            <div class="story-item-header">
+                                                                <div class="story-dot"></div>
+                                                                <span class="story-code">Trending</span>
+                                                            </div>
+                                                            <p class="story-desc" data-en="Popular hashtags" data-ar="الهاشتاجات الرائجة">Popular hashtags
+                                                            </p>
+                                                        </div>
+                                                        <div class="story-item">
+                                                            <div class="story-item-header">
+                                                                <div class="story-dot"></div>
+                                                                <span class="story-code">Responsive</span>
+                                                            </div>
+                                                            <p class="story-desc" data-en="All devices support" data-ar="دعم جميع الأجهزة">All devices
+                                                                support</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+</section>
+*@
+
+<!-- All Detailed Features - Updated -->
+
+<section class="py-20 md:py-28 bg-background">
+    <div class="container px-4 md:px-6">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
+                Complete Application Features
+            </h2>
+            <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Advanced software architecture ensuring a comprehensive and professional social experience
+            </p>
+        </div>
+
+        @{
+            
+            var featureGroups = new[]
+            {
+                new { Title = "Authentication", Icon = "shield", Color = "text-amber-600", BgColor = "bg-amber-50", Features = new[] { "User Can Register", "User Can Login", "Reset Password" } },
+                new { Title = "Profile", Icon = "user", Color = "text-blue-600", BgColor = "bg-blue-50", Features = new[] { "View/Edit Profile", "Change Password", "Update Settings" } },
+                new { Title = "Posts", Icon = "file-text", Color = "text-green-600", BgColor = "bg-green-50", Features = new[] { "Create/Edit Post", "Delete Post", "View Feed" } },
+                new { Title = "Interactions", Icon = "heart", Color = "text-red-500", BgColor = "bg-red-50", Features = new[] { "React to Post", "Comment", "Reply to Comment" } },
+                new { Title = "Saved", Icon = "bookmark", Color = "text-purple-600", BgColor = "bg-purple-50", Features = new[] { "Save/Remove Post", "Categories", "Quick Access" } },
+                new { Title = "Friends", Icon = "users", Color = "text-cyan-600", BgColor = "bg-cyan-50", Features = new[] { "Friend Requests", "Block/Unblock", "Manage Connections" } },
+                new { Title = "Groups", Icon = "building-2", Color = "text-orange-600", BgColor = "bg-orange-50", Features = new[] { "Create Group", "Join/Leave", "Group Management" } },
+                new { Title = "Pages", Icon = "book-open", Color = "text-pink-600", BgColor = "bg-pink-50", Features = new[] { "Create Page", "Follow/Unfollow", "Page Admin" } },
+                new { Title = "Stories", Icon = "book-open", Color = "text-indigo-600", BgColor = "bg-indigo-50", Features = new[] { "Create Story", "View Stories", "Story Privacy" } },
+                new { Title = "Search", Icon = "search", Color = "text-teal-600", BgColor = "bg-teal-50", Features = new[] { "Global Search", "Filter Results", "Advanced Search" } },
+                new { Title = "Admin", Icon = "layout-dashboard", Color = "text-slate-600", BgColor = "bg-slate-100", Features = new[] { "Dashboard", "Manage Users", "Reports & Stats" } },
+                new { Title = "General", Icon = "sparkles", Color = "text-violet-600", BgColor = "bg-violet-50", Features = new[] { "Trending", "Responsive", "Real-time" } }
+            };
+        }
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach (var group in featureGroups)
+            {
+                <div class="bg-card rounded-xl p-5 border border-border hover:border-primary/20 hover:shadow-md transition-all duration-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-9 h-9 rounded-lg @group.BgColor @group.Color flex items-center justify-center">
+                            <i data-lucide="@group.Icon" class="w-4 h-4"></i>
                         </div>
-                        <p class="story-desc" data-en="Popular hashtags" data-ar="الهاشتاجات الرائجة">Popular hashtags</p>
+                        <h3 class="font-semibold text-foreground">@group.Title</h3>
                     </div>
-                    <div class="story-item">
-                        <div class="story-item-header">
-                            <div class="story-dot"></div>
-                            <span class="story-code">Responsive</span>
-                        </div>
-                        <p class="story-desc" data-en="All devices support" data-ar="دعم جميع الأجهزة">All devices support</p>
-                    </div>
+                    <ul class="space-y-2">
+                        @foreach (var feature in group.Features)
+                        {
+                            <li class="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+                                @feature
+                            </li>
+                        }
+                    </ul>
                 </div>
-            </div>
+            }
         </div>
     </div>
 </section>
 
-<!-- About Section -->
+
+<!-- About Section - Old-->
+@*
 <section id="about" class="about">
     <div class="about-avatar">SA</div>
     <h2 data-en="About the Developer" data-ar="عن المطور">About the Developer</h2>
-    <p data-en="SOHBA was developed by Samir Ahmed. Passionate about building powerful software solutions and user interfaces that blend simplicity with professionalism." data-ar="تم تطوير منصة SOHBA بواسطة سمير أحمد. شغف ببناء حلول برمجية قوية وواجهات مستخدم تدمج بين البساطة والاحترافية.">
-        SOHBA was developed by <strong>Samir Ahmed</strong>. Passionate about building powerful software solutions and user interfaces that blend simplicity with professionalism.
+    <p data-en="SOHBA was developed by Samir Ahmed. Passionate about building powerful software solutions and user interfaces that blend simplicity with professionalism."
+        data-ar="تم تطوير منصة SOHBA بواسطة سمير أحمد. شغف ببناء حلول برمجية قوية وواجهات مستخدم تدمج بين البساطة والاحترافية.">
+        SOHBA was developed by <strong>Samir Ahmed</strong>. Passionate about building powerful software solutions and
+        user interfaces that blend simplicity with professionalism.
     </p>
     <a href="https://github.com/SamirAhmed00" target="_blank" class="github-link">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" />
+            <path
+            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" />
         </svg>
         <span data-en="Follow on GitHub" data-ar="تابع على GitHub">Follow on GitHub</span>
     </a>
 </section>
+*@
+<!-- About Section - Updated -->
+<section id="about" class="py-20 md:py-28 bg-muted/30">
+    <div class="container px-4 md:px-6">
+        <div class="flex flex-col items-center text-center max-w-2xl mx-auto">
+            @* Developer Avatar *@
+            <div class="relative mb-6">
+                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-3xl font-bold text-primary border-4 border-background shadow-lg">
+                    SA
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <span class="text-primary-foreground text-xs">✓</span>
+                </div>
+            </div>
 
-<!-- Stats Bar -->
+            <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                About the Developer
+            </h2>
+
+            <p class="text-muted-foreground leading-relaxed mb-6">
+                SOHBA was developed by <span class="font-semibold text-foreground">Samir Ahmed</span>.
+                Passionate about building powerful software solutions and user interfaces that blend simplicity with professionalism.
+            </p>
+
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-border bg-background rounded-md hover:bg-muted transition-colors font-medium">
+                <i data-lucide="github" class="w-4 h-4"></i>
+                Follow on GitHub
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Bar - Old -->
+@*
 <section class="stats-bar">
     <div class="stats-bar-grid">
         <div class="stats-bar-item">
@@ -1407,15 +1894,51 @@
         </div>
     </div>
 </section>
+*@
+
+<!-- Stats Bar - Updated -->
+<section class="py-16 bg-card border-y border-border">
+    <div class="container px-4 md:px-6">
+        @{
+            var stats = new[]
+            {
+                new { Value = 1200, Label = "User Capabilities", Suffix = "+" },
+                new { Value = 12, Label = "Technical Features", Suffix = "" },
+                new { Value = 50, Label = "Interactive Reactions", Suffix = "+" },
+                new { Value = 100, Label = "Data Security %", Suffix = "%" }
+            };
+        }
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            @foreach (var stat in stats)
+            {
+                <div class="text-center">
+                    <span class="text-4xl md:text-5xl font-bold text-primary counter" data-value="@stat.Value" data-suffix="@stat.Suffix">
+                        0
+                    </span>
+                    <p class="text-sm text-muted-foreground mt-2 uppercase tracking-wide">
+                        @stat.Label
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
 
 <!-- Footer -->
 <footer>
     <div class="footer-content">
-        <div class="footer-logo">
-            <div class="footer-logo-icon">S</div>
-            <span class="footer-logo-text">SOHBA.</span>
-        </div>
-        <p class="copyright" data-en="© 2026 Developed with pride by Samir Ahmed" data-ar="© 2026 تم التطوير بكل فخر بواسطة سمير أحمد">© 2026 Developed with pride by Samir Ahmed</p>
+        <!-- Logo -->
+        <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
+            <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
+                <span class="text-white text-2xl font-black">S</span>
+            </div>
+            <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
+                SOHBA
+            </span>
+        </a>
+        <p class="copyright" data-en="© 2026 Developed with pride by Samir Ahmed"
+            data-ar="© 2026 تم التطوير بكل فخر بواسطة سمير أحمد">© 2026 Developed with pride by Samir Ahmed</p>
     </div>
 </footer>
 
@@ -1424,41 +1947,41 @@
     let currentLang = 'en';
 
     function toggleLanguage() {
-        currentLang = currentLang === 'en' ? 'ar' : 'en';
-        const btn = document.getElementById('langBtn');
-        const html = document.documentElement;
+    currentLang = currentLang === 'en' ? 'ar' : 'en';
+    const btn = document.getElementById('langBtn');
+    const html = document.documentElement;
 
-        // Update button
-        btn.textContent = currentLang === 'en' ? 'العربية' : 'English';
+    // Update button
+    btn.textContent = currentLang === 'en' ? 'العربية' : 'English';
 
-        // Update direction
-        if (currentLang === 'ar') {
-            html.setAttribute('dir', 'rtl');
-            html.setAttribute('lang', 'ar');
-        } else {
-            html.setAttribute('dir', 'ltr');
-            html.setAttribute('lang', 'en');
-        }
+    // Update direction
+    if (currentLang === 'ar') {
+    html.setAttribute('dir', 'rtl');
+    html.setAttribute('lang', 'ar');
+    } else {
+    html.setAttribute('dir', 'ltr');
+    html.setAttribute('lang', 'en');
+    }
 
-        // Update all translatable elements
-        document.querySelectorAll('[data-en]').forEach(el => {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.placeholder = el.getAttribute('data-' + currentLang);
-            } else {
-                el.textContent = el.getAttribute('data-' + currentLang);
-            }
-        });
+    // Update all translatable elements
+    document.querySelectorAll('[data-en]').forEach(el => {
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+    el.placeholder = el.getAttribute('data-' + currentLang);
+    } else {
+    el.textContent = el.getAttribute('data-' + currentLang);
+    }
+    });
 
-        // Save preference
-        localStorage.setItem('sohba-lang', currentLang);
+    // Save preference
+    localStorage.setItem('sohba-lang', currentLang);
     }
 
     // Load saved language
     document.addEventListener('DOMContentLoaded', () => {
-        const savedLang = localStorage.getItem('sohba-lang');
-        if (savedLang === 'ar') {
-            toggleLanguage();
-        }
+    const savedLang = localStorage.getItem('sohba-lang');
+    if (savedLang === 'ar') {
+    toggleLanguage();
+    }
     });
 
     // GSAP Animations (Optimized)
@@ -1466,30 +1989,30 @@
 
     // Hero entrance only
     gsap.from(".hero-anim", {
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.1,
-        ease: "power2.out"
+    y: 30,
+    opacity: 0,
+    duration: 1,
+    stagger: 0.1,
+    ease: "power2.out"
     });
 
     // Stats counter only
     const stats = document.querySelectorAll(".stat-num");
     stats.forEach(stat => {
-        const target = parseInt(stat.getAttribute("data-target"));
-        ScrollTrigger.create({
-            trigger: stat,
-            start: "top 85%",
-            once: true,
-            onEnter: () => {
-                gsap.to(stat, {
-                    innerHTML: target,
-                    duration: 2,
-                    snap: { innerHTML: 1 },
-                    ease: "power2.out"
-                });
-            }
-        });
+    const target = parseInt(stat.getAttribute("data-target"));
+    ScrollTrigger.create({
+    trigger: stat,
+    start: "top 85%",
+    once: true,
+    onEnter: () => {
+    gsap.to(stat, {
+    innerHTML: target,
+    duration: 2,
+    snap: { innerHTML: 1 },
+    ease: "power2.out"
+    });
+    }
+    });
     });
 
     // Three.js Background (Optimized)
@@ -1506,15 +2029,15 @@
     const count = 50;
     const posArr = new Float32Array(count * 3);
     for (let i = 0; i < count * 3; i++) {
-        posArr[i] = (Math.random() - 0.5) * 10;
+    posArr[i] = (Math.random() - 0.5) * 10;
     }
     geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
 
     const material = new THREE.PointsMaterial({
-        color: 0x345e69,
-        size: 0.08,
-        transparent: true,
-        opacity: 0.3
+    color: 0x345e69,
+    size: 0.08,
+    transparent: true,
+    opacity: 0.3
     });
     const points = new THREE.Points(geometry, material);
     scene.add(points);
@@ -1523,30 +2046,99 @@
     // Animation loop with frame skipping
     let frameCount = 0;
     function animate() {
-        requestAnimationFrame(animate);
-        frameCount++;
-        if (frameCount % 2 === 0) {
-            points.rotation.y += 0.0005;
-            renderer.render(scene, camera);
-        }
+    requestAnimationFrame(animate);
+    frameCount++;
+    if (frameCount % 2 === 0) {
+    points.rotation.y += 0.0005;
+    renderer.render(scene, camera);
+    }
     }
     animate();
 
     // Resize handler
     let resizeTimeout;
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }, 200);
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    }, 200);
     });
 
     // Cleanup on page hide
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            renderer.dispose();
-        }
+    if (document.hidden) {
+    renderer.dispose();
+    }
     });
+
+
+    // Animation For Landing
+    const observerOptions = { threshold: 0.5 };[cite: 1, 2]
+    const statsObserver = new IntersectionObserver((entries) => {
+    [cite: 1, 2]
+    entries.forEach(entry => {
+    [cite: 1, 2]
+    if (entry.isIntersecting) {
+    [cite: 1, 2]
+    const statNumbers = entry.target.querySelectorAll('.stat-number');[cite: 1, 2]
+    statNumbers.forEach(stat => {
+    [cite: 1, 2]
+    const target = parseInt(stat.dataset.target);[cite: 1, 2]
+    animateCounter(stat, target);[cite: 1, 2]
+    });[cite: 1, 2]
+    statsObserver.unobserve(entry.target);[cite: 1, 2]
+    } [cite: 1, 2]
+    });[cite: 1, 2]
+    }, observerOptions);[cite: 1, 2]
+
+    const statsSection = document.querySelector('section.bg-primary');[cite: 1, 2]
+    if (statsSection) { statsObserver.observe(statsSection); } [cite: 1, 2]
+
+    function animateCounter(element, target) {
+    [cite: 1, 2]
+    let current = 0;[cite: 1, 2]
+    const increment = target / 50;[cite: 1, 2]
+    const timer = setInterval(() => {
+    [cite: 1, 2]
+    current += increment;[cite: 1, 2]
+    if (current >= target) {
+    [cite: 1, 2]
+    element.textContent = target;[cite: 1, 2]
+    clearInterval(timer);[cite: 1, 2]
+    } else {
+    [cite: 1, 2]
+    element.textContent = Math.floor(current);[cite: 1, 2]
+    } [cite: 1, 2]
+    }, 30);[cite: 1, 2]
+    }
+
+
+    // Counter 
+    document.addEventListener("DOMContentLoaded", () => {
+    const counters = document.querySelectorAll('.counter');
+    const duration = 2000; // 2 seconds
+
+    counters.forEach(counter => {
+    const target = parseInt(counter.getAttribute('data-value'));
+    const suffix = counter.getAttribute('data-suffix');
+    let start = 0;
+    const stepTime = Math.abs(Math.floor(duration / target));
+
+    const timer = setInterval(() => {
+    start += 1;
+    counter.innerText = start.toLocaleString() + suffix;
+    if (start >= target) {
+    clearInterval(timer);
+    counter.innerText = target.toLocaleString() + suffix;
+    }
+    }, stepTime);
+    });
+    });
+
+    // تفعيل أيقونات Lucide
+    lucide.createIcons();
 </script>
+
+

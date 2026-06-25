@@ -6,6 +6,8 @@ using Sohba.Extensions;
 using Sohba.Infrastructure.DependencyInjection;
 using System;
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 namespace Sohba
 {
@@ -25,9 +27,11 @@ namespace Sohba
             builder.Services.AddControllersWithViews(options =>
             {
                 options.Filters.Add<Sohba.Filters.ValidationFilter>();
-            })
+            });
+
+            builder.Services.AddFluentValidationAutoValidation();
             // Configure FluentValidation to automatically validate and populate ModelState
-            .AddFluentValidationAutoValidation();
+            
 
             builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Validators.PostCreateViewModelValidator>();
             builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Application.Validators.CommentRequestDtoValidator>();
