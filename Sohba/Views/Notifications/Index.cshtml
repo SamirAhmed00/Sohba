@@ -4,6 +4,21 @@
     Layout = "_AppLayout";
 }
 
+@functions {
+    private string GetNotificationIcon(string type)
+    {
+        return type switch
+        {
+            "PostLike" => "❤️",
+            "PostComment" => "💬",
+            "FriendRequest" => "👥",
+            "GroupInvitation" => "👪",
+            "SystemAlert" => "🔔",
+            _ => "📢"
+        };
+    }
+}
+
 <div class="max-w-7xl mx-auto page-transition">
     <!-- Header -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
@@ -58,10 +73,10 @@
 </div>
 
 @section Scripts {
-    <script>
+    @* <script>
         async function markAllRead() {
             // Implement API call
             SohbaApp.toast('All notifications marked as read', 'success');
         }
-    </script>
-}
+    </script> *@
+}   

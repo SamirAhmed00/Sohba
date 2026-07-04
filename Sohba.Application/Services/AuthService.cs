@@ -1,4 +1,4 @@
-using AutoMapper;
+    using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -75,6 +75,16 @@ public class AuthService : IAuthService
             return Result<AuthResponseDto>.Failure("Account locked out. Try again later.");
         if (!result.Succeeded)
             return Result<AuthResponseDto>.Failure("Invalid email or password.");
+
+        // Sign in with cookie (for MVC)
+        if (loginDto.RememberMe)
+        {
+            await _signInManager.SignInAsync(user, isPersistent: true);
+        }
+        else
+        {
+            await _signInManager.SignInAsync(user, isPersistent: false);
+        }
 
         var roles = await _userManager.GetRolesAsync(user);
         var token = _jwtService.GenerateToken(user, roles);

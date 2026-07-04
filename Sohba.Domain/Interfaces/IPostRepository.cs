@@ -7,6 +7,12 @@ namespace Sohba.Domain.Interfaces
 {
     public interface IPostRepository : IGenericRepository<Post>
     {
+        Task<(IEnumerable<Post> Items, int TotalCount)> GetTimelineAsync(
+           Guid userId,
+           int page = 1,
+           int pageSize = 10);
+
+        // I will Reove it Later -- Kept Now for backward compatibility
         Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
         Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
         Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag);

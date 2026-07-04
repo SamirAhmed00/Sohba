@@ -18,14 +18,21 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
         public FriendshipService(
             IFriendshipDomainService domainService,
             IMapper mapper,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService,
+            IUserService userService)
         {
             _domainService = domainService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
+            _userService = userService;
         }
 
         // Friend Requests
@@ -59,6 +66,18 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Friendships.Add(friendRequest);
             await _unitOfWork.CompleteAsync();
+
+
+            // Send notification to receiver
+            var user = await _userService.GetProfileAsync(senderId);
+            var userName = user.Value?.Name ?? "Someone";
+
+            await _notificationService.CreateNotificationAsync(
+                receiverId: receiverId,
+                message: $"{userName} sent you a friend request",
+                type: NotificationType.FriendRequest,
+                senderId: senderId
+            );
 
             return Result.Success();
         }
@@ -120,6 +139,18 @@ namespace Sohba.Application.Services
 
             var rowsAffected = await _unitOfWork.CompleteAsync();
             Console.WriteLine($"💾 Rows affected: {rowsAffected}");
+
+
+            // Send notification to sender
+            var user = await _userService.GetProfileAsync(receiverId);
+            var userName = user.Value?.Name ?? "Someone";
+
+            await _notificationService.CreateNotificationAsync(
+                receiverId: senderId,
+                message: $"{userName} accepted your friend request",
+                type: NotificationType.FriendRequest,
+                senderId: receiverId
+            );
 
             return Result.Success();
         }

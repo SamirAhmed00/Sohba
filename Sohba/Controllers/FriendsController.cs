@@ -11,19 +11,18 @@ namespace Sohba.Controllers
     [Authorize]
     public class FriendsController : BaseController
     {
-        private readonly ISocialService _socialService;
+        //private readonly ISocialService _socialService; // removed because it's The same As FriendshipService
         private readonly IFriendshipService _friendshipService;
 
-        public FriendsController(ISocialService socialService, IFriendshipService friendshipService)
+        public FriendsController(IFriendshipService friendshipService)
         {
-            _socialService = socialService;
             _friendshipService = friendshipService;
         }
 
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
-            var result = await _socialService.GetFriendsListAsync(userId);
+            var result = await _friendshipService.GetFriendsListAsync(userId);
             return View(result.Value);
         }
 

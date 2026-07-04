@@ -13,15 +13,53 @@ namespace Sohba.Infrastructure.Repositories
     {
         public PostRepository(AppDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<Post>> GetTimelineAsync(Guid userId)
-        {
 
+        public async Task<(IEnumerable<Post> Items, int TotalCount)> GetTimelineAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 10)
+        {
             var friendIds = await _context.Friends
                 .Where(f => (f.UserId == userId || f.FriendUserId == userId)
                             && f.Status == FriendshipStatus.Accepted)
                 .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
                 .ToListAsync();
 
+            var visibleUserIds = new List<Guid> { userId };
+            visibleUserIds.AddRange(friendIds);
+
+            // Build the query (don't execute yet)
+            var query = _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => !p.IsDeleted && !p.IsHidden
+                            && (p.SourceType == PostSourceType.User || p.SourceId == null)
+                            && (
+                                p.UserId == userId ||
+                                (p.Privacy == PostPrivacy.Public && visibleUserIds.Contains(p.UserId)) ||
+                                (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))
+                            ))
+                .OrderByDescending(p => p.CreatedAt);
+
+            // Get total count before pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+
+        public async Task<IEnumerable<Post>> GetTimelineAsync(Guid userId)
+        {
+            var friendIds = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
+                .ToListAsync();
 
             var visibleUserIds = new List<Guid> { userId };
             visibleUserIds.AddRange(friendIds);
@@ -31,18 +69,16 @@ namespace Sohba.Infrastructure.Repositories
                 .Where(p => !p.IsDeleted && !p.IsHidden
                             && (p.SourceType == PostSourceType.User || p.SourceId == null)
                             && (
-                                // User can always see their own posts
+                                // User always sees their own posts
                                 p.UserId == userId ||
-                                
-                                // Public posts from visible users (friends can be visible, or any user if Public means visible to all, 
-                                // but we previously checked 'visibleUserIds'. Let's ensure Public means 'any public post from friends or self' 
-                                // or if the platform is open, they can see all public posts. Based on old logic, visibleUserIds was used.
+
+                                // Public posts from anyone (if user is visible - i.e., friends or self)
                                 (p.Privacy == PostPrivacy.Public && visibleUserIds.Contains(p.UserId)) ||
-                                
-                                // Friends only posts from friends
+
+                                // Friends-only posts from friends only
                                 (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))
-                                
-                                // Private posts are only covered by the first condition (p.UserId == userId)
+
+                            // Private posts are only visible to the owner (handled by first condition)
                             ))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();

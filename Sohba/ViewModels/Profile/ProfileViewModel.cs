@@ -9,5 +9,9 @@ namespace Sohba.ViewModels.Profile
         public IEnumerable<FriendDto> Friends { get; set; }
         public IEnumerable<PostResponseDto> Posts { get; set; }
         public bool IsOwnProfile { get; set; }
+
+
+        public bool CanViewFriends { get; set; } = true;
+        public bool IsPrivate { get; set; }
     }
 }

@@ -17,7 +17,7 @@ namespace Sohba.Application.Interfaces
         Task<int> GetReactionCountAsync(Guid postId);
 
         // Comments
-        Task<Result> AddCommentAsync(Guid userId, Guid postId, string content);
+        Task<Result> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null);
         Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId);
         Task<Result> DeleteCommentAsync(Guid userId, Guid commentId, bool isAdmin);
 

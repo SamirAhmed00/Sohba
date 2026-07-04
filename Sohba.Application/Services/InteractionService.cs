@@ -18,26 +18,67 @@ namespace Sohba.Application.Services
         private readonly IInteractionDomainService _interactionDomainService;
         private readonly IMapper _mapper;
 
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
+
         public InteractionService(
             IUnitOfWork unitOfWork,
             IInteractionDomainService interactionDomainService,
-            IMapper mapper)
+            IMapper mapper,
+            INotificationService notificationService,
+            IUserService userService)
         {
             _unitOfWork = unitOfWork;
             _interactionDomainService = interactionDomainService;
             _mapper = mapper;
+            _notificationService = notificationService;
+            _userService = userService;
         }
 
         public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId)
         {
             var comments = await _unitOfWork.Interactions.GetCommentsByPostIdAsync(postId);
-            return _mapper.Map<IEnumerable<CommentResponseDto>>(comments);
+
+            // Build comment tree (top-level comments with their replies)
+            var commentDtos = _mapper.Map<IEnumerable<CommentResponseDto>>(comments).ToList();
+
+            // Group replies by parent comment ID
+            var replyLookup = commentDtos
+                .Where(c => c.ParentCommentId.HasValue)
+                .GroupBy(c => c.ParentCommentId.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Build the tree: only return top-level comments (no parent)
+            var result = new List<CommentResponseDto>();
+
+            foreach (var comment in commentDtos.Where(c => !c.ParentCommentId.HasValue))
+            {
+                comment.Replies = replyLookup.ContainsKey(comment.Id)
+                    ? replyLookup[comment.Id]
+                    : new List<CommentResponseDto>();
+                comment.ReplyCount = comment.Replies.Count;
+                result.Add(comment);
+            }
+
+            return result.OrderByDescending(c => c.CreatedAt).ToList();
         }
 
-        public async Task<Result> AddCommentAsync(Guid userId, Guid postId, string content)
+        public async Task<Result> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null) return Result.Failure("Post not found.");
+
+            if (parentCommentId.HasValue)
+            {
+                var parentComment = await _unitOfWork.Interactions.GetCommentByIdAsync(parentCommentId.Value);
+                if (parentComment == null)
+                    return Result.Failure("Parent comment not found.");
+
+                if (parentComment.PostId != postId)
+                    return Result.Failure("Parent comment does not belong to this post.");
+            }
+
 
             var canComment = _interactionDomainService.CanAddComment(userId, content, post.IsDeleted, isBlockedByOwner: false);
             if (!canComment.IsSuccess) return canComment;
@@ -47,11 +88,28 @@ namespace Sohba.Application.Services
                 UserId = userId,
                 PostId = postId,
                 Content = content,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                ParentCommentId = parentCommentId
             };
 
             _unitOfWork.Interactions.AddComment(comment);
             await _unitOfWork.CompleteAsync();
+
+
+            // Send notification to post owner
+            if (post.UserId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: post.UserId,
+                    message: $"{userName} commented on your post",
+                    type: NotificationType.PostComment,
+                    senderId: userId,
+                    targetId: postId
+                );
+            }
 
             return Result.Success();
         }
@@ -121,6 +179,23 @@ namespace Sohba.Application.Services
             }
 
             await _unitOfWork.CompleteAsync();
+
+            // Send notification to post owner
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post != null && post.UserId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: post.UserId,
+                    message: $"{userName} reacted with {type} to your post",
+                    type: NotificationType.PostLike,
+                    senderId: userId,
+                    targetId: postId
+                );
+            }
+
             return Result.Success();
         }
 

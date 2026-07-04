@@ -34,11 +34,13 @@ namespace Sohba.Application.Services
                 Name = user.Name,
                 Bio = user.Bio,
                 ProfilePictureUrl = user.ProfilePictureUrl,
-                IsPrivateAccount = false, // Default
-                ShowActivityStatus = true,
-                EmailNotifications = true,
-                PushNotifications = true,
-                WeeklyDigest = false,
+                
+                // Load privacy settings from user
+                IsPrivateAccount = user.IsPrivateAccount,
+                ShowActivityStatus = user.ShowActivityStatus,
+                EmailNotifications = user.EmailNotifications,
+                PushNotifications = user.PushNotifications,
+                WeeklyDigest = user.WeeklyDigest,
                 LastPasswordChanged = null // You need to track this
             };
 
@@ -54,10 +56,19 @@ namespace Sohba.Application.Services
             user.Name = settings.Name;
             user.Bio = settings.Bio;
             user.ProfilePictureUrl = settings.ProfilePictureUrl;
+           
+            
+            //   Update privacy settings
+            user.IsPrivateAccount = settings.IsPrivateAccount;
+            user.ShowActivityStatus = settings.ShowActivityStatus;
+            user.EmailNotifications = settings.EmailNotifications;
+            user.PushNotifications = settings.PushNotifications;
+            user.WeeklyDigest = settings.WeeklyDigest;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
 
             // TODO: Update other settings in settings table
 

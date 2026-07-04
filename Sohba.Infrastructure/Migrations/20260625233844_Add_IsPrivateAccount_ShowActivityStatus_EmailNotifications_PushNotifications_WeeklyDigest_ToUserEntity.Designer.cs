@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sohba.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sohba.Infrastructure.Data;
 namespace Sohba.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625233844_Add_IsPrivateAccount_ShowActivityStatus_EmailNotifications_PushNotifications_WeeklyDigest_ToUserEntity")]
+    partial class Add_IsPrivateAccount_ShowActivityStatus_EmailNotifications_PushNotifications_WeeklyDigest_ToUserEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -281,9 +284,6 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("ParentCommentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("PostId")
                         .HasColumnType("uniqueidentifier");
 
@@ -291,8 +291,6 @@ namespace Sohba.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ParentCommentId");
 
                     b.HasIndex("PostId");
 
@@ -849,10 +847,6 @@ namespace Sohba.Infrastructure.Migrations
 
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.Comment", b =>
                 {
-                    b.HasOne("Sohba.Domain.Entities.PostAggregate.Comment", "ParentComment")
-                        .WithMany("Replies")
-                        .HasForeignKey("ParentCommentId");
-
                     b.HasOne("Sohba.Domain.Entities.PostAggregate.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
@@ -864,8 +858,6 @@ namespace Sohba.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("ParentComment");
 
                     b.Navigation("Post");
 
@@ -1045,11 +1037,6 @@ namespace Sohba.Infrastructure.Migrations
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.Group", b =>
                 {
                     b.Navigation("GroupMembers");
-                });
-
-            modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.Comment", b =>
-                {
-                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.Hashtag", b =>

@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.StoryAggregate;
@@ -19,42 +23,122 @@ namespace Sohba.Controllers
         private readonly IPostService _postService;
         private readonly IStoryService _storyService;
         private readonly IHashtagService _hashtagService;
-        public HomeController(IPostService postService, IStoryService storyService, IHashtagService hashtagService)
+        private readonly ICompositeViewEngine _viewEngine;
+        public HomeController(IPostService postService, IStoryService storyService, IHashtagService hashtagService, ICompositeViewEngine viewEngine)
         {
             _postService = postService;
             _storyService = storyService;
             _hashtagService = hashtagService;
+            _viewEngine = viewEngine;
         }
 
-        // We Need To Call The ApplicationService With Post Method To Get The Data From The Database And Show It On The Home Page
-        public async Task<IActionResult> Index()
+
+        // Get posts as HTML partial
+        [HttpGet]
+        public async Task<IActionResult> GetPostCards(int page = 2, int pageSize = 10)
         {
-            Guid AdminID = GetCurrentUserId();
+            var userId = GetCurrentUserId();
+            var result = await _postService.GetFeedAsync(userId, page, pageSize);
 
-            var FeedPosts = await _postService.GetFeedAsync(AdminID);
+            if (result.IsFailure)
+                return Json(new { success = false, error = result.Error });
 
-            var storiesResult = await _storyService.GetStoriesForFeedAsync(AdminID);
-            var trendingHashtags = await _hashtagService.GetTrendingHashtagsAsync(5);
-            ViewBag.TrendingHashtags = trendingHashtags.Value;
+            // Render the _PostCard partial with the posts
+            var html = await RenderPartialViewToString("Partials/_PostCard", result.Value.Items);
 
-
-            if (FeedPosts.IsFailure)
+            return Json(new
             {
-                ViewBag.ErrorMessage = FeedPosts.Error;
+                success = true,
+                html = html,
+                hasMore = result.Value.HasNextPage,
+                currentPage = result.Value.Page,
+                totalPages = result.Value.TotalPages
+            });
+        }
+
+        // Helper method to render partial view to string
+        private async Task<string> RenderPartialViewToString(string viewName, object model)
+        {
+            if (string.IsNullOrEmpty(viewName))
+                viewName = ControllerContext.ActionDescriptor.ActionName;
+
+            ViewData.Model = model;
+
+            using (var writer = new StringWriter())
+            {
+                var viewResult = _viewEngine.FindView(ControllerContext, viewName, false);
+
+                if (viewResult.View == null)
+                    throw new ArgumentNullException($"{viewName} does not match any available view");
+
+                var viewContext = new ViewContext(
+                    ControllerContext,
+                    viewResult.View,
+                    ViewData,
+                    TempData,
+                    writer,
+                    new HtmlHelperOptions()
+                );
+
+                await viewResult.View.RenderAsync(viewContext);
+                return writer.GetStringBuilder().ToString();
+            }
+        }
+
+
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+
+            //  Get paginated posts
+            var feedResult = await _postService.GetFeedAsync(userId, page, pageSize);
+
+            var storiesResult = await _storyService.GetStoriesForFeedAsync(userId);
+            var trendingHashtags = await _hashtagService.GetTrendingHashtagsAsync(5);
+
+            ViewBag.TrendingHashtags = trendingHashtags.Value;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+
+            if (feedResult.IsFailure)
+            {
+                ViewBag.ErrorMessage = feedResult.Error;
                 return View(new HomeViewModel
                 {
                     Posts = new List<PostResponseDto>(),
                     Stories = storiesResult.Value ?? new List<StoryResponseDto>(),
+                    PagedResult = new PagedResult<PostResponseDto>()
                 });
             }
 
             var viewModel = new HomeViewModel
             {
-                Posts = FeedPosts.Value,
-                Stories = storiesResult.Value ?? new List<StoryResponseDto>(),                
+                Posts = feedResult.Value.Items,
+                Stories = storiesResult.Value ?? new List<StoryResponseDto>(),
+                PagedResult = feedResult.Value
             };
 
             return View(viewModel);
+        }
+
+        //  NEW: Load more posts via AJAX (for infinite scroll)
+        [HttpGet]
+        public async Task<IActionResult> LoadMore(int page = 2, int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _postService.GetFeedAsync(userId, page, pageSize);
+
+            if (result.IsFailure)
+                return Json(new { success = false, error = result.Error });
+
+            return Json(new
+            {
+                success = true,
+                posts = result.Value.Items,
+                hasMore = result.Value.HasNextPage,
+                currentPage = result.Value.Page,
+                totalPages = result.Value.TotalPages
+            });
         }
 
 

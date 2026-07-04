@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Application.Services;
 using Sohba.Controllers.Sohba.Controllers;
 using Sohba.ViewModels.Profile;
 
@@ -12,37 +13,51 @@ namespace Sohba.Controllers
     public class ProfileController : BaseController
     {
         private readonly IUserService _userService;
-        private readonly ISocialService _socialService;
+        //private readonly ISocialService _socialService; // removed because it's The same As FriendshipService
         private readonly IPostService _postService;
         private readonly IUserSettingsService _userSettingsService;
+        private readonly IFriendshipService _friendshipService;
 
-        public ProfileController(IUserService userService, ISocialService socialService, IPostService postService, IUserSettingsService userSettingsService)
+        public ProfileController(IUserService userService, IPostService postService, IUserSettingsService userSettingsService, IFriendshipService friendshipService)
         {
             _userService = userService;
-            _socialService = socialService;
             _postService = postService;
             _userSettingsService = userSettingsService;
+            _friendshipService = friendshipService;
         }
-
+        
+        
         [HttpGet]
         public async Task<IActionResult> Index(Guid? id)
         {
             var currentUserId = GetCurrentUserId();
             var profileUserId = id ?? currentUserId;
 
-            var profileResult = await _userService.GetProfileAsync(profileUserId);
-            if (profileResult.IsFailure) return NotFound();
+            // PRIVACY CHECK: Get profile with privacy enforcement
+            var profileResult = await _userService.GetProfileAsync(profileUserId, currentUserId);
 
-            var friendsResult = await _socialService.GetFriendsListAsync(profileUserId);
+            if (profileResult.IsFailure)
+            {
+                if (profileResult.Error != null && profileResult.Error.Contains("private", StringComparison.OrdinalIgnoreCase))
+                    return View("PrivateProfile", new { UserId = profileUserId });
+                return NotFound();
+            }
 
+            // Get friends list (may be empty if not allowed to view)
+            var friendsResult = await _friendshipService.GetFriendsListAsync(profileUserId);
             var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
+
+            // Check if user can view friends list
+            var isFriend = await _friendshipService.AreFriendsAsync(currentUserId, profileUserId);
+            var canViewFriends = currentUserId == profileUserId || isFriend;
 
             var viewModel = new ProfileViewModel
             {
                 Profile = profileResult.Value,
                 Friends = friendsResult.Value ?? new List<FriendDto>(),
                 Posts = postsResult.Value ?? new List<PostResponseDto>(),
-                IsOwnProfile = profileUserId == currentUserId
+                IsOwnProfile = profileUserId == currentUserId,
+                CanViewFriends = canViewFriends
             };
 
             return View(viewModel);

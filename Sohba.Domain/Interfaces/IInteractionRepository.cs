@@ -20,6 +20,7 @@ namespace Sohba.Domain.Interfaces
         // Comment Methods
         Task<Comment?> GetCommentByIdAsync(Guid commentId);
         Task<IEnumerable<Comment>> GetCommentsByPostIdAsync(Guid postId);
+        Task<IEnumerable<Comment>> GetRepliesByCommentIdAsync(Guid commentId);
         void AddComment(Comment comment);
         void RemoveComment(Comment comment);
 

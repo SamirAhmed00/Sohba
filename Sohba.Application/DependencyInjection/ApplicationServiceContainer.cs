@@ -20,11 +20,12 @@ namespace Sohba.Application.DependencyInjection
                 cfg.AddMaps(Assembly.GetExecutingAssembly());
             });
 
+            
             // Application Services Registration
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IGroupService, GroupService>();
             services.AddScoped<IPostService, PostService>();
-            services.AddScoped<ISocialService, SocialService>();
+            
             services.AddScoped<IStoryService, StoryService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFriendshipService, FriendshipService>();
@@ -36,6 +37,7 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<JwtService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserSettingsService, UserSettingsService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();

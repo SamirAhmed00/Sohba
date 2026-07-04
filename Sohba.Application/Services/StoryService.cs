@@ -87,11 +87,20 @@ namespace Sohba.Application.Services
 
             var stories = await _unitOfWork.Stories.GetStoriesForFeedAsync(userId);
 
+            //  PRIVACY CHECK: Enhanced filtering
             var filteredStories = stories.Where(s =>
                 s.CreatedAt >= cutoffTime &&
                 !s.IsDeleted &&
-                (s.Privacy == StoryPrivacy.Public && (friendIdsList.Contains(s.UserId) || s.UserId == userId) ||
-                 s.UserId == userId))
+                (
+                    // Owner always sees their own stories
+                    s.UserId == userId ||
+
+                    // Public stories from friends
+                    (s.Privacy == StoryPrivacy.Public && friendIdsList.Contains(s.UserId)) ||
+
+                    // Friends-only stories from friends
+                    (s.Privacy == StoryPrivacy.FriendsOnly && friendIdsList.Contains(s.UserId))
+                ))
                 .OrderByDescending(s => s.CreatedAt)
                 .ToList();
 
@@ -136,15 +145,20 @@ namespace Sohba.Application.Services
 
             if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
                 return Result<StoryResponseDto>.Failure("Story not found or expired.");
-            
+
+
+            // PRIVACY CHECK: Check if user is friends with story creator
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, story.UserId);
+
             var canView = _storyDomainService.CanViewStory(
                 currentUserId,
                 story.UserId,
-                false, // TODO: Check if friends
+                isFriend,  // ✅ Now using actual friendship check
                 story.CreatedAt);
 
             if (!canView.IsSuccess)
                 return Result<StoryResponseDto>.Failure(canView.Error);
+
 
             var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(storyId);
             var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(storyId, currentUserId);

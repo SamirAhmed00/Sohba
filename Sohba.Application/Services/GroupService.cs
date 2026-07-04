@@ -20,11 +20,17 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly IGroupDomainService _groupDomainService;
 
-        public GroupService(IUnitOfWork unitOfWork, IMapper mapper, IGroupDomainService groupDomainService)
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
+
+        public GroupService(IUnitOfWork unitOfWork, IMapper mapper, IGroupDomainService groupDomainService, INotificationService notificationService, IUserService userService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _groupDomainService = groupDomainService;
+            _notificationService = notificationService;
+            _userService = userService;
         }
 
         public async Task<Result<GroupResponseDto>> CreateGroupAsync(GroupCreateDto groupDto, Guid adminId)
@@ -77,6 +83,21 @@ namespace Sohba.Application.Services
             _unitOfWork.Groups.AddMember(newMember);
 
             var affectedRows = await _unitOfWork.CompleteAsync();
+
+            // Send notification to group admin
+            if (group.AdminId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: group.AdminId,
+                    message: $"{userName} joined your group {group.Name}",
+                    type: NotificationType.GroupInvitation,
+                    senderId: userId,
+                    targetId: groupId
+                );
+            }
             return Result<bool>.Success(affectedRows > 0);
         }
 

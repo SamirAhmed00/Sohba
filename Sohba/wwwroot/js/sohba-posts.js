@@ -192,3 +192,83 @@ window.SohbaApp.toggleComment = function (commentId, fullText, shortText) {
         button.innerText = 'See less';
     }
 };
+
+// Show reply form
+window.showReplyForm = function (commentId, userName) {
+    // Hide all other reply forms
+    document.querySelectorAll('[id^="replyForm-"]').forEach(el => el.classList.add('hidden'));
+
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) {
+        form.classList.remove('hidden');
+        const input = document.getElementById(`replyInput-${commentId}`);
+        if (input) {
+            input.placeholder = `Reply to ${userName}...`;
+            input.focus();
+        }
+    }
+};
+
+// Hide reply form
+window.hideReplyForm = function (commentId) {
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) form.classList.add('hidden');
+    const input = document.getElementById(`replyInput-${commentId}`);
+    if (input) input.value = '';
+};
+
+// Toggle replies visibility
+window.toggleReplies = function (commentId) {
+    const container = document.getElementById(`replies-${commentId}`);
+    if (container) {
+        container.classList.toggle('hidden');
+        const btn = container.previousElementSibling;
+        if (btn && btn.tagName === 'BUTTON') {
+            btn.textContent = container.classList.contains('hidden')
+                ? `View ${container.querySelectorAll('.flex.items-start.gap-3').length} replies`
+                : 'Hide replies';
+        }
+    }
+};
+
+// Submit reply
+window.submitReply = async function (commentId, postId) {
+    const input = document.getElementById(`replyInput-${commentId}`);
+    if (!input) return;
+
+    const content = input.value.trim();
+    if (!content) {
+        window.SohbaApp.toast('Please enter a reply', 'error');
+        return;
+    }
+
+    try {
+        const result = await window.SohbaApp.post('/Posts/Comment', {
+            postId: postId,
+            content: content,
+            parentCommentId: commentId
+        });
+
+        if (result.success) {
+            window.SohbaApp.toast('Reply posted!', 'success');
+            input.value = '';
+            hideReplyForm(commentId);
+
+            // Reload comments to show the new reply
+            // You can either reload the post modal or append the reply dynamically
+            // For now, we'll reload the modal
+            const modal = document.getElementById('postModal');
+            if (modal) {
+                const postIdFromModal = modal.dataset.postId;
+                if (postIdFromModal) {
+                    await window.SohbaApp.openPostModal(postIdFromModal);
+                }
+            }
+        } else {
+            window.SohbaApp.toast(result.error || 'Failed to post reply', 'error');
+        }
+    } catch (error) {
+        console.error('Error posting reply:', error);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};

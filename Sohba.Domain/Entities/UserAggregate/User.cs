@@ -10,15 +10,19 @@ namespace Sohba.Domain.Entities.UserAggregate
 {
     public class User : IdentityUser<Guid>
     {
-        //public Guid Id { get; set; }
-        public string Name { get; set; }
-        //public string Email { get; set; }
+        public string Name { get; set; }     
         public string Bio { get; set; }
         public bool IsDeleted { get; set; }
-        //public string PasswordHash { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        //Privacy Settings
+        public bool IsPrivateAccount { get; set; } = false;
+        public bool ShowActivityStatus { get; set; } = true;
+        public bool EmailNotifications { get; set; } = true;
+        public bool PushNotifications { get; set; } = true;
+        public bool WeeklyDigest { get; set; } = false;
 
         // Navigation Properties
         public virtual ICollection<Post> Posts { get; set; } = new List<Post>();

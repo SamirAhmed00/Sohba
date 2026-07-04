@@ -1,4 +1,5 @@
 using AutoMapper;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -25,6 +26,42 @@ namespace Sohba.Application.Services
             _mapper = mapper;
             _postDomainService = postDomainService;
         }
+
+
+
+        public async Task<Result<PagedResult<PostResponseDto>>> GetFeedAsync(
+         Guid userId,
+         int page = 1,
+         int pageSize = 10)
+        {
+            //  Validate pagination parameters
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+
+            //  Get paginated posts from repository
+            var (posts, totalCount) = await _unitOfWork.Posts.GetTimelineAsync(userId, page, pageSize);
+
+            //  Map posts to DTOs with interactions
+            var mappedResult = await MapPostsWithInteractions(posts, userId);
+
+            if (mappedResult.IsFailure)
+                return Result<PagedResult<PostResponseDto>>.Failure(mappedResult.Error);
+
+            // Create paged result
+            var pagedResult = new PagedResult<PostResponseDto>
+            {
+                Items = mappedResult.Value,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+
+            return Result<PagedResult<PostResponseDto>>.Success(pagedResult);
+        }
+
+
+
 
         public async Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId)
         {
@@ -103,6 +140,19 @@ namespace Sohba.Application.Services
 
             if (post == null || post.IsDeleted)
                 return Result<PostResponseDto>.Failure("Post not found or has been deleted.");
+
+
+            // PRIVACY CHECK: Verify user can view this post
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
+            var canView = _postDomainService.CanViewPost(
+                currentUserId,
+                post.UserId,
+                post.IsPrivate,
+                isFriend
+            );
+
+            if (!canView.IsSuccess)
+                return Result<PostResponseDto>.Failure(canView.Error);
 
             var ids = new List<Guid> { postId };
             var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
@@ -215,6 +265,40 @@ namespace Sohba.Application.Services
             var postList = posts.ToList();
             if (!postList.Any())
                 return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
+
+
+
+            //  PRIVACY CHECK: Filter posts based on privacy settings
+            var filteredPosts = new List<Post>();
+
+            foreach (var post in postList)
+            {
+                // Owner always sees their own posts
+                if (post.UserId == currentUserId)
+                {
+                    filteredPosts.Add(post);
+                    continue;
+                }
+
+                // Check friendship status
+                var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
+
+                // Apply privacy rules
+                var canView = _postDomainService.CanViewPost(
+                    currentUserId,
+                    post.UserId,
+                    post.IsPrivate,
+                    isFriend
+                );
+
+                if (canView.IsSuccess)
+                {
+                    filteredPosts.Add(post);
+                }
+            }
+
+            postList = filteredPosts;
+
 
             var ids = postList.Select(p => p.Id).ToList();
             var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);

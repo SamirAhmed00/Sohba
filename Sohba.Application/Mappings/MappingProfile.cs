@@ -111,25 +111,31 @@ namespace Sohba.Application.Mappings
             CreateMap<Page, PageSearchResultDto>();
 
 
-            // RegisterDto -> AppUserDto
-            CreateMap<RegisterDto, AppUserDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.EmailConfirmed, opt => opt.MapFrom(src => false))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                // Ignore Id mapping if it's auto-generated, or map it properly
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()));
+            //// RegisterDto -> AppUserDto
+            //CreateMap<RegisterDto, AppUserDto>()
+            //    .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
+            //    .ForMember(dest => dest.EmailConfirmed, opt => opt.MapFrom(src => false))
+            //    .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            //    // Ignore Id mapping if it's auto-generated, or map it properly
+            //    .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()));
 
-            // AppUserDto -> User (Domain)
-            // Map the specific properties. Identity manager usually handles PasswordHash securely.
-            CreateMap<AppUserDto, User>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                // Ignore PasswordHash here, as UserManager.CreateAsync handles hashing
-                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+            //// AppUserDto -> User (Domain)
+            //// Map the specific properties. Identity manager usually handles PasswordHash securely.
+            //CreateMap<AppUserDto, User>()
+            //    .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            //    .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+            //    .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            //    // Ignore PasswordHash here, as UserManager.CreateAsync handles hashing
+            //    .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
 
             // User -> AuthResponseDto
             CreateMap<User, AuthResponseDto>();
+
+            // Notification Mapping
+            CreateMap<Notification, NotificationResponseDto>()
+                .ForMember(dest => dest.NotificationType, opt => opt.MapFrom(src => src.Type.ToString()))
+                .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.Name : "System"))
+                .ForMember(dest => dest.SenderProfilePicture, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.ProfilePictureUrl : null));
         }
     }
 }

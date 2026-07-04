@@ -12,13 +12,13 @@ using System.Text;
 
 namespace Sohba.Application.Services
 {
-    public class SocialService : ISocialService
+    public class SocialService_Removed : ISocialService_Remove
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IFriendshipDomainService _friendshipDomainService;
 
-        public SocialService(
+        public SocialService_Removed(
             IUnitOfWork unitOfWork,
             IMapper mapper,
             IFriendshipDomainService friendshipDomainService)

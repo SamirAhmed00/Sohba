@@ -240,6 +240,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -264,6 +265,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> React([FromBody] ReactionRequestDto request)
         {
             if (request == null || request.PostId == Guid.Empty || string.IsNullOrWhiteSpace(request.ReactionType))
@@ -314,6 +316,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Comment([FromBody] CommentRequestDto request)
         {
             if (request == null || request.PostId == Guid.Empty || string.IsNullOrWhiteSpace(request.Content))
@@ -323,13 +326,19 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty)
                 return Unauthorized(new { success = false, error = "Unauthorized." });
 
-            var result = await _interactionService.AddCommentAsync(userId, request.PostId, request.Content);
+            var result = await _interactionService.AddCommentAsync(
+                userId,
+                request.PostId,
+                request.Content,
+                request.ParentCommentId
+            );
 
             if (!result.IsSuccess)
                 return Json(new { success = false, error = result.Error });
 
             var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId);
-            var latest = comments.First();
+            var latest = comments.FirstOrDefault(c => c.ParentCommentId == request.ParentCommentId) ?? comments.First();
+
 
             return Json(new
             {
@@ -347,6 +356,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleSavePost([FromBody] ToggleSaveRequest request)
         {
             var userId = GetCurrentUserId();
@@ -377,6 +387,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReportPost([FromBody] PostReportRequestDto request)
         {
             System.Diagnostics.Debug.WriteLine($"PostId: {request?.PostId}, Reason: {request?.Reason}, UserId: {request?.UserId}");
@@ -404,6 +415,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeSavedPostTag([FromBody] ChangeTagRequest request)
         {
             var userId = GetCurrentUserId();
@@ -420,6 +432,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveSavedPost([FromBody] RemoveSavedRequest request)
         {
             var userId = GetCurrentUserId();

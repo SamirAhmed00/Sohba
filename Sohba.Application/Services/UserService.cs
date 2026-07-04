@@ -16,30 +16,54 @@ namespace Sohba.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IProfileDomainService _profileDomainService;
+        private readonly IFriendshipRepository _friendshipRepository;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IProfileDomainService profileDomainService)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IProfileDomainService profileDomainService, IFriendshipRepository friendshipRepository)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _profileDomainService = profileDomainService;
+            _friendshipRepository = friendshipRepository;
         }
 
+        // Original method (kept for backward compatibility)
         public async Task<Result<UserResponseDto>> GetProfileAsync(Guid userId)
         {
-            
+            // Call the new overload with the same userId as current user (owner)
+            return await GetProfileAsync(userId, userId);
+        }
+
+        //  NEW: Get profile with privacy enforcement
+        public async Task<Result<UserResponseDto>> GetProfileAsync(Guid userId, Guid currentUserId)
+        {
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
 
             if (user == null)
                 return Result<UserResponseDto>.Failure("User profile not found.");
 
-            
+            //  PRIVACY CHECK: Verify user can view this profile
+            var isFriend = await _friendshipRepository.AreFriendsAsync(currentUserId, userId);
+            var isBlocked = await _friendshipRepository.IsUserBlockedAsync(currentUserId, userId);
+
+            var isPrivateAccount = user.IsPrivateAccount; 
+
+            var canView = _profileDomainService.CanViewProfile(
+                currentUserId,
+                userId,
+                isPrivateAccount,
+                isFriend,
+                isBlocked
+            );
+
+            if (!canView.IsSuccess)
+                return Result<UserResponseDto>.Failure(canView.Error);
+
             var response = _mapper.Map<UserResponseDto>(user);
             return Result<UserResponseDto>.Success(response);
         }
 
         public async Task<Result<bool>> UpdateProfileAsync(Guid userId, UserRequestDto updateDto)
         {
-            
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null)
                 return Result<bool>.Failure("User not found.");
@@ -69,7 +93,6 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result<bool>.Failure("User not found");
 
-            // Soft delete
             user.IsDeleted = true;
             _unitOfWork.Users.Update(user);
             await _unitOfWork.CompleteAsync();
@@ -86,17 +109,17 @@ namespace Sohba.Application.Services
             switch (status.ToLower())
             {
                 case "active":
-                    var blockedUsers = await _unitOfWork.Friendships.GetBlockedUsersAsync(Guid.Empty); // Need Edit ?
+                    var blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
                     var blockedIds = blockedUsers.Select(b => b.FriendUserId).ToList();
                     filteredUsers = allUsers.Where(u => !blockedIds.Contains(u.Id));
                     break;
 
                 case "blocked":
-                    blockedUsers = await _unitOfWork.Friendships.GetBlockedUsersAsync(Guid.Empty);
+                    blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
                     filteredUsers = allUsers.Where(u => blockedUsers.Any(b => b.FriendUserId == u.Id));
                     break;
 
-                default: 
+                default:
                     filteredUsers = allUsers;
                     break;
             }
@@ -106,3 +129,4 @@ namespace Sohba.Application.Services
         }
     }
 }
+

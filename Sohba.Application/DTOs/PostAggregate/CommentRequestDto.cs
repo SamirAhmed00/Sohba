@@ -9,5 +9,7 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string Content { get; set; }
         public Guid PostId { get; set; }
         public Guid UserId { get; set; }
+        public Guid? ParentCommentId { get; set; }
+    
     }
 }

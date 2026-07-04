@@ -1,13 +1,14 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using Sohba.Application.DependencyInjection;
+using Sohba.Application.Settings;
 using Sohba.Extensions;
 using Sohba.Infrastructure.DependencyInjection;
 using System;
 using System.Text;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 
 namespace Sohba
 {
@@ -17,27 +18,47 @@ namespace Sohba
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
-            // Get Connection String From Configuration
-            builder.Services.AddInfrastructureService(builder.Configuration);
-
-            // Add Application Services (AutoMapper)
-            builder.Services.AddApplicationServices();
-
-            builder.Services.AddControllersWithViews(options =>
+            // ============================================================
+            // 1. REGISTER JWT SETTINGS
+            // ============================================================
+            var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+            if (jwtSettings != null)
             {
-                options.Filters.Add<Sohba.Filters.ValidationFilter>();
+                jwtSettings.Validate();
+                builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+            }
+
+            // ============================================================
+            // 2. ADD JWT AUTHENTICATION
+            // ============================================================
+            var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing"));
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // Set to true in production
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
             });
-
-            builder.Services.AddFluentValidationAutoValidation();
-            // Configure FluentValidation to automatically validate and populate ModelState
             
-
-            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Validators.PostCreateViewModelValidator>();
-            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Application.Validators.CommentRequestDtoValidator>();
-
-
+            // COOKIE AUTH (for MVC views) + JWT (for API calls)
             builder.Services.AddAuthorization();
+
             builder.Services.ConfigureApplicationCookie(options => 
             {
                 options.LoginPath = "/Auth/Login"; 
@@ -52,8 +73,40 @@ namespace Sohba
                 options.Cookie.Name = ".SohbaAuth";
             });
 
-            var app = builder.Build(); // Here
+            // ============================================================
+            // 3. INFRASTRUCTURE & APPLICATION SERVICES
+            // ============================================================
+            builder.Services.AddInfrastructureService(builder.Configuration);
+            builder.Services.AddApplicationServices();
 
+            // ============================================================
+            // 4. MVC & VALIDATION
+            // ============================================================
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add<Sohba.Filters.ValidationFilter>();
+            });
+
+            builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Validators.PostCreateViewModelValidator>();
+            builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Application.Validators.CommentRequestDtoValidator>();
+
+
+            // ============================================================
+            // 5. BUILD APP
+            // ============================================================
+            var app = builder.Build();
+
+
+            // ============================================================
+            // 6. DATABASE INITIALIZATION
+            // ============================================================
+            await app.InitializeDatabaseAsync();
+
+
+            // ============================================================
+            // 7. MIDDLEWARE PIPELINE
+            // ============================================================
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -61,9 +114,6 @@ namespace Sohba
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
-            await app.InitializeDatabaseAsync();
-
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();

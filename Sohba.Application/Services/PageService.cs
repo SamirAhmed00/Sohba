@@ -4,6 +4,7 @@ using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -17,14 +18,21 @@ namespace Sohba.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
         public PageService(
             IPageDomainService pageDomainService,
             IUnitOfWork unitOfWork,
-            IMapper mapper)
+            IMapper mapper,
+            IUserService userService,
+            INotificationService notificationService)
         {
             _pageDomainService = pageDomainService;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _userService = userService;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<PageResponseDto>> CreatePageAsync(Guid adminId, PageCreateDto dto)
@@ -78,6 +86,21 @@ namespace Sohba.Application.Services
             
             _unitOfWork.Pages.AddFollower(follower);
             await _unitOfWork.CompleteAsync();
+
+            // Send notification to page admin
+            if (page.AdminId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: page.AdminId,
+                    message: $"{userName} followed your page {page.Name}",
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: pageId
+                );
+            }
 
             return Result.Success();
         }

@@ -63,9 +63,18 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<Comment>> GetCommentsByPostIdAsync(Guid postId)
         {
             return await _context.Comments
-                .Include(c => c.User)  // ✅ لجلب اسم المستخدم وصورته
+                .Include(c => c.User) 
                 .Where(c => c.PostId == postId)
                 .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Comment>> GetRepliesByCommentIdAsync(Guid commentId)
+        {
+            return await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.ParentCommentId == commentId)
+                .OrderBy(c => c.CreatedAt)
                 .ToListAsync();
         }
 

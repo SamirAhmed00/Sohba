@@ -2,6 +2,7 @@
 using Sohba.Domain.Common;
 using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Text;
 
 namespace Sohba.Application.Interfaces
@@ -12,6 +13,9 @@ namespace Sohba.Application.Interfaces
         // Profile
         Task<Result<UserResponseDto>> GetProfileAsync(Guid userId);
         Task<Result<bool>> UpdateProfileAsync(Guid userId, UserRequestDto updateDto);
+
+       // Get profile with privacy enforcement(current user for permission check)
+        Task<Result<UserResponseDto>> GetProfileAsync(Guid userId, Guid currentUserId);
 
         // Admin
         Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync(); 
