@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.SearchAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Controllers.Sohba.Controllers;
+
 using Sohba.ViewModels.Search;
 
 namespace Sohba.Controllers

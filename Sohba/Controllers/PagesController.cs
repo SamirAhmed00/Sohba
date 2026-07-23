@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Controllers.Sohba.Controllers;
+
 using Sohba.ViewModels.Page;
 
 namespace Sohba.Controllers

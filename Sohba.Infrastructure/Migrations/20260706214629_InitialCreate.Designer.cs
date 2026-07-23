@@ -12,8 +12,8 @@ using Sohba.Infrastructure.Data;
 namespace Sohba.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260704025131_CommentsReplyToCommentEntityAndUser")]
-    partial class CommentsReplyToCommentEntityAndUser
+    [Migration("20260706214629_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

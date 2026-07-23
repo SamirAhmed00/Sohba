@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -20,20 +21,22 @@ namespace Sohba.Application.Services
 
         private readonly INotificationService _notificationService;
         private readonly IUserService _userService;
-
+        private readonly ILogger<InteractionService> _logger;
 
         public InteractionService(
             IUnitOfWork unitOfWork,
             IInteractionDomainService interactionDomainService,
             IMapper mapper,
             INotificationService notificationService,
-            IUserService userService)
+            IUserService userService,
+            ILogger<InteractionService> logger)
         {
             _unitOfWork = unitOfWork;
             _interactionDomainService = interactionDomainService;
             _mapper = mapper;
             _notificationService = notificationService;
             _userService = userService;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId)
@@ -67,7 +70,11 @@ namespace Sohba.Application.Services
         public async Task<Result> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
-            if (post == null) return Result.Failure("Post not found.");
+            if (post == null)
+            {
+                _logger.LogWarning("Comment failed: post {PostId} not found", postId);
+                return Result.Failure("Post not found.");
+            }
 
             if (parentCommentId.HasValue)
             {
@@ -81,7 +88,11 @@ namespace Sohba.Application.Services
 
 
             var canComment = _interactionDomainService.CanAddComment(userId, content, post.IsDeleted, isBlockedByOwner: false);
-            if (!canComment.IsSuccess) return canComment;
+            if (!canComment.IsSuccess)
+            {
+                _logger.LogWarning("Comment rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, canComment.Error);
+                return canComment;
+            }
 
             var comment = new Comment
             {
@@ -94,6 +105,8 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Interactions.AddComment(comment);
             await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Comment {CommentId} added by user {UserId} on post {PostId}", comment.Id, userId, postId);
 
 
             // Send notification to post owner
@@ -165,6 +178,7 @@ namespace Sohba.Application.Services
             {
                 existingReaction.Type = type;
                 _unitOfWork.Interactions.UpdateReaction(existingReaction);
+                _logger.LogInformation("Reaction updated: user {UserId} changed reaction to {Type} on post {PostId}", userId, type, postId);
             }
             else
             {
@@ -176,6 +190,7 @@ namespace Sohba.Application.Services
                     CreatedAt = DateTime.UtcNow
                 };
                 _unitOfWork.Interactions.AddReaction(reaction);
+                _logger.LogInformation("Reaction added: user {UserId} reacted with {Type} on post {PostId}", userId, type, postId);
             }
 
             await _unitOfWork.CompleteAsync();

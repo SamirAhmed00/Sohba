@@ -54,6 +54,7 @@ window.SohbaApp.post = async function (url, data) {
     }
 };
 
+
 // Toggle Menu
 window.SohbaApp.toggleMenu = function (menuId) {
     const menu = document.getElementById(menuId);
@@ -69,4 +70,11 @@ window.SohbaApp.init = function () {
             window.SohbaApp.animateLike(this);
         });
     });
+};
+
+
+
+// Global alias for toggleMenu (for views that call it without SohbaApp.)
+window.toggleMenu = function (menuId) {
+    window.SohbaApp.toggleMenu(menuId);
 };

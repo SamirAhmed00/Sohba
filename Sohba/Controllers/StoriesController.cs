@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Controllers.Sohba.Controllers;
 
 namespace Sohba.Controllers
 {

@@ -1,4 +1,8 @@
-﻿@{
+﻿@using System.Security.Claims
+@{
+    var jwtToken = ViewBag.JwtToken ?? Context.Items["JwtToken"] as string;
+}
+@{
     var recommendedGroups = ViewBag.RecommendedGroups as IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupResponseDto>;
 }
 <!DOCTYPE html>
@@ -7,6 +11,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Sohba</title>
+    @if (ViewBag.JwtToken != null)
+    {
+        <meta name="jwt-token" content="@ViewBag.JwtToken" />
+    }
     <script type="importmap"></script>
     <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />

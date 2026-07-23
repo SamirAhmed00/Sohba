@@ -35,7 +35,6 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IHashtagService, HashtagService>();
             services.AddScoped<ISearchService, SearchService>();
             services.AddScoped<JwtService>();
-            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserSettingsService, UserSettingsService>();
             services.AddScoped<INotificationService, NotificationService>();
 

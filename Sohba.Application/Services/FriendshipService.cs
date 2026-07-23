@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -21,18 +22,22 @@ namespace Sohba.Application.Services
         private readonly INotificationService _notificationService;
         private readonly IUserService _userService;
 
+        protected readonly ILogger<FriendshipService> _logger;
+
         public FriendshipService(
             IFriendshipDomainService domainService,
             IMapper mapper,
             IUnitOfWork unitOfWork,
             INotificationService notificationService,
-            IUserService userService)
+            IUserService userService,
+            ILogger<FriendshipService> logger)
         {
             _domainService = domainService;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
             _userService = userService;
+            _logger = logger;
         }
 
         // Friend Requests
@@ -52,7 +57,10 @@ namespace Sohba.Application.Services
             );
 
             if (!decision.IsSuccess)
+            {
+                _logger.LogWarning("Friend request rejected from {SenderId} to {ReceiverId}: {Reason}", senderId, receiverId, decision.Error);
                 return decision;
+            }
 
             // Friend entity only stores two FK GUIDs; no navigation properties needed for insert.
             // DB FK constraint enforces referential integrity — no need to fetch User entities.
@@ -67,6 +75,8 @@ namespace Sohba.Application.Services
             _unitOfWork.Friendships.Add(friendRequest);
             await _unitOfWork.CompleteAsync();
 
+
+            _logger.LogInformation("Friend request sent from {SenderId} to {ReceiverId}", senderId, receiverId);
 
             // Send notification to receiver
             var user = await _userService.GetProfileAsync(senderId);
@@ -107,38 +117,33 @@ namespace Sohba.Application.Services
 
         public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            Console.WriteLine($"🔍 AcceptFriendRequest - senderId: {senderId}, receiverId: {receiverId}");
-            Console.WriteLine($"senderId == Ahmed? {senderId.ToString().ToUpper() == "0524C680-1A03-48AA-95E5-B881578D193E"}");
-            Console.WriteLine($"receiverId == Samir? {receiverId.ToString().ToUpper() == "0EF0DA58-4B3F-4775-87CF-4807CB1E38B4"}");
-
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
-            Console.WriteLine($"📊 HasPending result: {hasPending}");
 
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
-            Console.WriteLine($"📊 AlreadyFriends result: {alreadyFriends}");
 
             var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
-            Console.WriteLine($"📊 Decision success: {decision.IsSuccess}, Error: {decision.Error}");
+
 
             if (!decision.IsSuccess)
-                return decision;
-
-            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
-            Console.WriteLine($"📊 Friendship found: {friendship != null}");
-
-            if (friendship != null)
             {
-                Console.WriteLine($"📊 Friendship status: {friendship.Status}");
+                _logger.LogWarning("Friend request accept rejected from {SenderId} to {ReceiverId}: {Reason}", senderId, receiverId, decision.Error);
+                return decision;
             }
 
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+
             if (friendship == null)
+            {
+                _logger.LogWarning("Friend request accept failed: no pending request from {SenderId} to {ReceiverId}", senderId, receiverId);
                 return Result.Failure("Friend request not found.");
+            }
 
             friendship.Status = FriendshipStatus.Accepted;
             _unitOfWork.Friendships.Update(friendship);
 
-            var rowsAffected = await _unitOfWork.CompleteAsync();
-            Console.WriteLine($"💾 Rows affected: {rowsAffected}");
+
+            await _unitOfWork.CompleteAsync();
+            _logger.LogInformation("Friend request accepted: {SenderId} and {ReceiverId} are now friends", senderId, receiverId);
 
 
             // Send notification to sender
@@ -260,7 +265,10 @@ namespace Sohba.Application.Services
             var validation = _domainService.CanBlockUser(userId, targetId, alreadyBlocked);
 
             if (!validation.IsSuccess)
+            {
+                _logger.LogWarning("Block action rejected: user {UserId} cannot block {TargetId}: {Reason}", userId, targetId, validation.Error);
                 return validation;
+            }
 
             var friendship = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
             var reverseFriendship = await _unitOfWork.Friendships.GetByUsersAsync(targetId, userId);
@@ -282,6 +290,7 @@ namespace Sohba.Application.Services
             _unitOfWork.Friendships.Add(block);
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation("User {UserId} blocked user {TargetId}", userId, targetId);
             return Result.Success();
         }
 

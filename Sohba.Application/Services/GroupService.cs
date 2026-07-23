@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -22,15 +23,17 @@ namespace Sohba.Application.Services
 
         private readonly INotificationService _notificationService;
         private readonly IUserService _userService;
+        private readonly ILogger<GroupService> _logger;
 
 
-        public GroupService(IUnitOfWork unitOfWork, IMapper mapper, IGroupDomainService groupDomainService, INotificationService notificationService, IUserService userService)
+        public GroupService(IUnitOfWork unitOfWork, IMapper mapper, IGroupDomainService groupDomainService, INotificationService notificationService, IUserService userService, ILogger<GroupService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _groupDomainService = groupDomainService;
             _notificationService = notificationService;
             _userService = userService;
+            _logger = logger;
         }
 
         public async Task<Result<GroupResponseDto>> CreateGroupAsync(GroupCreateDto groupDto, Guid adminId)
@@ -85,14 +88,14 @@ namespace Sohba.Application.Services
             var affectedRows = await _unitOfWork.CompleteAsync();
 
             // Send notification to group admin
-            if (group.AdminId != userId)
+            if (group.AdminId != userId && affectedRows > 0)
             {
                 var user = await _userService.GetProfileAsync(userId);
                 var userName = user.Value?.Name ?? "Someone";
 
                 await _notificationService.CreateNotificationAsync(
                     receiverId: group.AdminId,
-                    message: $"{userName} joined your group {group.Name}",
+                    message: $"{userName} joined your group '{group.Name}'",
                     type: NotificationType.GroupInvitation,
                     senderId: userId,
                     targetId: groupId
@@ -165,6 +168,7 @@ namespace Sohba.Application.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to load members for group {GroupId}", groupId);
                 return Result<IEnumerable<GroupMemberDto>>.Failure($"Error loading members: {ex.Message}");
             }
         }
@@ -207,6 +211,22 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Groups.RemoveMember(member);
             var affectedRows = await _unitOfWork.CompleteAsync();
+
+
+            if (isAdmin && group.AdminId != userId && affectedRows > 0)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: group.AdminId,
+                    message: $"{userName} (Admin) left the group '{group.Name}'",
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: groupId
+                );
+            }
+
             return Result<bool>.Success(affectedRows > 0);
         }
 

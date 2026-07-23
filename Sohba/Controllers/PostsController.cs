@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.PostAggregate.Requests;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
-using Sohba.Controllers.Sohba.Controllers;
+
 using Sohba.Domain.Common;
 using Sohba.Domain.Enums;
 using Sohba.ViewModels.Post;
@@ -357,7 +358,7 @@ namespace Sohba.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleSavePost([FromBody] ToggleSaveRequest request)
+        public async Task<IActionResult> ToggleSavePost([FromBody] ToggleSaveRequestDto request)
         {
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty)
@@ -416,7 +417,7 @@ namespace Sohba.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeSavedPostTag([FromBody] ChangeTagRequest request)
+        public async Task<IActionResult> ChangeSavedPostTag([FromBody] ChangeTagRequestDto request)
         {
             var userId = GetCurrentUserId();
 
@@ -433,7 +434,7 @@ namespace Sohba.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveSavedPost([FromBody] RemoveSavedRequest request)
+        public async Task<IActionResult> RemoveSavedPost([FromBody] RemoveSavedRequestDto request)
         {
             var userId = GetCurrentUserId();
             var result = await _interactionService.RemoveSavedPostAsync(userId, request.PostId);
@@ -486,21 +487,5 @@ namespace Sohba.Controllers
             return Json(new { success = true, posts = result.Value });
         }
 
-        public class ToggleSaveRequest
-        {
-            public Guid PostId { get; set; }
-            public bool IsFavorite { get; set; }
-        }
-
-        public class ChangeTagRequest
-        {
-            public Guid PostId { get; set; }
-            public string Tag { get; set; }
-        }
-
-        public class RemoveSavedRequest
-        {
-            public Guid PostId { get; set; }
-        }
     }
 }

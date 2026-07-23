@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Sohba.Application.Interfaces
 {
-    public interface ISocialService_Remove
+    public interface ISocialService_Removed
     {
         Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId);
         Task<Result> RespondToRequestAsync(Guid userId, Guid requesterId, bool accept);

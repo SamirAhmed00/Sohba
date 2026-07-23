@@ -16,8 +16,11 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
         Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
         Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag);
-        bool IsPostDeleted(Guid postId);
-       
+
+
+        // Deleted Becuase we are not using 
+        //bool IsPostDeleted(Guid postId);
+
 
         // New method to add hashtags with location
         Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags, string location);

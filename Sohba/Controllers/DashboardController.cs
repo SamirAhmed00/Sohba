@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Controllers.Sohba.Controllers;
 using Sohba.Domain.Common;
 using Sohba.ViewModels.Dashboard;
 

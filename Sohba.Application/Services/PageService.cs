@@ -95,7 +95,7 @@ namespace Sohba.Application.Services
 
                 await _notificationService.CreateNotificationAsync(
                     receiverId: page.AdminId,
-                    message: $"{userName} followed your page {page.Name}",
+                    message: $"{userName} followed your page '{page.Name}'",
                     type: NotificationType.SystemAlert,
                     senderId: userId,
                     targetId: pageId
@@ -121,6 +121,20 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.RemoveFollower(userId, pageId);
             await _unitOfWork.CompleteAsync();
+
+
+            // Notification When User Unfollows the Page (if the user is not the admin of the page)
+            if (page.AdminId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: page.AdminId,
+                    message: $"{user.Value?.Name} unfollowed your page '{page.Name}'",
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: pageId
+                );
+            }
 
             return Result.Success();
         }

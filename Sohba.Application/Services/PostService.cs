@@ -1,9 +1,13 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
@@ -20,11 +24,19 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly IPostDomainService _postDomainService;
 
-        public PostService(IUnitOfWork unitOfWork, IMapper mapper, IPostDomainService postDomainService)
+        private readonly INotificationService _notificationService; 
+        private readonly IUserService _userService;
+
+        private readonly ILogger<PostService> _logger;
+
+        public PostService(IUnitOfWork unitOfWork, IMapper mapper, IPostDomainService postDomainService, INotificationService notificationService, IUserService userService, ILogger<PostService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _postDomainService = postDomainService;
+            _notificationService = notificationService;
+            _userService = userService;
+            _logger = logger;
         }
 
 
@@ -67,9 +79,14 @@ namespace Sohba.Application.Services
         {
             var validation = _postDomainService.CanCreatePost(userId, postDto.Content, !string.IsNullOrEmpty(postDto.ImageUrl));
             if (!validation.IsSuccess)
+            {
+                _logger.LogWarning("Post creation rejected for user {UserId}: {Reason}", userId, validation.Error);
                 return Result<PostResponseDto>.Failure(validation.Error);
+            }
 
             // --- Access Control for Group/Page Posts ---
+            Guid? groupId = null;
+            Guid? pageId = null;
             if (postDto.SourceId.HasValue)
             {
                 if (postDto.SourceType == PostSourceType.Group)
@@ -79,6 +96,7 @@ namespace Sohba.Application.Services
                     if (!isMember)
                         return Result<PostResponseDto>.Failure(
                             "Access denied: You must be an active member of this group to post in it.");
+                    groupId = postDto.SourceId;
                 }
                 else if (postDto.SourceType == PostSourceType.Page)
                 {
@@ -90,6 +108,7 @@ namespace Sohba.Application.Services
                     if (page.AdminId != userId)
                         return Result<PostResponseDto>.Failure(
                             "Access denied: Only the page administrator can post on this page.");
+                    pageId = postDto.SourceId;
                 }
             }
             // --- End Access Control ---
@@ -122,6 +141,10 @@ namespace Sohba.Application.Services
                 await _unitOfWork.CompleteAsync();
             }
 
+            //  Send notifications based on post type
+            await SendPostNotifications(post, userId, groupId, pageId);
+
+            _logger.LogInformation("Post created: {PostId} by user {UserId}, source type {SourceType}", post.Id, userId, postDto.SourceType);
             return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
 
@@ -203,12 +226,18 @@ namespace Sohba.Application.Services
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null)
+            {
+                _logger.LogWarning("Post deletion failed: post {PostId} not found", postId);
                 return Result.Failure("Post not found.");
+            }
 
             // 1. Check permission via Domain Service
             var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin);
             if (!result.IsSuccess)
+            {
+                _logger.LogWarning("Post deletion rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, result.Error);
                 return result;
+            }
 
             // 2. Apply Soft Delete
             post.IsDeleted = true;
@@ -217,6 +246,7 @@ namespace Sohba.Application.Services
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation("Post {PostId} soft-deleted by user {UserId} (isAdmin={IsAdmin})", postId, userId, isAdmin);
             return Result.Success();
         }
 
@@ -295,6 +325,11 @@ namespace Sohba.Application.Services
                 {
                     filteredPosts.Add(post);
                 }
+                else
+                {
+                    _logger.LogWarning("Privacy check: user {UserId} denied view of post {PostId} (owner {OwnerId}, isFriend {IsFriend})",
+                        currentUserId, post.Id, post.UserId, isFriend);
+                }
             }
 
             postList = filteredPosts;
@@ -331,5 +366,51 @@ namespace Sohba.Application.Services
             var regex = new Regex(@"#\w+");
             return regex.Matches(content).Select(m => m.Value.Replace("#", "").ToLower()).Distinct();
         }
+
+
+        // Helper method to send notifications for post creation
+        private async Task SendPostNotifications(Post post, Guid userId, Guid? groupId, Guid? pageId)
+        {
+            var user = await _userService.GetProfileAsync(userId);
+            var userName = user.Value?.Name ?? "Someone";
+
+            // 1. If posted in a group, notify group admin
+            if (groupId.HasValue)
+            {
+                var group = await _unitOfWork.Groups.GetByIdAsync(groupId.Value);
+                if (group != null && group.AdminId != userId)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        receiverId: group.AdminId,
+                        message: $"{userName} posted in your group '{group.Name}'",
+                        type: NotificationType.SystemAlert,
+                        senderId: userId,
+                        targetId: post.Id
+                    );
+                }
+
+                // Notify group members (optional - but we'll skip to avoid spam)
+            }
+
+            // 2. If posted on a page, notify page admin
+            if (pageId.HasValue)
+            {
+                var page = await _unitOfWork.Pages.GetByIdAsync(pageId.Value);
+                if (page != null && page.AdminId != userId)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        receiverId: page.AdminId,
+                        message: $"{userName} posted on your page '{page.Name}'",
+                        type: NotificationType.SystemAlert,
+                        senderId: userId,
+                        targetId: post.Id
+                    );
+                }
+            }
+
+            // 3. If user has friends, notify them (optional - can be skipped)
+            // This is a "friend activity" notification - we'll implement it later
+        }
     }
 }
+

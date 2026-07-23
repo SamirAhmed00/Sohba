@@ -2,10 +2,14 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Sohba.Application.DependencyInjection;
+using Sohba.Application.Interfaces;
 using Sohba.Application.Settings;
 using Sohba.Extensions;
+using Sohba.Handlers;
+using Sohba.Hubs;
 using Sohba.Infrastructure.DependencyInjection;
 using System;
 using System.Text;
@@ -54,8 +58,22 @@ namespace Sohba
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+                options.Events = new JwtBearerEvents 
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
-            
+
+
             // COOKIE AUTH (for MVC views) + JWT (for API calls)
             builder.Services.AddAuthorization();
 
@@ -71,6 +89,7 @@ namespace Sohba
                 options.Cookie.HttpOnly = true;
                 options.Cookie.MaxAge = null;
                 options.Cookie.Name = ".SohbaAuth";
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             // ============================================================
@@ -80,7 +99,16 @@ namespace Sohba
             builder.Services.AddApplicationServices();
 
             // ============================================================
-            // 4. MVC & VALIDATION
+            // 4. SIGNALR
+            // ============================================================
+            builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+                options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+            });
+            builder.Services.AddScoped<INotificationEventHandler, NotificationEventHandler>();
+            // ============================================================
+            // 5. MVC & VALIDATION
             // ============================================================
             builder.Services.AddControllersWithViews(options =>
             {
@@ -122,8 +150,9 @@ namespace Sohba
             app.UseAuthentication();
             app.UseAuthorization();
 
-            
-            app.MapStaticAssets();
+            app.MapHub<NotificationHub>("/notificationHub");
+
+           app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
                 //pattern: "{controller=Home}/{action=Index}/{id?}")

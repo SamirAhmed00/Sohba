@@ -82,7 +82,10 @@ namespace Sohba.Application.Mappings
 
             // --- Notification & Friends ---
             CreateMap<Notification, NotificationResponseDto>()
-                .ForMember(dest => dest.NotificationType, opt => opt.MapFrom(src => src.Type.ToString())); //
+                .ForMember(dest => dest.NotificationType, opt => opt.MapFrom(src => src.Type.ToString()))
+                .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.Name : "System"))
+                .ForMember(dest => dest.SenderProfilePicture, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.ProfilePictureUrl : null))
+                .ForMember(dest => dest.TimeAgo, opt => opt.Ignore());
 
             CreateMap<Friend, FriendDto>()
                  .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId)) 

@@ -4,7 +4,7 @@ using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
-using Sohba.Controllers.Sohba.Controllers;
+
 using Sohba.ViewModels.Profile;
 
 namespace Sohba.Controllers

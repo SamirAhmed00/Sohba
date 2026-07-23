@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.Interfaces;
-using Sohba.Controllers.Sohba.Controllers;
+
 using System;
 using System.Threading.Tasks;
 

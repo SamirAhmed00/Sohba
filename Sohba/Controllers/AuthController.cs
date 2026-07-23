@@ -13,16 +13,19 @@ namespace Sohba.Controllers
     {
         private readonly IAuthService _authService;
         private readonly SignInManager<User> _signInManager; 
-        private readonly UserManager<User> _userManager;     
+        private readonly UserManager<User> _userManager;
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IAuthService authService,
             SignInManager<User> signInManager,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+            ILogger<AuthController> logger)
         {
             _authService = authService;
             _signInManager = signInManager;
             _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -35,7 +38,8 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            Console.WriteLine($"🔐 Login attempt - Email: {loginDto.Email}, RememberMe: {loginDto.RememberMe}");
+            
+
 
             if (!ModelState.IsValid)
                 return View(loginDto);
@@ -43,6 +47,7 @@ namespace Sohba.Controllers
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
             if (user == null)
             {
+                _logger.LogInformation("Login attempt for email {Email}, RememberMe: {RememberMe}", loginDto.Email, loginDto.RememberMe);
                 ModelState.AddModelError("", "Invalid email or password.");
                 return View(loginDto);
             }
@@ -53,14 +58,22 @@ namespace Sohba.Controllers
                 loginDto.RememberMe,
                 lockoutOnFailure: true);
 
-            Console.WriteLine($"📊 SignIn result: {result.Succeeded}, RememberMe: {loginDto.RememberMe}");
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("Login blocked: account locked out for user {UserId} ({Email})", user.Id, loginDto.Email);
+                ModelState.AddModelError("", "Account locked out. Try again later.");
+                return View(loginDto);
+            }
+
 
             if (!result.Succeeded)
             {
+                _logger.LogWarning("Failed login attempt: invalid password for user {UserId} ({Email})", user.Id, loginDto.Email);
                 ModelState.AddModelError("", "Invalid email or password.");
                 return View(loginDto);
             }
 
+            _logger.LogInformation("SignIn result for email {Email}: Succeeded={Succeeded}, IsLockedOut={IsLockedOut}, IsNotAllowed={IsNotAllowed}",loginDto.Email, result.Succeeded, result.IsLockedOut, result.IsNotAllowed);
 
             return RedirectToAction("Index", "Home");
         }
@@ -81,10 +94,12 @@ namespace Sohba.Controllers
             var result = await _authService.RegisterAsync(registerDto);
             if (!result.IsSuccess)
             {
+                _logger.LogWarning("Registration failed for email {Email}: {Error}", registerDto.Email, result.Error);
                 ModelState.AddModelError("", result.Error);
                 return View(registerDto);
             }
 
+            _logger.LogInformation("New user registered: email {Email}, name {Name}", registerDto.Email, registerDto.Name);
             return RedirectToAction("Login");
         }
 
@@ -107,23 +122,40 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
         {
-            try
+            // -- TO CHECK : The Old Code Using Try Catch --
+            //try
+            //{
+            //    if (!ModelState.IsValid)
+            //        return Json(BaseResponseDto<object>.FailureResponse("Invalid email address."));
+
+            //    // Fallback URL pointing back to Auth/ResetPassword
+            //    var fallbackUrl = Url.Action("ResetPassword", "Auth", null, Request.Scheme);
+
+            //    var result = await _authService.ForgotPasswordAsync(model.Email, fallbackUrl);
+
+            //    // For security reasons, don't reveal if the user exists
+            //    return Json(BaseResponseDto<object>.SuccessResponse(null));
+            //}
+            //catch (Exception ex)
+            //{
+            //    return Json(BaseResponseDto<object>.FailureResponse($"An error occurred: {ex.Message}"));
+            //}
+
+            if (!ModelState.IsValid)
+                return Json(BaseResponseDto<object>.FailureResponse("Invalid email address."));
+
+            _logger.LogInformation("Password reset requested for email {Email}", model.Email);
+
+            var fallbackUrl = Url.Action("ResetPassword", "Auth", null, Request.Scheme);
+
+            var result = await _authService.ForgotPasswordAsync(model.Email, fallbackUrl);
+
+            if (result.IsFailure)
             {
-                if (!ModelState.IsValid)
-                    return Json(BaseResponseDto<object>.FailureResponse("Invalid email address."));
-
-                // Fallback URL pointing back to Auth/ResetPassword
-                var fallbackUrl = Url.Action("ResetPassword", "Auth", null, Request.Scheme);
-
-                var result = await _authService.ForgotPasswordAsync(model.Email, fallbackUrl);
-
-                // For security reasons, don't reveal if the user exists
-                return Json(BaseResponseDto<object>.SuccessResponse(null));
+                _logger.LogWarning("Password reset failed for email {Email}: {Error}", model.Email, result.Error);
             }
-            catch (Exception ex)
-            {
-                return Json(BaseResponseDto<object>.FailureResponse($"An error occurred: {ex.Message}"));
-            }
+
+            return Json(BaseResponseDto<object>.SuccessResponse(null));
         }
 
         [HttpGet]
@@ -140,22 +172,40 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
-            try
+            // -- TO CHECK : The Old Code Using Try Catch --
+            //try
+            //{
+            //    if (!ModelState.IsValid)
+            //        return Json(BaseResponseDto<object>.FailureResponse("Invalid payload."));
+
+            //    var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.NewPassword);
+
+            //    if (result.IsSuccess)
+            //        return Json(BaseResponseDto<object>.SuccessResponse(null));
+
+            //    return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+            //}
+            //catch (Exception ex)
+            //{
+            //    return Json(BaseResponseDto<object>.FailureResponse($"An error occurred: {ex.Message}"));
+            //}
+
+            if (!ModelState.IsValid)
+                return Json(BaseResponseDto<object>.FailureResponse("Invalid payload."));
+
+            _logger.LogInformation("Password reset attempt for email {Email}", model.Email);
+
+            var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.NewPassword);
+
+            if (result.IsSuccess)
             {
-                if (!ModelState.IsValid)
-                    return Json(BaseResponseDto<object>.FailureResponse("Invalid payload."));
-
-                var result = await _authService.ResetPasswordAsync(model.Email, model.Token, model.NewPassword);
-
-                if (result.IsSuccess)
-                    return Json(BaseResponseDto<object>.SuccessResponse(null));
-
-                return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+                _logger.LogInformation("Password reset successful for email {Email}", model.Email);
+                return Json(BaseResponseDto<object>.SuccessResponse(null));
             }
-            catch (Exception ex)
-            {
-                return Json(BaseResponseDto<object>.FailureResponse($"An error occurred: {ex.Message}"));
-            }
+
+
+            _logger.LogWarning("Password reset failed for email {Email}: {Error}", model.Email, result.Error);
+            return Json(BaseResponseDto<object>.FailureResponse(result.Error));            
         }
 
         [HttpGet]

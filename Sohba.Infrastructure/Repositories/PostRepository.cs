@@ -84,10 +84,12 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public bool IsPostDeleted(Guid postId)
-        {
-            return _context.Set<Post>().Any(p => p.Id == postId && p.IsDeleted);
-        }
+
+        // we Delted This Funcion
+        //public bool IsPostDeleted(Guid postId)
+        //{
+        //    return _context.Set<Post>().Any(p => p.Id == postId && p.IsDeleted);
+        //}
 
 
         public async Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags, string location)
@@ -175,6 +177,8 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+
+        
         public async Task<IEnumerable<Post>> SearchPostsAsync(string query, int limit = 10)
         {
             return await _context.Set<Post>()

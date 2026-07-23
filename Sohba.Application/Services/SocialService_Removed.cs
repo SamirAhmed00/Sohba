@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Sohba.Application.Services
 {
-    public class SocialService_Removed : ISocialService_Remove
+    public class SocialService_Removed : ISocialService_Removed
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
