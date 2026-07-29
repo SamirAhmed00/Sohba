@@ -56,7 +56,7 @@
             </div>
 
             <!-- Form -->
-            <form asp-action="Create" method="post" class="p-8 space-y-6" enctype="multipart/form-data" id="postForm">
+            <form asp-action="Create" method="post" class="p-8 space-y-6" enctype="multipart/form-data" id="postForm" data-skip-auto-loading>
                 @Html.AntiForgeryToken()
 
                 @if (!string.IsNullOrEmpty(groupId))

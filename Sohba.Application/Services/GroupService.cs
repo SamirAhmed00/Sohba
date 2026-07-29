@@ -262,22 +262,17 @@ namespace Sohba.Application.Services
 
         public async Task<Result<IEnumerable<GroupResponseDto>>> GetRecommendedGroupsAsync(Guid userId, int count = 5)
         {
-            var groups = await _unitOfWork.Groups.GetAllAsync();
+            var groups = await _unitOfWork.Groups.GetRecommendedGroupsAsync(userId, count);
 
-            var recommended = groups
-                .Where(g => g.GroupMembers == null || !g.GroupMembers.Any(m => m.UserId == userId))
-                .OrderByDescending(g => g.GroupMembers?.Count ?? 0) 
-                .Take(count)
-                .Select(g => {
-                    var dto = _mapper.Map<GroupResponseDto>(g);
-                    dto.AdminName = g.Admin?.Name ?? "System Admin";
-                    dto.MembersCount = g.GroupMembers?.Count ?? 0;
-                    dto.IsCurrentUserMember = false;
-                    return dto;
-                })
-                .ToList();
+            var dtos = groups.Select(g => {
+                var dto = _mapper.Map<GroupResponseDto>(g);
+                dto.AdminName = g.Admin?.Name ?? "System Admin";
+                dto.MembersCount = g.GroupMembers?.Count ?? 0;
+                dto.IsCurrentUserMember = false;
+                return dto;
+            }).ToList();
 
-            return Result<IEnumerable<GroupResponseDto>>.Success(recommended);
+            return Result<IEnumerable<GroupResponseDto>>.Success(dtos);
         }
     }
 }

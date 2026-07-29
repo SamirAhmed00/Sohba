@@ -182,11 +182,15 @@ namespace Sohba.Application.Services
 
             var userReaction = await _unitOfWork.Interactions.GetReactionAsync(currentUserId, postId);
 
+
+
+
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
             var isSaved = savedPosts.Any(s => s.PostId == postId);
             var isFavorite = savedPosts.Any(s => s.PostId == postId && s.Tag == SavedTag.Favorite);
 
             var response = _mapper.Map<PostResponseDto>(post);
+            
 
             if (counts.TryGetValue(postId, out var countData))
             {
@@ -197,6 +201,7 @@ namespace Sohba.Application.Services
             response.CurrentUserReaction = userReaction?.Type.ToString();
             response.IsSaved = isSaved;
             response.IsFavorite = isFavorite;
+            response.IsAuthor = post.UserId == currentUserId;
 
             return Result<PostResponseDto>.Success(response);
         }
@@ -296,7 +301,7 @@ namespace Sohba.Application.Services
             if (!postList.Any())
                 return Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
 
-
+            var friendIds = await _unitOfWork.Friendships.GetFriendIdsSetAsync(currentUserId);
 
             //  PRIVACY CHECK: Filter posts based on privacy settings
             var filteredPosts = new List<Post>();
@@ -311,7 +316,7 @@ namespace Sohba.Application.Services
                 }
 
                 // Check friendship status
-                var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
+                var isFriend = friendIds.Contains(post.UserId);
 
                 // Apply privacy rules
                 var canView = _postDomainService.CanViewPost(
@@ -351,7 +356,7 @@ namespace Sohba.Application.Services
                 dto.ReactionsCount = countData.reactions;
                 dto.IsSaved = savedDict.ContainsKey(p.Id);
                 dto.IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite;
-
+                dto.IsAuthor = p.UserId == currentUserId;
                 if (reactionDict.TryGetValue(p.Id, out var reaction))
                     dto.CurrentUserReaction = reaction;
 

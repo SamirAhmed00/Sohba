@@ -7,7 +7,7 @@ using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
 using Sohba.Infrastructure.Data;
-
+using Sohba.Domain.Entities.StoryAggregate;
 namespace Sohba.Infrastructure.DBInitializer
 {
     public class DBInitializer : IDBInitializer
@@ -31,6 +31,7 @@ namespace Sohba.Infrastructure.DBInitializer
             await SeedAdminUserAsync();
             await SeedTestUsersAsync(); 
             await SeedSampleDataAsync();
+            await SeedExtraTestDataAsync();
         }
 
         private async Task SeedRolesAsync()
@@ -621,6 +622,152 @@ namespace Sohba.Infrastructure.DBInitializer
         {
             // This is now handled by SeedTestUsersAsync
             await Task.CompletedTask;
+        }
+
+
+        
+        private async Task SeedExtraTestDataAsync()
+        {
+            var mohammed = await _context.Users.FirstAsync(u => u.Email == "mohammed@sohba.com");
+            var ahmed = await _context.Users.FirstAsync(u => u.Email == "ahmed@sohba.com");
+            var sara = await _context.Users.FirstAsync(u => u.Email == "sara@sohba.com");
+            var khaled = await _context.Users.FirstAsync(u => u.Email == "khaled@sohba.com");
+            var layla = await _context.Users.FirstAsync(u => u.Email == "layla@sohba.com");
+            var omar = await _context.Users.FirstAsync(u => u.Email == "omar@sohba.com");
+            var nour = await _context.Users.FirstAsync(u => u.Email == "nour@sohba.com");
+            var youssef = await _context.Users.FirstAsync(u => u.Email == "youssef@sohba.com");
+
+            
+            if (await _context.Stories.AnyAsync()) return;
+
+            // ================= 1. STORIES =================
+            _context.Stories.Add(new Story
+            {
+                Id = Guid.NewGuid(),
+                Content = "Testing a public story!",
+                MediaUrl = null,
+                MediaType = null,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(24),
+                Privacy = StoryPrivacy.Public,
+                UserId = mohammed.Id
+            });
+            _context.Stories.Add(new Story
+            {
+                Id = Guid.NewGuid(),
+                Content = "Friends-only story test",
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(24),
+                Privacy = StoryPrivacy.FriendsOnly,
+                UserId = sara.Id
+            });
+
+            // ================= 2. بوستات خاصة/Friends + جوه Group/Page =================
+            var privatePost = new Post
+            {
+                Id = Guid.NewGuid(),
+                Title = "My Private Thoughts",
+                Content = "Only I should see this. #Private",
+                UserId = khaled.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsPrivate = true,
+                Privacy = PostPrivacy.Private,
+                SourceType = PostSourceType.User
+            };
+            var friendsOnlyPost = new Post
+            {
+                Id = Guid.NewGuid(),
+                Title = "Friends Only Update",
+                Content = "Only my friends can see this. #FriendsOnly",
+                UserId = mohammed.Id,
+                CreatedAt = DateTime.UtcNow,
+                IsPrivate = false,
+                Privacy = PostPrivacy.Friends,
+                SourceType = PostSourceType.User
+            };
+            _context.Posts.AddRange(privatePost, friendsOnlyPost);
+            await _context.SaveChangesAsync();
+
+            // بوست جوه جروب (لازم تجيب GroupId الحقيقي من الداتابيز الأول)
+            var devGroup = await _context.Groups.FirstAsync(g => g.Name == "Sohba Developers");
+            var groupPost = new Post
+            {
+                Id = Guid.NewGuid(),
+                Title = "Sprint Planning Discussion",
+                Content = "Let's discuss our next sprint goals.",
+                UserId = ahmed.Id,
+                CreatedAt = DateTime.UtcNow,
+                Privacy = PostPrivacy.Public,
+                SourceType = PostSourceType.Group,
+                SourceId = devGroup.Id,
+                GroupId = devGroup.Id
+            };
+
+            var techPage = await _context.Pages.FirstAsync(p => p.Name == "Sohba Tech");
+            var pagePost = new Post
+            {
+                Id = Guid.NewGuid(),
+                Title = "New Product Launch!",
+                Content = "Check out our latest tech review.",
+                UserId = mohammed.Id,
+                CreatedAt = DateTime.UtcNow,
+                Privacy = PostPrivacy.Public,
+                SourceType = PostSourceType.Page,
+                SourceId = techPage.Id,
+                PageId = techPage.Id
+            };
+            _context.Posts.AddRange(groupPost, pagePost);
+            await _context.SaveChangesAsync();
+
+            // ================= 3. كومنتات وردود =================
+            var firstPublicPost = await _context.Posts.FirstAsync(p => p.Title == "Welcome to Sohba! 🚀");
+            var rootComment = new Comment
+            {
+                Id = Guid.NewGuid(),
+                Content = "Congrats on the launch!",
+                CreatedAt = DateTime.UtcNow,
+                UserId = ahmed.Id,
+                PostId = firstPublicPost.Id
+            };
+            _context.Comments.Add(rootComment);
+            await _context.SaveChangesAsync();
+
+            _context.Comments.Add(new Comment
+            {
+                Id = Guid.NewGuid(),
+                Content = "Thanks Ahmed!",
+                CreatedAt = DateTime.UtcNow,
+                UserId = mohammed.Id,
+                PostId = firstPublicPost.Id,
+                ParentCommentId = rootComment.Id
+            });
+
+            // ================= 4. تفاعلات (Reactions) =================
+            _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Like, CreatedAt = DateTime.UtcNow, UserId = ahmed.Id, PostId = firstPublicPost.Id });
+            _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Love, CreatedAt = DateTime.UtcNow, UserId = sara.Id, PostId = firstPublicPost.Id });
+
+            // ================= 5. بلاغات (Reports) — لاختبار Dashboard =================
+            var adminTestPost = await _context.Posts.FirstAsync(p => p.Title == "My Travel Story: Paris ✨");
+            _context.PostReports.Add(new PostReport
+            {
+                Id = Guid.NewGuid(),
+                Reason = ReportReason.Spam,
+                ReportedAt = DateTime.UtcNow,
+                IsResolved = false,
+                PostId = adminTestPost.Id,
+                UserId = khaled.Id
+            });
+
+            // ================= 6. بوستات محفوظة (Saved/Favorite) =================
+            _context.SavedPost.Add(new SavedPost
+            {
+                UserId = mohammed.Id,
+                PostId = adminTestPost.Id,
+                SavedAt = DateTime.UtcNow,
+                Tag = SavedTag.Favorite
+            });
+
+            await _context.SaveChangesAsync();
         }
     }
 }

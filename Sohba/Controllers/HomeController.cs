@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
@@ -17,6 +18,7 @@ using System.Diagnostics;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Feed")]
     public class HomeController : BaseController
     {
         private readonly IPostService _postService;

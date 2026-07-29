@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.SearchAggregate;
 using Sohba.Application.Interfaces;
@@ -9,6 +10,8 @@ using Sohba.ViewModels.Search;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class SearchController : BaseController
     {
         private readonly ISearchService _searchService;

@@ -53,7 +53,10 @@
     <script src="~/js/sohba-posts.js"></script>
     <script src="~/js/sohba-modal.js"></script>
     <script src="~/js/sohba-stories.js"></script>
-
+    <script src="~/js/features/stories.js" asp-append-version="true"></script>
+    <script src="~/js/features/groups.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* @await RenderSectionAsync("Scripts", required: false) *@
 </body>
 </html>

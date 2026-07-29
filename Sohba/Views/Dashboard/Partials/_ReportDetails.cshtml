@@ -22,14 +22,20 @@
         <p class="text-sm text-gray-600"><span class="font-bold">Post ID:</span> @Model.PostId</p>
         <p class="text-sm text-gray-600 mt-1">
             <span class="font-bold">Status:</span>
-            @if (Model.IsResolved)
-            {
-                <span class="text-green-600">Resolved</span>
-            }
-            else
-            {
-                <span class="text-red-600">Pending</span>
-            }
+            <span id="report-status-@Model.Id" class="@(Model.IsResolved ? "text-green-600" : "text-red-600")">
+                @(Model.IsResolved ? "Resolved" : "Pending")
+            </span>
         </p>
     </div>
+    @if (!Model.IsResolved)
+    {
+        <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+            <button onclick="resolveReport('@Model.Id', true)" class="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg shadow-green-600/30 transition-colors">
+                Mark as Resolved
+            </button>
+            <button onclick="resolveReport('@Model.Id', false)" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                Dismiss Report
+            </button>
+        </div>
+    }
 </div>

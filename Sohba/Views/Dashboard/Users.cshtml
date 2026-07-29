@@ -203,7 +203,7 @@
             // =========================
             // Block User
             // =========================
-            async function blockUser(userId) {
+            asyncwindow.blockUser = async function (userId) {
                 showConfirmModal({
                     title: 'Block User',
                     message: 'Are you sure you want to block this user? They will not be able to interact with the platform.',
@@ -231,12 +231,12 @@
                         }
                     }
                 });
-            }
+            };
 
             // =========================
             // Unblock User
             // =========================
-            async function unblockUser(userId) {
+            window.unblockUser = async function (userId) {
                 showConfirmModal({
                     title: 'Unblock User',
                     message: 'Are you sure you want to unblock this user? They will be able to interact with the platform again.',
@@ -254,12 +254,12 @@
                         }
                     }
                 });
-            }
+            };
 
             // =========================
             // Delete User
             // =========================
-            async function deleteUser(userId) {
+            window.deleteUser = async function (userId) {
                 showConfirmModal({
                     title: 'Delete User',
                     message: 'Are you sure you want to delete this user? This action cannot be undone.',
@@ -275,7 +275,7 @@
                         }
                     }
                 });
-            }
+            };
 
             // =========================
             // View User
@@ -309,95 +309,3 @@
         })();
     </script>
 }
-@* @section Scripts {
-    <script>
-        let searchTimeout;
-
-        // Live search with debounce
-        document.getElementById('searchInput').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => applyFilters(), 500);
-        });
-
-        document.getElementById('statusFilter').addEventListener('change', function() {
-            applyFilters();
-        });
-
-        function applyFilters() {
-            const search = document.getElementById('searchInput').value;
-            const status = document.getElementById('statusFilter').value;
-            window.location.href = `/Dashboard/Users?search=${encodeURIComponent(search)}&status=${status}`;
-        }
-
-        async function blockUser(userId) {
-            if (!confirm('Are you sure you want to block this user?')) return;
-
-            const result = await SohbaApp.post('/Dashboard/BlockUser', { userId });
-            if (result.success) {
-                SohbaApp.toast('User blocked successfully', 'success');
-
-                const badge = document.querySelector(`tr[data-user-id="${userId}"] .status-badge`);
-                badge.textContent = 'Blocked';
-                badge.className = 'status-badge px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full';
-
-                // Change button from Block to Unblock
-                const blockBtn = document.querySelector(`tr[data-user-id="${userId}"] button[onclick*="blockUser"]`);
-                blockBtn.outerHTML = `
-                    <button onclick="unblockUser('${userId}')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors" title="Unblock">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                    </button>
-                `;
-            } else {
-                SohbaApp.toast(result.error || 'Failed to block user', 'error');
-            }
-        }
-
-        async function unblockUser(userId) {
-            if (!confirm('Are you sure you want to unblock this user?')) return;
-
-            const result = await SohbaApp.post('/Dashboard/UnblockUser', { userId });
-            if (result.success) {
-                SohbaApp.toast('User unblocked successfully', 'success');
-                const badge = document.querySelector(`tr[data-user-id="${userId}"] .status-badge`);
-                badge.textContent = 'Active';
-                badge.className = 'status-badge px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full';
-            } else {
-                SohbaApp.toast(result.error || 'Failed to unblock user', 'error');
-            }
-        }
-
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-
-            const result = await SohbaApp.post('/Dashboard/DeleteUser', { userId });
-            if (result.success) {
-                SohbaApp.toast('User deleted successfully', 'success');
-                document.querySelector(`tr[data-user-id="${userId}"]`).remove();
-            } else {
-                SohbaApp.toast(result.error || 'Failed to delete user', 'error');
-            }
-        }
-
-        async function viewUser(userId) {
-            try {
-                const response = await fetch(`/Dashboard/GetUserDetails?userId=${userId}`);
-                const html = await response.text();
-                document.getElementById('userModalContent').innerHTML = html;
-                document.getElementById('userModal').classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            } catch (error) {
-                console.error('Error loading user details:', error);
-                SohbaApp.toast('Failed to load user details', 'error');
-            }
-        }
-
-        function closeUserModal() {
-            document.getElementById('userModal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        
-    </script>
-} *@

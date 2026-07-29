@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
@@ -7,6 +8,8 @@ using Sohba.Application.Interfaces;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class StoriesController : BaseController
     {
         private readonly IStoryService _storyService;
@@ -32,29 +35,21 @@ namespace Sohba.Controllers
             var userId = GetCurrentUserId();
 
             // Resolve the media URL here in the controller (Infrastructure boundary).
-            try
+            if (model.MediaFile != null && model.MediaFile.Length > 0)
             {
-                if (model.MediaFile != null && model.MediaFile.Length > 0)
-                {
-                    var uploadResult = await _fileStorage.SaveFileAsync(model.MediaFile, "stories");
-                    if (!uploadResult.IsSuccess)
-                        return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(uploadResult.Error));
+                var uploadResult = await _fileStorage.SaveFileAsync(model.MediaFile, "stories");
+                if (!uploadResult.IsSuccess)
+                    return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(uploadResult.Error));
                     
-                    model.MediaUrl = uploadResult.Value;
-                }
-
-                var result = await _storyService.CreateStoryAsync(model, userId);
-
-                if (result.IsSuccess)
-                    return Json(BaseResponseDto<StoryResponseDto>.SuccessResponse(result.Value));
-
-                return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(result.Error));
-            }
-            catch (Exception ex)
-            {
-                return Json(BaseResponseDto<StoryResponseDto>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+                model.MediaUrl = uploadResult.Value;
             }
 
+            var result = await _storyService.CreateStoryAsync(model, userId);
+
+            if (result.IsSuccess)
+                return Json(BaseResponseDto<StoryResponseDto>.SuccessResponse(result.Value));
+
+            return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(result.Error));
         }
 
         [HttpGet]

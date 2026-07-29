@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="~/css/legacy.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+
 </head>
 <body class="bg-gradient-to-br from-[#f0f2f5] to-white text-slate-800 antialiased">
 
@@ -34,8 +36,17 @@
     <script src="~/js/sohba-core.js"></script>
     <script src="~/js/sohba-posts.js"></script>
     <script src="~/js/sohba-modal.js"></script>
-    <script src="~/js/sohba-stories.js"></script>
+    <script src="~/js/features/modal.js" asp-append-version="true"></script>
+    <script src="~/js/features/dashboard.js" asp-append-version="true"></script> // I Puted It By MMesylf -- Check 1.2 
 
+
+    <!-- Those Scripts For _AppLayout only-->
+    @* <script src="~/js/sohba-stories.js"></script> *@
+    @* <script src="~/js/features/stories.js" asp-append-version="true"></script> // I Puted It By MMesylf -- Check 1.2  *@
+    @* <script src="~/js/features/groups.js" asp-append-version="true"></script> // I Puted It By MMesylf -- Check 1.2  *@
+
+    @await RenderSectionAsync("Styles", required: false)
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

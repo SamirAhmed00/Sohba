@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
 using Sohba.ViewModels.Group;
 
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class GroupsController : BaseController
     {
         private readonly IGroupService _groupService;
@@ -89,10 +94,12 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Join(Guid groupId)
+        public async Task<IActionResult> Join([FromBody] IdRequestDto request)
         {
             var userId = GetCurrentUserId();
-            var result = await _groupService.JoinGroupAsync(groupId, userId);
+            if (request == null || request.Id == Guid.Empty)
+                return Json(new { success = false, error = "Invalid group ID." });
+            var result = await _groupService.JoinGroupAsync(request.Id, userId);
             return Json(new { success = result.IsSuccess });
         }
 
@@ -245,24 +252,17 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Leave([FromBody] LeaveGroupRequest request)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == Guid.Empty)
-                    return Json(new { success = false, error = "User not authenticated" });
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(new { success = false, error = "User not authenticated" });
 
-                var result = await _groupService.LeaveGroupAsync(request.GroupId, userId);
+            var result = await _groupService.LeaveGroupAsync(request.GroupId, userId);
 
-                return Json(new
-                {
-                    success = result.IsSuccess,
-                    error = result.Error
-                });
-            }
-            catch (Exception ex)
+            return Json(new
             {
-                return Json(new { success = false, error = ex.Message });
-            }
+                success = result.IsSuccess,
+                error = result.Error
+            });
         }
 
         public class LeaveGroupRequest
@@ -270,18 +270,5 @@ namespace Sohba.Controllers
             public Guid GroupId { get; set; }
         }
 
-        // Helper Methods
-        //private Guid GetCurrentUserId()
-        //{
-        //    //var userIdStr = HttpContext.Session.GetString("UserId");
-        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
-        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-
-        //}
-
-        //private string GetCurrentUserName()
-        //{
-        //    return User.Identity?.Name ?? string.Empty;
-        //}
     }
 }

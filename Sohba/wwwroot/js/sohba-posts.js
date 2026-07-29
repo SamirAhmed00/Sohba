@@ -47,8 +47,8 @@ window.SohbaApp.reactToPost = async function (postId, reactionType) {
         } else if (result.action === 'removed') {
             window.SohbaApp.toast('Reaction removed!', 'success');
             button.dataset.currentReaction = '';
-            icon.innerText = '👍';
-            text.innerText = 'Like';
+            icon.innerText = 'React';
+            text.innerText = '';
             button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-bold text-slate-600 hover:bg-slate-50`;
         }
 
@@ -71,7 +71,7 @@ window.SohbaApp.savePost = async function (postId) {
         });
 
         if (result.success) {
-            const button = document.querySelector(`[data-save-button="${postId}"]`);
+            updateSaveFavoriteButtons(postId, result.saved, false);
             const icon = button.querySelector('svg');
             const text = button.querySelector('.btn-text');
 
@@ -103,7 +103,7 @@ window.SohbaApp.addToFavorites = async function (postId) {
         });
 
         if (result.success) {
-            const button = document.querySelector(`[data-fav-button="${postId}"]`);
+            updateSaveFavoriteButtons(postId, result.saved, result.saved);
             const icon = button.querySelector('svg');
             const text = button.querySelector('.btn-text');
 
@@ -127,6 +127,38 @@ window.SohbaApp.addToFavorites = async function (postId) {
     }
 };
 
+function updateSaveFavoriteButtons(postId, isSaved, isFavorite) {
+    const saveBtn = document.querySelector(`[data-save-button="${postId}"]`);
+    const favBtn = document.querySelector(`[data-fav-button="${postId}"]`);
+    
+        if (saveBtn) {
+                const icon = saveBtn.querySelector('svg');
+                const text = saveBtn.querySelector('.btn-text');
+                if (isSaved) {
+                        saveBtn.classList.add('text-amber-600', 'bg-amber-50');
+                        icon.setAttribute('fill', 'currentColor');
+                        text.textContent = isFavorite ? 'Favorited' : 'Saved';
+                    } else {
+                        saveBtn.classList.remove('text-amber-600', 'bg-amber-50');
+                        icon.setAttribute('fill', 'none');
+                        text.textContent = 'Save Post';
+                    }
+        }
+        if (favBtn) {
+            const icon = favBtn.querySelector('svg');
+            const text = favBtn.querySelector('.btn-text');
+            if (isFavorite) {
+                    favBtn.classList.add('text-pink-600', 'bg-pink-50');
+                    icon.setAttribute('fill', 'currentColor');
+                    text.textContent = 'Favorited';
+            } else {
+                    favBtn.classList.remove('text-pink-600', 'bg-pink-50');
+                    icon.setAttribute('fill', 'none');
+                    text.textContent = 'Add to Favorites';
+            }
+        }
+}
+
 // ------------ Comment Functions -------------
 window.SohbaApp.submitComment = async function () {
     const modal = document.getElementById('postModal');
@@ -137,27 +169,76 @@ window.SohbaApp.submitComment = async function () {
     if (!content) return;
 
     try {
-        const response = await fetch('/Posts/Comment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postId, content })
-        });
-        const result = await response.json();
+        // const response = await fetch('/Posts/Comment', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ postId, content })
+        // });
+        // const result = await response.json();
+
+        const result = await window.SohbaApp.post('/Posts/Comment', { postId, content });
 
         if (!result.success) {
             window.SohbaApp.toast(result.error || 'Failed', 'error');
             return;
         }
 
+        // const commentHtml = `
+        //     <div class="flex items-start gap-3">
+        //         <img src="https:ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random" class="w-8 h-8 rounded-full">
+        //         <div class="flex-1">
+        //             <span class="font-semibold text-sm">${result.comment.userName}</span>
+        //             <p class="text-sm text-gray-700">${result.comment.content}</p>
+        //             <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
+        //         </div>
+        //     </div>`;
+        // document.getElementById('modalComments').insertAdjacentHTML('afterbegin', commentHtml);
+
+        const commentId = `comment-${result.comment.id}`;
         const commentHtml = `
-            <div class="flex items-start gap-3">
-                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random" class="w-8 h-8 rounded-full">
-                <div class="flex-1">
-                    <span class="font-semibold text-sm">${result.comment.userName}</span>
-                    <p class="text-sm text-gray-700">${result.comment.content}</p>
-                    <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
+                <div class="flex items-start gap-3 mb-3">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random"
+                         class="w-8 h-8 rounded-full flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <span class="font-semibold text-sm text-gray-900">${result.comment.userName}</span>
+                        <div id="${commentId}" class="text-sm text-gray-700 break-words">
+                            ${result.comment.content}
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
+                            <button onclick="SohbaApp.showReplyForm('${result.comment.id}', '${result.comment.userName}')"
+                                    class="text-xs text-[#345e69] hover:underline font-medium">
+                                Reply
+                            </button>
+                        </div>
+
+                        <!-- Reply form (hidden by default) -->
+                        <div id="replyForm-${result.comment.id}" class="mt-2 hidden">
+                            <div class="flex items-start gap-3">
+                                <img src="https://ui-avatars.com/api/?name=You&background=345e69&color=fff"
+                                     class="w-7 h-7 rounded-full flex-shrink-0">
+                                <div class="flex-1">
+                                    <input type="text" id="replyInput-${result.comment.id}"
+                                           placeholder="Write a reply..."
+                                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                                    <div class="flex gap-2 mt-2">
+                                        <button onclick="SohbaApp.submitReply('${result.comment.id}', '${result.comment.postId}')"
+                                                class="px-4 py-1.5 bg-[#345e69] text-white text-sm font-semibold rounded-lg hover:bg-[#2a4b55]">
+                                            Reply
+                                        </button>
+                                        <button onclick="SohbaApp.hideReplyForm('${result.comment.id}')"
+                                                class="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Replies container -->
+                        <div id="replies-${result.comment.id}" class="mt-3 pl-4 border-l-2 border-slate-200 space-y-3"></div>
+                    </div>
                 </div>
-            </div>
         `;
         document.getElementById('modalComments').insertAdjacentHTML('afterbegin', commentHtml);
         input.value = '';
@@ -271,4 +352,40 @@ window.submitReply = async function (commentId, postId) {
         console.error('Error posting reply:', error);
         window.SohbaApp.toast('Network error', 'error');
     }
+};
+
+
+// ------------ Delete / Edit Post -------------
+window.SohbaApp.deletePost = function (postId) {
+    window.showConfirmModal({
+        title: 'Delete Post',
+        message: 'Are you sure you want to delete this post? This cannot be undone.',
+        type: 'delete',
+        confirmText: 'Delete',
+        onConfirm: async () => {
+            try {
+                const result = await window.SohbaApp.post('/Posts/Delete', { id: postId });
+
+                if (result.success) {
+                    window.SohbaApp.toast('Post deleted successfully.', 'success');
+                    const card = document.querySelector(`[data-post-id="${postId}"]`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease';
+                        card.style.opacity = '0';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                } else {
+                    window.SohbaApp.toast(result.error || 'Failed to delete post.', 'error');
+                }
+            } catch (err) {
+                console.error('Delete post error:', err);
+                window.SohbaApp.toast('Network error', 'error');
+            }
+        }
+    });
+};
+
+window.SohbaApp.editPostModal = function (postId) {
+    
+    window.location.href = `/Posts/Edit/${postId}`;
 };

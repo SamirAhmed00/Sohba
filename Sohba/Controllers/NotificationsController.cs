@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -8,6 +9,8 @@ using Sohba.Application.Interfaces;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class NotificationsController : BaseController
     {
         private readonly INotificationService _notificationService;

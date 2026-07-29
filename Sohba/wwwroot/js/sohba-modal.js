@@ -155,3 +155,72 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
         window.SohbaApp.closePostModal();
     }
 };
+
+
+window.SohbaApp.closePostModal = function () {
+    const modal = document.getElementById('postModal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.querySelector('#postModal > .absolute.inset-0.bg-black\\/60');
+    if (overlay) {
+        overlay.addEventListener('click', () => window.SohbaApp.closePostModal());
+    }
+});
+
+window.SohbaApp.reportPost = function (postId) {
+    const modal = document.getElementById('reportModal');
+    if (!modal) return;
+    modal.dataset.postId = postId;
+    modal.classList.remove('hidden');
+};
+
+window.SohbaApp.closeReportModal = function () {
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.SohbaApp.submitReport = async function () {
+    const modal = document.getElementById('reportModal');
+    const postId = modal.dataset.postId;
+    const selectedReason = document.querySelector('input[name="reportReason"]:checked');
+    if (!selectedReason) {
+        window.SohbaApp.toast('Please select a reason', 'error');
+        return;
+    }
+    const reason = selectedReason.value;
+    const otherText = document.getElementById('otherReasonText')?.value || null;
+
+    const result = await window.SohbaApp.post('/Posts/ReportPost', { postId, reason, otherText });
+    if (result.success) {
+        window.SohbaApp.toast('Post reported. Thank you.', 'success');
+        window.SohbaApp.closeReportModal();
+        const btn = document.querySelector(`[data-report-button="${postId}"]`);
+        if (btn) btn.setAttribute('disabled', 'true');
+    } else {
+        window.SohbaApp.toast(result.error || 'Failed to report post', 'error');
+    }
+};
+
+window.SohbaApp.sharePost = function (postId) {
+    const modal = document.getElementById('shareModal');
+    if (!modal) return;
+    const urlInput = document.getElementById('sharePostUrl');
+    if (urlInput) urlInput.value = `${window.location.origin}/Posts/Details/${postId}`;
+    modal.classList.remove('hidden');
+};
+
+window.SohbaApp.closeShareModal = function () {
+    const modal = document.getElementById('shareModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.SohbaApp.copyShareLink = function () {
+    const urlInput = document.getElementById('sharePostUrl');
+    if (!urlInput) return;
+    urlInput.select();
+    navigator.clipboard.writeText(urlInput.value);
+    window.SohbaApp.toast('Link copied!', 'success');
+};

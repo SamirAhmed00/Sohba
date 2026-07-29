@@ -17,5 +17,6 @@ namespace Sohba.Domain.Interfaces
 
         Task<IEnumerable<Group>> SearchGroupsAsync(string query, int limit = 10);
         Task<IEnumerable<GroupMember>> GetGroupMembersAsync(Guid groupId);
+        Task<IEnumerable<Group>> GetRecommendedGroupsAsync(Guid userId, int count = 5);
     }
 }

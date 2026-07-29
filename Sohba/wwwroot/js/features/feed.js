@@ -68,34 +68,26 @@ async function loadMorePosts() {
     showLoadingIndicator();
 
     try {
-        // Get HTML from server(rendered using _PostCard.cshtml)
-        const response = await fetch(`/Home/GetPostCards?page=${nextPage}&pageSize=${pageSize}`);
-        const data = await response.json();
+        const result = await fetch(`/Home/GetPostCards?page=${nextPage}&pageSize=${pageSize}`);
 
-        if (data.success) {
-            // ✅ Append the HTML directly - same style as original!
+        if (result.success) {
             const container = document.getElementById('postsContainer');
-            if (container) {
-                container.insertAdjacentHTML('beforeend', data.html);
+            if (container && result.data && result.data.html) {
+                container.insertAdjacentHTML('beforeend', result.data.html);
             }
-
-            currentPage = data.currentPage;
-            hasMore = data.hasMore;
+            currentPage = result.data?.currentPage ?? nextPage;
+            hasMore = result.data?.hasMore ?? false;
 
             if (!hasMore) {
                 hideLoadMoreButton();
             }
         } else {
-            console.error('Failed to load more posts:', data.error);
-            if (window.SohbaApp && SohbaApp.toast) {
-                SohbaApp.toast('Failed to load more posts', 'error');
-            }
+            console.error('Failed to load more posts:', result.error);
+            SohbaApp.toast(result.error || 'Failed to load more posts', 'error');
         }
     } catch (error) {
         console.error('Error loading more posts:', error);
-        if (window.SohbaApp && SohbaApp.toast) {
-            SohbaApp.toast('Network error', 'error');
-        }
+        SohbaApp.toast('Network error', 'error');
     } finally {
         isLoading = false;
         hideLoadingIndicator();

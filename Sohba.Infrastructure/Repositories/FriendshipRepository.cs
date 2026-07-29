@@ -64,18 +64,11 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId)
         {
             return await _context.Friends
+                .Include(f => f.User)
                 .Include(f => f.FriendUser)
                 .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Blocked)
                 .ToListAsync();
         }
-
-        //public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
-        //{
-        //    return await _context.Friends
-        //        .FirstOrDefaultAsync(f =>
-        //            f.UserId == userId &&
-        //            f.FriendUserId == friendId);
-        //}
 
         public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
         {
@@ -99,6 +92,8 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId)
         {
             return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
                 .Where(f =>
                     (f.UserId == userId || f.FriendUserId == userId) &&
                     f.Status == FriendshipStatus.Accepted)
@@ -123,14 +118,6 @@ namespace Sohba.Infrastructure.Repositories
                     f.Status == FriendshipStatus.Blocked);
         }
 
-        //public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
-        //{
-        //    return await _context.Friends
-        //        .AnyAsync(f =>
-        //            f.UserId == senderId &&
-        //            f.FriendUserId == receiverId &&
-        //            f.Status == FriendshipStatus.Pending);
-        //}
 
         public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
         {
@@ -143,7 +130,6 @@ namespace Sohba.Infrastructure.Repositories
 
             Console.WriteLine($"📊 Pending request exists: {exists}");
 
-            // لو مش موجود، شوف لو مقلوبين
             if (!exists)
             {
                 var reversedExists = await _context.Friends
@@ -164,6 +150,17 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
 
             return friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId);
+        }
+
+        public async Task<HashSet<Guid>> GetFriendIdsSetAsync(Guid userId)
+        {
+            var friendIds = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
+                .ToListAsync();
+
+            return friendIds.ToHashSet();
         }
     }
 

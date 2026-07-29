@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.Interfaces;
 
@@ -9,6 +10,8 @@ using System.Threading.Tasks;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class CommentsController : BaseController
     {
         private readonly IInteractionService _interactionService;

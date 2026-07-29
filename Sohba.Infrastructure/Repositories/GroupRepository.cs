@@ -20,7 +20,7 @@ namespace Sohba.Infrastructure.Repositories
             // then attaches a fresh copy of the same Group (detached via its own AsNoTracking),
             // EF's identity map throws an InvalidOperationException due to key conflict.
             return await _context.Groups
-                .AsNoTracking()
+                .AsNoTrackingWithIdentityResolution()
                 .Include(g => g.Admin)          
                 .Include(g => g.GroupMembers)
                 .ToListAsync();
@@ -32,7 +32,7 @@ namespace Sohba.Infrastructure.Repositories
                 .Include(g => g.Admin)
                 .Include(g => g.GroupMembers)
                 .ThenInclude(m => m.User)
-                .AsNoTracking()
+                .AsNoTrackingWithIdentityResolution()
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
         public async Task<bool> IsMemberAsync(Guid userId, Guid groupId)
@@ -54,6 +54,7 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<Group>> GetGroupsByUserIdAsync(Guid userId)
         {
             return await _context.Groups
+                .AsNoTracking()
                 .Include(g => g.Admin)
                 .Include(g => g.GroupMembers)
                 .Where(g => g.GroupMembers.Any(m => m.UserId == userId))
@@ -92,6 +93,23 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<GroupMember>()
                 .Include(gm => gm.User) 
                 .Where(gm => gm.GroupId == groupId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Group>> GetRecommendedGroupsAsync(Guid userId, int count = 5)
+        {
+            var userGroups = await _context.GroupMembers
+                .Where(gm => gm.UserId == userId)
+                .Select(gm => gm.GroupId)
+                .ToListAsync();
+
+            return await _context.Groups
+                .AsNoTracking()
+                .Include(g => g.Admin)          
+                .Include(g => g.GroupMembers)   
+                .Where(g => !userGroups.Contains(g.Id))
+                .OrderByDescending(g => g.GroupMembers.Count)
+                .Take(count)
                 .ToListAsync();
         }
 

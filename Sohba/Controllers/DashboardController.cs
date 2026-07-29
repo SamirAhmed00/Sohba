@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -8,6 +9,7 @@ using Sohba.ViewModels.Dashboard;
 namespace Sohba.Controllers
 {
     [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("Dashboard")]
     public class DashboardController : BaseController 
     {
         private readonly IUserService _userService;

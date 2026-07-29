@@ -9,6 +9,7 @@ using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Text;
 
 namespace Sohba.Application.Services
@@ -224,8 +225,18 @@ namespace Sohba.Application.Services
         public async Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId)
         {
             var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
-            var dto = _mapper.Map<IEnumerable<FriendDto>>(friends);
-            return Result<IEnumerable<FriendDto>>.Success(dto);
+            //var dto = _mapper.Map<IEnumerable<FriendDto>>(friends);
+            //return Result<IEnumerable<FriendDto>>.Success(dto);
+
+            var dtos = friends.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.UserId == userId ? f.FriendUserId : f.UserId,
+                FriendName = f.UserId == userId ? f.FriendUser.Name : f.User.Name,
+                ProfilePictureUrl = f.UserId == userId ? f.FriendUser.ProfilePictureUrl : f.User.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
         public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
@@ -241,15 +252,29 @@ namespace Sohba.Application.Services
         public async Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId)
         {
             var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId);
-            var dto = _mapper.Map<IEnumerable<FriendDto>>(requests);
-            return Result<IEnumerable<FriendDto>>.Success(dto);
+            var dtos = requests.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.UserId,
+                FriendName = f.User.Name,
+                ProfilePictureUrl = f.User.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+             return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
         public async Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId)
         {
             var requests = await _unitOfWork.Friendships.GetSentRequestsAsync(userId);
-            var dto = _mapper.Map<IEnumerable<FriendDto>>(requests);
-            return Result<IEnumerable<FriendDto>>.Success(dto);
+            var dtos = requests.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.FriendUserId,
+                FriendName = f.FriendUser.Name,
+                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
         public async Task<Result<int>> GetPendingRequestsCountAsync(Guid userId)
@@ -311,8 +336,15 @@ namespace Sohba.Application.Services
         public async Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId)
         {
             var blocked = await _unitOfWork.Friendships.GetBlockedUsersAsync(userId);
-            var dto = _mapper.Map<IEnumerable<FriendDto>>(blocked);
-            return Result<IEnumerable<FriendDto>>.Success(dto);
+            var dtos = blocked.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.FriendUserId,
+                FriendName = f.FriendUser.Name,
+                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
         // Suggestions

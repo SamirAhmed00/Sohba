@@ -22,6 +22,9 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId);
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
 
+        Task<HashSet<Guid>> GetFriendIdsSetAsync(Guid userId);
+
+
         // Check Methods
         Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
         Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId);

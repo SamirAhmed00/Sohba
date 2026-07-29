@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
 
@@ -8,6 +9,8 @@ using Sohba.ViewModels.Page;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class PagesController : BaseController
     {
         private readonly IPageService _pageService;
@@ -187,26 +190,19 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllFollowers(Guid pageId, int page = 1, int pageSize = 20)
         {
-            try
-            {
-                var followersResult = await _pageService.GetFollowersAsync(pageId, page, pageSize);
+            var followersResult = await _pageService.GetFollowersAsync(pageId, page, pageSize);
 
-                if (!followersResult.IsSuccess)
-                    return Json(new { success = false, error = followersResult.Error });
+            if (!followersResult.IsSuccess)
+                return Json(new { success = false, error = followersResult.Error });
 
-                return Json(new
-                {
-                    success = true,
-                    followers = followersResult.Value,
-                    page = page,
-                    pageSize = pageSize,
-                    hasMore = followersResult.Value.Count() == pageSize
-                });
-            }
-            catch (Exception ex)
+            return Json(new
             {
-                return Json(new { success = false, error = ex.Message });
-            }
+                success = true,
+                followers = followersResult.Value,
+                page = page,
+                pageSize = pageSize,
+                hasMore = followersResult.Value.Count() == pageSize
+            });
         }
 
         [HttpGet]
@@ -293,24 +289,17 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPageStats(Guid pageId)
         {
-            try
-            {
-                var postsResult = await _postService.GetPagePostsAsync(pageId, Guid.Empty);
-                var followersCount = await _pageService.GetFollowersCountAsync(pageId);
+            var postsResult = await _postService.GetPagePostsAsync(pageId, Guid.Empty);
+            var followersCount = await _pageService.GetFollowersCountAsync(pageId);
 
-                var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
+            var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
 
-                return Json(new
-                {
-                    success = true,
-                    postsCount = postsCount,
-                    followersCount = followersCount.Value
-                });
-            }
-            catch (Exception ex)
+            return Json(new
             {
-                return Json(new { success = false, error = ex.Message });
-            }
+                success = true,
+                postsCount = postsCount,
+                followersCount = followersCount.Value
+            });
         }
 
        

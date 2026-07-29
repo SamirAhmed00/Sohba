@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -10,6 +11,8 @@ using Sohba.ViewModels.Profile;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class ProfileController : BaseController
     {
         private readonly IUserService _userService;

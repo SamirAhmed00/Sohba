@@ -15,21 +15,27 @@ async function loadFriendSuggestions() {
     if (!container) return;
 
     try {
-        const response = await fetch('/Friends/GetFriendSuggestions?count=5');
+        const result = await SohbaApp.post('/Friends/GetFriendSuggestions', { count: 5 });
 
-        // Guard: if the response is not JSON (e.g. auth redirect), fail gracefully.
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Sign in to see suggestions</div>';
+        if (!result.success) {
+            container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Could not load suggestions</div>';
             return;
         }
 
-        const payload = await response.json();
+        // Guard: if the response is not JSON (e.g. auth redirect), fail gracefully.
+        // const contentType = response.headers.get('content-type') || '';
+        // if (!contentType.includes('application/json')) {
+        //     container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">Sign in to see suggestions</div>';
+        //     return;
+        // }
+
+        // const payload = await response.json();
 
         // GetFriendSuggestions returns BaseResponseDto<IEnumerable<UserResponseDto>>.
         // Unwrap the .data array (normalised to lowercase by sohba-core.js for AJAX calls,
         // but this uses raw fetch so we check both casings).
-        const users = payload.data ?? payload.Data ?? (Array.isArray(payload) ? payload : []);
+        // const users = payload.data ?? payload.Data ?? (Array.isArray(payload) ? payload : []);
+        const users = result.data ?? [];
 
         if (users.length > 0) {
             container.innerHTML = users.map(user => `

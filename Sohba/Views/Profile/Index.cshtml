@@ -42,7 +42,7 @@
             }
             else
             {
-                <button onclick="sendFriendRequest('@Model.Profile.Id')" 
+                <button onclick="sendFriendRequestFromProfile('@Model.Profile.Id')"
                         class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2"
                         id="addFriendBtn">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -127,7 +127,7 @@
 </div>
 
 
-@section Scripts {
+@* @section Scripts {
     <script>
         async function sendFriendRequest(userId) {
             try {
@@ -192,6 +192,16 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             if ('@Model.IsOwnProfile' === 'False') {
+                checkFriendshipStatus('@Model.Profile.Id');
+            }
+        });
+    </script>
+} *@
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!@Json.Serialize(Model.IsOwnProfile)) {
                 checkFriendshipStatus('@Model.Profile.Id');
             }
         });

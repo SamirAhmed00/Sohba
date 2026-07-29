@@ -6,30 +6,46 @@
 
 <div class="relative group">
     <!-- Scroll Buttons -->
-    <button onclick="scrollStories('left')"
-            class="absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+    <button data-action="scroll-stories" data-direction="left" aria-label="Scroll stories left"
+            class="story-scroll-btn absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
         </svg>
     </button>
 
-    <button onclick="scrollStories('right')"
+    <button data-action="scroll-stories" data-direction="right" aria-label="Scroll stories right"
+            class="story-scroll-btn  -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>  
+    </button>
+
+
+    @* -- Commented *@
+    @* <button onclick="scrollStories('left')"
+            class="absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button> *@
+    @* -- Commented *@
+    @* <button onclick="scrollStories('right')"
             class="absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
         </svg>
-    </button>
+    </button> *@
 
     <!-- Stories Container -->
     <div id="storiesContainer" class="flex space-x-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory scroll-smooth">
 
-        <!-- Add Story Card -->
-        <div onclick="openStoryModal()"
+        <!-- Add Story Card  // I Replaced onclick="openStoryModal()" With  data-action="open-create-story"-->
+        <div data-action="open-create-story"
              class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-md border border-gray-100 bg-white group/story hover:shadow-lg transition-shadow">
             <div class="h-32 w-full relative">
                 <img src="https://ui-avatars.com/api/?name=Me&background=345e69&color=fff"
-                     class="w-full h-full object-cover"
-                     alt="My Story">
+                     class="w-full h-full object-cover" />
+                     @* alt="My Story" alt="@firstStory.UserName"> *@
                 <div class="absolute inset-0 bg-black/10"></div>
             </div>
             <div class="absolute bottom-0 inset-x-0 bg-white h-16 text-center pt-6">
@@ -48,15 +64,17 @@
             var firstStory = userStories.First();
             var unviewedCount = userStories.Count(s => !s.HasUserViewed);
 
-            <div onclick="openStoryViewer('@userStories.Key')"
-                 class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow duration-300">
+            <!-- I Replaced onclick="openStoryViewer('@userStories.Key')" With : data-action="open-story-viewer"-->
+            <div data-action="open-story-viewer" 
+                 data-user-id="@userStories.Key"
+                 class="story-user-card snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow duration-300">
                 
                 <div class="absolute inset-0 @(unviewedCount > 0 ? "border-2 border-[#345e69]" : "border border-gray-300") rounded-2xl z-10"></div>
 
                 <!-- Story Media -->
                 @if (!string.IsNullOrEmpty(firstStory.MediaUrl))
                 {
-                    <img src="@firstStory.MediaUrl" class="w-full h-full object-cover" alt="Story">
+                    <img src="@firstStory.MediaUrl" class="w-full h-full object-cover" alt="Story" loading="lazy">
                 }
                 else
                 {
@@ -98,7 +116,7 @@
     </div>
 </div>
 
-<script>
+@* <script>
     function scrollStories(direction) {
         const container = document.getElementById('storiesContainer');
         const scrollAmount = 200;
@@ -109,4 +127,4 @@
             container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         }
     }
-</script>
+</script> *@

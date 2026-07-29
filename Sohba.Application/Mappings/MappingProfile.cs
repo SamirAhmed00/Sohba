@@ -87,13 +87,14 @@ namespace Sohba.Application.Mappings
                 .ForMember(dest => dest.SenderProfilePicture, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.ProfilePictureUrl : null))
                 .ForMember(dest => dest.TimeAgo, opt => opt.Ignore());
 
-            CreateMap<Friend, FriendDto>()
-                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId)) 
-                 .ForMember(dest => dest.FriendUserId, opt => opt.MapFrom(src => src.FriendUserId))
-                 .ForMember(dest => dest.FriendName, opt => opt.MapFrom(src => src.User.Name))  
-                 .ForMember(dest => dest.ReceiverName, opt => opt.MapFrom(src => src.FriendUser.Name))
-                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                 .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.User.ProfilePictureUrl));
+            // -- Unused Friend Mapping (Commented Out) ---
+            //CreateMap<Friend, FriendDto>()
+            //     .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId)) 
+            //     .ForMember(dest => dest.FriendUserId, opt => opt.MapFrom(src => src.FriendUserId))
+            //     .ForMember(dest => dest.FriendName, opt => opt.MapFrom(src => src.User.Name))  
+            //     .ForMember(dest => dest.ReceiverName, opt => opt.MapFrom(src => src.FriendUser.Name))
+            //     .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            //     .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.User.ProfilePictureUrl));
 
 
             // --- Story Mapping ---

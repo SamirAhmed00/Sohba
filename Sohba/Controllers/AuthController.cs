@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
@@ -9,6 +10,7 @@ using System.Security.Claims;
 
 namespace Sohba.Controllers
 {
+    [EnableRateLimiting("Auth")]
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;

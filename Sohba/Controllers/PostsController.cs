@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.PostAggregate.Requests;
@@ -13,6 +14,8 @@ using Sohba.ViewModels.Post;
 namespace Sohba.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("Api")]
+
     public class PostsController : BaseController
     {
         private readonly IPostService _postService;
@@ -110,46 +113,39 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPostDetails(Guid postId)
         {
-            try
+            var userId = GetCurrentUserId();
+
+            var postResult = await _postService.GetPostByIdAsync(postId, userId);
+            if (postResult.IsFailure)
+                return NotFound(new { success = false, error = postResult.Error });
+
+            var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
+
+            return Json(new
             {
-                var userId = GetCurrentUserId();
-
-                var postResult = await _postService.GetPostByIdAsync(postId, userId);
-                if (postResult.IsFailure)
-                    return NotFound(new { success = false, error = postResult.Error });
-
-                var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
-
-                return Json(new
+                success = true,
+                post = new
                 {
-                    success = true,
-                    post = new
-                    {
-                        id = postResult.Value.Id,
-                        title = postResult.Value.Title,
-                        content = postResult.Value.Content,
-                        imageUrl = postResult.Value.ImageUrl,
-                        authorName = postResult.Value.AuthorName,
-                        createdAt = postResult.Value.CreatedAt,
-                        commentsCount = postResult.Value.CommentsCount,
-                        reactionsCount = postResult.Value.ReactionsCount,
-                        currentUserReaction = postResult.Value.CurrentUserReaction,
-                        isSaved = postResult.Value.IsSaved,
-                        isFavorite = postResult.Value.IsFavorite
-                    },
-                    comments = comments.Select(c => new
-                    {
-                        id = c.Id,
-                        content = c.Content,
-                        userName = c.UserName,
-                        createdAt = c.CreatedAt
-                    })
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, error = ex.Message });
-            }
+                    id = postResult.Value.Id,
+                    title = postResult.Value.Title,
+                    content = postResult.Value.Content,
+                    imageUrl = postResult.Value.ImageUrl,
+                    authorName = postResult.Value.AuthorName,
+                    createdAt = postResult.Value.CreatedAt,
+                    commentsCount = postResult.Value.CommentsCount,
+                    reactionsCount = postResult.Value.ReactionsCount,
+                    currentUserReaction = postResult.Value.CurrentUserReaction,
+                    isSaved = postResult.Value.IsSaved,
+                    isFavorite = postResult.Value.IsFavorite
+                },
+                comments = comments.Select(c => new
+                {
+                    id = c.Id,
+                    content = c.Content,
+                    userName = c.UserName,
+                    createdAt = c.CreatedAt
+                })
+            });
         }
 
 
@@ -181,6 +177,7 @@ namespace Sohba.Controllers
 
             var post = result.Value;
 
+            //return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(PostUpdateDto));
             // In an ideal scenario, AutoMapper should map PostResponseDto to PostEditViewModel
             var vm = new PostEditViewModel
             {
@@ -197,72 +194,62 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(PostEditViewModel model)
         {
-            try
+            if (!ModelState.IsValid)
+                return Json(BaseResponseDto<object>.FailureResponse("Invalid form data submitted."));
+
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty) 
+                return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
+
+            string imageUrl = model.ImageUrl;
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
-                if (!ModelState.IsValid)
-                    return Json(BaseResponseDto<object>.FailureResponse("Invalid form data submitted."));
-
-                var userId = GetCurrentUserId();
-                if (userId == Guid.Empty) 
-                    return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
-
-                string imageUrl = model.ImageUrl;
-
-                if (model.ImageFile != null && model.ImageFile.Length > 0)
-                {
-                    var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
-                    if (!uploadResult.IsSuccess)
-                        return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
+                var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
+                if (!uploadResult.IsSuccess)
+                    return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
                     
-                    if (uploadResult.Value != null) 
-                        imageUrl = uploadResult.Value;
-                }
-
-                var updateDto = new PostUpdateDto
-                {
-                    Id = model.Id,
-                    Title = model.Title,
-                    Content = model.Content,
-                    ImageUrl = imageUrl,
-                    Privacy = model.Privacy
-                };
-
-                var result = await _postService.UpdatePostAsync(model.Id, updateDto, userId);
-
-                if (result.IsSuccess)
-                    return Json(BaseResponseDto<object>.SuccessResponse(null));
-
-                return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+                if (uploadResult.Value != null) 
+                    imageUrl = uploadResult.Value;
             }
-            catch (Exception ex)
+
+            var updateDto = new PostUpdateDto
             {
-                return Json(BaseResponseDto<object>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+                Id = model.Id,
+                Title = model.Title,
+                Content = model.Content,
+                ImageUrl = imageUrl,
+                Privacy = model.Privacy
+            };
+
+            var result = await _postService.UpdatePostAsync(model.Id, updateDto, userId);
+
+            if (result.IsSuccess)
+            {
+                var updatedPost = await _postService.GetPostByIdAsync(model.Id, userId);
+                return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(updatedPost.Value));
             }
+
+            return Json(BaseResponseDto<object>.FailureResponse(result.Error));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromBody] DeletePostModel model)
         {
-            try
-            {
-                if (id == Guid.Empty)
-                    return Json(BaseResponseDto<object>.FailureResponse("Invalid post ID."));
+            if (model == null || model.id == Guid.Empty)
+                return Json(BaseResponseDto<object>.FailureResponse("Invalid post ID."));
 
-                var userId = GetCurrentUserId();
-                bool isAdmin = User.IsInRole("Admin");
-                var result = await _postService.DeletePostAsync(id, userId, isAdmin);
+            var userId = GetCurrentUserId();
+            bool isAdmin = User.IsInRole("Admin");
+            var result = await _postService.DeletePostAsync(model.id, userId, isAdmin);
+            if (result.IsSuccess)
+                return Json(BaseResponseDto<object>.SuccessResponse(null));
 
-                if (result.IsSuccess)
-                    return Json(BaseResponseDto<object>.SuccessResponse(null));
-
-                return Json(BaseResponseDto<object>.FailureResponse(result.Error));
-            }
-            catch (Exception ex)
-            {
-                // Global exception handling standard per RULES.md §6
-                return Json(BaseResponseDto<object>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
-            }
+            return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+        }
+        public class DeletePostModel{
+            public Guid id { get; set; }
         }
 
         [HttpPost]
@@ -338,7 +325,23 @@ namespace Sohba.Controllers
                 return Json(new { success = false, error = result.Error });
 
             var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId);
-            var latest = comments.FirstOrDefault(c => c.ParentCommentId == request.ParentCommentId) ?? comments.First();
+            //var latest = comments.FirstOrDefault(c => c.ParentCommentId == request.ParentCommentId) ?? comments.First();
+            CommentResponseDto latest;
+             if (request.ParentCommentId.HasValue)
+             {
+                   latest = comments
+                             .SelectMany(c => c.Replies)
+                             .Where(r => r.ParentCommentId == request.ParentCommentId)
+                             .OrderByDescending(r => r.CreatedAt)
+                             .FirstOrDefault();
+             }
+             else
+                 {
+                latest = comments.FirstOrDefault(); 
+                 }
+            
+             if (latest == null)
+                return Json(new { success = false, error = "Comment created but could not be retrieved." });
 
 
             return Json(new
@@ -391,7 +394,6 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReportPost([FromBody] PostReportRequestDto request)
         {
-            System.Diagnostics.Debug.WriteLine($"PostId: {request?.PostId}, Reason: {request?.Reason}, UserId: {request?.UserId}");
             if (request == null || request.PostId == Guid.Empty || string.IsNullOrWhiteSpace(request.Reason))
                 return BadRequest(new { success = false, error = "Invalid request data." });
 

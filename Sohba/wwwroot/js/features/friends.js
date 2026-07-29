@@ -134,22 +134,123 @@ async function rejectRequest(userId) {
 }
 
 async function cancelRequest(userId) {
-    // Payload key must match: public class CancelRequestModel { public Guid receiverId { get; set; } }
-    if (!confirm('Cancel this friend request?')) return;
+    window.showConfirmModal({
+        title: 'Cancel Friend Request',
+        message: 'Are you sure you want to cancel this friend request?',
+        type: 'warning',
+        confirmText: 'Cancel Request',
+        onConfirm: async () => {
+            const btn = event?.target;
+            if (btn) { btn.disabled = true; btn.innerHTML = 'Cancelling...'; }
 
-    const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
+            try {
+                const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
+
+                if (result.success) {
+                    SohbaApp.toast('Request cancelled', 'success');
+                    const elem = document.querySelector(`[data-request-id="${userId}"]`);
+                    if (elem) {
+                        elem.style.transition = 'opacity 0.3s ease';
+                        elem.style.opacity = '0';
+                        setTimeout(() => elem.remove(), 300);
+                    }
+                    // Update counter
+                    const countElements = document.querySelectorAll('.tab-btn');
+                    if (countElements.length > 1) {
+                        const match = countElements[1].textContent.match(/\d+/);
+                        if (match) countElements[1].innerHTML = `Sent (${parseInt(match[0]) - 1})`;
+                    }
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to cancel request', 'error');
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Cancel'; }
+            }
+        }
+    });
+}
+
+
+window.blockUser = async function (userId) {
+    window.showConfirmModal({
+        title: 'Block User',
+        message: 'Are you sure you want to block this user? They will no longer be able to interact with you.',
+        type: 'warning',
+        confirmText: 'Block',
+        onConfirm: async () => {
+            try {
+                const result = await SohbaApp.post('/Friends/BlockUser', { userId: userId });
+                if (result.success) {
+                    SohbaApp.toast('User blocked successfully.', 'success');
+                    setTimeout(() => window.location.reload(), 500); // Refresh to update UI state
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to block user.', 'error');
+                }
+            } catch (err) {
+                SohbaApp.toast('An unexpected error occurred.', 'error');
+            }
+        }
+    });
+};
+
+
+window.sendFriendRequestFromProfile = async function (userId) {
+    const btn = document.getElementById('addFriendBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending...'; }
+
+    const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
 
     if (result.success) {
-        SohbaApp.toast('Request cancelled', 'success');
-        const elem = document.querySelector(`[data-request-id="${userId}"]`);
-        if (elem) elem.remove();
-
-        const countElements = document.querySelectorAll('.tab-btn');
-        if (countElements.length > 1) {
-            const match = countElements[1].textContent.match(/\d+/);
-            if (match) countElements[1].innerHTML = `Sent (${parseInt(match[0]) - 1})`;
+        SohbaApp.toast('Friend request sent!', 'success');
+        if (btn) {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Request Sent</span>
+            `;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
         }
     } else {
-        SohbaApp.toast(result.error || 'Failed to cancel request', 'error');
+        SohbaApp.toast(result.error || 'Failed to send request', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>Add Friend</span>'; }
     }
-}
+};
+
+window.checkFriendshipStatus = async function (targetUserId) {
+    try {
+        const result = await SohbaApp.post('/Friends/CheckStatus', { userId: targetUserId });
+        // ملحوظة: CheckStatus في الكونترولر [HttpGet]، فلو الميثود دي فضلت GET
+        // استخدم fetch عادي بدل SohbaApp.post (اللي مبني على POST دايمًا):
+        // const response = await fetch(`/Friends/CheckStatus?userId=${targetUserId}`);
+        // const result = await response.json();
+
+        const btn = document.getElementById('addFriendBtn');
+        if (!btn) return;
+
+        if (result.data === 'pending') {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Pending</span>
+            `;
+            btn.disabled = true;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+        } else if (result.data === 'accepted') {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Friends</span>
+            `;
+            btn.disabled = true;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+        }
+    } catch (error) {
+        console.error('Error checking friendship status:', error);
+    }
+};
