@@ -235,6 +235,12 @@
                 const response = await fetch('/Pages/Discover');
                 const pages = await response.json();
                 if (pages && pages.length > 0) {
+                    const seenNames = new Set();
+                    const uniquePages = pages.filter(page => {
+                        if (!page.name || seenNames.has(page.name)) return false;
+                        seenNames.add(page.name);
+                        return true;
+                    });
                     pagesContainer.innerHTML = pages.map(page => `
                         <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
                             <a href="/Pages/Details/${page.id}" class="flex items-center">
@@ -279,7 +285,7 @@
 
     // Join Group directly from the sidebar
     async function joinGroup(groupId) {
-        const result = await SohbaApp.post('/Groups/Join', { groupId });
+        const result = await SohbaApp.post('/Groups/Join', { id: groupId });
         if (result.success) {
             SohbaApp.toast('Joined group successfully!', 'success');
             setTimeout(() => location.reload(), 1000);
@@ -301,6 +307,12 @@
             const groups = await response.json();
 
             if (groups && groups.length > 0) {
+                const seenNames = new Set();
+                const uniqueGroups = groups.filter(group => {
+                    if (!group.name || seenNames.has(group.name)) return false;
+                    seenNames.add(group.name);
+                    return true;
+                });
                 groupsContainer.innerHTML = groups.map(group => `
                     <div class="flex items-center justify-between group p-1 hover:bg-white rounded-xl transition-all">
                         <a href="/Groups/Details/${group.id}" class="flex items-center">

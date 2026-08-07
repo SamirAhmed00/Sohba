@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
 
 namespace Sohba.Controllers
 {
@@ -65,19 +67,28 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> MarkAsViewed(Guid storyId)
+        public async Task<IActionResult> MarkAsViewed([FromBody] MarkAsViewedModel model)
         {
             var userId = GetCurrentUserId();
-            var result = await _storyService.MarkStoryAsViewedAsync(storyId, userId);
+            if (model == null || model.storyId == Guid.Empty)
+                    return Json(new BaseResponseDto { Success = false, Error = "Invalid story ID." });
+            var result = await _storyService.MarkStoryAsViewedAsync(model.storyId, userId);
 
             return Json(new BaseResponseDto { Success = result.IsSuccess });
         }
 
+        public class MarkAsViewedModel
+        {
+            public Guid storyId { get; set; }
+        }
+
         [HttpPost]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromBody] IdRequestDto request)
         {
             var userId = GetCurrentUserId();
-            var result = await _storyService.DeleteStoryAsync(id, userId);
+            if (request == null || request.Id == Guid.Empty)
+                    return Json(new BaseResponseDto { Success = false, Error = "Invalid story ID." });
+            var result = await _storyService.DeleteStoryAsync(request.Id, userId);
             return Json(new BaseResponseDto { Success = result.IsSuccess });
         }
 

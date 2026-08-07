@@ -119,7 +119,7 @@ namespace Sohba.Controllers
             if (postResult.IsFailure)
                 return NotFound(new { success = false, error = postResult.Error });
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(postId);
+            var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId);
 
             return Json(new
             {
@@ -141,9 +141,23 @@ namespace Sohba.Controllers
                 comments = comments.Select(c => new
                 {
                     id = c.Id,
+                    postId = c.PostId,
                     content = c.Content,
                     userName = c.UserName,
-                    createdAt = c.CreatedAt
+                    createdAt = c.CreatedAt,
+                    parentCommentId = c.ParentCommentId,
+                    replyCount = c.ReplyCount,
+                    isAuthor = c.IsAuthor,
+                    replies = (c.Replies ?? new List<CommentResponseDto>()).Select(r => new
+                    {
+                        id = r.Id,
+                        postId = r.PostId,
+                        content = r.Content,
+                        userName = r.UserName,
+                        createdAt = r.CreatedAt,
+                        parentCommentId = r.ParentCommentId,
+                        isAuthor = r.IsAuthor
+                    })
                 })
             });
         }
@@ -185,6 +199,7 @@ namespace Sohba.Controllers
                 Title = post.Title,
                 Content = post.Content,
                 ImageUrl = post.ImageUrl,
+                Privacy = post.Privacy
             };
 
             return View(vm);
@@ -324,7 +339,7 @@ namespace Sohba.Controllers
             if (!result.IsSuccess)
                 return Json(new { success = false, error = result.Error });
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId);
+            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId, request.UserId); // I Added Request.UserID To Avoid Run Errors 
             //var latest = comments.FirstOrDefault(c => c.ParentCommentId == request.ParentCommentId) ?? comments.First();
             CommentResponseDto latest;
              if (request.ParentCommentId.HasValue)
@@ -390,6 +405,56 @@ namespace Sohba.Controllers
             }
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserCollections()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _interactionService.GetUserCollectionsAsync(userId);
+            return Json(BaseResponseDto<IEnumerable<SavedCollectionDto>>.SuccessResponse(result.Value));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCollection([FromBody] CreateSavedCollectionDto request)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(request?.Name))
+                return Json(BaseResponseDto.FailureResponse("Collection name is required."));
+
+            var result = await _interactionService.CreateCollectionAsync(userId, request.Name.Trim());
+
+            if (!result.IsSuccess)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
+
+            return Json(BaseResponseDto<SavedCollectionDto>.SuccessResponse(result.Value));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveToCollection([FromBody] SaveToCollectionDto request)
+        {
+            var userId = GetCurrentUserId();
+            if (request == null || request.PostId == Guid.Empty || request.CollectionId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request."));
+
+            var result = await _interactionService.SavePostToCollectionAsync(userId, request.PostId, request.CollectionId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleFavorite([FromBody] SaveToCollectionDto request)
+        {
+            var userId = GetCurrentUserId();
+            if (request == null || request.PostId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request."));
+
+            var result = await _interactionService.SavePostToFavoritesAsync(userId, request.PostId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReportPost([FromBody] PostReportRequestDto request)
@@ -447,23 +512,34 @@ namespace Sohba.Controllers
             return Json(new { success = false, error = result.Error });
         }
 
+
+        // The Old 
+        //[HttpGet]
+        //public async Task<IActionResult> SavedPosts(string tag = "all")
+        //{
+        //    var userId = GetCurrentUserId();
+        //    Result<IEnumerable<PostResponseDto>> result;
+
+        //    if (tag == "all")
+        //        result = await _interactionService.GetSavedPostsAsync(userId);
+        //    else if (Enum.TryParse<SavedTag>(tag, true, out var savedTag))
+        //        result = await _interactionService.GetSavedPostsByTagAsync(userId, savedTag);
+        //    else
+        //        result = await _interactionService.GetSavedPostsAsync(userId);
+
+        //    ViewBag.CurrentTag = tag;
+        //    return View(result.Value ?? new List<PostResponseDto>());
+        //}
+
+
         [HttpGet]
         public async Task<IActionResult> SavedPosts(string tag = "all")
         {
             var userId = GetCurrentUserId();
-            Result<IEnumerable<PostResponseDto>> result;
-
-            if (tag == "all")
-                result = await _interactionService.GetSavedPostsAsync(userId);
-            else if (Enum.TryParse<SavedTag>(tag, true, out var savedTag))
-                result = await _interactionService.GetSavedPostsByTagAsync(userId, savedTag);
-            else
-                result = await _interactionService.GetSavedPostsAsync(userId);
-
+            var result = await _interactionService.GetSavedPostsGroupedAsync(userId);
             ViewBag.CurrentTag = tag;
-            return View(result.Value ?? new List<PostResponseDto>());
+            return View(result.Value ?? new List<SavedPostsGroupedDto>());
         }
-
         [HttpGet]
         public async Task<IActionResult> Hashtag(string tag)
         {
@@ -489,5 +565,8 @@ namespace Sohba.Controllers
             return Json(new { success = true, posts = result.Value });
         }
 
+
+
+       
     }
 }

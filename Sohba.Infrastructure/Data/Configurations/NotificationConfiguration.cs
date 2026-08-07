@@ -25,6 +25,10 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany()
                    .HasForeignKey(n => n.SenderId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(n => new { n.ReceiverId, n.CreatedAt });
+            builder.HasIndex(n => new { n.ReceiverId, n.IsRead });
+            builder.HasIndex(n => new { n.CreatedAt, n.IsRead });
         }
     }
 }

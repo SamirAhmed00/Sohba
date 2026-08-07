@@ -22,8 +22,7 @@ namespace Sohba.Application.Mappings
         {
             // --- User Mapping ---
             // Map Request DTO to Entity (For registration)
-            CreateMap<UserRequestDto, User>()
-                .ForMember(dest => dest.PasswordHash, opt => opt.MapFrom(src => src.Password)); // Basic mapping for now
+            CreateMap<UserRequestDto, User>();
 
             CreateMap<User, UserResponseDto>();
 
@@ -32,6 +31,7 @@ namespace Sohba.Application.Mappings
             CreateMap<Post, PostResponseDto>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
                 .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
+                .ForMember(dest => dest.Privacy, opt => opt.MapFrom(src => src.Privacy))
                 .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.SourceType.ToString()))
                 .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
                     src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
@@ -79,6 +79,10 @@ namespace Sohba.Application.Mappings
             CreateMap<SavedPost, SavedPostDto>()
                 .ForMember(dest => dest.PostTitle, opt => opt.MapFrom(src => src.Post.Title))
                 .ForMember(dest => dest.Tag, opt => opt.MapFrom(src => src.Tag.ToString()));
+
+            // --- Saved Collection Mapping ---
+            CreateMap<SavedCollection, SavedCollectionDto>()
+                .ForMember(dest => dest.PostCount, opt => opt.MapFrom(src => src.SavedPosts != null ? src.SavedPosts.Count : 0));
 
             // --- Notification & Friends ---
             CreateMap<Notification, NotificationResponseDto>()

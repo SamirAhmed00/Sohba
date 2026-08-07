@@ -18,7 +18,7 @@
     <script type="importmap"></script>
     <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/tailwind.css" />
+    
     <link rel="stylesheet" href="~/css/legacy.css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -44,6 +44,13 @@
     <!-- Confirm Modal -->
     <partial name="Partials/_ConfirmModal" />
 
+    <!-- Post Modal (single global instance) -->
+
+    <partial name="Partials/_PostModal" />
+
+    <!-- Save Post Modal -->
+    <partial name="Partials/_SavePostModal" />
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -53,8 +60,14 @@
     <script src="~/js/sohba-posts.js"></script>
     <script src="~/js/sohba-modal.js"></script>
     <script src="~/js/sohba-stories.js"></script>
+
     <script src="~/js/features/stories.js" asp-append-version="true"></script>
     <script src="~/js/features/groups.js" asp-append-version="true"></script>
+    <script src="~/js/features/comments.js" asp-append-version="true"></script>
+    <script src="~/js/features/modal.js" asp-append-version="true"></script>
+    <script src="~/js/features/search.js" asp-append-version="true"></script>
+    <script src="~/js/features/friends.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 
     @* @await RenderSectionAsync("Scripts", required: false) *@

@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
 using Sohba.ViewModels.Friend;
+using static Sohba.Controllers.FriendsController;
 
 namespace Sohba.Controllers
 {
@@ -81,12 +84,18 @@ namespace Sohba.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> Unfriend(Guid friendId)
+        public async Task<IActionResult> Unfriend([FromBody] UnfriendModel model)
         {
             var currentUserId = GetCurrentUserId();
-            var result = await _friendshipService.UnfriendAsync(currentUserId, friendId);
+            if (model == null || model.friendId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse("Invalid request: friend ID is missing."));
+            var result = await _friendshipService.UnfriendAsync(currentUserId, model.friendId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
+        public class UnfriendModel
+         {
+             public Guid friendId { get; set; }
+         }
 
         [HttpPost]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserModel model)
@@ -100,11 +109,18 @@ namespace Sohba.Controllers
             public Guid userId { get; set; }
         }
         [HttpPost]
-        public async Task<IActionResult> UnblockUser(Guid userId)
+        public async Task<IActionResult> UnblockUser([FromBody] UnblockUserModel model)
         {
             var currentUserId = GetCurrentUserId();
-            var result = await _friendshipService.UnblockUserAsync(currentUserId, userId);
+            if (model == null || model.userId == Guid.Empty)
+                    return Json(BaseResponseDto.FailureResponse("Invalid request: user ID is missing."));
+            var result = await _friendshipService.UnblockUserAsync(currentUserId, model.userId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        public class UnblockUserModel
+        {  
+             public Guid userId { get; set; }
         }
 
         [HttpGet]

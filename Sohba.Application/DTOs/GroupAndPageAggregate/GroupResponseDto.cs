@@ -13,7 +13,8 @@ namespace Sohba.Application.DTOs.GroupAndPageAggregate
         public string AdminName { get; set; } // Flattened from Admin.Name
         public int MembersCount { get; set; }
         public bool IsCurrentUserMember { get; set; }
-
+        
+        public Guid AdminId { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

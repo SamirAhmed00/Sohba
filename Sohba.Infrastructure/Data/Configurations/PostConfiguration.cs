@@ -24,6 +24,10 @@ namespace Sohba.Infrastructure.Data.Configurations
             
             builder.HasQueryFilter(p => !p.IsDeleted);
 
+            builder.HasIndex(p => new { p.UserId, p.CreatedAt });
+            builder.HasIndex(p => p.CreatedAt);
+            builder.HasIndex(p => new { p.SourceType, p.SourceId });
+
         }
     }
 }

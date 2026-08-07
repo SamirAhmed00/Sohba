@@ -453,6 +453,18 @@ namespace Sohba.Infrastructure.DBInitializer
 
         private async Task<Group> CreateGroupAsync(string name, string description, Guid adminId, string imageUrl)
         {
+            var existing = await _context.Groups
+                .Include(g => g.GroupMembers)
+                .FirstOrDefaultAsync(g => g.Name == name);
+            if (existing != null)
+            {
+                if (existing.GroupMembers.All(m => m.UserId != adminId))
+                {
+                    await AddGroupMemberAsync(existing.Id, adminId, GroupRole.Admin);
+                }
+                return existing;
+            }
+
             var group = new Group
             {
                 Id = Guid.NewGuid(),
@@ -509,6 +521,14 @@ namespace Sohba.Infrastructure.DBInitializer
 
         private async Task<Page> CreatePageAsync(string name, string description, Guid adminId, string imageUrl)
         {
+            var existing = await _context.Pages.FirstOrDefaultAsync(p => p.Name == name);
+            if (existing != null)
+            {
+                await AddPageFollowerAsync(existing.Id, adminId);
+                return existing;
+            }
+
+
             var page = new Page
             {
                 Id = Guid.NewGuid(),

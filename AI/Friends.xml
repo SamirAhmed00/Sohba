@@ -1,0 +1,2183 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+The content has been processed where comments have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: Sohba/Controllers/FriendsController.cs, Sohba.Application/Interfaces/IFriendshipService.cs, Sohba.Application/Services/FriendshipService.cs, Sohba.Application/DTOs/UserAggregate/FriendDto.cs, Sohba.Application/DTOs/UserAggregate/UserResponseDto.cs, Sohba.Application/DTOs/Common/BaseResponseDto.cs, Sohba/ViewModels/Friend/FriendRequestsViewModel.cs, Sohba/ViewModels/Friend/FriendSuggestionViewModel.cs, Sohba.Domain/Entities/UserAggregate/Friend.cs, Sohba.Domain/Entities/UserAggregate/User.cs, Sohba.Domain/Enums/FriendshipStatus.cs, Sohba.Domain/Interfaces/IFriendshipRepository.cs, Sohba.Domain/Interfaces/IUserRepository.cs, Sohba.Domain/Domain Rules/Interface/IFriendshipDomainService.cs, Sohba.Domain/Domain Rules/Logic/FriendshipDomainService.cs, Sohba.Domain/Common/Result.cs, Sohba.Infrastructure/Repositories/FriendshipRepository.cs, Sohba.Infrastructure/Repositories/UserRepository.cs, Sohba/Views/Friends/Index.cshtml, Sohba/Views/Friends/Requests.cshtml, Sohba/Views/Friends/Suggestions.cshtml, Sohba/Views/Friends/Find.cshtml, Sohba/Views/Friends/Blocked.cshtml, Sohba/wwwroot/js/features/friends.js
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Code comments have been removed from supported file types
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Sohba/
+  Controllers/
+    FriendsController.cs
+  ViewModels/
+    Friend/
+      FriendRequestsViewModel.cs
+      FriendSuggestionViewModel.cs
+  Views/
+    Friends/
+      Blocked.cshtml
+      Find.cshtml
+      Index.cshtml
+      Requests.cshtml
+      Suggestions.cshtml
+  wwwroot/
+    js/
+      features/
+        friends.js
+Sohba.Application/
+  DTOs/
+    Common/
+      BaseResponseDto.cs
+    UserAggregate/
+      FriendDto.cs
+      UserResponseDto.cs
+  Interfaces/
+    IFriendshipService.cs
+  Services/
+    FriendshipService.cs
+Sohba.Domain/
+  Common/
+    Result.cs
+  Domain Rules/
+    Interface/
+      IFriendshipDomainService.cs
+    Logic/
+      FriendshipDomainService.cs
+  Entities/
+    UserAggregate/
+      Friend.cs
+      User.cs
+  Enums/
+    FriendshipStatus.cs
+  Interfaces/
+    IFriendshipRepository.cs
+    IUserRepository.cs
+Sohba.Infrastructure/
+  Repositories/
+    FriendshipRepository.cs
+    UserRepository.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Sohba/ViewModels/Friend/FriendRequestsViewModel.cs">
+using Sohba.Application.DTOs.UserAggregate;
+
+namespace Sohba.ViewModels.Friend
+{
+    public class FriendRequestsViewModel
+    {
+        public IEnumerable<FriendDto> PendingRequests { get; set; }
+        public IEnumerable<FriendDto> SentRequests { get; set; }
+        public int PendingCount { get; set; }
+        public int SentCount { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/ViewModels/Friend/FriendSuggestionViewModel.cs">
+using Sohba.Application.DTOs.UserAggregate;
+
+namespace Sohba.ViewModels.Friend
+{
+    public class FriendSuggestionViewModel
+    {
+        public UserResponseDto User { get; set; }
+        public int MutualFriendsCount { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/Common/BaseResponseDto.cs">
+using System;
+
+namespace Sohba.Application.DTOs.Common
+{
+    public class BaseResponseDto
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+
+        public static BaseResponseDto SuccessResponse() => new BaseResponseDto { Success = true, Error = null };
+        public static BaseResponseDto FailureResponse(string error) => new BaseResponseDto { Success = false, Error = error };
+    }
+
+    public class BaseResponseDto<T> : BaseResponseDto
+    {
+        public T Data { get; set; }
+
+        public static BaseResponseDto<T> SuccessResponse(T data) => new BaseResponseDto<T> { Success = true, Data = data, Error = null };
+        public new static BaseResponseDto<T> FailureResponse(string error) => new BaseResponseDto<T> { Success = false, Data = default, Error = error };
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/UserResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class UserResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Enums/FriendshipStatus.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Enums
+{
+    public enum FriendshipStatus
+    {
+        Pending = 1,
+        Accepted = 2,
+        Rejected = 3,
+        Blocked = 4
+    }
+
+}
+</file>
+
+<file path="Sohba/Views/Friends/Blocked.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.FriendDto>
+@{
+    ViewData["Title"] = "Blocked Users";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Blocked Users</h1>
+                <p class="text-gray-500 mt-1">@Model.Count() blocked users</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    </div>
+
+    <!-- Blocked Users List -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="space-y-3">
+            @foreach (var user in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4" data-user-id="@user.FriendUserId">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.FriendName}&background=345e69&color=fff")"
+                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                            <div>
+                                <h3 class="font-bold text-gray-900">@user.FriendName</h3>
+                                <p class="text-sm text-gray-500">Blocked user</p>
+                            </div>
+                        </div>
+                        <button onclick="unblockUser('@user.FriendUserId')"
+                                class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                            Unblock
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No blocked users</h3>
+            <p class="text-gray-500 mt-2">You haven't blocked anyone</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function unblockUser(userId) {
+            const result = await SohbaApp.post('/Friends/UnblockUser', { userId });
+            if (result.success) {
+                SohbaApp.toast('User unblocked', 'success');
+                document.querySelector(`[data-user-id="${userId}"]`).remove();
+
+                // Update count
+                const remainingCount = document.querySelectorAll('[data-user-id]').length;
+                document.querySelector('.text-gray-500.mt-1').textContent = `${remainingCount} blocked users`;
+            }
+        }
+    </script>
+}
+</file>
+
+<file path="Sohba/wwwroot/js/features/friends.js">
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const userCards = document.querySelectorAll('.user-card');
+            let visibleCount = 0;
+
+            userCards.forEach(card => {
+                const name = card.dataset.name;
+                if (name && name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+
+            const noResults = document.getElementById('noResultsMessage');
+            if (noResults) {
+                if (visibleCount === 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+            }
+        });
+    }
+});
+
+
+function filterUsers(filter) {
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-[#345e69]', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-gray-700');
+    });
+    const target = event.target;
+    target.classList.add('active', 'bg-[#345e69]', 'text-white');
+    target.classList.remove('bg-slate-100', 'text-gray-700');
+
+
+    if (window.SohbaApp) {
+        SohbaApp.toast('Filter by ' + filter + ' coming soon!', 'info');
+    }
+}
+
+
+function viewProfile(userId) {
+    window.location.href = `/Profile/Index/${userId}`;
+}
+
+
+
+async function sendFriendRequest(userId) {
+
+    if (!window.SohbaApp) return;
+
+    const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
+
+    if (result.success) {
+        SohbaApp.toast('Friend request sent!', 'success');
+        const userElement = document.querySelector(`[data-user-id="${userId}"]`);
+        if (userElement) userElement.remove();
+    } else {
+        SohbaApp.toast(result.error || 'Failed to send request', 'error');
+    }
+}
+
+function switchTab(tab) {
+    console.log('Switching to tab:', tab);
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-[#345e69]', 'text-[#345e69]');
+        btn.classList.add('border-transparent', 'text-gray-400');
+    });
+
+    const target = event.target || event.currentTarget;
+    if (target) {
+        target.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
+        target.classList.remove('border-transparent', 'text-gray-400');
+    }
+
+
+    const pendingTab = document.getElementById('pending-tab');
+    if (pendingTab) pendingTab.classList.toggle('hidden', tab !== 'pending');
+
+    const sentTab = document.getElementById('sent-tab');
+    if (sentTab) sentTab.classList.toggle('hidden', tab !== 'sent');
+}
+
+async function acceptRequest(userId) {
+
+    const result = await SohbaApp.post('/Friends/AcceptRequest', { senderId: userId });
+
+    if (result.success) {
+        SohbaApp.toast('Friend request accepted!', 'success');
+        const elem = document.querySelector(`[data-request-id="${userId}"]`);
+        if (elem) elem.remove();
+
+        const countElement = document.querySelector('.tab-btn:first-child');
+        if (countElement) {
+            const match = countElement.textContent.match(/\d+/);
+            if (match) countElement.innerHTML = `Received (${parseInt(match[0]) - 1})`;
+        }
+    } else {
+        SohbaApp.toast(result.error || 'Failed to accept request', 'error');
+    }
+}
+
+async function rejectRequest(userId) {
+
+    const result = await SohbaApp.post('/Friends/RejectRequest', { requesterId: userId });
+
+    if (result.success) {
+        SohbaApp.toast('Friend request declined', 'success');
+        const elem = document.querySelector(`[data-request-id="${userId}"]`);
+        if (elem) elem.remove();
+
+        const countElement = document.querySelector('.tab-btn:first-child');
+        if (countElement) {
+            const match = countElement.textContent.match(/\d+/);
+            if (match) countElement.innerHTML = `Received (${parseInt(match[0]) - 1})`;
+        }
+    } else {
+        SohbaApp.toast(result.error || 'Failed to decline request', 'error');
+    }
+}
+
+async function cancelRequest(userId) {
+    window.showConfirmModal({
+        title: 'Cancel Friend Request',
+        message: 'Are you sure you want to cancel this friend request?',
+        type: 'warning',
+        confirmText: 'Cancel Request',
+        onConfirm: async () => {
+            const btn = event?.target;
+            if (btn) { btn.disabled = true; btn.innerHTML = 'Cancelling...'; }
+
+            try {
+                const result = await SohbaApp.post('/Friends/CancelRequest', { receiverId: userId });
+
+                if (result.success) {
+                    SohbaApp.toast('Request cancelled', 'success');
+                    const elem = document.querySelector(`[data-request-id="${userId}"]`);
+                    if (elem) {
+                        elem.style.transition = 'opacity 0.3s ease';
+                        elem.style.opacity = '0';
+                        setTimeout(() => elem.remove(), 300);
+                    }
+
+                    const countElements = document.querySelectorAll('.tab-btn');
+                    if (countElements.length > 1) {
+                        const match = countElements[1].textContent.match(/\d+/);
+                        if (match) countElements[1].innerHTML = `Sent (${parseInt(match[0]) - 1})`;
+                    }
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to cancel request', 'error');
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Cancel'; }
+            }
+        }
+    });
+}
+
+
+window.blockUser = async function (userId) {
+    window.showConfirmModal({
+        title: 'Block User',
+        message: 'Are you sure you want to block this user? They will no longer be able to interact with you.',
+        type: 'warning',
+        confirmText: 'Block',
+        onConfirm: async () => {
+            try {
+                const result = await SohbaApp.post('/Friends/BlockUser', { userId: userId });
+                if (result.success) {
+                    SohbaApp.toast('User blocked successfully.', 'success');
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to block user.', 'error');
+                }
+            } catch (err) {
+                SohbaApp.toast('An unexpected error occurred.', 'error');
+            }
+        }
+    });
+};
+
+
+window.sendFriendRequestFromProfile = async function (userId) {
+    const btn = document.getElementById('addFriendBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Sending...'; }
+
+    const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
+
+    if (result.success) {
+        SohbaApp.toast('Friend request sent!', 'success');
+        if (btn) {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Request Sent</span>
+            `;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+        }
+    } else {
+        SohbaApp.toast(result.error || 'Failed to send request', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>Add Friend</span>'; }
+    }
+};
+
+window.checkFriendshipStatus = async function (targetUserId) {
+    try {
+        const result = await SohbaApp.post('/Friends/CheckStatus', { userId: targetUserId });
+
+
+
+
+
+        const btn = document.getElementById('addFriendBtn');
+        if (!btn) return;
+
+        if (result.data === 'pending') {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Pending</span>
+            `;
+            btn.disabled = true;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+        } else if (result.data === 'accepted') {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Friends</span>
+            `;
+            btn.disabled = true;
+            btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+        }
+    } catch (error) {
+        console.error('Error checking friendship status:', error);
+    }
+};
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/FriendDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class FriendDto
+    {
+        public Guid UserId { get; set; }
+        public Guid FriendUserId { get; set; }
+        public string FriendName { get; set; }
+        public string ReceiverName { get; set; }
+        public string Status { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Common/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Common
+{
+    public class Result
+    {
+        public bool IsSuccess { get; }
+        public string Error { get; }
+        public bool IsFailure => !IsSuccess;
+
+        protected Result(bool isSuccess, string error)
+        {
+            if (isSuccess && !string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Success result cannot have an error message.");
+
+            if (!isSuccess && string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Failure result must have an error message.");
+
+            IsSuccess = isSuccess;
+            Error = error;
+        }
+
+        public static Result Success() => new Result(true, string.Empty);
+        public static Result Failure(string error) => new Result(false, error);
+    }
+
+    public class Result<T> : Result
+    {
+        private readonly T _value;
+
+        public T Value => IsSuccess
+            ? _value
+            : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
+
+        protected Result(T value, bool isSuccess, string error)
+            : base(isSuccess, error)
+        {
+            _value = value;
+        }
+
+        public static Result<T> Success(T value) => new Result<T>(value, true, string.Empty);
+
+        public new static Result<T> Failure(string error) => new Result<T>(default, false, error);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Interface/IFriendshipDomainService.cs">
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Interface
+{
+    public interface IFriendshipDomainService
+    {
+
+        Result CanSendFriendRequest(
+            Guid senderId,
+            Guid receiverId,
+            bool alreadyFriends,
+            bool hasPendingRequest,
+            bool isBlocked);
+
+        Result CanAcceptFriendRequest(
+            bool requestExists,
+            bool alreadyFriends);
+
+        Result CanDeclineFriendRequest(
+            bool requestExists);
+
+        Result CanCancelFriendRequest(
+            bool requestExists);
+
+
+        Result CanRemoveFriend(
+            bool alreadyFriends);
+
+        Result CanBlockUser(
+            Guid userId,
+            Guid targetId,
+            bool alreadyBlocked);
+
+        Result CanUnblockUser(
+            bool alreadyBlocked);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Logic/FriendshipDomainService.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Interfaces;
+
+namespace Sohba.Domain.Domain_Rules.Logic
+{
+
+    public class FriendshipDomainService : IFriendshipDomainService
+    {
+        public Result CanSendFriendRequest(
+            Guid senderId,
+            Guid receiverId,
+            bool alreadyFriends,
+            bool hasPendingRequest,
+            bool isBlocked)
+        {
+            if (senderId == receiverId)
+                return Result.Failure("You cannot send a friend request to yourself.");
+
+            if (isBlocked)
+                return Result.Failure("Action denied due to blocking.");
+
+            if (alreadyFriends)
+                return Result.Failure("You are already friends.");
+
+            if (hasPendingRequest)
+                return Result.Failure("A pending friend request already exists.");
+
+            return Result.Success();
+        }
+
+        public Result CanAcceptFriendRequest(
+            bool requestExists,
+            bool alreadyFriends)
+        {
+            if (!requestExists)
+                return Result.Failure("No pending friend request found.");
+
+            if (alreadyFriends)
+                return Result.Failure("You are already friends.");
+
+            return Result.Success();
+        }
+
+        public Result CanDeclineFriendRequest(
+            bool requestExists)
+        {
+            if (!requestExists)
+                return Result.Failure("No pending friend request found.");
+
+            return Result.Success();
+        }
+
+        public Result CanCancelFriendRequest(
+            bool requestExists)
+        {
+            if (!requestExists)
+                return Result.Failure("No sent request found to cancel.");
+
+            return Result.Success();
+        }
+
+        public Result CanRemoveFriend(
+            bool alreadyFriends)
+        {
+            if (!alreadyFriends)
+                return Result.Failure("You are not friends with this user.");
+
+            return Result.Success();
+        }
+
+        public Result CanBlockUser(
+            Guid userId,
+            Guid targetId,
+            bool alreadyBlocked)
+        {
+            if (userId == targetId)
+                return Result.Failure("You cannot block yourself.");
+
+            if (alreadyBlocked)
+                return Result.Failure("User is already blocked.");
+
+            return Result.Success();
+        }
+
+        public Result CanUnblockUser(
+            bool alreadyBlocked)
+        {
+            if (!alreadyBlocked)
+                return Result.Failure("User is not blocked.");
+
+            return Result.Success();
+        }
+    }
+
+}
+</file>
+
+<file path="Sohba/Views/Friends/Find.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
+@{
+    ViewData["Title"] = "Find Friends";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Find Friends</h1>
+                <p class="text-gray-500 mt-1">Search and connect with people</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mt-4 relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text" id="searchInput" placeholder="Search by name..."
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all" />
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex gap-2 mt-4">
+            <button onclick="filterUsers('all')" class="filter-btn active px-4 py-2 bg-[#345e69] text-white text-sm font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                All
+            </button>
+            <button onclick="filterUsers('mutual')" class="filter-btn px-4 py-2 bg-slate-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Mutual Friends
+            </button>
+            <button onclick="filterUsers('recent')" class="filter-btn px-4 py-2 bg-slate-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Recently Joined
+            </button>
+        </div>
+    </div>
+
+    <!-- Users Grid -->
+    <div id="usersContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var user in Model)
+            {
+                <div class="user-card bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift" data-user-id="@user.Id" data-name="@user.Name.ToLower()">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
+                                 class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-100" />
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-gray-900 truncate">@user.Name</h3>
+                            <p class="text-sm text-gray-500 mt-1">@user.Bio</p>
+                            <p class="text-xs text-gray-400 mt-1">Joined @user.CreatedAt.ToString("MMM yyyy")</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="sendFriendRequest('@user.Id')"
+                                class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                            Add Friend
+                        </button>
+                        <button onclick="viewProfile('@user.Id')"
+                                class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- No Results Message (hidden by default) -->
+    <div id="noResultsMessage" class="hidden text-center py-20 bg-white rounded-2xl border border-slate-100">
+        <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900">No users found</h3>
+        <p class="text-gray-500 mt-2">Try searching with a different name</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/features/friends.js"></script>
+}
+</file>
+
+<file path="Sohba/Views/Friends/Index.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.FriendDto>
+@{
+    ViewData["Title"] = "Friends";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 ">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Friends</h1>
+                <p class="text-gray-500 mt-1">@Model.Count() friends in your network</p>
+            </div>
+
+            <div class="flex gap-2">
+                <a asp-action="Requests" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Requests
+                    <span id="pendingRequestsBadge" class="hidden bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"></span>
+                </a>
+                <a asp-controller="Friends" asp-action="Suggestions" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Find Friends
+                </a>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="mt-4 relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </span>
+            <input type="text" placeholder="Search friends..." 
+                   class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all" />
+        </div>
+    </div>
+
+    <!-- Friends Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach (var friend in Model)
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={friend.FriendName}&background=345e69&color=fff")" 
+                             class="w-16 h-16 rounded-2xl object-cover border-2 border-slate-100 group-hover:border-[#345e69] transition-colors" />
+                        <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-gray-900 truncate">@friend.FriendName</h3>
+                        <p class="text-sm text-gray-500">@friend.Status</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button class="flex-1 py-2 bg-[#345e69]/10 text-[#345e69] font-semibold rounded-xl hover:bg-[#345e69] hover:text-white transition-colors">
+                        Message
+                    </button>
+                    <button onclick="unfriend('@friend.FriendUserId')" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <button onclick="blockUser('@friend.FriendUserId')" class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors" title="Block">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-20">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No friends yet</h3>
+            <p class="text-gray-500 mt-2">Start connecting with people!</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function unfriend(userId) {
+            if (!confirm('Are you sure you want to remove this friend?')) return;
+            
+            const result = await SohbaApp.post('/Friends/Unfriend', { friendId: userId });
+            if (result.success) {
+                SohbaApp.toast('Friend removed', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to remove friend', 'error');
+            }
+        }
+        async function blockUser(userId) {
+            if (!confirm('Are you sure you want to block this user? They will be removed from your friends list.')) return;
+
+            const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+            if (result.success) {
+                SohbaApp.toast('User blocked', 'success');
+                location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to block user', 'error');
+            }
+        }
+
+
+        async function loadPendingRequestsCount() {
+            const response = await fetch('/Friends/GetPendingRequestsCount');
+            const data = await response.json();
+            if (data.count > 0) {
+                const badge = document.getElementById('pendingRequestsBadge');
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        loadPendingRequestsCount();
+    </script>
+}
+</file>
+
+<file path="Sohba/Views/Friends/Suggestions.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.UserResponseDto>
+@{
+    ViewData["Title"] = "Friend Suggestions";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">People You May Know</h1>
+                <p class="text-gray-500 mt-1">Connect with new people</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    </div>
+
+    <!-- Suggestions Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var user in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group" data-user-id="@user.Id">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="relative mb-3">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
+                                 class="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 group-hover:border-[#345e69] transition-colors" />
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                        </div>
+
+                        <h3 class="font-bold text-gray-900 text-lg">@user.Name</h3>
+                        <p class="text-sm text-gray-500 mt-1">@user.Bio</p>
+
+                        <div class="flex gap-2 mt-4 w-full">
+                            <button onclick="sendFriendRequest('@user.Id')"
+                                    class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                Add Friend
+                            </button>
+                            <button onclick="viewProfile('@user.Id')"
+                                    class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No suggestions</h3>
+            <p class="text-gray-500 mt-2">We'll show you people you might know here</p>
+            <a asp-action="Index" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        async function sendFriendRequest(userId) {
+            const result = await SohbaApp.post('/Friends/SendRequest', {receiverId: userId });
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                // Remove user from suggestions
+                document.querySelector(`[data-user-id="${userId}"]`).remove();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send request', 'error');
+            }
+        }
+
+        function viewProfile(userId) {
+            window.location.href = `/Profile/Index/${userId}`;
+        }
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IFriendshipService.cs">
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IFriendshipService
+    {
+
+        Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> CancelFriendRequestAsync(Guid senderId, Guid receiverId);
+
+
+        Task<Result> UnfriendAsync(Guid userId, Guid friendId);
+        Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId);
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
+
+        Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId);
+        Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId);
+        Task<Result<int>> GetPendingRequestsCountAsync(Guid userId);
+
+
+        Task<Result> BlockUserAsync(Guid userId, Guid targetId);
+        Task<Result> UnblockUserAsync(Guid userId, Guid targetId);
+        Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId);
+
+
+        Task<Result<IEnumerable<UserResponseDto>>> GetFriendSuggestionsAsync(Guid userId, int count = 10);
+
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/UserAggregate/Friend.cs">
+using Sohba.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Entities.UserAggregate
+{
+    public class Friend
+    {
+        public Guid UserId { get; set; }
+        public Guid FriendUserId { get; set; }
+
+        public FriendshipStatus Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public virtual User User { get; set; }
+        public virtual User FriendUser { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Interfaces/IUserRepository.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Interfaces
+{
+    public interface IUserRepository : IGenericRepository<User>
+    {
+        Task<User> GetByUsernameAsync(string username);
+
+
+
+
+        Task<IEnumerable<User>> GetRandomUsersAsync(List<Guid> excludeUserIds, int count);
+        Task<IEnumerable<User>> SearchUsersAsync(string query, Guid currentUserId, int limit = 10);
+
+    }
+}
+</file>
+
+<file path="Sohba/Views/Friends/Requests.cshtml">
+@model Sohba.ViewModels.Friend.FriendRequestsViewModel
+@{
+    ViewData["Title"] = "Friend Requests";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Friend Requests</h1>
+                <p class="text-gray-500 mt-1">Manage your friend requests</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                Back to Friends
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6 border-b border-slate-200">
+        <div class="flex gap-6">
+            <button onclick="switchTab('pending')"
+                    class="tab-btn active py-3 px-1 border-b-2 border-[#345e69] text-[#345e69] font-bold text-sm">
+                Received (@Model.PendingCount)
+            </button>
+            <button onclick="switchTab('sent')"
+                    class="tab-btn py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm">
+                Sent (@Model.SentCount)
+            </button>
+        </div>
+    </div>
+
+    <!-- Pending Requests Tab -->
+    <div id="pending-tab" class="tab-content">
+        @if (Model.PendingRequests != null && Model.PendingRequests.Any())
+        {
+            <div class="space-y-3">
+                @foreach (var request in Model.PendingRequests)
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover-lift" data-request-id="@request.UserId">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
+                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                            <div>
+                                <h3 class="font-bold text-gray-900">@request.FriendName</h3>
+                                <p class="text-sm text-gray-500">Wants to connect with you</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="acceptRequest('@request.UserId')"  
+                                    class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                Accept
+                            </button>
+                            <button onclick="rejectRequest('@request.UserId')" 
+                                    class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                Decline
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-16 bg-white rounded-2xl border border-slate-100">
+                <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No pending requests</h3>
+                <p class="text-gray-500 mt-2">You don't have any friend requests at the moment</p>
+            </div>
+        }
+    </div>
+
+    <!-- Sent Requests Tab (hidden by default) -->
+    <div id="sent-tab" class="tab-content hidden">
+        @if (Model.SentRequests != null && Model.SentRequests.Any())
+        {
+            <div class="space-y-3">
+                @foreach (var request in Model.SentRequests)
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4" data-request-id="@request.FriendUserId">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
+                                     class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                                <div>
+                                    <h3 class="font-bold text-gray-900">@request.ReceiverName</h3>
+                                    <p class="text-sm text-gray-500">Request sent · Pending</p>
+                                </div>
+                            </div>
+                            <button onclick="cancelRequest('@request.FriendUserId')"
+                                    class="px-5 py-2 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors">
+                                Cancel Request
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-16 bg-white rounded-2xl border border-slate-100">
+                <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No sent requests</h3>
+                <p class="text-gray-500 mt-2">You haven't sent any friend requests</p>
+                <a asp-action="Suggestions" class="inline-block mt-4 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                    Find Friends
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/features/friends.js"></script>
+}
+</file>
+
+<file path="Sohba.Infrastructure/Repositories/UserRepository.cs">
+using Microsoft.EntityFrameworkCore;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
+using Sohba.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Infrastructure.Repositories
+{
+    public class UserRepository : GenericRepository<User>, IUserRepository
+    {
+        public UserRepository(AppDbContext context) : base(context) { }
+
+        public override async Task<User> GetByIdAsync(Guid id)
+        {
+
+
+            var totalUsers = await _context.Users.CountAsync();
+
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user != null)
+            {
+                return user;
+            }
+
+            return user;
+        }
+        public async Task<User> GetByUsernameAsync(string username)
+        {
+            return await _context.Set<User>().FirstOrDefaultAsync(u => u.Name == username);
+        }
+
+
+
+
+
+        public async Task<IEnumerable<User>> GetRandomUsersAsync(List<Guid> excludeUserIds, int count)
+        {
+            return await _context.Set<User>()
+                .Where(u => !excludeUserIds.Contains(u.Id))
+                .OrderBy(u => Guid.NewGuid())
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> SearchUsersAsync(string query, Guid currentUserId, int limit = 10)
+        {
+            return await _context.Set<User>()
+                .Where(u => u.Id != currentUserId &&
+                           !u.IsDeleted &&
+                           u.Name.Contains(query))
+                .Take(limit)
+                .ToListAsync();
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/UserAggregate/User.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Entities.StoryAggregate;
+
+namespace Sohba.Domain.Entities.UserAggregate
+{
+    public class User : IdentityUser<Guid>
+    {
+        public string Name { get; set; }
+        public string Bio { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+
+        public bool IsPrivateAccount { get; set; } = false;
+        public bool ShowActivityStatus { get; set; } = true;
+        public bool EmailNotifications { get; set; } = true;
+        public bool PushNotifications { get; set; } = true;
+        public bool WeeklyDigest { get; set; } = false;
+
+
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+        public virtual ICollection<Story> Stories { get; set; } = new List<Story>();
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
+
+
+        public virtual ICollection<Friend> Friends { get; set; } = new List<Friend>();
+        public virtual ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();
+        public virtual ICollection<PageFollower> FollowedPages { get; set; } = new List<PageFollower>();
+        public virtual ICollection<PostReport> SentReports { get; set; } = new List<PostReport>();
+        public virtual ICollection<SavedPost> SavedPosts { get; set; } = new List<SavedPost>();
+
+        public virtual ICollection<Group> AdministeredGroups { get; set; } = new List<Group>();
+        public virtual ICollection<Page> AdministeredPages { get; set; } = new List<Page>();
+
+
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Interfaces/IFriendshipRepository.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Interfaces
+{
+    public interface IFriendshipRepository
+    {
+
+        void Add(Friend friendship);
+        void Update(Friend friendship);
+        void Delete(Friend friendship);
+
+
+        Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId);
+        Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId);
+
+        Task<IEnumerable<Friend>> GetPendingRequestsAsync(Guid userId);
+        Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId);
+        Task<int> GetPendingRequestsCountAsync(Guid userId);
+        Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId);
+        Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
+
+        Task<HashSet<Guid>> GetFriendIdsSetAsync(Guid userId);
+
+
+
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
+    }
+
+}
+</file>
+
+<file path="Sohba.Infrastructure/Repositories/FriendshipRepository.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
+using Sohba.Domain.Interfaces;
+using Sohba.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+
+namespace Sohba.Infrastructure.Repositories
+{
+    public class FriendshipRepository : IFriendshipRepository
+    {
+        private readonly AppDbContext _context;
+
+        public FriendshipRepository(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public void Add(Friend friendship)
+        {
+            _context.Friends.Add(friendship);
+        }
+
+        public void Update(Friend friendship)
+        {
+            _context.Friends.Update(friendship);
+        }
+
+        public void Delete(Friend friendship)
+        {
+            _context.Friends.Remove(friendship);
+        }
+
+
+        public async Task<IEnumerable<Friend>> GetPendingRequestsAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId)
+        {
+
+
+            return await _context.Friends
+                .AsNoTracking()
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Pending)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetPendingRequestsCountAsync(Guid userId)
+        {
+            return await _context.Friends
+                .CountAsync(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending);
+        }
+
+        public async Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Blocked)
+                .ToListAsync();
+        }
+
+        public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
+        {
+            Console.WriteLine($"🔍 GetByUsersAsync - userId: {userId}, friendId: {friendId}");
+
+            var friendship = await _context.Friends
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendId);
+
+            Console.WriteLine($"📊 Friendship found: {friendship != null}");
+
+            if (friendship == null)
+            {
+                var reversed = await _context.Friends
+                    .FirstOrDefaultAsync(f => f.UserId == friendId && f.FriendUserId == userId);
+                Console.WriteLine($"📊 Reversed found: {reversed != null}");
+            }
+
+            return friendship;
+        }
+
+        public async Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f =>
+                    (f.UserId == userId || f.FriendUserId == userId) &&
+                    f.Status == FriendshipStatus.Accepted)
+                .ToListAsync();
+        }
+
+        public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    ((f.UserId == userId && f.FriendUserId == friendId) ||
+                     (f.UserId == friendId && f.FriendUserId == userId)) &&
+                    f.Status == FriendshipStatus.Accepted);
+        }
+
+        public async Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    f.UserId == userId &&
+                    f.FriendUserId == targetId &&
+                    f.Status == FriendshipStatus.Blocked);
+        }
+
+
+        public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
+        {
+            Console.WriteLine($"🔍 HasPendingRequest - senderId: {senderId}, receiverId: {receiverId}");
+
+            var exists = await _context.Friends
+                .AnyAsync(f => f.UserId == senderId &&
+                               f.FriendUserId == receiverId &&
+                               f.Status == FriendshipStatus.Pending);
+
+            Console.WriteLine($"📊 Pending request exists: {exists}");
+
+            if (!exists)
+            {
+                var reversedExists = await _context.Friends
+                    .AnyAsync(f => f.UserId == receiverId &&
+                                   f.FriendUserId == senderId &&
+                                   f.Status == FriendshipStatus.Pending);
+                Console.WriteLine($"📊 Reversed check: {reversedExists}");
+            }
+
+            return exists;
+        }
+
+        public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
+        {
+            var friendships = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .ToListAsync();
+
+            return friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId);
+        }
+
+        public async Task<HashSet<Guid>> GetFriendIdsSetAsync(Guid userId)
+        {
+            var friendIds = await _context.Friends
+                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
+                .ToListAsync();
+
+            return friendIds.ToHashSet();
+        }
+    }
+
+}
+</file>
+
+<file path="Sohba/Controllers/FriendsController.cs">
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.ViewModels.Friend;
+
+namespace Sohba.Controllers
+{
+    [Authorize]
+    [EnableRateLimiting("FriendRequest")]
+
+    public class FriendsController : BaseController
+    {
+
+        private readonly IFriendshipService _friendshipService;
+
+        public FriendsController(IFriendshipService friendshipService)
+        {
+            _friendshipService = friendshipService;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _friendshipService.GetFriendsListAsync(userId);
+            return View(result.Value);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Requests()
+        {
+            var userId = GetCurrentUserId();
+
+            var pendingResult = await _friendshipService.GetPendingRequestsAsync(userId);
+            var sentResult = await _friendshipService.GetSentRequestsAsync(userId);
+            var pendingCountResult = await _friendshipService.GetPendingRequestsCountAsync(userId);
+
+            var viewModel = new FriendRequestsViewModel
+            {
+                PendingRequests = pendingResult.Value ?? new List<FriendDto>(),
+                SentRequests = sentResult.Value ?? new List<FriendDto>(),
+                PendingCount = pendingCountResult.Value,
+                SentCount = sentResult.Value?.Count() ?? 0
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Blocked()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _friendshipService.GetBlockedUsersAsync(userId);
+            return View(result.Value);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendRequest([FromBody] SendRequestModel model)
+        {
+
+
+            if (model == null || model.receiverId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse(
+                    "Invalid request: receiver ID is missing or invalid."));
+
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse(
+                    "User not authenticated."));
+
+            var result = await _friendshipService.SendFriendRequestAsync(currentUserId, model.receiverId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        public class SendRequestModel
+        {
+            public Guid receiverId { get; set; }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> Unfriend(Guid friendId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.UnfriendAsync(currentUserId, friendId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BlockUser([FromBody] BlockUserModel model)
+        {
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.BlockUserAsync(currentUserId, model.userId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+        public class BlockUserModel
+        {
+            public Guid userId { get; set; }
+        }
+        [HttpPost]
+        public async Task<IActionResult> UnblockUser(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.UnblockUserAsync(currentUserId, userId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Suggestions()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
+            return View(result.Value);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFriendSuggestions(int count = 5)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _friendshipService.GetFriendSuggestionsAsync(userId, count);
+            return Json(BaseResponseDto<IEnumerable<UserResponseDto>>.SuccessResponse(result.Value));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPendingRequestsCount()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _friendshipService.GetPendingRequestsCountAsync(userId);
+            return Json(BaseResponseDto<int>.SuccessResponse(result.Value));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Find()
+        {
+            var userId = GetCurrentUserId();
+            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
+            return View(suggestions.Value);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckStatus(Guid userId)
+        {
+            var currentUserId = GetCurrentUserId();
+
+            var areFriends = await _friendshipService.AreFriendsAsync(currentUserId, userId);
+            if (areFriends)
+                return Json(BaseResponseDto<string>.SuccessResponse("accepted"));
+
+            var hasPending = await _friendshipService.HasPendingRequestAsync(currentUserId, userId);
+            if (hasPending)
+                return Json(BaseResponseDto<string>.SuccessResponse("pending"));
+
+            return Json(BaseResponseDto<string>.SuccessResponse("none"));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AcceptRequest([FromBody] AcceptRequestModel model)
+        {
+            if (model == null || model.senderId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request: sender ID is missing."));
+
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.AcceptFriendRequestAsync(model.senderId, currentUserId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectRequest([FromBody] RejectRequestModel model)
+        {
+            if (model == null || model.requesterId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request: requester ID is missing."));
+
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.RejectFriendRequestAsync(model.requesterId, currentUserId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelRequest([FromBody] CancelRequestModel model)
+        {
+            if (model == null || model.receiverId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request: receiver ID is missing."));
+
+            var currentUserId = GetCurrentUserId();
+            var result = await _friendshipService.CancelFriendRequestAsync(currentUserId, model.receiverId);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
+        }
+
+
+        public class AcceptRequestModel
+        {
+            public Guid senderId { get; set; }
+        }
+
+        public class RejectRequestModel
+        {
+            public Guid requesterId { get; set; }
+        }
+
+        public class CancelRequestModel
+        {
+            public Guid receiverId { get; set; }
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Services/FriendshipService.cs">
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
+using Sohba.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Text;
+
+namespace Sohba.Application.Services
+{
+    public class FriendshipService : IFriendshipService
+    {
+        private readonly IFriendshipDomainService _domainService;
+        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
+
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
+        protected readonly ILogger<FriendshipService> _logger;
+
+        public FriendshipService(
+            IFriendshipDomainService domainService,
+            IMapper mapper,
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService,
+            IUserService userService,
+            ILogger<FriendshipService> logger)
+        {
+            _domainService = domainService;
+            _mapper = mapper;
+            _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
+            _userService = userService;
+            _logger = logger;
+        }
+
+
+        public async Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId)
+        {
+
+            var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
+            var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+            var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(senderId, receiverId);
+
+            var decision = _domainService.CanSendFriendRequest(
+                senderId,
+                receiverId,
+                alreadyFriends,
+                hasPending,
+                isBlocked
+            );
+
+            if (!decision.IsSuccess)
+            {
+                _logger.LogWarning("Friend request rejected from {SenderId} to {ReceiverId}: {Reason}", senderId, receiverId, decision.Error);
+                return decision;
+            }
+
+
+
+            var friendRequest = new Friend
+            {
+                UserId = senderId,
+                FriendUserId = receiverId,
+                Status = FriendshipStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            _unitOfWork.Friendships.Add(friendRequest);
+            await _unitOfWork.CompleteAsync();
+
+
+            _logger.LogInformation("Friend request sent from {SenderId} to {ReceiverId}", senderId, receiverId);
+
+
+            var user = await _userService.GetProfileAsync(senderId);
+            var userName = user.Value?.Name ?? "Someone";
+
+            await _notificationService.CreateNotificationAsync(
+                receiverId: receiverId,
+                message: $"{userName} sent you a friend request",
+                type: NotificationType.FriendRequest,
+                senderId: senderId
+            );
+
+            return Result.Success();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
+        {
+            var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+
+            var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
+
+            var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
+
+
+            if (!decision.IsSuccess)
+            {
+                _logger.LogWarning("Friend request accept rejected from {SenderId} to {ReceiverId}: {Reason}", senderId, receiverId, decision.Error);
+                return decision;
+            }
+
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+
+            if (friendship == null)
+            {
+                _logger.LogWarning("Friend request accept failed: no pending request from {SenderId} to {ReceiverId}", senderId, receiverId);
+                return Result.Failure("Friend request not found.");
+            }
+
+            friendship.Status = FriendshipStatus.Accepted;
+            _unitOfWork.Friendships.Update(friendship);
+
+
+            await _unitOfWork.CompleteAsync();
+            _logger.LogInformation("Friend request accepted: {SenderId} and {ReceiverId} are now friends", senderId, receiverId);
+
+
+
+            var user = await _userService.GetProfileAsync(receiverId);
+            var userName = user.Value?.Name ?? "Someone";
+
+            await _notificationService.CreateNotificationAsync(
+                receiverId: senderId,
+                message: $"{userName} accepted your friend request",
+                type: NotificationType.FriendRequest,
+                senderId: receiverId
+            );
+
+            return Result.Success();
+        }
+
+
+        public async Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId)
+        {
+            var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+
+            var decision = _domainService.CanDeclineFriendRequest(hasPending);
+            if (!decision.IsSuccess)
+                return decision;
+
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+
+            if (friendship != null)
+            {
+                _unitOfWork.Friendships.Delete(friendship);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            return Result.Success();
+        }
+
+        public async Task<Result> CancelFriendRequestAsync(Guid senderId, Guid receiverId)
+        {
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+
+            var decision = _domainService.CanCancelFriendRequest(friendship != null);
+            if (!decision.IsSuccess)
+                return decision;
+
+            if (friendship != null)
+            {
+                _unitOfWork.Friendships.Delete(friendship);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            return Result.Success();
+        }
+
+
+        public async Task<Result> UnfriendAsync(Guid userId, Guid friendId)
+        {
+            var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
+
+            var decision = _domainService.CanRemoveFriend(alreadyFriends);
+
+            if (!decision.IsSuccess)
+                return decision;
+
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(userId, friendId);
+            var reverseFriendship = await _unitOfWork.Friendships.GetByUsersAsync(friendId, userId);
+
+            if (friendship != null)
+                _unitOfWork.Friendships.Delete(friendship);
+
+            if (reverseFriendship != null)
+                _unitOfWork.Friendships.Delete(reverseFriendship);
+
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId)
+        {
+            var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
+
+
+
+            var dtos = friends.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.UserId == userId ? f.FriendUserId : f.UserId,
+                FriendName = f.UserId == userId ? f.FriendUser.Name : f.User.Name,
+                ProfilePictureUrl = f.UserId == userId ? f.FriendUser.ProfilePictureUrl : f.User.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+        public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
+        {
+            return await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
+        }
+
+        public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
+        {
+            return await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+        }
+
+        public async Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId)
+        {
+            var requests = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId);
+            var dtos = requests.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.UserId,
+                FriendName = f.User.Name,
+                ProfilePictureUrl = f.User.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+             return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+        public async Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId)
+        {
+            var requests = await _unitOfWork.Friendships.GetSentRequestsAsync(userId);
+            var dtos = requests.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.FriendUserId,
+                FriendName = f.FriendUser.Name,
+                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+        public async Task<Result<int>> GetPendingRequestsCountAsync(Guid userId)
+        {
+            var count = await _unitOfWork.Friendships.GetPendingRequestsCountAsync(userId);
+            return Result<int>.Success(count);
+        }
+
+
+        public async Task<Result> BlockUserAsync(Guid userId, Guid targetId)
+        {
+            var alreadyBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(userId, targetId);
+            var validation = _domainService.CanBlockUser(userId, targetId, alreadyBlocked);
+
+            if (!validation.IsSuccess)
+            {
+                _logger.LogWarning("Block action rejected: user {UserId} cannot block {TargetId}: {Reason}", userId, targetId, validation.Error);
+                return validation;
+            }
+
+            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
+            var reverseFriendship = await _unitOfWork.Friendships.GetByUsersAsync(targetId, userId);
+
+            if (friendship != null)
+                _unitOfWork.Friendships.Delete(friendship);
+
+            if (reverseFriendship != null)
+                _unitOfWork.Friendships.Delete(reverseFriendship);
+
+            var block = new Friend
+            {
+                UserId = userId,
+                FriendUserId = targetId,
+                Status = FriendshipStatus.Blocked,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Friendships.Add(block);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("User {UserId} blocked user {TargetId}", userId, targetId);
+            return Result.Success();
+        }
+
+        public async Task<Result> UnblockUserAsync(Guid userId, Guid targetId)
+        {
+            var block = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
+            var validation = _domainService.CanUnblockUser(block != null && block.Status == FriendshipStatus.Blocked);
+
+            if (!validation.IsSuccess)
+                return validation;
+
+            _unitOfWork.Friendships.Delete(block);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId)
+        {
+            var blocked = await _unitOfWork.Friendships.GetBlockedUsersAsync(userId);
+            var dtos = blocked.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.FriendUserId,
+                FriendName = f.FriendUser.Name,
+                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            }).ToList();
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetFriendSuggestionsAsync(Guid userId, int count = 10)
+        {
+            var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
+            var friendIds = friends.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId).ToList();
+
+            var sentRequests = await _unitOfWork.Friendships.GetSentRequestsAsync(userId);
+            var sentIds = sentRequests.Select(r => r.FriendUserId).ToList();
+
+            var blocked = await _unitOfWork.Friendships.GetBlockedUsersAsync(userId);
+            var blockedIds = blocked.Select(b => b.FriendUserId).ToList();
+
+            var excludeIds = new List<Guid> { userId };
+            excludeIds.AddRange(friendIds);
+            excludeIds.AddRange(sentIds);
+            excludeIds.AddRange(blockedIds);
+
+            var suggestions = await _unitOfWork.Users.GetRandomUsersAsync(excludeIds, count);
+
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(suggestions);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
+        }
+    }
+}
+</file>
+
+</files>

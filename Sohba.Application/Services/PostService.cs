@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.Common;
@@ -131,14 +132,25 @@ namespace Sohba.Application.Services
             // Extract hashtags from content
             var extractedTags = ExtractHashtags(postDto.Content).ToList();
 
-            _unitOfWork.Posts.Add(post);
-            await _unitOfWork.CompleteAsync();
-
-            if (extractedTags.Any())
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                string userLocation = "Egypt"; // Default — future: fetch from User.Country
-                await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
+                _unitOfWork.Posts.Add(post);
                 await _unitOfWork.CompleteAsync();
+                
+                if (extractedTags.Any())
+                {
+                    string userLocation = "Egypt";
+                    await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
+                    await _unitOfWork.CompleteAsync();
+                }
+                
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
             }
 
             //  Send notifications based on post type
@@ -147,14 +159,6 @@ namespace Sohba.Application.Services
             _logger.LogInformation("Post created: {PostId} by user {UserId}, source type {SourceType}", post.Id, userId, postDto.SourceType);
             return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
-
-
-        public async Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId)
-        {
-            var posts = await _unitOfWork.Posts.GetTimelineAsync(userId);
-            return await MapPostsWithInteractions(posts, userId);
-        }
-
         
         
         public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId)
@@ -416,6 +420,21 @@ namespace Sohba.Application.Services
             // 3. If user has friends, notify them (optional - can be skipped)
             // This is a "friend activity" notification - we'll implement it later
         }
+
+        public async Task<Result<int>> GetPostsCountAsync()
+        {
+            var count = await _unitOfWork.Posts.CountAsync();
+            return Result<int>.Success(count);
+        }
+
+        public async Task<Result<IEnumerable<PostResponseDto>>> GetRecentPostsAsync(int count)
+        {
+            var posts = await _unitOfWork.Posts.GetRecentAsync(count);
+            var dtos = _mapper.Map<IEnumerable<PostResponseDto>>(posts);
+            return Result<IEnumerable<PostResponseDto>>.Success(dtos);
+        }
+
+        
     }
 }
 

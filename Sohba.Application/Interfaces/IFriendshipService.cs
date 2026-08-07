@@ -28,6 +28,7 @@ namespace Sohba.Application.Interfaces
         Task<Result> BlockUserAsync(Guid userId, Guid targetId);
         Task<Result> UnblockUserAsync(Guid userId, Guid targetId);
         Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId);
+        Task<bool> IsBlockedAsync(Guid userId, Guid targetId);
 
         // Suggestions
         Task<Result<IEnumerable<UserResponseDto>>> GetFriendSuggestionsAsync(Guid userId, int count = 10);

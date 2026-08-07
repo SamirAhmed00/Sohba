@@ -26,32 +26,33 @@
         @foreach (var group in Model)
         {
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift flex items-center gap-5 transition-all duration-300">
-                <div class="relative group/icon">
-                    @*TODO : ADD Image To Group Entity*@
-                    @if (!string.IsNullOrEmpty(group.ImageUrl))
-                    {
-                        <img src="@group.ImageUrl" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-100 transform transition-transform group-hover/icon:scale-105" alt="@group.Name" />
-                    }
-                    else
-                    { 
-                        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-sm border border-slate-200 transform transition-transform group-hover/icon:scale-105">
-                            <span class="relative z-10 text-[#345e69] text-2xl font-black tracking-tighter">
-                                @group.Name[0].ToString().ToUpper()
-                            </span>
+                <a asp-action="Details" asp-route-id="@group.Id" class="relative group/icon">
+                        @*TODO : ADD Image To Group Entity*@
+                        @if (!string.IsNullOrEmpty(group.ImageUrl))
+                        {
+                            <img src="@group.ImageUrl" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-100 transform transition-transform group-hover/icon:scale-105" alt="@group.Name" />
+                        }
+                        else
+                        { 
+                            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-sm border border-slate-200 transform transition-transform group-hover/icon:scale-105">
+                                <span class="relative z-10 text-[#345e69] text-2xl font-black tracking-tighter">
+                                    @group.Name[0].ToString().ToUpper()
+                                </span>
 
-                            <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
-                        </div>
-                     } 
+                                <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+                            </div>
+                         } 
 
-                    @if (group.IsCurrentUserMember)
-                    {
-                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm z-20"></div>
-                    }
-                </div>
+                        @if (group.IsCurrentUserMember)
+                        {
+                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm z-20"></div>
+                        }
+                </a>
+                
 
                 <div class="flex-1">
                     <div class="flex items-center gap-2">
-                        <h3 class="font-black text-gray-800 text-lg leading-tight">@group.Name</h3>
+                        <a asp-action="Details" asp-route-id="@group.Id" class="font-black text-gray-800 text-lg leading-tight hover:underline">@group.Name</a>
                         @if (group.IsCurrentUserMember)
                         {
                             <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -106,7 +107,7 @@
 @section Scripts {
     <script>
         async function joinGroup(groupId, button) {
-            const result = await SohbaApp.post('/Groups/Join', { groupId });
+            const result = await SohbaApp.post('/Groups/Join', { id: groupId });
             if (result.success) {
                 SohbaApp.toast('Joined group successfully!', 'success');
                 // Update button UI

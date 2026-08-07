@@ -82,7 +82,7 @@ namespace Sohba
                 })
                 .AddJwtBearer(options =>
                 {
-                    options.RequireHttpsMetadata = false;
+                    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
                     options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -179,7 +179,7 @@ namespace Sohba
                 // ============================================================
                 builder.Services.AddInfrastructureService(builder.Configuration);
                 builder.Services.AddApplicationServices();
-
+                builder.Services.AddHealthChecks();
 
                 // COOKIE AUTH 
                 builder.Services.AddAuthorization();
@@ -272,7 +272,7 @@ namespace Sohba
                 });
 
                 app.MapHub<NotificationHub>("/notificationHub");
-
+                app.MapHealthChecks("/healthz");
                 app.MapStaticAssets();
                 app.MapControllerRoute(
                     name: "default",

@@ -246,6 +246,12 @@ namespace Sohba.Application.Services
             var response = _mapper.Map<PageResponseDto>(page);
             return Result<PageResponseDto>.Success(response);
         }
+
+        public async Task<Result<int>> GetPagesCountAsync()
+        {
+            var count = await _unitOfWork.Pages.CountAsync();
+            return Result<int>.Success(count);
+        }
     }
 
 }

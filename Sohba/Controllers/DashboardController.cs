@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
+using Sohba.Domain.Entities.PostAggregate;
 using Sohba.ViewModels.Dashboard;
 
 namespace Sohba.Controllers
@@ -40,37 +42,26 @@ namespace Sohba.Controllers
         {
             var viewModel = new DashboardViewModel();
 
-            // Get counts
-            var users = await _userService.GetAllUsersAsync();
-            var posts = await _postService.GetAllPostsAsync();
-            var groups = await _groupService.GetAllGroupsAsync();
-            var pages = await _pageService.GetAllPagesAsync();
-            var reports = await _reportingService.GetAllReportsAsync();
-
-            viewModel.TotalUsers = users.Value?.Count() ?? 0;
-            viewModel.TotalPosts = posts.Value?.Count() ?? 0;
-            viewModel.TotalGroups = groups.Value?.Count() ?? 0;
-            viewModel.TotalPages = pages.Value?.Count() ?? 0;
-            viewModel.PendingReports = reports.Value?.Count(r => !r.IsResolved) ?? 0;
-
-            // Get recent users (last 5)
-            viewModel.RecentUsers = users.Value?
-                .OrderByDescending(u => u.CreatedAt)
-                .Take(5)
-                .ToList() ?? new();
-
-            // Get recent posts (last 5)
-            viewModel.RecentPosts = posts.Value?
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(5)
-                .ToList() ?? new();
-
-            // Get recent reports (last 5 pending)
-            viewModel.RecentReports = reports.Value?
-                .Where(r => !r.IsResolved)
-                .OrderByDescending(r => r.ReportedAt)
-                .Take(5)
-                .ToList() ?? new();
+            var usersCount = await _userService.GetUsersCountAsync();
+            var postsCount = await _postService.GetPostsCountAsync();
+            var groupsCount = await _groupService.GetGroupsCountAsync();
+            var pagesCount = await _pageService.GetPagesCountAsync();
+            var pendingReportsCount = await _reportingService.GetPendingReportsCountAsync();
+            
+            viewModel.TotalUsers = usersCount.Value;
+            viewModel.TotalPosts = postsCount.Value;
+            viewModel.TotalGroups = groupsCount.Value;
+            viewModel.TotalPages = pagesCount.Value;
+            viewModel.PendingReports = pendingReportsCount.Value;
+            
+            
+            var recentUsers = await _userService.GetRecentUsersAsync(5);
+            var recentPosts = await _postService.GetRecentPostsAsync(5);
+            var recentReports = await _reportingService.GetRecentPendingReportsAsync(5);
+            
+            viewModel.RecentUsers = recentUsers.Value?.ToList() ?? new();
+            viewModel.RecentPosts = recentPosts.Value?.ToList() ?? new();
+            viewModel.RecentReports = recentReports.Value?.ToList() ?? new();
 
             // TODO: Get users count for last 7 days
             viewModel.UsersLast7Days = new List<int> { 5, 8, 12, 7, 15, 10, 20 };
@@ -135,23 +126,30 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> BlockUser(Guid userId)
+        public async Task<IActionResult> BlockUser([FromBody] IdWrapperUserId model)
         {
-            var result = await _friendshipService.BlockUserAsync(GetCurrentUserId(), userId);
+            if (model == null || model.userId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid user ID." });
+            var result = await _friendshipService.BlockUserAsync(GetCurrentUserId(), model.userId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         [HttpPost]
-        public async Task<IActionResult> UnblockUser(Guid userId)
+        public async Task<IActionResult> UnblockUser([FromBody] IdWrapperUserId model)
         {
-            var result = await _friendshipService.UnblockUserAsync(GetCurrentUserId(), userId);
+            if (model == null || model.userId == Guid.Empty)
+                         return Json(new { success = false, error = "Invalid user ID." });
+
+            var result = await _friendshipService.UnblockUserAsync(GetCurrentUserId(), model.userId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteUser(Guid userId)
+        public async Task<IActionResult> DeleteUser([FromBody] IdWrapperUserId model)
         {
-            var result = await _userService.DeleteUserAsync(userId);
+            if (model == null || model.userId == Guid.Empty)
+                        return Json(new { success = false, error = "Invalid user ID." });
+            var result = await _userService.DeleteUserAsync(model.userId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
@@ -199,16 +197,20 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeletePost(Guid postId)
+        public async Task<IActionResult> DeletePost([FromBody] IdWrapperPostId model)
         {
-            var result = await _postService.DeletePostAsync(postId, GetCurrentUserId());
+            if (model == null || model.postId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid post ID." });
+            var result = await _postService.DeletePostAsync(model.postId, GetCurrentUserId());
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         [HttpPost]
-        public async Task<IActionResult> HidePost(Guid postId)
+        public async Task<IActionResult> HidePost([FromBody] IdWrapperPostId model)
         {
-            var result = await _postService.HidePostAsync(postId, GetCurrentUserId());
+            if (model == null || model.postId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid post ID." });            
+            var result = await _postService.HidePostAsync(model.postId, GetCurrentUserId());
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
@@ -251,27 +253,32 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResolveReport(Guid reportId)
+        public async Task<IActionResult> ResolveReport([FromBody] IdWrapperReportId model)
         {
-            var result = await _reportingService.ResolveReportAsync(reportId);
+            if (model == null || model.reportId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid report ID." });
+            var result = await _reportingService.ResolveReportAsync(model.reportId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         [HttpPost]
-        public async Task<IActionResult> DismissReport(Guid reportId)
+        public async Task<IActionResult> DismissReport([FromBody] IdWrapperReportId model)
         {
-            // Dismiss is same as resolve for now
-            var result = await _reportingService.ResolveReportAsync(reportId);
+            if (model == null || model.reportId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid report ID." });
+            var result = await _reportingService.ResolveReportAsync(model.reportId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteReportedPost(Guid postId, Guid reportId)
+        public async Task<IActionResult> DeleteReportedPost([FromBody] DeleteReportedPostModel model)
         {
-            var deleteResult = await _postService.DeletePostAsync(postId, GetCurrentUserId());
+            if (model == null || model.postId == Guid.Empty || model.reportId == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid post or report ID." });            
+            var deleteResult = await _postService.DeletePostAsync(model.postId, GetCurrentUserId());
             if (deleteResult.IsSuccess)
             {
-                await _reportingService.ResolveReportAsync(reportId);
+                await _reportingService.ResolveReportAsync(model.reportId);
             }
             return Json(new { success = deleteResult.IsSuccess, error = deleteResult.Error });
         }
@@ -311,5 +318,11 @@ namespace Sohba.Controllers
             }
             return Content("Report not found");
         }
+
+
+        public class IdWrapperUserId { public Guid userId { get; set; } }
+        public class IdWrapperPostId { public Guid postId { get; set; } }
+        public class IdWrapperReportId { public Guid reportId { get; set; } }
+        public class DeleteReportedPostModel { public Guid postId { get; set; } public Guid reportId { get; set; } }
     }
 }

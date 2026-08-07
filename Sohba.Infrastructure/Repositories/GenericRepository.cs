@@ -40,5 +40,10 @@ namespace Sohba.Infrastructure.Repositories
         {
             _context.Set<T>().Remove(entity);
         }
+
+        public virtual async Task<int> CountAsync()
+        {
+            return await _context.Set<T>().CountAsync();
+        }
     }
 }

@@ -153,14 +153,7 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result<IEnumerable<Notification>>.Failure("User not found");
 
-            var notifications = await _unitOfWork.Notifications.GetAllAsync();
-
-            var result = notifications
-                .Where(n => n.ReceiverId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var result = await _unitOfWork.Notifications.GetByReceiverPagedAsync(userId, page, pageSize);
 
             return Result<IEnumerable<Notification>>.Success(result);
         }
@@ -239,11 +232,8 @@ namespace Sohba.Application.Services
         public async Task<Result> DeleteOldNotificationsAsync(int daysOld = 30)
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
-            var allNotifications = await _unitOfWork.Notifications.GetAllAsync();
 
-            var oldNotifications = allNotifications
-                .Where(n => n.CreatedAt < cutoffDate && n.IsRead)
-                .ToList();
+            var oldNotifications = await _unitOfWork.Notifications.GetOldReadNotificationsAsync(cutoffDate);
 
             foreach (var notification in oldNotifications)
             {

@@ -95,40 +95,32 @@ function switchTab(tab) {
     if (sentTab) sentTab.classList.toggle('hidden', tab !== 'sent');
 }
 
-async function acceptRequest(userId) {
-    // Payload key must match: public class AcceptRequestModel { public Guid senderId { get; set; } }
+async function acceptRequest(userId, btn) {
+    if (btn) { btn.disabled = true; }
+
     const result = await SohbaApp.post('/Friends/AcceptRequest', { senderId: userId });
 
     if (result.success) {
         SohbaApp.toast('Friend request accepted!', 'success');
         const elem = document.querySelector(`[data-request-id="${userId}"]`);
         if (elem) elem.remove();
-
-        const countElement = document.querySelector('.tab-btn:first-child');
-        if (countElement) {
-            const match = countElement.textContent.match(/\d+/);
-            if (match) countElement.innerHTML = `Received (${parseInt(match[0]) - 1})`;
-        }
     } else {
+        if (btn) { btn.disabled = false; }
         SohbaApp.toast(result.error || 'Failed to accept request', 'error');
     }
 }
 
-async function rejectRequest(userId) {
-    // Payload key must match: public class RejectRequestModel { public Guid requesterId { get; set; } }
+async function rejectRequest(userId, btn) {
+    if (btn) { btn.disabled = true; }
+
     const result = await SohbaApp.post('/Friends/RejectRequest', { requesterId: userId });
 
     if (result.success) {
         SohbaApp.toast('Friend request declined', 'success');
         const elem = document.querySelector(`[data-request-id="${userId}"]`);
         if (elem) elem.remove();
-
-        const countElement = document.querySelector('.tab-btn:first-child');
-        if (countElement) {
-            const match = countElement.textContent.match(/\d+/);
-            if (match) countElement.innerHTML = `Received (${parseInt(match[0]) - 1})`;
-        }
     } else {
+        if (btn) { btn.disabled = false; }
         SohbaApp.toast(result.error || 'Failed to decline request', 'error');
     }
 }
@@ -220,16 +212,14 @@ window.sendFriendRequestFromProfile = async function (userId) {
 
 window.checkFriendshipStatus = async function (targetUserId) {
     try {
-        const result = await SohbaApp.post('/Friends/CheckStatus', { userId: targetUserId });
-        // ملحوظة: CheckStatus في الكونترولر [HttpGet]، فلو الميثود دي فضلت GET
-        // استخدم fetch عادي بدل SohbaApp.post (اللي مبني على POST دايمًا):
-        // const response = await fetch(`/Friends/CheckStatus?userId=${targetUserId}`);
-        // const result = await response.json();
+        const response = await fetch(`/Friends/CheckStatus?userId=${targetUserId}`);
+        const result = await response.json();
+        const data = result.data ?? result.Data;
 
         const btn = document.getElementById('addFriendBtn');
         if (!btn) return;
 
-        if (result.data === 'pending') {
+        if (data === 'pending') {
             btn.innerHTML = `
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -239,7 +229,7 @@ window.checkFriendshipStatus = async function (targetUserId) {
             btn.disabled = true;
             btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
             btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
-        } else if (result.data === 'accepted') {
+        } else if (data === 'accepted') {
             btn.innerHTML = `
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -254,3 +244,39 @@ window.checkFriendshipStatus = async function (targetUserId) {
         console.error('Error checking friendship status:', error);
     }
 };
+
+
+async function blockUserFromProfile(userId) {
+    if (!confirm('Are you sure you want to block this user?')) return;
+
+    try {
+        const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+        if (result.success) {
+            SohbaApp.toast('User blocked', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            SohbaApp.toast(result.error || 'Failed to block user', 'error');
+        }
+    } catch (error) {
+        console.error('Block error:', error);
+        SohbaApp.toast('Network error', 'error');
+    }
+}
+
+async function unblockUserFromProfile(userId) {
+    try {
+        const result = await SohbaApp.post('/Friends/UnblockUser', { userId });
+        if (result.success) {
+            SohbaApp.toast('User unblocked', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            SohbaApp.toast(result.error || 'Failed to unblock user', 'error');
+        }
+    } catch (error) {
+        console.error('Unblock error:', error);
+        SohbaApp.toast('Network error', 'error');
+    }
+}
+
+window.blockUserFromProfile = blockUserFromProfile;
+window.unblockUserFromProfile = unblockUserFromProfile;

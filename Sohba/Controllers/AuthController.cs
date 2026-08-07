@@ -15,18 +15,15 @@ namespace Sohba.Controllers
     {
         private readonly IAuthService _authService;
         private readonly SignInManager<User> _signInManager; 
-        private readonly UserManager<User> _userManager;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IAuthService authService,
             SignInManager<User> signInManager,
-            UserManager<User> userManager,
             ILogger<AuthController> logger)
         {
             _authService = authService;
             _signInManager = signInManager;
-            _userManager = userManager;
             _logger = logger;
         }
 
@@ -40,42 +37,19 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            
-
-
             if (!ModelState.IsValid)
                 return View(loginDto);
 
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            if (user == null)
+            var result = await _authService.LoginAsync(loginDto);
+
+            if (!result.IsSuccess)
             {
-                _logger.LogInformation("Login attempt for email {Email}, RememberMe: {RememberMe}", loginDto.Email, loginDto.RememberMe);
-                ModelState.AddModelError("", "Invalid email or password.");
+                _logger.LogWarning("Login failed for email {Email}: {Error}", loginDto.Email, result.Error);
+                ModelState.AddModelError("", result.Error);
                 return View(loginDto);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                user.UserName,
-                loginDto.Password,
-                loginDto.RememberMe,
-                lockoutOnFailure: true);
-
-            if (result.IsLockedOut)
-            {
-                _logger.LogWarning("Login blocked: account locked out for user {UserId} ({Email})", user.Id, loginDto.Email);
-                ModelState.AddModelError("", "Account locked out. Try again later.");
-                return View(loginDto);
-            }
-
-
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("Failed login attempt: invalid password for user {UserId} ({Email})", user.Id, loginDto.Email);
-                ModelState.AddModelError("", "Invalid email or password.");
-                return View(loginDto);
-            }
-
-            _logger.LogInformation("SignIn result for email {Email}: Succeeded={Succeeded}, IsLockedOut={IsLockedOut}, IsNotAllowed={IsNotAllowed}",loginDto.Email, result.Succeeded, result.IsLockedOut, result.IsNotAllowed);
+            _logger.LogInformation("User logged in successfully: {Email}", loginDto.Email);
 
             return RedirectToAction("Index", "Home");
         }

@@ -1,0 +1,1834 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+The content has been processed where comments have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: Sohba/Controllers/PagesController.cs, Sohba.Application/Interfaces/IPageService.cs, Sohba.Application/Services/PageService.cs, Sohba.Application/Interfaces/IPostService.cs, Sohba.Application/Interfaces/IFriendshipService.cs, Sohba.Application/Interfaces/IFileStorageService.cs, Sohba.Application/DTOs/GroupAndPageAggregate/PageCreateDto.cs, Sohba.Application/DTOs/GroupAndPageAggregate/PageUpdateDto.cs, Sohba.Application/DTOs/GroupAndPageAggregate/PageResponseDto.cs, Sohba.Application/DTOs/GroupAndPageAggregate/PageFollowerDto.cs, Sohba/ViewModels/Page/PageCreateViewModel.cs, Sohba/ViewModels/Page/PageEditViewModel.cs, Sohba.Domain/Entities/GroupAndPage/Page.cs, Sohba.Domain/Entities/GroupAndPage/PageFollower.cs, Sohba.Domain/Interfaces/IPageRepository.cs, Sohba.Domain/Domain Rules/Interface/IPageDomainService.cs, Sohba.Domain/Domain Rules/Logic/PageDomainService.cs, Sohba.Domain/Common/Result.cs, Sohba.Infrastructure/Repositories/PageRepository.cs, Sohba/Views/Pages/Index.cshtml, Sohba/Views/Pages/Create.cshtml, Sohba/Views/Pages/Details.cshtml, Sohba/Views/Pages/Edit.cshtml
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Code comments have been removed from supported file types
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Sohba/
+  Controllers/
+    PagesController.cs
+  ViewModels/
+    Page/
+      PageCreateViewModel.cs
+      PageEditViewModel.cs
+  Views/
+    Pages/
+      Create.cshtml
+      Details.cshtml
+      Edit.cshtml
+      Index.cshtml
+Sohba.Application/
+  DTOs/
+    GroupAndPageAggregate/
+      PageCreateDto.cs
+      PageFollowerDto.cs
+      PageResponseDto.cs
+      PageUpdateDto.cs
+  Interfaces/
+    IFileStorageService.cs
+    IFriendshipService.cs
+    IPageService.cs
+    IPostService.cs
+  Services/
+    PageService.cs
+Sohba.Domain/
+  Common/
+    Result.cs
+  Domain Rules/
+    Interface/
+      IPageDomainService.cs
+    Logic/
+      PageDomainService.cs
+  Entities/
+    GroupAndPage/
+      Page.cs
+      PageFollower.cs
+  Interfaces/
+    IPageRepository.cs
+Sohba.Infrastructure/
+  Repositories/
+    PageRepository.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Sohba/ViewModels/Page/PageEditViewModel.cs">
+namespace Sohba.ViewModels.Page
+{
+    public class PageEditViewModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public IFormFile? ImageFile { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Pages/Edit.cshtml">
+@model Sohba.ViewModels.Page.PageEditViewModel
+@{
+    ViewData["Title"] = "Edit Page";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+        <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-8 text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-10 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-white rounded-2xl shadow-xl shadow-black/10 transition-transform hover:scale-105 duration-300">
+                        <svg class="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-black text-white tracking-tight">Edit Page</h1>
+                        <p class="text-white/80 mt-1 font-medium italic opacity-90">Update your page information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm"></div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Page Name</label>
+                <input asp-for="Name"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                       placeholder="Enter page name..." />
+                <span asp-validation-for="Name" class="text-red-500 text-xs"></span>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <textarea asp-for="Description" rows="4"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                          placeholder="What's this page about?"></textarea>
+                <span asp-validation-for="Description" class="text-red-500 text-xs"></span>
+            </div>
+
+            <!-- Current Image Preview -->
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Current Image</label>
+                    <img src="@Model.ImageUrl" class="w-32 h-32 rounded-xl object-cover border border-slate-200" />
+                </div>
+            }
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Page Image (Optional)</label>
+                <input asp-for="ImageFile" type="file" accept="image/*"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
+                <p class="text-xs text-gray-500 mt-2">Leave empty to keep current image. PNG, JPG up to 5MB.</p>
+                <span asp-validation-for="ImageFile" class="text-red-500 text-xs"></span>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-slate-100">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/30 transform active:scale-95 transition-all">
+                    Update Page
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Preview image before upload
+        document.getElementById('ImageFile')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Preview logic (optional)
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                console.log('Image selected:', file.name);
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/DTOs/GroupAndPageAggregate/PageFollowerDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.GroupAndPageAggregate
+{
+    public class PageFollowerDto
+    {
+        public Guid UserId { get; set; }
+        public string UserName { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime FollowedAt { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/GroupAndPageAggregate/PageUpdateDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.GroupAndPageAggregate
+{
+    public class PageUpdateDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Interface/IPageDomainService.cs">
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.GroupAndPage;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Interface
+{
+    public interface IPageDomainService
+    {
+        Result CanCreatePage(string pageName);
+        Result CanFollowPage(Guid userId, Page page, bool alreadyFollowing);
+        Result CanUnfollowPage(bool alreadyFollowing);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Logic/PageDomainService.cs">
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.GroupAndPage;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Logic
+{
+    public class PageDomainService : IPageDomainService
+    {
+        public Result CanCreatePage(string pageName)
+        {
+            if (string.IsNullOrWhiteSpace(pageName))
+                return Result.Failure("Page name cannot be empty.");
+
+            if (pageName.Length < 3)
+                return Result.Failure("Page name is too short.");
+
+            return Result.Success();
+        }
+
+        public Result CanFollowPage(Guid userId, Page page, bool alreadyFollowing)
+        {
+            if (page == null)
+                return Result.Failure("Target page does not exist.");
+
+            if (page.AdminId == userId)
+                return Result.Failure("As an admin, you already own and follow this page.");
+
+            if (alreadyFollowing)
+                return Result.Failure("You are already following this page.");
+
+            return Result.Success();
+        }
+
+        public Result CanUnfollowPage(bool alreadyFollowing)
+        {
+            if (!alreadyFollowing)
+                return Result.Failure("You cannot unfollow a page you don't follow.");
+
+            return Result.Success();
+        }
+    }
+}
+</file>
+
+<file path="Sohba/ViewModels/Page/PageCreateViewModel.cs">
+namespace Sohba.ViewModels.Page
+{
+    public class PageCreateViewModel
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public IFormFile? ImageFile { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/GroupAndPageAggregate/PageCreateDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.GroupAndPageAggregate
+{
+    public class PageCreateDto
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public Guid AdminId { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/GroupAndPageAggregate/PageResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.GroupAndPageAggregate
+{
+    public class PageResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public string AdminName { get; set; }
+        public Guid AdminId { get; set; }
+        public bool IsFollowing { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IFileStorageService.cs">
+using Microsoft.AspNetCore.Http;
+using Sohba.Domain.Common;
+
+namespace Sohba.Application.Interfaces
+{
+
+
+
+
+
+
+    public interface IFileStorageService
+    {
+
+
+
+
+
+        Task<Result<string>> SaveFileAsync(IFormFile file, string subFolder);
+
+
+
+
+
+        Task DeleteFileAsync(string relativeUrl);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Common/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Common
+{
+    public class Result
+    {
+        public bool IsSuccess { get; }
+        public string Error { get; }
+        public bool IsFailure => !IsSuccess;
+
+        protected Result(bool isSuccess, string error)
+        {
+            if (isSuccess && !string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Success result cannot have an error message.");
+
+            if (!isSuccess && string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Failure result must have an error message.");
+
+            IsSuccess = isSuccess;
+            Error = error;
+        }
+
+        public static Result Success() => new Result(true, string.Empty);
+        public static Result Failure(string error) => new Result(false, error);
+    }
+
+    public class Result<T> : Result
+    {
+        private readonly T _value;
+
+        public T Value => IsSuccess
+            ? _value
+            : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
+
+        protected Result(T value, bool isSuccess, string error)
+            : base(isSuccess, error)
+        {
+            _value = value;
+        }
+
+        public static Result<T> Success(T value) => new Result<T>(value, true, string.Empty);
+
+        public new static Result<T> Failure(string error) => new Result<T>(default, false, error);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/GroupAndPage/PageFollower.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Entities.GroupAndPage
+{
+    public class PageFollower
+    {
+        public Guid Id { get; set; }
+        public DateTime FollowedAt { get; set; }
+
+        public Guid UserId { get; set; }
+        public virtual UserAggregate.User User { get; set; }
+        public Guid PageId { get; set; }
+        public virtual Page Page { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Interfaces/IPageRepository.cs">
+using Sohba.Domain.Entities.GroupAndPage;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Interfaces
+{
+    public interface IPageRepository : IGenericRepository<Page>
+    {
+        void AddFollower(PageFollower follower);
+        void RemoveFollower(Guid userId, Guid pageId);
+        Task<IEnumerable<Page>> GetPagesByFollowerIdAsync(Guid userId);
+        Task<IEnumerable<Page>> SearchPagesAsync(string query, int limit = 10);
+        Task<bool> IsFollowingAsync(Guid userId, Guid pageId);
+        Task<int> GetFollowersCountAsync(Guid pageId);
+        Task<IEnumerable<PageFollower>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
+    }
+}
+</file>
+
+<file path="Sohba.Infrastructure/Repositories/PageRepository.cs">
+using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Interfaces;
+using Sohba.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
+
+namespace Sohba.Infrastructure.Repositories
+{
+    public class PageRepository : GenericRepository<Page>, IPageRepository
+    {
+        public PageRepository(AppDbContext context) : base(context)
+        {
+        }
+
+        public void AddFollower(PageFollower follower)
+        {
+            _context.Set<PageFollower>().Add(follower);
+        }
+
+        public void RemoveFollower(Guid userId, Guid pageId)
+        {
+            var follower = _context.Set<PageFollower>()
+                .FirstOrDefault(f => f.UserId == userId && f.PageId == pageId);
+
+            if (follower != null)
+            {
+                _context.Set<PageFollower>().Remove(follower);
+            }
+        }
+
+        public async Task<IEnumerable<Page>> GetPagesByFollowerIdAsync(Guid userId)
+        {
+            var followers = await _context.Set<PageFollower>()
+               .Where(f => f.UserId == userId)
+               .Include(f => f.Page)
+               .ThenInclude(p => p.Admin)
+               .ToListAsync();
+
+            return followers.Select(f => f.Page);
+        }
+        public override async Task<IEnumerable<Page>> GetAllAsync()
+        {
+            return await _context.Set<Page>()
+                .Include(p => p.Admin)
+                .ToListAsync();
+        }
+
+        public override async Task<Page> GetByIdAsync(Guid id)
+        {
+            return await _context.Set<Page>()
+               .Include(p => p.Admin)
+               .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<IEnumerable<Page>> SearchPagesAsync(string query, int limit = 10)
+        {
+            return await _context.Pages
+                .Include(p => p.Admin)
+                .Where(p => p.Name.Contains(query) ||
+                           p.Description.Contains(query))
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<bool> IsFollowingAsync(Guid userId, Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .AnyAsync(f => f.UserId == userId && f.PageId == pageId);
+        }
+
+        public async Task<int> GetFollowersCountAsync(Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .CountAsync(f => f.PageId == pageId);
+        }
+
+        public async Task<IEnumerable<PageFollower>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20)
+        {
+            return await _context.Set<PageFollower>()
+                .Include(f => f.User)
+                .Where(f => f.PageId == pageId)
+                .OrderBy(f => f.FollowedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+    }
+
+}
+</file>
+
+<file path="Sohba/Views/Pages/Create.cshtml">
+@model Sohba.ViewModels.Page.PageCreateViewModel
+@{
+    ViewData["Title"] = "Create Page";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+        <div class="bg-gradient-to-br from-[#345e69] via-[#407380] to-[#4a8291] p-8 text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-10 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-white rounded-2xl shadow-xl shadow-black/10 transition-transform hover:scale-105 duration-300">
+                        <svg class="w-8 h-8 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h1 class="text-3xl font-black text-white tracking-tight">
+                            Create New Page
+                        </h1>
+                        <p class="text-white/80 mt-1 font-medium italic opacity-90">
+                            Share your passion with the world.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm"></div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Page Name</label>
+                <input asp-for="Name"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all"
+                       placeholder="Enter page name..." />
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <textarea asp-for="Description" rows="4"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all resize-none"
+                          placeholder="What is this page about?"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Page Image</label>
+                <input asp-for="ImageFile" type="file" accept="image/*"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#345e69]/10 file:text-[#345e69] hover:file:bg-[#345e69]/20 cursor-pointer" />
+                <p class="text-xs text-gray-500 mt-2">Optional. PNG, JPG up to 5MB.</p>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-slate-100">
+                <a asp-action="Index" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit" class="flex-1 py-2.5 bg-[#345e69] hover:bg-[#2a4b55] text-white font-semibold rounded-xl shadow-lg shadow-[#345e69]/30 transform active:scale-95 transition-all">
+                    Create Page
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</file>
+
+<file path="Sohba/Views/Pages/Details.cshtml">
+@model Sohba.Application.DTOs.GroupAndPageAggregate.PageResponseDto
+@{
+    ViewData["Title"] = Model.Name;
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition px-4">
+    <!-- Page Header -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+        <!-- Cover Image -->
+        <div class="h-48 bg-gradient-to-r from-emerald-600 to-teal-600 relative">
+            <div class="absolute -bottom-12 left-8">
+                <div class="w-32 h-32 bg-white p-2 rounded-3xl shadow-lg">
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <img src="@Model.ImageUrl" class="w-full h-full rounded-2xl object-cover" />
+                    }
+                    else
+                    {
+                        <div class="w-full h-full bg-slate-100 rounded-2xl flex items-center justify-center text-emerald-600 text-4xl font-black">
+                            @Model.Name[0]
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Info & Actions -->
+        <div class="pt-16 pb-6 px-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">@Model.Name</h1>
+                <p class="text-gray-500 mt-1 flex items-center gap-2">
+                    <span>Created by @Model.AdminName</span>
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                @* @if (User.Identity?.Name == Model.AdminName)
+                { *@
+                    <a asp-action="Edit" asp-route-id="@Model.Id"
+                       class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Page
+                    </a>
+                @* } *@
+
+                <button onclick="toggleFollow()" id="followBtn"
+                        class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Follow Page</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="px-8 border-t border-slate-50 flex gap-8">
+            <button onclick="switchTab('posts')"
+                    class="tab-btn active py-4 border-b-2 border-emerald-600 text-emerald-600 font-bold text-sm">
+                Posts
+            </button>
+            <button onclick="switchTab('about')"
+                    class="tab-btn py-4 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm">
+                About
+            </button>
+            <button onclick="switchTab('followers')"
+                    class="tab-btn py-4 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm">
+                Followers
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="tab-content">
+        <!-- Posts Tab (default) -->
+        <div id="posts-tab" class="tab-pane">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Create Post Box -->
+                    @* @if (User.Identity?.Name == Model.AdminName)
+                    { *@
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            <a asp-controller="Posts" asp-action="Create" asp-route-pageId="@Model.Id"
+                               class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-5 py-2.5 rounded-xl text-gray-500 transition-all border border-slate-100">
+                                Share something with your page followers...
+                            </a>
+                        </div>
+                    @* } *@
+
+                    <!-- Posts Container -->
+                    <div id="page-posts">
+                        <div class="text-center py-10 text-gray-500">Loading posts...</div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar -->
+                <div class="space-y-6">
+                    <!-- About Preview -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h3 class="font-black text-gray-900 mb-4">About</h3>
+                        <p class="text-gray-600 text-sm leading-relaxed">
+                            @Model.Description
+                        </p>
+                        <div class="mt-6 pt-6 border-t border-slate-50">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">Created</span>
+                                <span class="font-bold text-gray-700">@Model.CreatedAt.ToString("MMMM dd, yyyy")</span> 
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Followers Preview -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-black text-gray-900">Followers</h3>
+                            <a href="#" onclick="switchTab('followers'); return false;" class="text-emerald-600 text-xs font-bold uppercase">View All</a>
+                        </div>
+                        <div id="followersPreview" class="grid grid-cols-5 gap-2">
+                            
+                            <div class="text-xs text-center text-slate-400 py-4 col-span-5">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="about-tab" class="tab-pane hidden">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-black text-gray-900 mb-6">About @Model.Name</h2>
+
+                <div class="prose max-w-none">
+                    <p class="text-gray-600 leading-relaxed whitespace-pre-line">
+                        @Model.Description
+                    </p>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-xl">
+                        <span class="text-2xl font-black text-emerald-600" id="followersCount">0</span>
+                        <span class="text-sm text-gray-600 block">Followers</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl">
+                        <span class="text-2xl font-black text-emerald-600" id="postsCount">0</span>
+                        <span class="text-sm text-gray-600 block">Posts</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-slate-50">
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Admin: @Model.AdminName</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Followers Tab -->
+        <div id="followers-tab" class="tab-pane hidden">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-lg font-black text-gray-900 mb-4">Followers</h2>
+                <div id="followersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+
+                    <div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPageId = '@Model.Id';
+        let isFollowing = false;
+
+        // Load page data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPagePosts();
+            loadFollowersPreview();
+            loadPageStats(); 
+            checkFollowStatus();
+        });
+
+        async function loadPageStats() {
+            try {
+                const response = await fetch(`/Pages/GetPageStats?pageId=${currentPageId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('postsCount').textContent = data.postsCount;
+                    document.getElementById('followersCount').textContent = data.followersCount;
+                }
+            } catch (error) {
+                console.error('Error loading page stats:', error);
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-emerald-600', 'text-emerald-600');
+                btn.classList.add('border-transparent', 'text-gray-400');
+            });
+            event.target.classList.add('active', 'border-emerald-600', 'text-emerald-600');
+            event.target.classList.remove('border-transparent', 'text-gray-400');
+
+            // Show selected tab
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.add('hidden');
+            });
+            document.getElementById(`${tab}-tab`).classList.remove('hidden');
+
+            // Load tab content if needed
+            if (tab === 'followers') {
+                loadAllFollowers();
+            } else if (tab === 'about') {
+                loadPageStats();
+            }
+        }
+
+        // Load page posts
+        async function loadPagePosts() {
+            try {
+                const response = await fetch(`/Pages/GetPagePosts?pageId=${currentPageId}`);
+                const html = await response.text();
+                document.getElementById('page-posts').innerHTML = html;
+                
+                const postsCount = document.querySelectorAll('#page-posts article').length;
+                document.getElementById('postsCount').textContent = postsCount;
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                document.getElementById('page-posts').innerHTML = '<div class="text-center py-10 text-red-500">Failed to load posts</div>';
+            }
+        }
+
+        // Load followers preview
+        async function loadFollowersPreview() {
+            try {
+                const response = await fetch(`/Pages/GetFollowersPreview?pageId=${currentPageId}&count=10`);
+                const followers = await response.json();
+
+                const container = document.getElementById('followersPreview');
+                if (followers && followers.length > 0) {
+                    container.innerHTML = followers.map(f => `
+                        <div class="group cursor-pointer" title="${f.userName}">
+                            <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
+                                 class="w-10 h-10 rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
+                        </div>
+                    `).join('');
+
+                    document.getElementById('followersCount').textContent = followers.length;
+                } else {
+                    container.innerHTML = '<div class="text-xs text-center text-slate-400 py-4 col-span-5">No followers yet</div>';
+                }
+            } catch (error) {
+                console.error('Error loading followers:', error);
+            }
+        }
+
+        // Load all followers
+        async function loadAllFollowers() {
+            try {
+                const container = document.getElementById('followersList');
+                container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>';
+                
+                const response = await fetch(`/Pages/GetAllFollowers?pageId=${currentPageId}`);
+                const data = await response.json();
+
+                if (data.success && data.followers && data.followers.length > 0) {
+                    container.innerHTML = data.followers.map(f => `
+                        <div class="text-center group cursor-pointer">
+                            <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
+                                 class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
+                            <p class="text-xs font-semibold text-gray-700 mt-2 truncate">${f.userName}</p>
+                            <p class="text-xs text-gray-400">Joined ${new Date(f.followedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">No followers yet</div>';
+                }
+            } catch (error) {
+                console.error('Error loading followers:', error);
+                document.getElementById('followersList').innerHTML = '<div class="text-center text-red-500 py-8 col-span-full">Failed to load followers</div>';
+            }
+        }
+
+        // Check if current user follows this page
+        async function checkFollowStatus() {
+            try {
+                const response = await fetch(`/Pages/CheckFollowStatus?pageId=${currentPageId}`);
+                const data = await response.json();
+                isFollowing = data.isFollowing;
+                updateFollowButton();
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+            }
+        }
+
+        // Toggle follow
+        async function toggleFollow() {
+            try {
+                const result = await SohbaApp.post('/Pages/ToggleFollow', { pageId: currentPageId });
+
+                if (result.success) {
+                    isFollowing = result.isFollowing;
+                    updateFollowButton();
+                    
+                    SohbaApp.toast(isFollowing ? 'Page followed!' : 'Page unfollowed', 'success');
+                    
+                    await loadFollowersPreview();
+                    await loadPageStats();
+                    
+                    if (!document.getElementById('followers-tab').classList.contains('hidden')) {
+                        await loadAllFollowers();
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+                SohbaApp.toast('Failed to update follow status', 'error');
+            }
+        }
+
+        // Update follow button UI
+        function updateFollowButton() {
+            const btn = document.getElementById('followBtn');
+            const icon = btn.querySelector('svg');
+            const text = btn.querySelector('span');
+
+            if (isFollowing) {
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btn.classList.add('bg-slate-200', 'hover:bg-slate-300', 'text-gray-700');
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
+                text.textContent = 'Following';
+            } else {
+                btn.classList.remove('bg-slate-200', 'hover:bg-slate-300', 'text-gray-700');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'text-white');
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />';
+                text.textContent = 'Follow Page';
+            }
+        }
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IFriendshipService.cs">
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IFriendshipService
+    {
+
+        Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> CancelFriendRequestAsync(Guid senderId, Guid receiverId);
+
+
+        Task<Result> UnfriendAsync(Guid userId, Guid friendId);
+        Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId);
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
+
+        Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId);
+        Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId);
+        Task<Result<int>> GetPendingRequestsCountAsync(Guid userId);
+
+
+        Task<Result> BlockUserAsync(Guid userId, Guid targetId);
+        Task<Result> UnblockUserAsync(Guid userId, Guid targetId);
+        Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId);
+
+
+        Task<Result<IEnumerable<UserResponseDto>>> GetFriendSuggestionsAsync(Guid userId, int count = 10);
+
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IPageService.cs">
+using Sohba.Application.DTOs.GroupAndPageAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IPageService
+    {
+        Task<Result<PageResponseDto>> CreatePageAsync(Guid adminId, PageCreateDto dto);
+        Task<Result> FollowPageAsync(Guid userId, Guid pageId);
+        Task<Result> UnfollowPageAsync(Guid userId, Guid pageId);
+        Task<Result<PageResponseDto>> GetPageByIdAsync(Guid pageId);
+        Task<Result<IEnumerable<PageResponseDto>>> GetUserFollowedPagesAsync(Guid userId);
+        Task<Result<IEnumerable<PageResponseDto>>> GetAllPagesAsync();
+        Task<Result> DeletePageAsync(Guid adminId, Guid pageId);
+        Task<Result<bool>> ToggleFollowPageAsync(Guid userId, Guid pageId);
+        Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId);
+        Task<Result<int>> GetFollowersCountAsync(Guid pageId);
+        Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
+        Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId);
+
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/GroupAndPage/Page.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Entities.GroupAndPage
+{
+    public class Page
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public Guid AdminId { get; set; }
+        public virtual UserAggregate.User Admin { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Pages/Index.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.PageResponseDto>
+@{
+    ViewData["Title"] = "Pages";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Pages</h1>
+                <p class="text-gray-500 mt-1">Discover and follow pages</p>
+            </div>
+            <a asp-action="Create" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create Page
+            </a>
+        </div>
+    </div>
+
+    <div id="pagesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @if (Model != null && Model.Any())
+        {
+
+            @foreach (var item in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
+                            @item.Name[0]
+                        </div>
+                        <div class="flex-1">
+                            <a href="/Pages/Details/@item.Id" class="font-bold text-gray-900 hover:text-emerald-600 transition">@item.Name</a>
+                            <p class="text-gray-500 text-sm mt-1 line-clamp-2">@item.Description</p>
+                            <p class="text-xs text-gray-400 mt-2">By @item.AdminName</p>
+                        </div>
+                    </div>
+
+                    @if (item.AdminId == (Guid)ViewBag.CurrentUserId)
+                    {
+                        <a href="/Pages/Details/@item.Id" class="block text-center w-full mt-4 py-2 bg-emerald-50 text-emerald-600 font-bold rounded-xl outline-dashed outline-emerald-200 hover:bg-emerald-100 transition-colors">
+                            ⚙️ Manage Your Page
+                        </a>
+                    }
+                    else
+                    {
+                        @if (item.IsFollowing)
+                        {
+                            <button onclick="toggleFollow('@item.Id', this)" class="w-full mt-4 py-2 bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors">
+                                Following
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="toggleFollow('@item.Id', this)" class="w-full mt-4 py-2 bg-[#345e69]/10 text-[#345e69] font-semibold rounded-xl hover:bg-[#345e69] hover:text-white transition-colors">
+                                Follow
+                            </button>
+                        }
+                    }
+                </div>
+            }
+
+        }
+        else
+        {
+            <div class="col-span-full text-center py-20">
+                <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No pages yet</h3>
+                <p class="text-gray-500 mt-2">Create or follow a page!</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Handle Follow Action with JS for smooth UI experience
+        async function followPage(pageId, btnElement) {
+            try {
+                const result = await SohbaApp.post('/Pages/Follow', { pageId });
+                if (result.success) {
+                    SohbaApp.toast('Page followed!', 'success');
+
+                    btnElement.innerText = 'Following';
+                    btnElement.classList.replace('bg-[#345e69]/10', 'bg-[#345e69]');
+                    btnElement.classList.replace('text-[#345e69]', 'text-white');
+                    btnElement.disabled = true;
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to follow', 'error');
+                }
+            } catch (e) {
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+        // Handle Unfollow Action with JS for smooth UI experience
+        async function toggleFollow(pageId, buttonElement) {
+            const result = await SohbaApp.post('/Pages/ToggleFollow', { pageId });
+
+            if (result.success) {
+                if (result.isFollowing) {
+                    buttonElement.innerText = "Following";
+                    buttonElement.classList.replace('bg-[#345e69]/10', 'bg-slate-200');
+                    buttonElement.classList.replace('text-[#345e69]', 'text-slate-600');
+                    SohbaApp.toast('Page followed!', 'success');
+                } else {
+                    buttonElement.innerText = "Follow";
+                    buttonElement.classList.replace('bg-slate-200', 'bg-[#345e69]/10');
+                    buttonElement.classList.replace('text-slate-600', 'text-[#345e69]');
+                    SohbaApp.toast('Unfollowed page', 'info');
+                }
+            } else {
+                SohbaApp.toast(result.error || 'Failed action', 'error');
+            }
+        }
+
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/Services/PageService.cs">
+using AutoMapper;
+using Sohba.Application.DTOs.GroupAndPageAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Enums;
+using Sohba.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Services
+{
+    public class PageService : IPageService
+    {
+        private readonly IPageDomainService _pageDomainService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+
+        private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
+
+        public PageService(
+            IPageDomainService pageDomainService,
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            IUserService userService,
+            INotificationService notificationService)
+        {
+            _pageDomainService = pageDomainService;
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _userService = userService;
+            _notificationService = notificationService;
+        }
+
+        public async Task<Result<PageResponseDto>> CreatePageAsync(Guid adminId, PageCreateDto dto)
+        {
+            var domainDecision = _pageDomainService.CanCreatePage(dto?.Name);
+            if (domainDecision.IsFailure)
+                return Result<PageResponseDto>.Failure(domainDecision.Error);
+
+            var page = new Page
+            {
+                Id = Guid.NewGuid(),
+                Name = dto.Name,
+                Description = dto.Description,
+                AdminId = adminId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Pages.Add(page);
+
+            var follower = new PageFollower
+            {
+                UserId = adminId,
+                PageId = page.Id,
+                FollowedAt = DateTime.UtcNow
+            };
+            _unitOfWork.Pages.AddFollower(follower);
+            await _unitOfWork.CompleteAsync();
+
+            var response = _mapper.Map<PageResponseDto>(page);
+            return Result<PageResponseDto>.Success(response);
+        }
+
+        public async Task<Result> FollowPageAsync(Guid userId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            var followedPages = await _unitOfWork.Pages.GetPagesByFollowerIdAsync(userId);
+            var alreadyFollowing = followedPages.Any(p => p.Id == pageId);
+
+
+            var domainDecision = _pageDomainService.CanFollowPage(userId, page, alreadyFollowing);
+            if (domainDecision.IsFailure)
+                return domainDecision;
+
+            var follower = new PageFollower
+            {
+                UserId = userId,
+                PageId = pageId,
+                FollowedAt = DateTime.UtcNow
+            };
+
+
+            _unitOfWork.Pages.AddFollower(follower);
+            await _unitOfWork.CompleteAsync();
+
+
+            if (page.AdminId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                var userName = user.Value?.Name ?? "Someone";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: page.AdminId,
+                    message: $"{userName} followed your page '{page.Name}'",
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: pageId
+                );
+            }
+
+            return Result.Success();
+        }
+
+        public async Task<Result> UnfollowPageAsync(Guid userId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null)
+                return Result.Failure("Page not found");
+
+
+            var followedPages = await _unitOfWork.Pages.GetPagesByFollowerIdAsync(userId);
+            var alreadyFollowing = followedPages.Any(p => p.Id == pageId);
+
+            var domainDecision = _pageDomainService.CanUnfollowPage(alreadyFollowing);
+            if (domainDecision.IsFailure)
+                return domainDecision;
+
+            _unitOfWork.Pages.RemoveFollower(userId, pageId);
+            await _unitOfWork.CompleteAsync();
+
+
+
+            if (page.AdminId != userId)
+            {
+                var user = await _userService.GetProfileAsync(userId);
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: page.AdminId,
+                    message: $"{user.Value?.Name} unfollowed your page '{page.Name}'",
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: pageId
+                );
+            }
+
+            return Result.Success();
+        }
+
+        public async Task<Result<PageResponseDto>> GetPageByIdAsync(Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null)
+                return Result<PageResponseDto>.Failure("Page not found");
+
+            var dto = _mapper.Map<PageResponseDto>(page);
+            return Result<PageResponseDto>.Success(dto);
+        }
+
+        public async Task<Result<IEnumerable<PageResponseDto>>> GetUserFollowedPagesAsync(Guid userId)
+        {
+            var pages = await _unitOfWork.Pages.GetPagesByFollowerIdAsync(userId);
+            var dtos = _mapper.Map<IEnumerable<PageResponseDto>>(pages);
+
+            return Result<IEnumerable<PageResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result<IEnumerable<PageResponseDto>>> GetAllPagesAsync()
+        {
+            var pages = await _unitOfWork.Pages.GetAllAsync();
+
+            var dtos = _mapper.Map<IEnumerable<PageResponseDto>>(pages);
+
+            return Result<IEnumerable<PageResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result> DeletePageAsync(Guid adminId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+
+            if (page == null)
+                return Result.Failure("Page not found");
+
+            if (page.AdminId != adminId)
+                return Result.Failure("You are not authorized to delete this page.");
+
+            _unitOfWork.Pages.Delete(page);
+
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<bool>> ToggleFollowPageAsync(Guid userId, Guid pageId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null)
+                return Result<bool>.Failure("Page not found");
+
+
+            var isFollowing = await IsFollowingAsync(userId, pageId);
+
+            if (isFollowing.Value)
+            {
+
+                await UnfollowPageAsync(userId, pageId);
+                return Result<bool>.Success(false);
+            }
+            else
+            {
+
+                await FollowPageAsync(userId, pageId);
+                return Result<bool>.Success(true);
+            }
+        }
+
+        public async Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId)
+        {
+            var followedPages = await _unitOfWork.Pages.GetPagesByFollowerIdAsync(userId);
+            var isFollowing = followedPages.Any(p => p.Id == pageId);
+            return Result<bool>.Success(isFollowing);
+        }
+
+        public async Task<Result<int>> GetFollowersCountAsync(Guid pageId)
+        {
+            var count = await _unitOfWork.Pages.GetFollowersCountAsync(pageId);
+            return Result<int>.Success(count);
+        }
+
+        public async Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20)
+        {
+            var followers = await _unitOfWork.Pages.GetFollowersAsync(pageId, page, pageSize);
+            var dtos = _mapper.Map<IEnumerable<PageFollowerDto>>(followers);
+            return Result<IEnumerable<PageFollowerDto>>.Success(dtos);
+        }
+
+        public async Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(updateDto.Id);
+            if (page == null)
+                return Result<PageResponseDto>.Failure("Page not found.");
+
+            if (page.AdminId != userId)
+                return Result<PageResponseDto>.Failure("You are not authorized to edit this page.");
+
+
+            page.Name = updateDto.Name;
+            page.Description = updateDto.Description;
+            page.ImageUrl = updateDto.ImageUrl ?? page.ImageUrl;
+
+            _unitOfWork.Pages.Update(page);
+            await _unitOfWork.CompleteAsync();
+
+            var response = _mapper.Map<PageResponseDto>(page);
+            return Result<PageResponseDto>.Success(response);
+        }
+    }
+
+}
+</file>
+
+<file path="Sohba/Controllers/PagesController.cs">
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.GroupAndPageAggregate;
+using Sohba.Application.Interfaces;
+
+using Sohba.ViewModels.Page;
+
+namespace Sohba.Controllers
+{
+    [Authorize]
+    [EnableRateLimiting("Api")]
+
+    public class PagesController : BaseController
+    {
+        private readonly IPageService _pageService;
+        private readonly IPostService _postService;
+        private readonly IFriendshipService _friendshipService;
+        private readonly IFileStorageService _fileStorage;
+
+        public PagesController(
+            IPageService pageService,
+            IPostService postService,
+            IFriendshipService friendshipService,
+            IFileStorageService fileStorage)
+        {
+            _pageService = pageService;
+            _postService = postService;
+            _friendshipService = friendshipService;
+            _fileStorage = fileStorage;
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> Discover()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _pageService.GetAllPagesAsync();
+
+            if (result.IsSuccess)
+            {
+                var followedPages = await _pageService.GetUserFollowedPagesAsync(userId);
+                var followedIds = followedPages.Value.Select(p => p.Id);
+
+                var pagesToFollow = result.Value
+                    .Where(p => !followedIds.Contains(p.Id))
+                    .Take(5)
+                    .ToList();
+
+                return Json(pagesToFollow);
+            }
+            return Json(new List<PageResponseDto>());
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Details(Guid id)
+        {
+            var result = await _pageService.GetPageByIdAsync(id);
+
+            if (result.IsFailure)
+                return NotFound();
+
+            return View(result.Value);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _pageService.DeletePageAsync(userId, id);
+
+            if (result.IsSuccess)
+                return Json(new { success = true, message = "Page deleted successfully" });
+
+            return Json(new { success = false, error = result.Error });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await _pageService.GetUserFollowedPagesAsync(userId);
+            if (result.IsSuccess)
+            {
+                foreach (var page in result.Value)
+                {
+                    page.IsFollowing = true;
+                }
+            }
+            ViewBag.CurrentUserId = userId;
+            return View(result.Value);
+        }
+
+        [HttpGet]
+        public IActionResult Create() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(PageCreateViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var userId = GetCurrentUserId();
+
+
+
+            string imageUrl = null;
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+            if (!uploadResult.IsSuccess)
+            {
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
+                return View(model);
+            }
+            imageUrl = uploadResult.Value;
+
+            var dto = new PageCreateDto
+            {
+                Name = model.Name,
+                Description = model.Description,
+                ImageUrl = imageUrl,
+                AdminId = userId
+            };
+
+            var result = await _pageService.CreatePageAsync(userId, dto);
+
+            if (result.IsSuccess)
+                return RedirectToAction("Index");
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleFollow(Guid pageId)
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await _pageService.ToggleFollowPageAsync(userId, pageId);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                isFollowing = result.Value
+            });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetPagesList()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _pageService.GetUserFollowedPagesAsync(userId);
+            return Json(result.Value);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPagePosts(Guid pageId)
+        {
+            var userId = GetCurrentUserId();
+            var postsResult = await _postService.GetPagePostsAsync(pageId, userId);
+
+            if (postsResult.IsSuccess && postsResult.Value != null && postsResult.Value.Any())
+            {
+                return PartialView("Partials/_PostCard", postsResult.Value);
+            }
+
+            return Content("<div class='text-center py-10 text-gray-500'>No posts yet</div>");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetFollowersPreview(Guid pageId, int count = 10)
+        {
+            var userId = GetCurrentUserId();
+
+            var followersResult = await _pageService.GetFollowersAsync(pageId, 1, count);
+
+            if (followersResult.IsSuccess)
+            {
+                return Json(followersResult.Value);
+            }
+
+            return Json(new List<PageFollowerDto>());
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllFollowers(Guid pageId, int page = 1, int pageSize = 20)
+        {
+            var followersResult = await _pageService.GetFollowersAsync(pageId, page, pageSize);
+
+            if (!followersResult.IsSuccess)
+                return Json(new { success = false, error = followersResult.Error });
+
+            return Json(new
+            {
+                success = true,
+                followers = followersResult.Value,
+                page = page,
+                pageSize = pageSize,
+                hasMore = followersResult.Value.Count() == pageSize
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckFollowStatus(Guid pageId)
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await _pageService.IsFollowingAsync(userId, pageId);
+
+            return Json(new { isFollowing = result.Value });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            var pageResult = await _pageService.GetPageByIdAsync(id);
+
+            if (pageResult.IsFailure)
+                return NotFound();
+
+            if (pageResult.Value.AdminId != userId)
+                return Forbid();
+
+            var viewModel = new PageEditViewModel
+            {
+                Id = pageResult.Value.Id,
+                Name = pageResult.Value.Name,
+                Description = pageResult.Value.Description,
+                ImageUrl = pageResult.Value.ImageUrl
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(PageEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+
+
+            string imageUrl = model.ImageUrl;
+            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "pages");
+            if (!uploadResult.IsSuccess)
+            {
+                ModelState.AddModelError("ImageFile", uploadResult.Error);
+                return View(model);
+            }
+            if (uploadResult.Value != null) imageUrl = uploadResult.Value;
+
+            var updateDto = new PageUpdateDto
+            {
+                Id = model.Id,
+                Name = model.Name,
+                Description = model.Description,
+                ImageUrl = imageUrl
+            };
+
+            var result = await _pageService.UpdatePageAsync(updateDto, userId);
+
+            if (result.IsSuccess)
+            {
+                TempData["SuccessMessage"] = "Page updated successfully";
+                return RedirectToAction("Details", new { id = model.Id });
+            }
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetPageStats(Guid pageId)
+        {
+            var postsResult = await _postService.GetPagePostsAsync(pageId, Guid.Empty);
+            var followersCount = await _pageService.GetFollowersCountAsync(pageId);
+
+            var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
+
+            return Json(new
+            {
+                success = true,
+                postsCount = postsCount,
+                followersCount = followersCount.Value
+            });
+        }
+
+
+
+        public class ToggleFollowRequest
+        {
+            public Guid PageId { get; set; }
+        }
+        //private Guid GetCurrentUserId()
+        //{
+        //    //var userIdStr = HttpContext.Session.GetString("UserId");
+
+
+
+
+    }
+
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IPostService.cs">
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.PostAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IPostService
+    {
+
+        Task<Result<PagedResult<PostResponseDto>>> GetFeedAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 10);
+
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
+        Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
+        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
+        Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false);
+        Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetPagePostsAsync(Guid pageId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetUserPostsAsync(Guid userId, Guid currentUserId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
+        Task<Result> HidePostAsync(Guid postId, Guid userId);
+
+        Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
+
+    }
+}
+</file>
+
+</files>

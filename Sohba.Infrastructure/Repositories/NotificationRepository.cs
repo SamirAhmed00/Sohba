@@ -19,5 +19,22 @@ namespace Sohba.Infrastructure.Repositories
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Notification>> GetByReceiverPagedAsync(Guid userId, int page, int pageSize)
+        {
+            return await _context.Set<Notification>()
+                .Where(n => n.ReceiverId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Notification>> GetOldReadNotificationsAsync(DateTime cutoffDate)
+        {
+            return await _context.Set<Notification>()
+                .Where(n => n.CreatedAt<cutoffDate && n.IsRead)
+                .ToListAsync();
+        }
     }
 }

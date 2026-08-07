@@ -25,6 +25,7 @@ namespace Sohba.Infrastructure.Data
         public DbSet<PostReport> PostReports { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
         public DbSet<SavedPost> SavedPost { get; set; }
+        public DbSet<SavedCollection> SavedCollections { get; set; }
 
         public DbSet<Group> Groups { get; set; }
         public DbSet<GroupMember> GroupMembers { get; set; }
@@ -35,6 +36,8 @@ namespace Sohba.Infrastructure.Data
         public DbSet<User> Users { get; set; }
 
         public DbSet<Story> Stories { get; set; }
+
+        
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

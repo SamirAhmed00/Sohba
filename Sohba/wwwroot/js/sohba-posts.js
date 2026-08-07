@@ -63,6 +63,9 @@ window.SohbaApp.reactToPost = async function (postId, reactionType) {
 };
 
 // ------------ Save & Favorite Functions -------------
+
+
+// -- We Will Delete It --- But Kept Now For Compatibility With Old Code --
 window.SohbaApp.savePost = async function (postId) {
     try {
         const result = await window.SohbaApp.post('/Posts/ToggleSavePost', {
@@ -72,18 +75,6 @@ window.SohbaApp.savePost = async function (postId) {
 
         if (result.success) {
             updateSaveFavoriteButtons(postId, result.saved, false);
-            const icon = button.querySelector('svg');
-            const text = button.querySelector('.btn-text');
-
-            if (result.saved) {
-                button.classList.add('text-amber-600', 'bg-amber-50');
-                icon.setAttribute('fill', 'currentColor');
-                text.textContent = 'Saved';
-            } else {
-                button.classList.remove('text-amber-600', 'bg-amber-50');
-                icon.setAttribute('fill', 'none');
-                text.textContent = 'Save Post';
-            }
 
             window.SohbaApp.toast(result.message, 'success');
         } else {
@@ -97,29 +88,16 @@ window.SohbaApp.savePost = async function (postId) {
 
 window.SohbaApp.addToFavorites = async function (postId) {
     try {
-        const result = await window.SohbaApp.post('/Posts/ToggleSavePost', {
-            postId: postId,
-            isFavorite: true
-        });
+        const result = await window.SohbaApp.post('/Posts/ToggleFavorite', { postId });
 
         if (result.success) {
-            updateSaveFavoriteButtons(postId, result.saved, result.saved);
-            const icon = button.querySelector('svg');
-            const text = button.querySelector('.btn-text');
+            const btn = document.querySelector(`[data-fav-button="${postId}"]`);
+            const isCurrentlyFav = btn && btn.classList.contains('text-pink-600');
+            updateSaveFavoriteButtons(postId, true, !isCurrentlyFav);
 
-            if (result.saved) {
-                button.classList.add('text-pink-600', 'bg-pink-50');
-                icon.setAttribute('fill', 'currentColor');
-                text.textContent = 'Favorited';
-            } else {
-                button.classList.remove('text-pink-600', 'bg-pink-50');
-                icon.setAttribute('fill', 'none');
-                text.textContent = 'Add to Favorites';
-            }
-
-            window.SohbaApp.toast(result.message, 'success');
+            window.SohbaApp.toast(isCurrentlyFav ? 'Removed from favorites' : 'Added to favorites!', 'success');
         } else {
-            window.SohbaApp.toast(result.error || 'Failed to add to favorites', 'error');
+            window.SohbaApp.toast(result.error || 'Failed to update favorites', 'error');
         }
     } catch (error) {
         console.error('Favorite error:', error);
@@ -389,3 +367,96 @@ window.SohbaApp.editPostModal = function (postId) {
     
     window.location.href = `/Posts/Edit/${postId}`;
 };
+
+
+
+// --------------- Save Posts ------------
+
+window.SohbaApp.openSavePostModal = async function (postId) {
+    const modal = document.getElementById('savePostModal');
+    if (!modal) return;
+
+    modal.dataset.postId = postId;
+    const listEl = document.getElementById('saveCollectionsList');
+    const nameInput = document.getElementById('newCollectionName');
+    listEl.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">Loading...</div>';
+    nameInput.value = '';
+
+    const result = await window.SohbaApp.get('/Posts/GetUserCollections');
+    const collections = result.data ?? [];
+
+    if (collections.length === 0) {
+        listEl.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">No collections yet. Create one below.</div>';
+    } else {
+        listEl.innerHTML = collections.map(c => `
+            <button onclick="SohbaApp.saveToCollection('${postId}', '${c.id}')"
+                    class="w-full text-left px-4 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-semibold text-gray-700">
+                ${c.name}
+            </button>
+        `).join('');
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.SohbaApp.saveToCollection = async function (postId, collectionId) {
+    const result = await window.SohbaApp.post('/Posts/SaveToCollection', { postId, collectionId });
+    if (result.success) {
+        window.SohbaApp.toast('Post saved to collection!', 'success');
+        window.SohbaApp.closeSavePostModal();
+        updateSaveFavoriteButtons(postId, true, false);
+    } else {
+        window.SohbaApp.toast(result.error || 'Failed to save post', 'error');
+    }
+};
+
+window.SohbaApp.createNewCollection = async function () {
+    const name = document.getElementById('newCollectionName')?.value.trim();
+    const postId = document.getElementById('savePostModal')?.dataset.postId;
+    if (!name) { window.SohbaApp.toast('Please enter a collection name', 'error'); return; }
+
+    const createResult = await window.SohbaApp.post('/Posts/CreateCollection', { name });
+    if (!createResult.success) {
+        window.SohbaApp.toast(createResult.error || 'Failed to create collection', 'error');
+        return;
+    }
+
+    const collectionId = createResult.data?.id;
+    if (postId && collectionId) {
+        await window.SohbaApp.saveToCollection(postId, collectionId);
+    } else {
+        window.SohbaApp.closeSavePostModal();
+        window.SohbaApp.toast('Collection created!', 'success');
+    }
+};
+
+window.SohbaApp.closeSavePostModal = function () {
+    const modal = document.getElementById('savePostModal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+window.SohbaApp.get = async function (url) {
+    try {
+        const response = await fetch(url);
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            return { success: false, error: `Server error (HTTP ${response.status}).` };
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('[SohbaApp.get] Network error:', error);
+        return { success: false, error: 'Network error.' };
+    }
+};
+
+
+
+// ---- Namespace aliases: HTML attributes call SohbaApp.* ----
+window.SohbaApp.showReplyForm = window.showReplyForm;
+window.SohbaApp.hideReplyForm = window.hideReplyForm;
+window.SohbaApp.submitReply = window.submitReply;
+window.SohbaApp.toggleReplies = window.toggleReplies;
+window.SohbaApp.deleteComment = window.deleteComment;
+

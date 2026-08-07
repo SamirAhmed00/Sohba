@@ -127,6 +127,54 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(filteredUsers);
             return Result<IEnumerable<UserResponseDto>>.Success(dtos);
         }
+
+        public async Task<Result<int>> GetUsersCountAsync()
+        {
+            var count = await _unitOfWork.Users.CountAsync();
+            return Result<int>.Success(count);
+        }
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetRecentUsersAsync(int count)
+        {
+            var users = await _unitOfWork.Users.GetRecentAsync(count);
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result> DeactivateAccountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("User not found.");
+
+            // Domain rule: mark the account as deactivated (soft disable)
+            user.IsActive = false;      
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+
+        public async Task<Result> DeleteMyAccountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("User not found.");
+
+            // Delete related data (posts, comments, friendships, saved collections) per domain rules
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                // NOTE: implement the cascade deletion carefully in the repository
+                // (delete friendships, group memberships, page admin rows, posts, comments, saved)
+                _unitOfWork.Users.Delete(user);
+                await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return Result.Success();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
     }
 }
 

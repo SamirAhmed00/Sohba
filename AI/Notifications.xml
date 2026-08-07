@@ -1,0 +1,1146 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+The content has been processed where comments have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: Sohba/Controllers/NotificationsController.cs, Sohba/Hubs/NotificationHub.cs, Sohba/Handlers/NotificationEventHandler.cs, Sohba.Application/Interfaces/INotificationService.cs, Sohba.Application/Services/NotificationService.cs, Sohba.Application/Interfaces/INotificationEventHandler.cs, Sohba.Application/Interfaces/INotificationHubService.cs, Sohba.Application/Events/NotificationEvent.cs, Sohba.Application/DTOs/UserAggregate/NotificationResponseDto.cs, Sohba.Application/DTOs/Common/BaseResponseDto.cs, Sohba.Domain/Entities/UserAggregate/Notification.cs, Sohba.Domain/Enums/NotificationType.cs, Sohba.Domain/Interfaces/INotificationRepository.cs, Sohba.Domain/Domain Rules/Interface/INotificationDomainService.cs, Sohba.Domain/Domain Rules/Logic/NotificationDomainService.cs, Sohba.Domain/Common/Result.cs, Sohba.Infrastructure/Repositories/NotificationRepository.cs, Sohba.Infrastructure/Services/NotificationCleanupService.cs, Sohba/Views/Notifications/Index.cshtml
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Code comments have been removed from supported file types
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Sohba/
+  Controllers/
+    NotificationsController.cs
+  Handlers/
+    NotificationEventHandler.cs
+  Hubs/
+    NotificationHub.cs
+  Views/
+    Notifications/
+      Index.cshtml
+Sohba.Application/
+  DTOs/
+    Common/
+      BaseResponseDto.cs
+    UserAggregate/
+      NotificationResponseDto.cs
+  Events/
+    NotificationEvent.cs
+  Interfaces/
+    INotificationEventHandler.cs
+    INotificationHubService.cs
+    INotificationService.cs
+  Services/
+    NotificationService.cs
+Sohba.Domain/
+  Common/
+    Result.cs
+  Domain Rules/
+    Interface/
+      INotificationDomainService.cs
+    Logic/
+      NotificationDomainService.cs
+  Entities/
+    UserAggregate/
+      Notification.cs
+  Enums/
+    NotificationType.cs
+  Interfaces/
+    INotificationRepository.cs
+Sohba.Infrastructure/
+  Repositories/
+    NotificationRepository.cs
+  Services/
+    NotificationCleanupService.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Sohba/Handlers/NotificationEventHandler.cs">
+using Microsoft.AspNetCore.SignalR;
+using Sohba.Application.Events;
+using Sohba.Application.Interfaces;
+using Sohba.Controllers;
+using Sohba.Hubs;
+using System.Threading.Tasks;
+
+namespace Sohba.Handlers
+{
+
+
+
+
+    public class NotificationEventHandler : INotificationEventHandler
+    {
+        private readonly IHubContext<NotificationHub> _hubContext;
+        protected readonly ILogger<NotificationEventHandler> _logger;
+        public NotificationEventHandler(IHubContext<NotificationHub> hubContext, ILogger<NotificationEventHandler> logger)
+        {
+            _hubContext = hubContext;
+            _logger = logger;
+        }
+
+        public async Task HandleAsync(NotificationEvent @event)
+        {
+            if (@event == null || @event.Notification == null)
+                return;
+
+            try
+            {
+
+                var notificationDto = new
+                {
+                    id = @event.Notification.Id,
+                    message = @event.Message,
+                    notificationType = @event.Type.ToString(),
+                    senderId = @event.SenderId,
+                    targetId = @event.TargetId,
+                    createdAt = @event.Notification.CreatedAt,
+                    isRead = @event.Notification.IsRead,
+
+
+                };
+
+
+                await _hubContext.Clients.User(@event.ReceiverId.ToString())
+                    .SendAsync("ReceiveNotification", notificationDto);
+
+            }
+            catch (System.Exception ex)
+            {
+
+                _logger.LogError(ex, "SignalR failed to send notification to user {ReceiverId}", @event.ReceiverId);
+            }
+        }
+    }
+}
+</file>
+
+<file path="Sohba/Hubs/NotificationHub.cs">
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
+
+namespace Sohba.Hubs
+{
+    [Authorize]
+    public class NotificationHub : Hub
+    {
+
+        private static readonly ConcurrentDictionary<string, string> _userConnections = new();
+
+        public override async Task OnConnectedAsync()
+        {
+            var userId = Context.UserIdentifier;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _userConnections[userId] = Context.ConnectionId;
+            }
+
+            await base.OnConnectedAsync();
+        }
+
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            var userId = Context.UserIdentifier;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _userConnections.TryRemove(userId, out _);
+            }
+
+            await base.OnDisconnectedAsync(exception);
+        }
+
+
+        public async Task SendNotificationToUser(string userId, object notification)
+        {
+            if (_userConnections.TryGetValue(userId, out var connectionId))
+            {
+                await Clients.Client(connectionId).SendAsync("ReceiveNotification", notification);
+            }
+        }
+
+
+        public async Task SendNotificationToUsers(string[] userIds, object notification)
+        {
+            var connectionIds = new List<string>();
+            foreach (var userId in userIds)
+            {
+                if (_userConnections.TryGetValue(userId, out var connectionId))
+                {
+                    connectionIds.Add(connectionId);
+                }
+            }
+
+            if (connectionIds.Any())
+            {
+                await Clients.Clients(connectionIds).SendAsync("ReceiveNotification", notification);
+            }
+        }
+
+
+        public async Task BroadcastNotification(object notification)
+        {
+            await Clients.All.SendAsync("ReceiveNotification", notification);
+        }
+
+
+        public async Task JoinGroup(string groupName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+        }
+
+
+        public async Task LeaveGroup(string groupName)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+        }
+
+
+        public int GetConnectionCount()
+        {
+            return _userConnections.Count;
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/Common/BaseResponseDto.cs">
+using System;
+
+namespace Sohba.Application.DTOs.Common
+{
+    public class BaseResponseDto
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+
+        public static BaseResponseDto SuccessResponse() => new BaseResponseDto { Success = true, Error = null };
+        public static BaseResponseDto FailureResponse(string error) => new BaseResponseDto { Success = false, Error = error };
+    }
+
+    public class BaseResponseDto<T> : BaseResponseDto
+    {
+        public T Data { get; set; }
+
+        public static BaseResponseDto<T> SuccessResponse(T data) => new BaseResponseDto<T> { Success = true, Data = data, Error = null };
+        public new static BaseResponseDto<T> FailureResponse(string error) => new BaseResponseDto<T> { Success = false, Data = default, Error = error };
+    }
+}
+</file>
+
+<file path="Sohba.Application/Events/NotificationEvent.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
+using System;
+
+namespace Sohba.Application.Events
+{
+
+
+
+
+
+    public class NotificationEvent
+    {
+
+
+
+        public Guid ReceiverId { get; set; }
+
+
+
+
+        public string Message { get; set; } = string.Empty;
+
+
+
+
+        public NotificationType Type { get; set; }
+
+
+
+
+        public Guid? SenderId { get; set; }
+
+
+
+
+        public Guid? TargetId { get; set; }
+
+
+
+
+        public Notification? Notification { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/INotificationEventHandler.cs">
+using Sohba.Application.Events;
+using System.Threading.Tasks;
+
+namespace Sohba.Application.Interfaces
+{
+
+
+
+
+    public interface INotificationEventHandler
+    {
+
+
+
+
+        Task HandleAsync(NotificationEvent @event);
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/INotificationHubService.cs">
+using System;
+using System.Threading.Tasks;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface INotificationHubService
+    {
+        Task SendNotificationToUserAsync(string userId, object notification);
+        Task SendNotificationToUsersAsync(string[] userIds, object notification);
+        Task BroadcastNotificationAsync(object notification);
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/INotificationService.cs">
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface INotificationService
+    {
+
+        Task<Result> CreateNotificationAsync(
+            Guid receiverId,
+            string message,
+            NotificationType type,
+            Guid? senderId = null,
+            Guid? targetId = null);
+
+
+        Task<Result<IEnumerable<Notification>>> GetUserNotificationsAsync(Guid userId, int page = 1, int pageSize = 20);
+        Task<Result<IEnumerable<Notification>>> GetUnreadNotificationsAsync(Guid userId);
+        Task<Result<int>> GetUnreadCountAsync(Guid userId);
+
+
+        Task<Result> MarkAsReadAsync(Guid notificationId, Guid userId);
+        Task<Result> MarkAllAsReadAsync(Guid userId);
+
+
+        Task<Result> DeleteNotificationAsync(Guid notificationId, Guid userId);
+        Task<Result> DeleteOldNotificationsAsync(int daysOld = 30);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Interface/INotificationDomainService.cs">
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Interface
+{
+    public interface INotificationDomainService
+    {
+
+        bool ShouldSendNotification(Guid actorId, Guid targetOwnerId);
+
+
+        bool ShouldBundleNotifications(Guid targetEntityId, string notificationType, DateTime lastSentAt);
+
+        Result CanMarkAsRead(Guid userId, Guid notificationOwnerId);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Logic/NotificationDomainService.cs">
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Logic
+{
+    public class NotificationDomainService : INotificationDomainService
+    {
+        public bool ShouldSendNotification(Guid actorId, Guid targetOwnerId)
+        {
+
+            return actorId != targetOwnerId;
+        }
+
+        public bool ShouldBundleNotifications(Guid targetEntityId, string notificationType, DateTime lastSentAt)
+        {
+
+
+            double bundleWindowMinutes = 15;
+            return DateTime.UtcNow < lastSentAt.AddMinutes(bundleWindowMinutes);
+        }
+
+        public Result CanMarkAsRead(Guid userId, Guid notificationOwnerId)
+        {
+            if (userId != notificationOwnerId)
+                return Result.Failure("You can only manage your own notifications.");
+
+            return Result.Success();
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Enums/NotificationType.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Enums
+{
+    public enum NotificationType
+    {
+        PostLike = 1,
+        PostComment = 2,
+        FriendRequest = 3,
+        GroupInvitation = 4,
+        SystemAlert = 5
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Interfaces/INotificationRepository.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Interfaces
+{
+    public interface INotificationRepository : IGenericRepository<Notification>
+    {
+        Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(Guid userId);
+    }
+}
+</file>
+
+<file path="Sohba.Infrastructure/Repositories/NotificationRepository.cs">
+using Microsoft.EntityFrameworkCore;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
+using Sohba.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Infrastructure.Repositories
+{
+    public class NotificationRepository : GenericRepository<Notification>, INotificationRepository
+    {
+        public NotificationRepository(AppDbContext context) : base(context) { }
+
+        public async Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(Guid userId)
+        {
+            return await _context.Set<Notification>()
+                .Where(n => n.ReceiverId == userId && !n.IsRead)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Infrastructure/Services/NotificationCleanupService.cs">
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Sohba.Application.Interfaces;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Sohba.Infrastructure.Services
+{
+    public class NotificationCleanupService : BackgroundService
+    {
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<NotificationCleanupService> _logger;
+        private readonly TimeSpan _interval = TimeSpan.FromHours(24);
+
+        public NotificationCleanupService(
+            IServiceProvider serviceProvider,
+            ILogger<NotificationCleanupService> logger)
+        {
+            _serviceProvider = serviceProvider;
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Notification Cleanup Service started");
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(_interval, stoppingToken);
+
+                    using var scope = _serviceProvider.CreateScope();
+                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                    _logger.LogInformation("Running notification cleanup...");
+
+
+                    var result = await notificationService.DeleteOldNotificationsAsync(30);
+
+                    if (result.IsSuccess)
+                    {
+                        _logger.LogInformation("Notification cleanup completed successfully");
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Notification cleanup failed: {Error}", result.Error);
+                    }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex, "Error during notification cleanup");
+                }
+            }
+
+            _logger.LogInformation("Notification Cleanup Service stopped");
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/NotificationResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class NotificationResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Message { get; set; }
+        public bool IsRead { get; set; }
+        public string NotificationType { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public Guid? TargetId { get; set; }
+        public string SenderName { get; set; }
+        public string SenderProfilePicture { get; set; }
+
+        public string TimeAgo => GetTimeAgo(CreatedAt);
+
+        private string GetTimeAgo(DateTime dateTime)
+        {
+            var timeSpan = DateTime.UtcNow - dateTime;
+            if (timeSpan.TotalMinutes < 1) return "Just now";
+            if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes}m ago";
+            if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours}h ago";
+            if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays}d ago";
+            if (timeSpan.TotalDays < 30) return $"{(int)(timeSpan.TotalDays / 7)}w ago";
+            if (timeSpan.TotalDays < 365) return $"{(int)(timeSpan.TotalDays / 30)}mo ago";
+            return $"{(int)(timeSpan.TotalDays / 365)}y ago";
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Services/NotificationService.cs">
+using AutoMapper;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Events;
+using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
+using Sohba.Domain.Interfaces;
+
+namespace Sohba.Application.Services
+{
+    public class NotificationService : INotificationService
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationDomainService _domainService;
+        private readonly IMapper _mapper;
+        private readonly INotificationEventHandler _eventHandler;
+
+        protected readonly ILogger<NotificationService> _logger;
+        public NotificationService(
+            IUnitOfWork unitOfWork,
+            INotificationDomainService domainService,
+            IMapper mapper,
+            INotificationEventHandler eventHandler,
+            ILogger<NotificationService> logger)
+        {
+            _unitOfWork = unitOfWork;
+            _domainService = domainService;
+            _mapper = mapper;
+            _eventHandler = eventHandler;
+            _logger = logger;
+        }
+
+        public async Task<Result> CreateNotificationAsync(
+            Guid receiverId,
+            string message,
+            NotificationType type,
+            Guid? senderId = null,
+            Guid? targetId = null)
+        {
+
+            if (!_domainService.ShouldSendNotification(senderId ?? Guid.Empty, receiverId))
+                return Result.Success();
+
+
+            var receiver = await _unitOfWork.Users.GetByIdAsync(receiverId);
+            if (receiver == null)
+            {
+                _logger.LogWarning("Notification not sent: receiver {ReceiverId} not found", receiverId);
+                return Result.Failure("Receiver not found");
+            }
+
+            if (senderId.HasValue)
+            {
+                var sender = await _unitOfWork.Users.GetByIdAsync(senderId.Value);
+                if (sender == null)
+                {
+                    _logger.LogWarning("Notification not sent: sender {SenderId} not found", senderId.Value);
+                    return Result.Failure("Sender not found");
+                }
+            }
+
+
+            if (!await ShouldSendBasedOnPreferences(receiverId, type))
+            {
+                _logger.LogInformation("Notification suppressed by user preferences: receiver {ReceiverId}, type {Type}", receiverId, type);
+                return Result.Success();
+            }
+
+
+
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid(),
+                ReceiverId = receiverId,
+                SenderId = senderId,
+                Message = message,
+                Type = type,
+                TargetId = targetId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Notifications.Add(notification);
+            await _unitOfWork.CompleteAsync();
+            _logger.LogInformation("Notification created: {NotificationId}, receiver {ReceiverId}, type {Type}", notification.Id, receiverId, type);
+
+
+            try
+            {
+                var notificationEvent = new NotificationEvent
+                {
+                    ReceiverId = receiverId,
+                    Message = message,
+                    Type = type,
+                    SenderId = senderId,
+                    TargetId = targetId,
+                    Notification = notification
+                };
+
+                await _eventHandler.HandleAsync(notificationEvent);
+                _logger.LogInformation("Notification {NotificationId} dispatched via SignalR to user {ReceiverId}", notification.Id, receiverId);
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "NotificationService event handler failed for receiver {ReceiverId}, type {Type}", receiverId, type);
+                _logger.LogError(ex, "SignalR dispatch failed for notification {NotificationId} to user {ReceiverId}", notification.Id, receiverId);
+            }
+
+            return Result.Success();
+        }
+
+
+
+
+        private async Task<bool> ShouldSendBasedOnPreferences(Guid userId, NotificationType type)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return false;
+
+
+            if (!user.EmailNotifications && !user.PushNotifications)
+                return false;
+
+
+            var notificationType = type switch
+            {
+                NotificationType.PostLike or NotificationType.PostComment => "social",
+                NotificationType.FriendRequest or NotificationType.GroupInvitation => "social",
+                NotificationType.SystemAlert => "system",
+                _ => "system"
+            };
+
+
+
+            if (notificationType == "social" && !user.PushNotifications)
+                return false;
+
+            return true;
+        }
+
+        public async Task<Result<IEnumerable<Notification>>> GetUserNotificationsAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 20)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<IEnumerable<Notification>>.Failure("User not found");
+
+            var notifications = await _unitOfWork.Notifications.GetAllAsync();
+
+            var result = notifications
+                .Where(n => n.ReceiverId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Result<IEnumerable<Notification>>.Success(result);
+        }
+
+        public async Task<Result<IEnumerable<Notification>>> GetUnreadNotificationsAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<IEnumerable<Notification>>.Failure("User not found");
+
+            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
+            return Result<IEnumerable<Notification>>.Success(notifications);
+        }
+
+        public async Task<Result<int>> GetUnreadCountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<int>.Failure("User not found");
+
+            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
+            return Result<int>.Success(notifications.Count());
+        }
+
+        public async Task<Result> MarkAsReadAsync(Guid notificationId, Guid userId)
+        {
+            var notification = await _unitOfWork.Notifications.GetByIdAsync(notificationId);
+            if (notification == null)
+                return Result.Failure("Notification not found");
+
+
+            var validation = _domainService.CanMarkAsRead(userId, notification.ReceiverId);
+            if (!validation.IsSuccess)
+                return validation;
+
+            notification.IsRead = true;
+            _unitOfWork.Notifications.Update(notification);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result> MarkAllAsReadAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result.Failure("User not found");
+
+            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+                _unitOfWork.Notifications.Update(notification);
+            }
+
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+
+        public async Task<Result> DeleteNotificationAsync(Guid notificationId, Guid userId)
+        {
+            var notification = await _unitOfWork.Notifications.GetByIdAsync(notificationId);
+            if (notification == null)
+                return Result.Failure("Notification not found");
+
+            if (notification.ReceiverId != userId)
+                return Result.Failure("You can only delete your own notifications");
+
+            _unitOfWork.Notifications.Delete(notification);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result> DeleteOldNotificationsAsync(int daysOld = 30)
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+            var allNotifications = await _unitOfWork.Notifications.GetAllAsync();
+
+            var oldNotifications = allNotifications
+                .Where(n => n.CreatedAt < cutoffDate && n.IsRead)
+                .ToList();
+
+            foreach (var notification in oldNotifications)
+            {
+                _unitOfWork.Notifications.Delete(notification);
+            }
+
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Common/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Common
+{
+    public class Result
+    {
+        public bool IsSuccess { get; }
+        public string Error { get; }
+        public bool IsFailure => !IsSuccess;
+
+        protected Result(bool isSuccess, string error)
+        {
+            if (isSuccess && !string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Success result cannot have an error message.");
+
+            if (!isSuccess && string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Failure result must have an error message.");
+
+            IsSuccess = isSuccess;
+            Error = error;
+        }
+
+        public static Result Success() => new Result(true, string.Empty);
+        public static Result Failure(string error) => new Result(false, error);
+    }
+
+    public class Result<T> : Result
+    {
+        private readonly T _value;
+
+        public T Value => IsSuccess
+            ? _value
+            : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
+
+        protected Result(T value, bool isSuccess, string error)
+            : base(isSuccess, error)
+        {
+            _value = value;
+        }
+
+        public static Result<T> Success(T value) => new Result<T>(value, true, string.Empty);
+
+        public new static Result<T> Failure(string error) => new Result<T>(default, false, error);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/UserAggregate/Notification.cs">
+using Sohba.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Entities.UserAggregate
+{
+    public class Notification
+    {
+        public Guid Id { get; set; }
+        public string Message { get; set; }
+        public bool IsRead { get; set; } = false;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public NotificationType Type { get; set; }
+
+        public Guid ReceiverId { get; set; }
+        public virtual User Receiver { get; set; }
+
+
+        public Guid? SenderId { get; set; }
+        public virtual User? Sender { get; set; }
+
+
+        public Guid? TargetId { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Notifications/Index.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.UserAggregate.NotificationResponseDto>
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "_AppLayout";
+}
+
+@functions {
+    private string GetNotificationIcon(string type)
+    {
+        return type switch
+        {
+            "PostLike" => "❤️",
+            "PostComment" => "💬",
+            "FriendRequest" => "👥",
+            "GroupInvitation" => "👪",
+            "SystemAlert" => "🔔",
+            _ => "📢"
+        };
+    }
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Notifications</h1>
+                <p class="text-gray-500 mt-1">Stay updated with your activity</p>
+            </div>
+            <button onclick="markAllRead()" class="text-sm text-[#345e69] font-semibold hover:underline">
+                Mark all as read
+            </button>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="space-y-2">
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br  from-[#345e69] via-[#4a8291] to-[#345e69] p-12 text-center">
+            
+            <div class="absolute inset-0 bg-grid-white/10 [mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)]"></div>
+
+            <div class="relative z-10">
+                <div class="w-28 h-28 mx-auto bg-white/10 backdrop-blur-xl rounded-3xl flex items-center justify-center mb-6 border border-white/20">
+                    <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </div>
+
+                <h3 class="text-4xl font-black text-white mb-2">Real-Time Notification</h3>
+                <p class="text-xl text-white/80 mb-8">Coming Soon with SignalR</p>
+
+                <div class="flex justify-center gap-3">
+                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">⚡ Live</span>
+                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">💬 Instant</span>
+                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">🔄 Real-time</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-20">
+            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No notifications</h3>
+            <p class="text-gray-500 mt-2">You're all caught up!</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @* <script>
+        async function markAllRead() {
+            // Implement API call
+            SohbaApp.toast('All notifications marked as read', 'success');
+        }
+    </script> *@
+}
+</file>
+
+<file path="Sohba/Controllers/NotificationsController.cs">
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+
+namespace Sohba.Controllers
+{
+    [Authorize]
+    [EnableRateLimiting("Api")]
+
+    public class NotificationsController : BaseController
+    {
+        private readonly INotificationService _notificationService;
+        private readonly IMapper _mapper;
+
+        public NotificationsController(INotificationService notificationService, IMapper mapper)
+        {
+            _notificationService = notificationService;
+            _mapper = mapper;
+        }
+
+
+        public async Task<IActionResult> Index(int page = 1)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            var result = await _notificationService.GetUserNotificationsAsync(userId, page, 20);
+
+            if (result.IsFailure)
+                return View(new List<NotificationResponseDto>());
+
+            var dtos = _mapper.Map<IEnumerable<NotificationResponseDto>>(result.Value);
+            return View(dtos);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(new { count = 0 });
+
+            var result = await _notificationService.GetUnreadCountAsync(userId);
+            return Json(new { count = result.IsSuccess ? result.Value : 0 });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadNotifications()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(BaseResponseDto<IEnumerable<NotificationResponseDto>>.FailureResponse("Unauthorized"));
+
+            var result = await _notificationService.GetUnreadNotificationsAsync(userId);
+            if (result.IsFailure)
+                return Json(BaseResponseDto<IEnumerable<NotificationResponseDto>>.FailureResponse(result.Error));
+
+            var dtos = _mapper.Map<IEnumerable<NotificationResponseDto>>(result.Value);
+            return Json(BaseResponseDto<IEnumerable<NotificationResponseDto>>.SuccessResponse(dtos));
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Unauthorized"));
+
+            var result = await _notificationService.MarkAsReadAsync(id, userId);
+            if (result.IsFailure)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
+
+            return Json(BaseResponseDto.SuccessResponse());
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Unauthorized"));
+
+            var result = await _notificationService.MarkAllAsReadAsync(userId);
+            if (result.IsFailure)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
+
+            return Json(BaseResponseDto.SuccessResponse());
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Unauthorized"));
+
+            var result = await _notificationService.DeleteNotificationAsync(id, userId);
+            if (result.IsFailure)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
+
+            return Json(BaseResponseDto.SuccessResponse());
+        }
+    }
+}
+</file>
+
+</files>

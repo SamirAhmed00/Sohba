@@ -30,6 +30,13 @@ namespace Sohba.Domain.Interfaces
         void RemoveSavedPost(SavedPost savedPost);
         Task<IEnumerable<SavedPost>> GetSavedPostsByUserAsync(Guid userId);
         Task<IEnumerable<SavedPost>> GetSavedPostsByUserAndTagAsync(Guid userId, SavedTag tag);
-        void UpdateSavedPost(SavedPost savedPost); 
+        void UpdateSavedPost(SavedPost savedPost);
+
+        // SavedCollection Methods (NEW)
+        Task<IEnumerable<SavedCollection>> GetCollectionsByUserAsync(Guid userId);
+        Task<SavedCollection?> GetCollectionByIdAsync(Guid collectionId);
+        Task<SavedCollection?> GetCollectionByNameAsync(Guid userId, string name);
+        void AddCollection(SavedCollection collection);
+        Task<SavedPost?> GetSavedPostByCollectionAsync(Guid userId, Guid postId, Guid collectionId);
     }
 }

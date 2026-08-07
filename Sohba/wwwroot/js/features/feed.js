@@ -30,21 +30,53 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-function setupInfiniteScroll() {
-    // Detect when user scrolls near bottom
-    window.addEventListener('scroll', function () {
-        if (isLoading || !hasMore) return;
+// function setupInfiniteScroll() {
+//     //Detect when user scrolls near bottom
+//     window.addEventListener('scroll', function () {
+//         if (isLoading || !hasMore) return;
 
-        const scrollHeight = document.documentElement.scrollHeight;
-        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-        const clientHeight = document.documentElement.clientHeight;
+//         const scrollHeight = document.documentElement.scrollHeight;
+//         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+//         const clientHeight = document.documentElement.clientHeight;
 
-        // Load more when user is 200px from bottom
-        if (scrollTop + clientHeight >= scrollHeight - 200) {
-            loadMorePosts();
-        }
+//         //Load more when user is 200px from bottom
+//         if (scrollTop + clientHeight >= scrollHeight - 200) {
+//             loadMorePosts();
+//         }
+//     });
+// }
+
+
+const renderedPostIds = new Set();
+
+function collectRenderedPostIds() {
+    document.querySelectorAll('#postsContainer [data-post-id]').forEach(el => {
+        renderedPostIds.add(el.dataset.postId);
     });
 }
+
+function setupInfiniteScroll() {
+    let scrollTicking = false;
+
+    window.addEventListener('scroll', function () {
+        if (scrollTicking) return;
+        scrollTicking = true;
+
+        requestAnimationFrame(() => {
+            scrollTicking = false;
+            if (isLoading || !hasMore) return;
+
+            const scrollHeight = document.documentElement.scrollHeight;
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollTop + clientHeight >= scrollHeight - 300) {
+                loadMorePosts();
+            }
+        });
+    });
+}
+
 
 function setupLoadMoreButton() {
     const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -68,20 +100,34 @@ async function loadMorePosts() {
     showLoadingIndicator();
 
     try {
-        const result = await fetch(`/Home/GetPostCards?page=${nextPage}&pageSize=${pageSize}`);
+        const response = await fetch(`/Home/GetPostCards?page=${nextPage}&pageSize=${pageSize}`);
+        const result = await response.json();
 
         if (result.success) {
             const container = document.getElementById('postsContainer');
-            if (container && result.data && result.data.html) {
-                container.insertAdjacentHTML('beforeend', result.data.html);
+            if (container && result.html) {
+                const temp = document.createElement('div');
+                temp.innerHTML = result.html;
+
+                const uniqueCards = Array.from(temp.querySelectorAll('[data-post-id]')).filter(card => {
+                    const id = card.dataset.postId;
+                    if (!id || renderedPostIds.has(id)) return false;
+                    renderedPostIds.add(id);
+                    return true;
+                });
+
+                if (uniqueCards.length > 0) {
+                    uniqueCards.forEach(card => container.appendChild(card));
+                }
             }
-            currentPage = result.data?.currentPage ?? nextPage;
-            hasMore = result.data?.hasMore ?? false;
+            currentPage = result.currentPage ?? nextPage;
+            hasMore = result.hasMore ?? false;
 
             if (!hasMore) {
                 hideLoadMoreButton();
             }
-        } else {
+        }
+        else {
             console.error('Failed to load more posts:', result.error);
             SohbaApp.toast(result.error || 'Failed to load more posts', 'error');
         }

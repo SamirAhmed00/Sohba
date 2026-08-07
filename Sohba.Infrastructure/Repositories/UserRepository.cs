@@ -16,18 +16,12 @@ namespace Sohba.Infrastructure.Repositories
         {
 
             // Count total users
-            var totalUsers = await _context.Users.CountAsync();         
+            //var totalUsers = await _context.Users.CountAsync();         
 
             // Try with no filters
             var user = await _context.Users
                 .AsNoTracking()
-                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user != null)
-            {
-                return user;
-            }
 
             return user;
         }
@@ -56,6 +50,14 @@ namespace Sohba.Infrastructure.Repositories
                            !u.IsDeleted &&
                            u.Name.Contains(query))
                 .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> GetRecentAsync(int count)
+        {
+            return await _context.Set<User>()
+                .OrderByDescending(u => u.CreatedAt)
+                .Take(count)
                 .ToListAsync();
         }
     }

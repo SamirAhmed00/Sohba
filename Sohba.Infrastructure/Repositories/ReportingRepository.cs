@@ -22,5 +22,20 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<PostReport>()
                 .CountAsync(r => r.PostId == entityId);
         }
+
+        public async Task<int> CountPendingAsync()
+        {
+            return await _context.Set<PostReport>()
+                .CountAsync(r => !r.IsResolved);
+        }
+
+        public async Task<IEnumerable<PostReport>> GetRecentPendingAsync(int count)
+        {
+            return await _context.Set<PostReport>()
+                .Where(r => !r.IsResolved)
+                .OrderByDescending(r => r.ReportedAt)
+                .Take(count)
+                .ToListAsync();
+        }
     }
 }

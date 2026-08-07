@@ -9,5 +9,7 @@ namespace Sohba.Domain.Interfaces
     {
         Task<bool> HasUserReportedEntityAsync(Guid userId, Guid entityId);
         Task<int> GetReportCountForEntityAsync(Guid entityId);
+        Task<int> CountPendingAsync();
+        Task<IEnumerable<PostReport>> GetRecentPendingAsync(int count);
     }
 }

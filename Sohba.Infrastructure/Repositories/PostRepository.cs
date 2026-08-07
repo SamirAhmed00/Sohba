@@ -53,52 +53,22 @@ namespace Sohba.Infrastructure.Repositories
         }
 
 
-        public async Task<IEnumerable<Post>> GetTimelineAsync(Guid userId)
-        {
-            var friendIds = await _context.Friends
-                .Where(f => (f.UserId == userId || f.FriendUserId == userId)
-                            && f.Status == FriendshipStatus.Accepted)
-                .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
-                .ToListAsync();
-
-            var visibleUserIds = new List<Guid> { userId };
-            visibleUserIds.AddRange(friendIds);
-
-            return await _context.Set<Post>()
-                .Include(p => p.User)
-                .Where(p => !p.IsDeleted && !p.IsHidden
-                            && (p.SourceType == PostSourceType.User || p.SourceId == null)
-                            && (
-                                // User always sees their own posts
-                                p.UserId == userId ||
-
-                                // Public posts from anyone (if user is visible - i.e., friends or self)
-                                (p.Privacy == PostPrivacy.Public && visibleUserIds.Contains(p.UserId)) ||
-
-                                // Friends-only posts from friends only
-                                (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))
-
-                            // Private posts are only visible to the owner (handled by first condition)
-                            ))
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-        }
-
-
-        // we Delted This Funcion
-        //public bool IsPostDeleted(Guid postId)
-        //{
-        //    return _context.Set<Post>().Any(p => p.Id == postId && p.IsDeleted);
-        //}
+        
 
 
         public async Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags, string location)
         {
-            foreach (var tagText in hashtags)
+            var tagList = hashtags.ToList();
+            if (!tagList.Any()) return;
+            
+            var existingHashtags = await _context.Hashtags
+                .Where(h => tagList.Contains(h.Tag))
+                .ToDictionaryAsync(h => h.Tag);
+            
+            foreach (var tagText in tagList)
             {
-                var hashtag = await _context.Hashtags.FirstOrDefaultAsync(h => h.Tag == tagText);
 
-                if (hashtag == null)
+                if (!existingHashtags.TryGetValue(tagText, out var hashtag))
                 {
                     hashtag = new Hashtag
                     {
@@ -198,6 +168,16 @@ namespace Sohba.Infrastructure.Repositories
                 .Where(ph => ph.Hashtag.Tag == tag && !ph.Post.IsDeleted)
                 .Select(ph => ph.Post)
                 .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+
+        public async Task<IEnumerable<Post>> GetRecentAsync(int count)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(count)
                 .ToListAsync();
         }
     }

@@ -50,11 +50,11 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="acceptRequest('@request.UserId')"  
-                                    class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                <button onclick="acceptRequest('@request.UserId', this)"
+                                        class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
                                 Accept
                             </button>
-                            <button onclick="rejectRequest('@request.UserId')" 
+                                <button onclick="rejectRequest('@request.UserId', this)"
                                     class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
                                 Decline
                             </button>

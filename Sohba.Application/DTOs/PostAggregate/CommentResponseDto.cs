@@ -12,6 +12,9 @@ namespace Sohba.Application.DTOs.PostAggregate
         public Guid PostId { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        public bool IsAuthor { get; set; }
+        public Guid UserId { get; set; }
+
         // Reply 
         public Guid? ParentCommentId { get; set; }
         public List<CommentResponseDto> Replies { get; set; } = new List<CommentResponseDto>();

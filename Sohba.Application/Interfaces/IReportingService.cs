@@ -14,5 +14,8 @@ namespace Sohba.Application.Interfaces
         // Admin
         Task<Result<IEnumerable<PostReportResponseDto>>> GetAllReportsAsync();
         Task<Result> ResolveReportAsync(Guid reportId);
+
+        Task<Result<int>> GetPendingReportsCountAsync();
+        Task<Result<IEnumerable<PostReportResponseDto>>> GetRecentPendingReportsAsync(int count);
     }
 }

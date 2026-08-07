@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
+using Sohba.Domain.Enums;
 namespace Sohba.Application.DTOs.PostAggregate
 {
     public class PostResponseDto
@@ -24,6 +24,9 @@ namespace Sohba.Application.DTOs.PostAggregate
 
         public bool IsAuthor { get; set; }
         public bool IsPrivate { get; set; }
+
+        public PostPrivacy Privacy { get; set; }
+
         public string SourceType { get; set; } 
         public string? SourceName { get; set; }
         public Guid? SourceId { get; set; }

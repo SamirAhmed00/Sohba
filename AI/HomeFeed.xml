@@ -1,0 +1,2436 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+The content has been processed where comments have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: Sohba/Controllers/HomeController.cs, Sohba.Application/Interfaces/IPostService.cs, Sohba.Application/Interfaces/IStoryService.cs, Sohba.Application/Interfaces/IHashtagService.cs, Sohba.Application/DTOs/PostAggregate/PostResponseDto.cs, Sohba.Application/DTOs/StoryAggregate/StoryResponseDto.cs, Sohba.Application/DTOs/GroupAndPageAggregate/GroupResponseDto.cs, Sohba.Application/DTOs/Common/BaseResponseDto.cs, Sohba.Application/DTOs/Common/PagedResult.cs, Sohba/ViewModels/HomeViewModel.cs, Sohba/Models/ErrorViewModel.cs, Sohba.Domain/Common/Result.cs, Sohba/Views/Home/Index.cshtml, Sohba/Views/Shared/Partials/_PostCard.cshtml, Sohba/Views/Shared/Partials/_CreatePost.cshtml, Sohba/Views/Shared/Partials/_Stories.cshtml, Sohba/Views/Shared/Partials/_StoryRail.cshtml, Sohba/Views/Shared/Partials/_StoryViewer.cshtml, Sohba/Views/Shared/Partials/_CreateStoryModal.cshtml, Sohba/wwwroot/js/features/feed.js, Sohba/wwwroot/js/sohba-posts.js, Sohba/wwwroot/js/sohba-stories.js
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Code comments have been removed from supported file types
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Sohba/
+  Controllers/
+    HomeController.cs
+  Models/
+    ErrorViewModel.cs
+  ViewModels/
+    HomeViewModel.cs
+  Views/
+    Home/
+      Index.cshtml
+    Shared/
+      Partials/
+        _CreatePost.cshtml
+        _CreateStoryModal.cshtml
+        _PostCard.cshtml
+        _Stories.cshtml
+        _StoryRail.cshtml
+        _StoryViewer.cshtml
+  wwwroot/
+    js/
+      features/
+        feed.js
+      sohba-posts.js
+      sohba-stories.js
+Sohba.Application/
+  DTOs/
+    Common/
+      BaseResponseDto.cs
+      PagedResult.cs
+    GroupAndPageAggregate/
+      GroupResponseDto.cs
+    PostAggregate/
+      PostResponseDto.cs
+    StoryAggregate/
+      StoryResponseDto.cs
+  Interfaces/
+    IHashtagService.cs
+    IPostService.cs
+    IStoryService.cs
+Sohba.Domain/
+  Common/
+    Result.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Sohba/Models/ErrorViewModel.cs">
+namespace Sohba.Models
+{
+    public class ErrorViewModel
+    {
+        public string? RequestId { get; set; }
+
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
+}
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_Stories.cshtml">
+@* // Stories Section *@
+<div class="relative group">
+
+    <button onclick="scrollStories('left')" class="absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button>
+
+    <button onclick="scrollStories('right')" class="absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+    </button>
+
+    <div id="storiesContainer" class="flex space-x-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory scroll-smooth pr-10">
+
+        @* Card: Add Story *@
+        <div onclick="openModal()" class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-md border border-gray-100 bg-white group/story hover:shadow-lg transition-shadow">
+            <div class="h-32 w-full relative">
+                <img src="https://ui-avatars.com/api/?name=Me&background=345e69&color=fff" class="w-full h-full object-cover" alt="My Story">
+                <div class="absolute inset-0 bg-black/10"></div>
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-white h-16 text-center pt-6">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#345e69] border-[3px] border-white rounded-full p-1 shadow-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <p class="text-xs font-bold text-gray-800">Add Story</p>
+            </div>
+        </div>
+
+        @* Loop: User Stories *@
+        @for (int i = 1; i <= 20; i++)
+        {
+            <div class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div class="absolute inset-0 border border-[#345e69]/20 rounded-2xl z-10"></div>
+
+                <img src="https://ui-avatars.com/api/?name=User+@i&background=random" class="w-full h-full object-cover" alt="Story">
+                <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60"></div>
+
+                <div class="absolute bottom-3 left-2 right-2 z-20 flex justify-center">
+                    <span class="bg-black/60 backdrop-blur-[2px] text-white text-[10px] font-bold truncate px-2 py-1 rounded-lg w-full text-center">
+                        User Name @i
+                    </span>
+                </div>
+
+                <div class="absolute top-3 left-3 w-8 h-8 rounded-full border-2 border-[#345e69] p-0.5 bg-white z-20">
+                    <img src="https://ui-avatars.com/api/?name=User+@i&background=random" class="w-full h-full rounded-full object-cover">
+                </div>
+            </div>
+        }
+    </div>
+</div>
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_StoryViewer.cshtml">
+<div id="storyViewerModal" class="fixed inset-0 z-[200] hidden">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/90" onclick="closeStoryViewer()"></div>
+
+    <!-- Modal Container -->
+    <div class="absolute inset-0 flex items-center justify-center">
+        <div class="relative w-full max-w-4xl h-[90vh] bg-black rounded-2xl overflow-hidden">
+
+            <!-- Close Button -->
+            <button onclick="closeStoryViewer()"
+                    class="absolute top-4 right-4 z-30 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Navigation Buttons -->
+            <button onclick="navigateStory('prev')"
+                    class="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+
+            <button onclick="navigateStory('next')"
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            <!-- Story Content -->
+            <div id="storyContent" class="w-full h-full flex items-center justify-center">
+                <!-- Media will be loaded here via JavaScript -->
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gray-600 z-20">
+                <div id="storyProgress" class="h-full bg-[#345e69] transition-all duration-100" style="width: 0%"></div>
+            </div>
+
+            <!-- User Info -->
+            <div class="absolute top-4 left-4 flex items-center gap-3 z-20">
+                <img id="storyUserAvatar" class="w-10 h-10 rounded-full border-2 border-[#345e69]" src="" alt="">
+                <div>
+                    <span id="storyUserName" class="text-white font-semibold"></span>
+                    <span id="storyTime" class="text-white/60 text-sm block"></span>
+                </div>
+            </div>
+
+            <!-- Story Info (Viewers) -->
+            <div class="absolute bottom-4 left-4 text-white/60 text-sm z-20">
+                <span id="storyViewersCount">0</span> views
+            </div>
+        </div>
+    </div>
+</div>
+</file>
+
+<file path="Sohba/wwwroot/js/sohba-stories.js">
+let currentUserId = null;
+let currentUserStories = [];
+let currentStoryIndex = 0;
+let progressInterval = null;
+
+
+window.openStoryViewer = async function (userId) {
+    currentUserId = userId;
+    currentStoryIndex = 0;
+
+
+    const response = await fetch(`/Stories/GetUserStories?userId=${userId}`);
+    const stories = await response.json();
+
+    if (stories && stories.length > 0) {
+        currentUserStories = stories;
+        showStory(0);
+        document.getElementById('storyViewerModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        startProgress();
+    }
+};
+
+
+function showStory(index) {
+    if (index < 0 || index >= currentUserStories.length) {
+        closeStoryViewer();
+        return;
+    }
+
+    currentStoryIndex = index;
+    const story = currentUserStories[index];
+
+
+    document.getElementById('storyUserName').textContent = story.userName;
+    document.getElementById('storyUserAvatar').src = story.userProfilePicture ||
+        `https://ui-avatars.com/api/?name=${story.userName}&background=345e69&color=fff`;
+    document.getElementById('storyTime').textContent = timeAgo(story.createdAt);
+    document.getElementById('storyViewersCount').textContent = story.viewersCount || 0;
+
+
+    const contentDiv = document.getElementById('storyContent');
+    if (story.mediaType === 'video') {
+        contentDiv.innerHTML = `<video src="${story.mediaUrl}" class="max-h-full max-w-full" autoplay></video>`;
+    } else {
+        contentDiv.innerHTML = `<img src="${story.mediaUrl || 'https://via.placeholder.com/600'}" class="max-h-full max-w-full object-contain">`;
+    }
+
+
+    fetch('/Stories/MarkAsViewed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storyId: story.id })
+    });
+}
+
+
+function startProgress() {
+    let progress = 0;
+    progressInterval = setInterval(() => {
+        progress += 1;
+        document.getElementById('storyProgress').style.width = progress + '%';
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            navigateStory('next');
+        }
+    }, 50);
+}
+
+
+window.navigateStory = function (direction) {
+    clearInterval(progressInterval);
+
+    if (direction === 'next') {
+        if (currentStoryIndex < currentUserStories.length - 1) {
+            showStory(currentStoryIndex + 1);
+            startProgress();
+        } else {
+            closeStoryViewer();
+        }
+    } else if (direction === 'prev') {
+        if (currentStoryIndex > 0) {
+            showStory(currentStoryIndex - 1);
+            startProgress();
+        }
+    }
+};
+
+
+window.closeStoryViewer = function () {
+    document.getElementById('storyViewerModal').classList.add('hidden');
+    document.body.style.overflow = '';
+    clearInterval(progressInterval);
+    currentUserId = null;
+    currentUserStories = [];
+};
+
+// Keyboard navigation
+document.addEventListener('keydown', function (e) {
+    const modal = document.getElementById('storyViewerModal');
+    if (modal && !modal.classList.contains('hidden')) {
+        if (e.key === 'ArrowLeft') {
+            navigateStory('prev');
+        } else if (e.key === 'ArrowRight') {
+            navigateStory('next');
+        } else if (e.key === 'Escape') {
+            closeStoryViewer();
+        }
+    }
+});
+
+
+function timeAgo(date) {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ago';
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+}
+</file>
+
+<file path="Sohba.Application/DTOs/Common/BaseResponseDto.cs">
+using System;
+
+namespace Sohba.Application.DTOs.Common
+{
+    public class BaseResponseDto
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+
+        public static BaseResponseDto SuccessResponse() => new BaseResponseDto { Success = true, Error = null };
+        public static BaseResponseDto FailureResponse(string error) => new BaseResponseDto { Success = false, Error = error };
+    }
+
+    public class BaseResponseDto<T> : BaseResponseDto
+    {
+        public T Data { get; set; }
+
+        public static BaseResponseDto<T> SuccessResponse(T data) => new BaseResponseDto<T> { Success = true, Data = data, Error = null };
+        public new static BaseResponseDto<T> FailureResponse(string error) => new BaseResponseDto<T> { Success = false, Data = default, Error = error };
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/Common/PagedResult.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.Common
+{
+    public class PagedResult<T>
+    {
+        public IEnumerable<T> Items { get; set; } = new List<T>();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+        public bool HasPreviousPage => Page > 1;
+        public bool HasNextPage => Page < TotalPages;
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IHashtagService.cs">
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IHashtagService
+    {
+        Task<Result<IEnumerable<HashtagDto>>> GetTrendingHashtagsAsync(int count = 10);
+        Task<Result<IEnumerable<PostResponseDto>>> GetPostsByHashtagAsync(string tag, Guid currentUserId);
+    }
+
+}
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_StoryRail.cshtml">
+@model IEnumerable<Sohba.Application.DTOs.StoryAggregate.StoryResponseDto>
+
+@{
+    var groupedStories = Model.GroupBy(s => s.UserId);
+}
+
+<div class="relative group">
+    <!-- Scroll Buttons -->
+    <button data-action="scroll-stories" data-direction="left" aria-label="Scroll stories left"
+            class="story-scroll-btn absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button>
+
+    <button data-action="scroll-stories" data-direction="right" aria-label="Scroll stories right"
+            class="story-scroll-btn  -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>  
+    </button>
+
+
+    @* -- Commented *@
+    @* <button onclick="scrollStories('left')"
+            class="absolute -left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+    </button> *@
+    @* -- Commented *@
+    @* <button onclick="scrollStories('right')"
+            class="absolute -right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white hover:bg-gray-50 text-[#345e69] w-10 h-10 rounded-full shadow-lg border border-gray-100 flex items-center justify-center transition-all hover:scale-110 hidden sm:flex">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+    </button> *@
+
+    <!-- Stories Container -->
+    <div id="storiesContainer" class="flex space-x-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory scroll-smooth">
+
+        <!-- Add Story Card  // I Replaced onclick="openStoryModal()" With  data-action="open-create-story"-->
+        <div data-action="open-create-story"
+             class="snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-md border border-gray-100 bg-white group/story hover:shadow-lg transition-shadow">
+            <div class="h-32 w-full relative">
+                <img src="https://ui-avatars.com/api/?name=Me&background=345e69&color=fff"
+                     class="w-full h-full object-cover" />
+                     @* alt="My Story" alt="@firstStory.UserName"> *@
+                <div class="absolute inset-0 bg-black/10"></div>
+            </div>
+            <div class="absolute bottom-0 inset-x-0 bg-white h-16 text-center pt-6">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#345e69] border-[3px] border-white rounded-full p-1 shadow-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <p class="text-xs font-bold text-gray-800">Add Story</p>
+            </div>
+        </div>
+
+        <!-- User Stories -->
+        @foreach (var userStories in groupedStories)
+        {
+            var firstStory = userStories.First();
+            var unviewedCount = userStories.Count(s => !s.HasUserViewed);
+
+            <!-- I Replaced onclick="openStoryViewer('@userStories.Key')" With : data-action="open-story-viewer"-->
+            <div data-action="open-story-viewer" 
+                 data-user-id="@userStories.Key"
+                 class="story-user-card snap-start flex-shrink-0 relative w-28 h-48 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow duration-300">
+                
+                <div class="absolute inset-0 @(unviewedCount > 0 ? "border-2 border-[#345e69]" : "border border-gray-300") rounded-2xl z-10"></div>
+
+                <!-- Story Media -->
+                @if (!string.IsNullOrEmpty(firstStory.MediaUrl))
+                {
+                    <img src="@firstStory.MediaUrl" class="w-full h-full object-cover" alt="Story" loading="lazy">
+                }
+                else
+                {
+                    <img src="https://ui-avatars.com/api/?name=@firstStory.UserName&background=random"
+                         class="w-full h-full object-cover" alt="Story">
+                }
+
+                <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60"></div>
+
+                <!-- User Info -->
+                <div class="absolute bottom-3 left-2 right-2 z-20">
+                    <span class="block text-white text-xs font-bold truncate text-center">
+                        @firstStory.UserName
+                    </span>
+                </div>
+
+                <!-- User Avatar -->
+                <div class="absolute top-3 left-3 w-8 h-8 rounded-full border-2 border-[#345e69] p-0.5 bg-white z-20">
+                    @if (!string.IsNullOrEmpty(firstStory.UserProfilePicture))
+                    {
+                        <img src="@firstStory.UserProfilePicture" class="w-full h-full rounded-full object-cover">
+                    }
+                    else
+                    {
+                        <img src="https://ui-avatars.com/api/?name=@firstStory.UserName&background=345e69&color=fff"
+                             class="w-full h-full rounded-full object-cover">
+                    }
+                </div>
+
+                <!-- Unviewed Count Badge -->
+                @if (unviewedCount > 1)
+                {
+                    <div class="absolute top-3 right-3 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center z-20">
+                        <span class="text-white text-xs font-bold">@unviewedCount</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@* <script>
+    function scrollStories(direction) {
+        const container = document.getElementById('storiesContainer');
+        const scrollAmount = 200;
+
+        if (direction === 'left') {
+            container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        } else {
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }
+</script> *@
+</file>
+
+<file path="Sohba/wwwroot/js/features/feed.js">
+let currentPage = 1;
+const pageSize = 10;
+let isLoading = false;
+let hasMore = true;
+
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const urlParams = new URLSearchParams(window.location.search);
+    currentPage = parseInt(urlParams.get('page')) || 1;
+
+
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!isLoading && hasMore) {
+                loadMorePosts();
+            }
+        });
+    }
+
+
+    if (!loadMoreBtn) {
+        setupInfiniteScroll();
+    }
+});
+
+function setupInfiniteScroll() {
+
+    window.addEventListener('scroll', function () {
+        if (isLoading || !hasMore) return;
+
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        const clientHeight = document.documentElement.clientHeight;
+
+
+        if (scrollTop + clientHeight >= scrollHeight - 200) {
+            loadMorePosts();
+        }
+    });
+}
+
+function setupLoadMoreButton() {
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!isLoading && hasMore) {
+                loadMorePosts();
+            }
+        });
+    }
+}
+
+async function loadMorePosts() {
+    if (isLoading || !hasMore) return;
+
+    isLoading = true;
+    const nextPage = currentPage + 1;
+
+
+    showLoadingIndicator();
+
+    try {
+        const result = await fetch(`/Home/GetPostCards?page=${nextPage}&pageSize=${pageSize}`);
+
+        if (result.success) {
+            const container = document.getElementById('postsContainer');
+            if (container && result.data && result.data.html) {
+                container.insertAdjacentHTML('beforeend', result.data.html);
+            }
+            currentPage = result.data?.currentPage ?? nextPage;
+            hasMore = result.data?.hasMore ?? false;
+
+            if (!hasMore) {
+                hideLoadMoreButton();
+            }
+        } else {
+            console.error('Failed to load more posts:', result.error);
+            SohbaApp.toast(result.error || 'Failed to load more posts', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading more posts:', error);
+        SohbaApp.toast('Network error', 'error');
+    } finally {
+        isLoading = false;
+        hideLoadingIndicator();
+    }
+}
+
+
+function showLoadingIndicator() {
+    const loader = document.getElementById('loadingIndicator');
+    if (loader) loader.classList.remove('hidden');
+}
+
+function hideLoadingIndicator() {
+    const loader = document.getElementById('loadingIndicator');
+    if (loader) loader.classList.add('hidden');
+}
+
+function hideLoadMoreButton() {
+    const btn = document.getElementById('loadMoreBtn');
+    if (btn) btn.style.display = 'none';
+
+    const endMessage = document.getElementById('endOfFeedMessage');
+    if (endMessage) endMessage.classList.remove('hidden');
+}
+</file>
+
+<file path="Sohba.Application/DTOs/StoryAggregate/StoryResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.StoryAggregate
+{
+    public class StoryResponseDto
+    {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public string Content { get; set; }
+        public string? MediaUrl { get; set; }
+        public string? MediaType { get; set; }
+        public string UserName { get; set; }
+        public string? UserProfilePicture { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public int ViewersCount { get; set; }
+        public bool HasUserViewed { get; set; }
+        public string Privacy { get; set; }
+    }
+
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IStoryService.cs">
+using Sohba.Application.DTOs.StoryAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IStoryService
+    {
+        Task<Result<StoryResponseDto>> CreateStoryAsync(StoryCreateDto storyDto, Guid userId);
+        Task<Result> DeleteStoryAsync(Guid storyId, Guid userId);
+        Task<Result<IEnumerable<StoryResponseDto>>> GetStoriesForFeedAsync(Guid userId);
+        Task<Result<StoryResponseDto>> GetStoryByIdAsync(Guid storyId, Guid currentUserId);
+        Task<Result> MarkStoryAsViewedAsync(Guid storyId, Guid userId);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Common/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Common
+{
+    public class Result
+    {
+        public bool IsSuccess { get; }
+        public string Error { get; }
+        public bool IsFailure => !IsSuccess;
+
+        protected Result(bool isSuccess, string error)
+        {
+            if (isSuccess && !string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Success result cannot have an error message.");
+
+            if (!isSuccess && string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Failure result must have an error message.");
+
+            IsSuccess = isSuccess;
+            Error = error;
+        }
+
+        public static Result Success() => new Result(true, string.Empty);
+        public static Result Failure(string error) => new Result(false, error);
+    }
+
+    public class Result<T> : Result
+    {
+        private readonly T _value;
+
+        public T Value => IsSuccess
+            ? _value
+            : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
+
+        protected Result(T value, bool isSuccess, string error)
+            : base(isSuccess, error)
+        {
+            _value = value;
+        }
+
+        public static Result<T> Success(T value) => new Result<T>(value, true, string.Empty);
+
+        public new static Result<T> Failure(string error) => new Result<T>(default, false, error);
+    }
+}
+</file>
+
+<file path="Sohba/ViewModels/HomeViewModel.cs">
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.GroupAndPageAggregate;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.StoryAggregate;
+
+namespace Sohba.ViewModels
+{
+    public class HomeViewModel
+    {
+        public IEnumerable<PostResponseDto> Posts { get; set; }
+        public IEnumerable<StoryResponseDto> Stories { get; set; }
+
+        public PagedResult<PostResponseDto> PagedResult { get; set; }
+        public IEnumerable<GroupResponseDto> RecommendedGroups { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_CreateStoryModal.cshtml">
+<!-- Create Story Modal -->
+<div id="storyModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/60" onclick="closeStoryModal()"></div>
+
+    <!-- Modal Container -->
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Add to Story</h3>
+                <button onclick="closeStoryModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="p-4">
+                <!-- Text Input -->
+                <textarea id="createStoryContent" rows="3"
+                          class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20"
+                          placeholder="What's on your mind?"></textarea>
+
+                <!-- Image Upload -->
+                <div class="mt-4">
+                    <button onclick="document.getElementById('storyMedia').click()"
+                            class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-[#345e69] hover:bg-[#345e69]/5 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-[#345e69]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-sm font-medium text-gray-600">Upload Photo</span>
+                    </button>
+                    <input type="file" id="storyMedia" accept="image/*,video/*" class="hidden" onchange="handleStoryMediaSelect(event)">
+                </div>
+
+                <!-- Preview -->
+                <div id="storyPreviewContainer" class="mt-4 hidden">
+                    <div class="relative">
+                        <img id="storyPreview" class="w-full rounded-xl object-cover max-h-64" src="" alt="Preview">
+                        <button onclick="removeStoryMedia()"
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Privacy -->
+                <div class="mt-4">
+                    <select id="storyPrivacy" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                        <option value="Public">Public</option>
+                        <option value="FriendsOnly">Friends Only</option>
+                    </select>
+                </div>
+
+                <!-- Post Button -->
+                <button onclick="submitStory()"
+                        class="w-full mt-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                    Share to Story
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedFile = null;
+
+    function openStoryModal() {
+        const modal = document.getElementById('storyModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function handleStoryMediaSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('storyPreview').src = e.target.result;
+            document.getElementById('storyPreviewContainer').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeStoryMedia() {
+        selectedFile = null;
+        document.getElementById('storyMedia').value = '';
+        document.getElementById('storyPreviewContainer').classList.add('hidden');
+    }
+
+    async function submitStory() {
+        const content = document.getElementById('createStoryContent').value.trim();
+        const privacy = document.getElementById('storyPrivacy').value;
+
+        if (!content && !selectedFile) {
+            SohbaApp.toast('Please add text or media to your story', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('Content', content);
+        formData.append('Privacy', privacy);
+
+        if (selectedFile) {
+            formData.append('MediaFile', selectedFile);
+        }
+
+        try {
+            const response = await fetch('/Stories/Create', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                SohbaApp.toast('Story created successfully!', 'success');
+                closeStoryModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                SohbaApp.toast(result.error || 'Failed to create story', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            SohbaApp.toast('Network error', 'error');
+        }
+    }
+
+    function closeStoryModal() {
+        document.getElementById('storyModal').classList.add('hidden');
+        document.getElementById('createStoryContent').value = '';
+        document.getElementById('storyMedia').value = '';
+        document.getElementById('storyPreviewContainer').classList.add('hidden');
+        selectedFile = null;
+        document.body.style.overflow = '';
+    }
+</script>
+</file>
+
+<file path="Sohba/wwwroot/js/sohba-posts.js">
+window.SohbaApp.toggleReactionPicker = function (postId) {
+    const button = document.querySelector(`[data-like-button="${postId}"]`);
+    if (button.dataset.currentReaction) {
+        window.SohbaApp.reactToPost(postId, button.dataset.currentReaction);
+        return;
+    }
+    const picker = document.getElementById(`reaction-picker-${postId}`);
+    if (!picker) return;
+    document.querySelectorAll('[id^="reaction-picker-"]').forEach(p => p.classList.add('hidden'));
+    picker.classList.toggle('hidden');
+};
+
+window.SohbaApp.reactToPost = async function (postId, reactionType) {
+    document.getElementById(`reaction-picker-${postId}`)?.classList.add('hidden');
+
+    try {
+        const result = await window.SohbaApp.post('/Posts/React', { postId, reactionType });
+
+        if (!result.success) {
+            window.SohbaApp.toast(result.error || 'Failed', 'error');
+            return;
+        }
+
+        const button = document.querySelector(`[data-like-button="${postId}"]`);
+        const icon = button.querySelector('.like-icon');
+        const text = button.querySelector('.like-text');
+
+        const map = {
+            Like: { icon: '👍', classes: 'text-blue-700 bg-blue-100 hover:bg-blue-200' },
+            Love: { icon: '❤️', classes: 'text-rose-700 bg-rose-100 hover:bg-rose-200' },
+            Haha: { icon: '😂', classes: 'text-amber-600 bg-amber-100 hover:bg-amber-200' },
+            Wow: { icon: '😮', classes: 'text-orange-700 bg-orange-100 hover:bg-orange-200' },
+            Sad: { icon: '😢', classes: 'text-indigo-700 bg-indigo-100 hover:bg-indigo-200' },
+            Angry: { icon: '😠', classes: 'text-red-700 bg-red-100 hover:bg-red-200' }
+        };
+
+        if (result.action === 'added') {
+            window.SohbaApp.toast('Reaction added!', 'success');
+            button.dataset.currentReaction = result.reactionType;
+            const r = map[result.reactionType];
+            icon.innerText = r.icon;
+            text.innerText = result.reactionType;
+            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-bold ${r.classes}`;
+        } else if (result.action === 'removed') {
+            window.SohbaApp.toast('Reaction removed!', 'success');
+            button.dataset.currentReaction = '';
+            icon.innerText = 'React';
+            text.innerText = '';
+            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-bold text-slate-600 hover:bg-slate-50`;
+        }
+
+        const countSpan = document.querySelector(`.reaction-count-${postId}`);
+        if (countSpan && result.newCount !== undefined) {
+            countSpan.innerText = result.newCount + ' reactions';
+        }
+    } catch (e) {
+        console.error(e);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};
+
+
+window.SohbaApp.savePost = async function (postId) {
+    try {
+        const result = await window.SohbaApp.post('/Posts/ToggleSavePost', {
+            postId: postId,
+            isFavorite: false
+        });
+
+        if (result.success) {
+            updateSaveFavoriteButtons(postId, result.saved, false);
+            const icon = button.querySelector('svg');
+            const text = button.querySelector('.btn-text');
+
+            if (result.saved) {
+                button.classList.add('text-amber-600', 'bg-amber-50');
+                icon.setAttribute('fill', 'currentColor');
+                text.textContent = 'Saved';
+            } else {
+                button.classList.remove('text-amber-600', 'bg-amber-50');
+                icon.setAttribute('fill', 'none');
+                text.textContent = 'Save Post';
+            }
+
+            window.SohbaApp.toast(result.message, 'success');
+        } else {
+            window.SohbaApp.toast(result.error || 'Failed to save post', 'error');
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};
+
+window.SohbaApp.addToFavorites = async function (postId) {
+    try {
+        const result = await window.SohbaApp.post('/Posts/ToggleSavePost', {
+            postId: postId,
+            isFavorite: true
+        });
+
+        if (result.success) {
+            updateSaveFavoriteButtons(postId, result.saved, result.saved);
+            const icon = button.querySelector('svg');
+            const text = button.querySelector('.btn-text');
+
+            if (result.saved) {
+                button.classList.add('text-pink-600', 'bg-pink-50');
+                icon.setAttribute('fill', 'currentColor');
+                text.textContent = 'Favorited';
+            } else {
+                button.classList.remove('text-pink-600', 'bg-pink-50');
+                icon.setAttribute('fill', 'none');
+                text.textContent = 'Add to Favorites';
+            }
+
+            window.SohbaApp.toast(result.message, 'success');
+        } else {
+            window.SohbaApp.toast(result.error || 'Failed to add to favorites', 'error');
+        }
+    } catch (error) {
+        console.error('Favorite error:', error);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};
+
+function updateSaveFavoriteButtons(postId, isSaved, isFavorite) {
+    const saveBtn = document.querySelector(`[data-save-button="${postId}"]`);
+    const favBtn = document.querySelector(`[data-fav-button="${postId}"]`);
+
+        if (saveBtn) {
+                const icon = saveBtn.querySelector('svg');
+                const text = saveBtn.querySelector('.btn-text');
+                if (isSaved) {
+                        saveBtn.classList.add('text-amber-600', 'bg-amber-50');
+                        icon.setAttribute('fill', 'currentColor');
+                        text.textContent = isFavorite ? 'Favorited' : 'Saved';
+                    } else {
+                        saveBtn.classList.remove('text-amber-600', 'bg-amber-50');
+                        icon.setAttribute('fill', 'none');
+                        text.textContent = 'Save Post';
+                    }
+        }
+        if (favBtn) {
+            const icon = favBtn.querySelector('svg');
+            const text = favBtn.querySelector('.btn-text');
+            if (isFavorite) {
+                    favBtn.classList.add('text-pink-600', 'bg-pink-50');
+                    icon.setAttribute('fill', 'currentColor');
+                    text.textContent = 'Favorited';
+            } else {
+                    favBtn.classList.remove('text-pink-600', 'bg-pink-50');
+                    icon.setAttribute('fill', 'none');
+                    text.textContent = 'Add to Favorites';
+            }
+        }
+}
+
+
+window.SohbaApp.submitComment = async function () {
+    const modal = document.getElementById('postModal');
+    const postId = modal.dataset.postId;
+    const input = document.getElementById('commentInput');
+    const content = input.value.trim();
+
+    if (!content) return;
+
+    try {
+
+
+
+
+
+
+
+        const result = await window.SohbaApp.post('/Posts/Comment', { postId, content });
+
+        if (!result.success) {
+            window.SohbaApp.toast(result.error || 'Failed', 'error');
+            return;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        const commentId = `comment-${result.comment.id}`;
+        const commentHtml = `
+                <div class="flex items-start gap-3 mb-3">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random"
+                         class="w-8 h-8 rounded-full flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <span class="font-semibold text-sm text-gray-900">${result.comment.userName}</span>
+                        <div id="${commentId}" class="text-sm text-gray-700 break-words">
+                            ${result.comment.content}
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
+                            <button onclick="SohbaApp.showReplyForm('${result.comment.id}', '${result.comment.userName}')"
+                                    class="text-xs text-[#345e69] hover:underline font-medium">
+                                Reply
+                            </button>
+                        </div>
+
+                        <!-- Reply form (hidden by default) -->
+                        <div id="replyForm-${result.comment.id}" class="mt-2 hidden">
+                            <div class="flex items-start gap-3">
+                                <img src="https://ui-avatars.com/api/?name=You&background=345e69&color=fff"
+                                     class="w-7 h-7 rounded-full flex-shrink-0">
+                                <div class="flex-1">
+                                    <input type="text" id="replyInput-${result.comment.id}"
+                                           placeholder="Write a reply..."
+                                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                                    <div class="flex gap-2 mt-2">
+                                        <button onclick="SohbaApp.submitReply('${result.comment.id}', '${result.comment.postId}')"
+                                                class="px-4 py-1.5 bg-[#345e69] text-white text-sm font-semibold rounded-lg hover:bg-[#2a4b55]">
+                                            Reply
+                                        </button>
+                                        <button onclick="SohbaApp.hideReplyForm('${result.comment.id}')"
+                                                class="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Replies container -->
+                        <div id="replies-${result.comment.id}" class="mt-3 pl-4 border-l-2 border-slate-200 space-y-3"></div>
+                    </div>
+                </div>
+        `;
+        document.getElementById('modalComments').insertAdjacentHTML('afterbegin', commentHtml);
+        input.value = '';
+
+        const countSpan = document.getElementById(`comments-count-${postId}`);
+        if (countSpan) {
+            const newCount = parseInt(countSpan.innerText) + 1;
+            countSpan.innerText = newCount;
+            const labelSpan = document.getElementById(`comments-label-${postId}`);
+            if (labelSpan) labelSpan.innerText = newCount === 1 ? 'comment' : 'comments';
+        }
+        window.SohbaApp.toast('Comment posted!', 'success');
+    } catch (e) {
+        console.error(e);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};
+
+window.SohbaApp.toggleComment = function (commentId, fullText, shortText) {
+    const commentDiv = document.getElementById(commentId);
+    const button = commentDiv?.nextElementSibling;
+
+    if (!commentDiv || !button || button.tagName !== 'BUTTON') return;
+
+    const isExpanded = commentDiv.innerText === fullText;
+
+    if (isExpanded) {
+        commentDiv.innerText = shortText;
+        button.innerText = 'See more';
+    } else {
+        commentDiv.innerText = fullText;
+        button.innerText = 'See less';
+    }
+};
+
+
+window.showReplyForm = function (commentId, userName) {
+
+    document.querySelectorAll('[id^="replyForm-"]').forEach(el => el.classList.add('hidden'));
+
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) {
+        form.classList.remove('hidden');
+        const input = document.getElementById(`replyInput-${commentId}`);
+        if (input) {
+            input.placeholder = `Reply to ${userName}...`;
+            input.focus();
+        }
+    }
+};
+
+
+window.hideReplyForm = function (commentId) {
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) form.classList.add('hidden');
+    const input = document.getElementById(`replyInput-${commentId}`);
+    if (input) input.value = '';
+};
+
+// Toggle replies visibility
+window.toggleReplies = function (commentId) {
+    const container = document.getElementById(`replies-${commentId}`);
+    if (container) {
+        container.classList.toggle('hidden');
+        const btn = container.previousElementSibling;
+        if (btn && btn.tagName === 'BUTTON') {
+            btn.textContent = container.classList.contains('hidden')
+                ? `View ${container.querySelectorAll('.flex.items-start.gap-3').length} replies`
+                : 'Hide replies';
+        }
+    }
+};
+
+
+window.submitReply = async function (commentId, postId) {
+    const input = document.getElementById(`replyInput-${commentId}`);
+    if (!input) return;
+
+    const content = input.value.trim();
+    if (!content) {
+        window.SohbaApp.toast('Please enter a reply', 'error');
+        return;
+    }
+
+    try {
+        const result = await window.SohbaApp.post('/Posts/Comment', {
+            postId: postId,
+            content: content,
+            parentCommentId: commentId
+        });
+
+        if (result.success) {
+            window.SohbaApp.toast('Reply posted!', 'success');
+            input.value = '';
+            hideReplyForm(commentId);
+
+            // Reload comments to show the new reply
+            // You can either reload the post modal or append the reply dynamically
+            // For now, we'll reload the modal
+            const modal = document.getElementById('postModal');
+            if (modal) {
+                const postIdFromModal = modal.dataset.postId;
+                if (postIdFromModal) {
+                    await window.SohbaApp.openPostModal(postIdFromModal);
+                }
+            }
+        } else {
+            window.SohbaApp.toast(result.error || 'Failed to post reply', 'error');
+        }
+    } catch (error) {
+        console.error('Error posting reply:', error);
+        window.SohbaApp.toast('Network error', 'error');
+    }
+};
+
+
+
+window.SohbaApp.deletePost = function (postId) {
+    window.showConfirmModal({
+        title: 'Delete Post',
+        message: 'Are you sure you want to delete this post? This cannot be undone.',
+        type: 'delete',
+        confirmText: 'Delete',
+        onConfirm: async () => {
+            try {
+                const result = await window.SohbaApp.post('/Posts/Delete', { id: postId });
+
+                if (result.success) {
+                    window.SohbaApp.toast('Post deleted successfully.', 'success');
+                    const card = document.querySelector(`[data-post-id="${postId}"]`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease';
+                        card.style.opacity = '0';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                } else {
+                    window.SohbaApp.toast(result.error || 'Failed to delete post.', 'error');
+                }
+            } catch (err) {
+                console.error('Delete post error:', err);
+                window.SohbaApp.toast('Network error', 'error');
+            }
+        }
+    });
+};
+
+window.SohbaApp.editPostModal = function (postId) {
+
+    window.location.href = `/Posts/Edit/${postId}`;
+};
+</file>
+
+<file path="Sohba.Application/DTOs/GroupAndPageAggregate/GroupResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.GroupAndPageAggregate
+{
+    public class GroupResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public string AdminName { get; set; }
+        public int MembersCount { get; set; }
+        public bool IsCurrentUserMember { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_CreatePost.cshtml">
+@* // Create Post Section *@
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 px-6">
+    <div class="flex items-center gap-4 mb-4">
+        <img src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff" class="w-11 h-11 rounded-full object-cover border-2 border-slate-100 shadow-sm" alt="Profile">
+        
+        <div class="flex-1">
+            <input type="text"
+                   placeholder="What's on your mind, User?"
+                   class="w-full bg-slate-50 rounded-full px-5 py-3 text-sm text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:bg-white transition-all border border-transparent hover:border-slate-200 cursor-pointer"
+                   onclick="SohbaApp.openCreatePostModal()"
+                   readonly>
+        </div>
+    </div>
+    <hr class="border-slate-100 mb-3" />
+    <div class="flex justify-between items-center">
+        <div class="flex gap-1 sm:gap-4">
+            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors group" onclick="SohbaApp.openCreatePostModal()">
+                <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span class="text-sm font-semibold text-slate-600 group-hover:text-red-600">Live Video</span>
+            </button>
+            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-green-50 transition-colors group" onclick="SohbaApp.openCreatePostModal()">
+                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span class="text-sm font-semibold text-slate-600 group-hover:text-green-600">Photo/Video</span>
+            </button>
+            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-yellow-50 transition-colors group hidden sm:flex" onclick="SohbaApp.openCreatePostModal()">
+                <svg class="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="text-sm font-semibold text-slate-600 group-hover:text-yellow-600">Feeling</span>
+            </button>
+        </div>
+        <button class="bg-[#345e69] hover:bg-[#2a4b55] text-white px-6 py-2 rounded-xl font-bold shadow-md shadow-[#345e69]/20 transform active:scale-95 transition-all" onclick="SohbaApp.openCreatePostModal()">Post</button>
+    </div>
+</div>
+
+
+<!-- Create Post Modal (LinkedIn/Facebook Style) -->
+<div id="createPostModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeCreatePostModal()"></div>
+
+    <!-- Modal Container -->
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-xl font-bold text-gray-900">Create Post</h3>
+                <button onclick="SohbaApp.closeCreatePostModal()" class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- User Info -->
+            <div class="p-4 flex items-center gap-3">
+                <img src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff" class="w-12 h-12 rounded-full object-cover">
+                <div>
+                    <h4 class="font-bold text-gray-900">User Name</h4>
+                    <select class="text-xs bg-slate-100 border-0 rounded-lg px-2 py-1 text-gray-600">
+                        <option>Public</option>
+                        <option>Friends</option>
+                        <option>Only me</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Post Title -->
+            <div class="px-4 pb-2">
+                <input type="text"
+                       id="createPostTitle"
+                       placeholder="Post title..."
+                       class="w-full px-0 py-2 text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] text-xl placeholder:text-gray-400"
+                       maxlength="200">
+            </div>
+            <!-- Post Content -->
+            <div class="px-4">
+                <textarea id="createPostContent" rows="4"
+                          class="w-full px-0 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] text-lg resize-none placeholder:text-gray-400"
+                          placeholder="What's on your mind, User?"></textarea>
+            </div>
+
+            <!-- Image Preview (Hidden by default) -->
+            <div id="imagePreviewContainer" class="px-4 pb-4 hidden">
+                <div class="relative inline-block">
+                    <img id="imagePreview" src="" class="max-h-64 rounded-xl object-cover" alt="Preview">
+                    <button onclick="SohbaApp.removeSelectedImage()"
+                            class="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-900">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-4 border-t border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-medium text-gray-700">Add to your post</span>
+                    <div class="flex gap-2">
+                        <button onclick="document.getElementById('imageUpload').click()"
+                                class="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Photo">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                        <button class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Video">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                        <button class="p-2 text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors" title="Feeling">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden file input -->
+                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="SohbaApp.handleImageSelect(event)">
+
+                <!-- Post Button -->
+                <button onclick="SohbaApp.submitCreatePost()"
+                        class="w-full py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                    Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    window.SohbaApp = window.SohbaApp || {};
+    // ------------ Create Post Modal Functions -------------
+           window.SohbaApp.openCreatePostModal = function() {
+               const modal = document.getElementById('createPostModal');
+               if (!modal) return;
+
+               // Reset form
+               document.getElementById('createPostTitle').value = '';
+               document.getElementById('createPostContent').value = '';
+               document.getElementById('imagePreviewContainer').classList.add('hidden');
+               document.getElementById('imagePreview').src = '';
+               document.getElementById('imageUpload').value = '';
+
+               modal.classList.remove('hidden');
+               document.body.style.overflow = 'hidden';
+
+               // Focus on textarea
+               setTimeout(() => document.getElementById('createPostContent')?.focus(), 100);
+           };
+
+           window.SohbaApp.closeCreatePostModal = function() {
+               const modal = document.getElementById('createPostModal');
+               if (!modal) return;
+               modal.classList.add('hidden');
+               document.body.style.overflow = '';
+           };
+
+           window.SohbaApp.handleImageSelect = function(event) {
+               const file = event.target.files[0];
+               if (!file) return;
+
+               const reader = new FileReader();
+               reader.onload = function(e) {
+                   document.getElementById('imagePreview').src = e.target.result;
+                   document.getElementById('imagePreviewContainer').classList.remove('hidden');
+               };
+               reader.readAsDataURL(file);
+           };
+
+           window.SohbaApp.removeSelectedImage = function() {
+               document.getElementById('imagePreviewContainer').classList.add('hidden');
+               document.getElementById('imagePreview').src = '';
+               document.getElementById('imageUpload').value = '';
+           };
+
+             window.SohbaApp.submitCreatePost = async function() {
+                console.log('submitCreatePost called');
+                const title = document.getElementById('createPostTitle').value.trim();
+                const content = document.getElementById('createPostContent').value.trim();
+                const imageFile = document.getElementById('imageUpload').files[0];
+
+                if (!title && !content && !imageFile) {
+                    window.SohbaApp.toast('Please add a title, content, or an image', 'error');
+                    return;
+                }
+                if (!title) {
+                    window.SohbaApp.toast('Title is required', 'error');
+                    return;
+                }
+
+                if (!content) {
+                    window.SohbaApp.toast('Content is required', 'error');
+                    return;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('Title', title || 'Untitled Post');
+                    formData.append('Content', content);
+                    formData.append('IsPrivate', 'false');
+
+                    if (imageFile) {
+                        formData.append('ImageFile', imageFile);
+                    }
+
+                    const response = await fetch('/Posts/Create', {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        },
+                        body: formData
+                    });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        const text = await response.text();
+                        console.error('Error response:', text);
+                        window.SohbaApp.toast('Failed to create post', 'error');
+                    }
+                } catch (error) {
+                    console.error('Create post error:', error);
+                    window.SohbaApp.toast('Network error', 'error');
+                }
+            };
+</script>
+</file>
+
+<file path="Sohba.Application/DTOs/PostAggregate/PostResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.PostAggregate
+{
+    public class PostResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string? ImageUrl { get; set; }
+        public string AuthorName { get; set; }
+        public int CommentsCount { get; set; }
+        public int ReactionsCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string? CurrentUserReaction { get; set; }
+
+        public bool IsSaved { get; set; }
+        public string? SavedTag { get; set; }
+        public bool IsFavorite { get; set; }
+
+        public bool IsReportedByCurrentUser { get; set; }
+
+        public bool IsAuthor { get; set; }
+        public bool IsPrivate { get; set; }
+        public string SourceType { get; set; }
+        public string? SourceName { get; set; }
+        public Guid? SourceId { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Shared/Partials/_PostCard.cshtml">
+@using System.Globalization
+@using Sohba.Application.DTOs.PostAggregate
+@using System.Text.RegularExpressions
+@model IEnumerable<PostResponseDto>
+
+@functions {
+    private string GetTimeAgo(DateTime createdAt)
+    {
+        var timeSpan = DateTime.UtcNow - createdAt.ToLocalTime();
+
+        if (timeSpan.TotalSeconds < 60)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)}w ago";
+        if (timeSpan.TotalDays < 365)
+            return $"{(int)(timeSpan.TotalDays / 30)}mo ago";
+
+        return $"{(int)(timeSpan.TotalDays / 365)}y ago";
+    }
+
+    private string GetPrivacyIcon(bool isPrivate)
+    {
+        return isPrivate ?
+            "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' /></svg> Private" :
+            "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' /></svg> Public";
+    }
+    private string GetReactionClass(string? type)
+    {
+        if (string.IsNullOrEmpty(type)) return "text-slate-600 hover:bg-slate-100";
+        return type switch
+        {
+            "Like" => "text-blue-700 bg-blue-100 hover:bg-blue-200",     
+            "Love" => "text-rose-700 bg-rose-100 hover:bg-rose-200",     
+            "Haha" => "text-amber-600 bg-amber-100 hover:bg-amber-200",  
+            "Wow" => "text-orange-700 bg-orange-100 hover:bg-orange-200",
+            "Sad" => "text-indigo-700 bg-indigo-100 hover:bg-indigo-200",
+            "Angry" => "text-red-700 bg-red-100 hover:bg-red-200",       
+            _ => "text-slate-600 hover:bg-slate-100"
+        };
+    }
+}
+<div class="page-transition">
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6 flex items-center gap-3">
+            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span class="font-medium">@ViewBag.ErrorMessage</span>
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+            <div class="bg-slate-100 p-6 rounded-3xl mb-5">
+                <svg class="w-16 h-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">No posts yet</h3>
+            <p class="text-slate-500 text-sm max-w-xs mx-auto">Start following friends or create your first post!</p>
+            <a asp-controller="Posts" asp-action="Create" class="mt-5 px-6 py-2.5 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                Create Post
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-5">
+            @foreach (var post in Model)
+            {
+                var menuId = $"menu-{post.Id}";
+                var timeAgo = GetTimeAgo(post.CreatedAt);
+                var hasImage = !string.IsNullOrEmpty(post.ImageUrl);
+
+                <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden" data-post-id="@post.Id" data-reactions="@post.ReactionsCount">
+
+                    @* Header *@
+                    <div class="p-4 sm:p-5 flex items-center justify-between">
+                        <div class="flex items-center gap-3.5">
+                            <div class="relative">
+                                <div class="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-slate-100">
+                                    <img src="https://ui-avatars.com/api/?name=@(Uri.EscapeDataString(post.AuthorName ?? "User"))&background=345e69&color=fff&size=128"
+                                         class="w-full h-full object-cover"
+                                         alt="@post.AuthorName"
+                                         onerror="this.src='https://ui-avatars.com/api/?name=User&background=345e69&color=fff'">
+                                </div>
+                                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                            </div>
+
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-base">@post.AuthorName</h4>
+                                <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                                    <span title="@post.CreatedAt.ToString("MMM dd, yyyy HH:mm")">@timeAgo</span>
+
+                                    @if (post.SourceType != "User")
+                                    {
+                                        <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                        <span class="flex items-center gap-1">
+                                            @if (post.SourceType == "Group")
+                                            {
+                                                <svg class="w-3 h-3 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                            }
+                                            else if (post.SourceType == "Page")
+                                            {
+                                                <svg class="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                                </svg>
+                                            }
+                                            <a asp-controller="@post.SourceType" asp-action="Details" asp-route-id="@post.SourceId"
+                                               class="hover:underline font-medium">
+                                                @post.SourceName
+                                            </a>
+                                        </span>
+                                    }
+                                    <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                    <span class="flex items-center gap-1">@Html.Raw(GetPrivacyIcon(post.IsPrivate))</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Menu *@
+                        <div class="relative">
+                            <button aria-label="Post options" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl" onclick="SohbaApp.toggleMenu('@menuId')">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                                </svg>
+                            </button>
+
+                            <div id="@menuId" class="hidden absolute right-0 top-11 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                                <div class="py-1.5">
+                                    <button data-save-button="@post.Id"
+                                            onclick="SohbaApp.savePost('@post.Id')"
+                                            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm @(post.IsSaved ? "text-amber-600 bg-amber-50" : "")">
+                                        @if (post.IsSaved)
+                                        {
+                                            @if (post.IsFavorite)
+                                            {
+                                                <svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                                </svg>
+                                            }
+                                            else
+                                            {
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                                </svg>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                            </svg>
+                                        }
+
+                                        <span class="btn-text">
+                                            @if (post.IsSaved)
+                                            {
+                                                @(post.IsFavorite ? "Favorited" : "Saved")
+                                            }
+                                            else
+                                            {
+                                                @("Save Post")
+                                            }
+                                        </span>
+                                    </button>
+
+                                    <button data-fav-button="@post.Id"
+                                            onclick="SohbaApp.addToFavorites('@post.Id')"
+                                            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm @(post.IsFavorite ? "text-pink-600 bg-pink-50" : "")">
+                                        @if (post.IsFavorite)
+                                        {
+                                            <svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                        }
+
+                                        <span class="btn-text">
+                                            @(post.IsFavorite ? "Favorited" : "Add to Favorites")
+                                        </span>
+                                    </button>
+                                    <hr class="border-slate-100 my-1">
+                                    @if (post.IsAuthor || User.IsInRole("Admin"))
+                                    {
+                                        <button onclick="SohbaApp.editPostModal('@post.Id')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm">
+                                            <!-- edit icon -->
+                                            Edit Post
+                                        </button>
+                                        <button onclick="SohbaApp.deletePost('@post.Id')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-600 text-sm">
+                                            <!-- delete icon -->
+                                            Delete Post
+                                        </button>
+                                        <hr class="border-slate-100 my-1">
+                                    }
+
+                                    <button data-report-button="@post.Id"
+                                            onclick="SohbaApp.reportPost('@post.Id')"
+                                            class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-600 text-sm @(post.IsReportedByCurrentUser ? "opacity-50 cursor-not-allowed" : "")"
+                                            @(post.IsReportedByCurrentUser ? "disabled" : "")>
+
+                                        @if (post.IsReportedByCurrentUser)
+                                        {
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span>Reported</span>
+                                        }
+                                        else
+                                        {
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>Report Post</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Content Section *@
+                    <div class="px-4 sm:px-5 pb-3">
+                        <h3 class="post-title font-bold text-slate-800 text-lg mb-2">@post.Title</h3>
+
+                        @using System.Text.RegularExpressions
+                        @{
+                            var contentWithLinks = Regex.Replace(
+                            post.Content ?? "",
+                                                    @"#(\w+)",
+                                                "<a href='/Posts/Hashtag?tag=$1' class='text-[#345e69] hover:underline font-bold'>#$1</a>"
+                            );
+                        }
+
+                        <p class="post-content text-slate-600 leading-relaxed text-sm sm:text-base whitespace-pre-line">
+                            @Html.Raw(contentWithLinks)
+                        </p>
+                    </div>
+
+                    @* Media *@
+                    @if (hasImage)
+                    {
+                        <div class="mt-2 bg-slate-100 cursor-pointer" onclick="SohbaApp.openPostModal('@post.Id')">
+                            <div class="aspect-[16/9] overflow-hidden">
+                                <img src="@post.ImageUrl" 
+                                    class="post-image w-full h-full object-cover" 
+                                    alt="Post image" 
+                                    loading="lazy"
+                                     onerror="this.style.display='none'">
+                            </div>
+                        </div>
+                    }
+
+                    @* Engagement Stats *@
+                    <div class="px-4 sm:px-5 py-3 flex items-center justify-between border-b border-slate-100">
+                        <div class="flex items-center gap-1.5">
+                            <div class="flex -space-x-1.5">
+                                <span class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] border border-white">👍</span>
+                                <span class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-[8px] border border-white">❤️</span>
+                                @if (post.ReactionsCount > 2)
+                                {
+                                    <span class="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[8px] text-slate-600 border border-white font-bold">+@(post.ReactionsCount - 2)</span>
+                                }
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium reaction-count-@post.Id">
+                                @post.ReactionsCount @(post.ReactionsCount == 1 ? "reaction" : "reactions")
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-4 text-xs text-slate-500">
+                            <button onclick="SohbaApp.openPostModal('@post.Id', 'comments')"
+                                    class="hover:text-[#345e69]">
+
+                                <span id="comments-count-@post.Id">
+                                    @post.CommentsCount
+                                </span>
+
+                                <span id="comments-label-@post.Id">
+                                    @(post.CommentsCount == 1 ? "comment" : "comments")
+                                </span>
+
+                            </button>
+
+
+                            <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                            <span>0 shares</span> @* Will be dynamic later *@
+                        </div>
+                    </div>
+
+                    @* Action Buttons *@
+                    <div class="px-2 py-1.5 flex items-center justify-between">
+                        <div class="flex-1 relative">
+                            @{
+                                var currentReaction = post.CurrentUserReaction;
+                                var likeIcon = currentReaction switch
+                                {
+                                                    "Like" => "👍",
+                                                    "Love" => "❤️",
+                                                    "Haha" => "😂",
+                                                    "Wow" => "😮",
+                                                    "Sad" => "😢",
+                                                    "Angry" => "😠",
+                                    _ => "React"
+                                };
+                                var likeText = currentReaction == "React" ? "" : "";
+                                var reactionClass = GetReactionClass(currentReaction);
+                            }
+
+                            <button data-like-button="@post.Id"
+                                    data-current-reaction="@currentReaction"
+                                    aria-label="React to post"
+                                    onclick="SohbaApp.toggleReactionPicker('@post.Id')"
+                                    class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 @reactionClass font-bold">
+                                <span class="like-icon">@likeIcon</span>
+                                <span class="like-text font-semibold text-sm">@likeText</span>
+                            </button>
+
+
+                            <div id="reaction-picker-@post.Id" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-2 bg-white rounded-2xl shadow-xl border border-slate-200 flex items-center gap-1 z-20">
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Like')" class="p-2 hover:scale-110 transition text-2xl" title="Like" aria-label="React with Like">👍</button>
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Love')" class="p-2 hover:scale-110 transition text-2xl" title="Love" aria-label="React with White Heart">❤️</button>
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Haha')" class="p-2 hover:scale-110 transition text-2xl" title="Haha" aria-label="React with Laugh">😂</button>
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Wow')" class="p-2 hover:scale-110 transition text-2xl" title="Wow" aria-label="React with WOW">😮</button>
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Sad')" class="p-2 hover:scale-110 transition text-2xl" title="Sad" aria-label="React with Sad">😢</button>
+                                <button onclick="SohbaApp.reactToPost('@post.Id', 'Angry')" class="p-2 hover:scale-110 transition text-2xl" title="Angry" aria-label="React with Angry">😠</button>
+                            </div>
+                        </div>
+
+                        <button onclick="SohbaApp.openPostModal('@post.Id', 'comments')" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span class="font-semibold text-sm">Comment</span>
+                        </button>
+
+                        <button onclick="SohbaApp.sharePost('@post.Id')" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            <span class="font-semibold text-sm">Share</span>
+                        </button>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+
+    @* Modern Post Modal (Instagram Style) *@
+    <div id="postModal" class="fixed inset-0 z-50 hidden">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closePostModal()"></div>
+
+        <!-- Modal Container -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-7xl h-[90vh] rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden overflow-x-hidden">
+
+                <!-- Left: Image Section -->
+                <div id="modalLeft" class="flex-1 bg-black flex items-center justify-center">
+                    <img id="modalPostImage" class="w-full h-full object-cover" src="" alt="Post image">
+                </div>
+
+                <!-- Right: Details Section -->
+                <div id="modalRight" class="w-96 flex-shrink-0 flex flex-col bg-white">
+
+
+                    <!-- Header: User Info -->
+                    <div class="flex items-center gap-3 p-4 border-b">
+                        <img id="modalAuthorAvatar" class="w-10 h-10 rounded-full object-cover" src="">
+                        <div>
+                            <h3 id="modalAuthorName" class="font-semibold text-gray-900"></h3>
+                            <p id="modalPostDate" class="text-xs text-gray-500"></p>
+                        </div>
+                        <button aria-label="Close" onclick="SohbaApp.closePostModal()" class="ml-auto p-1 text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Comments Section (Scrollable) -->
+                    <div id="modalComments" class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <!-- Comments will be injected here -->
+                    </div>
+
+                    <!-- Post Content (if no image) -->
+                    <div id="modalPostContent" class="px-4 pb-2 text-gray-800"></div>
+
+                    <!-- Comment Input -->
+                    <div class="p-4 border-t flex gap-2">
+                        <input id="commentInput" type="text" placeholder="Add a comment..." class="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:border-[#345e69]">
+                        <button onclick="SohbaApp.submitComment()" class="bg-[#345e69] text-white px-5 py-2 rounded-full font-semibold hover:bg-[#2a4b55] transition">Post</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    @Html.AntiForgeryToken()
+    <!-- Report Post Modal -->
+    <div id="reportModal" class="fixed inset-0 z-[100] hidden">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeReportModal()"></div>
+
+        <!-- Modal Container -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-900">Report Post</h3>
+                    <button onclick="SohbaApp.closeReportModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-4">
+                    <p class="text-sm text-gray-600 mb-4">Why are you reporting this post? Your report is anonymous.</p>
+
+                    <div class="space-y-3">
+                        <!-- Spam -->
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="reportReason" value="Spam" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Spam</span>
+                        </label>
+
+                        <!-- Harassment -->
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="reportReason" value="Harassment" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Harassment or bullying</span>
+                        </label>
+
+                        <!-- Inappropriate Content -->
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="reportReason" value="InappropriateContent" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Inappropriate content</span>
+                        </label>
+
+                        <!-- Violence -->
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="reportReason" value="Violence" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Violence or dangerous organizations</span>
+                        </label>
+
+                        <!-- Other -->
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                            <input type="radio" name="reportReason" value="Other" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Something else</span>
+                        </label>
+                    </div>
+
+                    <!-- Additional info (ظهر بس لو اختار Other) -->
+                    <div id="otherReasonContainer" class="mt-4 hidden">
+                        <textarea id="otherReasonText" rows="3" placeholder="Please describe the issue..."
+                                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex gap-3 p-4 border-t bg-slate-50">
+                    <button onclick="SohbaApp.closeReportModal()"
+                            class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="SohbaApp.submitReport()"
+                            class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-colors">
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <!-- Share Post Modal -->
+    <div id="shareModal" class="fixed inset-0 z-[100] hidden">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeShareModal()"></div>
+
+        <!-- Modal Container -->
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-900">Share Post</h3>
+                    <button onclick="SohbaApp.closeShareModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <p class="text-sm text-gray-600 mb-3">Share this post with others</p>
+
+                    <!-- Post URL -->
+                    <div class="flex items-center gap-2 mb-4">
+                        <input id="sharePostUrl" type="text" readonly
+                               class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
+                               value="">
+                        <button onclick="SohbaApp.copyShareLink()"
+                                class="px-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <!-- Social Share Options (اختياري) -->
+                    <div class="flex justify-center gap-4 mt-4">
+                        <button class="p-3 bg-blue-600 text-white rounded-full hover:scale-110 transition-transform" title="Share on Facebook" aria-label="Share on Facebook>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
+                            </svg>
+                        </button>
+                    <button class="p-3 bg-sky-500 text-white rounded-full hover:scale-110 transition-transform" title="Share on Twitter" aria-label="Share on Twitter>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                            </svg>
+                        </button>
+                <button class="p-3 bg-green-600 text-white rounded-full hover:scale-110 transition-transform" title="Share on WhatsApp" aria-label="Share on WhatsApp>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12c0 1.9.53 3.68 1.45 5.2L2.3 21.3c-.1.4.2.8.6.6l4.1-1.4C8.4 21.4 10.1 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3.1 1.1 1.1-3.1-.2-.3c-.7-1.2-1.1-2.6-1.1-4.1 0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8zm4.5-6.5c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.7 1-.1.2-.2.2-.4.1-1.5-.7-2.5-1.3-3.5-2.3-.3-.3-.5-.5-.7-.8-.1-.2 0-.4.1-.5.1-.1.2-.2.3-.3.1-.1.2-.2.2-.3.1-.2 0-.4 0-.5-.1-.2-.5-1.1-.6-1.5-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-1.2 1.8-1.1 2.9.1 1.1.5 2.1 1.2 3 .7.9 1.6 1.6 2.7 2 .5.2 1 .3 1.5.3.6 0 1.1-.2 1.5-.5.3-.3.5-.6.6-1 .1-.3 0-.5-.1-.6-.1-.1-.2-.1-.3-.2z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @*-----------------------------------------------------------------------*@
+
+
+
+
+</div>
+</file>
+
+<file path="Sohba/Views/Home/Index.cshtml">
+@model Sohba.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Home Page";
+    Layout = "_AppLayout"; // run this page into _AppLayout.cshtml
+}
+
+<style>
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start relative">
+    <div class="col-span-1 xl:col-span-8 space-y-6">
+        <partial name="Partials/_StoryRail" model="Model.Stories" />
+        <partial name="Partials/_CreatePost" />
+         <div id="postsContainer">
+            <partial name="Partials/_PostCard" model="Model.Posts" />
+        </div>
+
+        
+        
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden text-center py-4">
+            <div class="inline-flex items-center gap-2 text-gray-500">
+                <svg class="animate-spin h-5 w-5 text-[#345e69]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading more posts...</span>
+            </div>
+        </div>
+
+        <!--  Load More Button (visible on desktop) -->
+        @if (Model.PagedResult != null && Model.PagedResult.HasNextPage)
+        {
+            <button id="loadMoreBtn"
+                    class="w-full py-3 bg-white border-2 border-[#345e69] text-[#345e69] font-bold rounded-xl hover:bg-[#345e69] hover:text-white transition-colors">
+                Load More Posts
+            </button>
+        }
+
+        <!-- End of Feed Message -->
+        <div id="endOfFeedMessage" class="text-center py-8 text-gray-500 @(Model.PagedResult != null && Model.PagedResult.HasNextPage ? "hidden" : "")">
+            <p>You've seen all posts!</p>
+        </div>
+    </div>
+    <partial name="Partials/_RightSidebar" />
+</div>
+
+<!-- Modals -->
+<partial name="Partials/_CreateStoryModal" />
+<partial name="Partials/_StoryViewer" />
+
+
+@section Scripts {
+    <script src="~/js/features/feed.js"></script>
+    <script src="~/js/features/sidebar.js"></script>
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IPostService.cs">
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.PostAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IPostService
+    {
+
+        Task<Result<PagedResult<PostResponseDto>>> GetFeedAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 10);
+
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
+        Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
+        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
+        Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false);
+        Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetPagePostsAsync(Guid pageId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetUserPostsAsync(Guid userId, Guid currentUserId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
+        Task<Result> HidePostAsync(Guid postId, Guid userId);
+
+        Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
+
+    }
+}
+</file>
+
+<file path="Sohba/Controllers/HomeController.cs">
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.GroupAndPageAggregate;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.StoryAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Application.Services;
+using Sohba.Domain.Common;
+using Sohba.Models;
+using Sohba.ViewModels;
+using System.Diagnostics;
+
+namespace Sohba.Controllers
+{
+    [Authorize]
+    [EnableRateLimiting("Feed")]
+    public class HomeController : BaseController
+    {
+        private readonly IPostService _postService;
+        private readonly IStoryService _storyService;
+        private readonly IHashtagService _hashtagService;
+        private readonly ICompositeViewEngine _viewEngine;
+        public HomeController(IPostService postService, IStoryService storyService, IHashtagService hashtagService, ICompositeViewEngine viewEngine)
+        {
+            _postService = postService;
+            _storyService = storyService;
+            _hashtagService = hashtagService;
+            _viewEngine = viewEngine;
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetPostCards(int page = 2, int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _postService.GetFeedAsync(userId, page, pageSize);
+
+            if (result.IsFailure)
+                return Json(new { success = false, error = result.Error });
+
+
+            var html = await RenderPartialViewToString("Partials/_PostCard", result.Value.Items);
+
+            return Json(new
+            {
+                success = true,
+                html = html,
+                hasMore = result.Value.HasNextPage,
+                currentPage = result.Value.Page,
+                totalPages = result.Value.TotalPages
+            });
+        }
+
+
+        private async Task<string> RenderPartialViewToString(string viewName, object model)
+        {
+            if (string.IsNullOrEmpty(viewName))
+                viewName = ControllerContext.ActionDescriptor.ActionName;
+
+            ViewData.Model = model;
+
+            using (var writer = new StringWriter())
+            {
+                var viewResult = _viewEngine.FindView(ControllerContext, viewName, false);
+
+                if (viewResult.View == null)
+                    throw new ArgumentNullException($"{viewName} does not match any available view");
+
+                var viewContext = new ViewContext(
+                    ControllerContext,
+                    viewResult.View,
+                    ViewData,
+                    TempData,
+                    writer,
+                    new HtmlHelperOptions()
+                );
+
+                await viewResult.View.RenderAsync(viewContext);
+                return writer.GetStringBuilder().ToString();
+            }
+        }
+
+
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+
+
+            var feedResult = await _postService.GetFeedAsync(userId, page, pageSize);
+
+            var storiesResult = await _storyService.GetStoriesForFeedAsync(userId);
+            var trendingHashtags = await _hashtagService.GetTrendingHashtagsAsync(5);
+
+            ViewBag.TrendingHashtags = trendingHashtags.Value;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+
+            if (feedResult.IsFailure)
+            {
+                ViewBag.ErrorMessage = feedResult.Error;
+                return View(new HomeViewModel
+                {
+                    Posts = new List<PostResponseDto>(),
+                    Stories = storiesResult.Value ?? new List<StoryResponseDto>(),
+                    PagedResult = new PagedResult<PostResponseDto>()
+                });
+            }
+
+            var viewModel = new HomeViewModel
+            {
+                Posts = feedResult.Value.Items,
+                Stories = storiesResult.Value ?? new List<StoryResponseDto>(),
+                PagedResult = feedResult.Value
+            };
+
+            return View(viewModel);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> LoadMore(int page = 2, int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _postService.GetFeedAsync(userId, page, pageSize);
+
+            if (result.IsFailure)
+                return Json(new { success = false, error = result.Error });
+
+            return Json(new
+            {
+                success = true,
+                posts = result.Value.Items,
+                hasMore = result.Value.HasNextPage,
+                currentPage = result.Value.Page,
+                totalPages = result.Value.TotalPages
+            });
+        }
+
+
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+}
+</file>
+
+</files>

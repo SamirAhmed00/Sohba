@@ -39,7 +39,7 @@ namespace Sohba.Application.Services
             _logger = logger;
         }
 
-        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId)
+        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId , Guid currentUserId)
         {
             var comments = await _unitOfWork.Interactions.GetCommentsByPostIdAsync(postId);
 
@@ -55,6 +55,9 @@ namespace Sohba.Application.Services
             // Build the tree: only return top-level comments (no parent)
             var result = new List<CommentResponseDto>();
 
+
+
+            // Do I Delete This Or What???????????????????????????????????????
             foreach (var comment in commentDtos.Where(c => !c.ParentCommentId.HasValue))
             {
                 comment.Replies = replyLookup.ContainsKey(comment.Id)
@@ -64,6 +67,14 @@ namespace Sohba.Application.Services
                 result.Add(comment);
             }
 
+            foreach (var comment in result)
+            {
+                comment.IsAuthor = comment.UserId == currentUserId;
+                foreach (var reply in comment.Replies)
+                {
+                    reply.IsAuthor = reply.UserId == currentUserId;
+                }
+            }
             return result.OrderByDescending(c => c.CreatedAt).ToList();
         }
 
@@ -151,7 +162,9 @@ namespace Sohba.Application.Services
             var canReply = _interactionDomainService.CanReplyToComment(userId, isCommentDeleted: false, isThreadLocked: false);
             if (!canReply.IsSuccess) return canReply;
 
-            return Result.Success();
+            // Reuse the comment-creation logic with the parent comment id.
+            // This persists the reply, validates the post, and sends notifications.
+            return await AddCommentAsync(userId, parentComment.PostId, content, parentCommentId: commentId);
         }
 
         public async Task<Result> RemoveReactionAsync(Guid userId, Guid postId)
@@ -334,6 +347,180 @@ namespace Sohba.Application.Services
                 dto.CurrentUserReaction = reactionDict.GetValueOrDefault(p.Id);
                 return dto;
             });
+        }
+
+
+
+        // ------------------------
+
+        public async Task<Result<IEnumerable<SavedCollectionDto>>> GetUserCollectionsAsync(Guid userId)
+        {
+            var collections = await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId);
+
+            var dtos = collections.Select(c => new SavedCollectionDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                IsDefault = c.IsDefault,
+                IsFavorites = c.IsFavorites,
+                PostCount = c.SavedPosts?.Count ?? 0,
+                CreatedAt = c.CreatedAt
+            }).ToList();
+
+            return Result<IEnumerable<SavedCollectionDto>>.Success(dtos);
+        }
+
+        public async Task<Result<SavedCollectionDto>> CreateCollectionAsync(Guid userId, string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Result<SavedCollectionDto>.Failure("Collection name is required.");
+
+            var trimmed = name.Trim();
+
+            var existing = await _unitOfWork.Interactions.GetCollectionByNameAsync(userId, trimmed);
+            if (existing != null)
+                return Result<SavedCollectionDto>.Failure("A collection with this name already exists.");
+
+            var collection = new SavedCollection
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Name = trimmed,
+                IsDefault = false,
+                IsFavorites = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Interactions.AddCollection(collection);
+            await _unitOfWork.CompleteAsync();
+
+            var dto = new SavedCollectionDto
+            {
+                Id = collection.Id,
+                Name = collection.Name,
+                IsDefault = collection.IsDefault,
+                IsFavorites = collection.IsFavorites,
+                PostCount = 0,
+                CreatedAt = collection.CreatedAt
+            };
+
+            return Result<SavedCollectionDto>.Success(dto);
+        }
+
+        public async Task<Result> SavePostToCollectionAsync(Guid userId, Guid postId, Guid collectionId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return Result.Failure("Post not found.");
+
+            var collection = await _unitOfWork.Interactions.GetCollectionByIdAsync(collectionId);
+            if (collection == null) return Result.Failure("Collection not found.");
+            if (collection.UserId != userId) return Result.Failure("You do not own this collection.");
+
+            var existing = await _unitOfWork.Interactions.GetSavedPostByCollectionAsync(userId, postId, collectionId);
+            if (existing != null)
+                return Result.Failure("Post is already saved to this collection.");
+
+            var savedPost = new SavedPost
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                PostId = postId,
+                CollectionId = collectionId,
+                Tag = SavedTag.General,
+                SavedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Interactions.AddSavedPost(savedPost);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result> SavePostToFavoritesAsync(Guid userId, Guid postId)
+        {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null) return Result.Failure("Post not found.");
+
+            // Find or create the special Favorites collection.
+            var favorites = (await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId))
+                .FirstOrDefault(c => c.IsFavorites);
+
+            if (favorites == null)
+            {
+                favorites = new SavedCollection
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Name = "Favorites",
+                    IsDefault = true,
+                    IsFavorites = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _unitOfWork.Interactions.AddCollection(favorites);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            var existing = await _unitOfWork.Interactions.GetSavedPostByCollectionAsync(userId, postId, favorites.Id);
+            if (existing != null)
+            {
+                // Toggle off: remove from favorites.
+                _unitOfWork.Interactions.RemoveSavedPost(existing);
+                await _unitOfWork.CompleteAsync();
+                return Result.Success();
+            }
+
+            var savedPost = new SavedPost
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                PostId = postId,
+                CollectionId = favorites.Id,
+                Tag = SavedTag.Favorite,
+                SavedAt = DateTime.UtcNow
+            };
+
+            _unitOfWork.Interactions.AddSavedPost(savedPost);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<SavedPostsGroupedDto>>> GetSavedPostsGroupedAsync(Guid userId)
+        {
+            var collections = await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId);
+            var allSaved = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
+
+            var result = new List<SavedPostsGroupedDto>
+            {
+                // Always show the default "Saved" collection first.
+                new SavedPostsGroupedDto
+                {
+                    CollectionId = Guid.Empty,
+                    CollectionName = "All Saved",
+                    IsFavorites = false,
+                    Posts = (await MapPostsToResponse(allSaved.Select(s => s.Post).ToList(), userId)).ToList()
+                }
+            };
+
+            foreach (var collection in collections)
+            {
+                var collectionSaves = allSaved
+                    .Where(s => s.CollectionId == collection.Id)
+                    .ToList();
+
+                if (collectionSaves.Count == 0 && !collection.IsDefault && !collection.IsFavorites)
+                    continue;
+
+                result.Add(new SavedPostsGroupedDto
+                {
+                    CollectionId = collection.Id,
+                    CollectionName = collection.Name,
+                    IsFavorites = collection.IsFavorites,
+                    Posts = (await MapPostsToResponse(collectionSaves.Select(s => s.Post).ToList(), userId)).ToList()
+                });
+            }
+
+            return Result<IEnumerable<SavedPostsGroupedDto>>.Success(result);
         }
     }
 }

@@ -234,5 +234,18 @@ namespace Sohba.Application.Services
 
             return Result.Success();
         }
+
+        public async Task<Result<int>> GetPendingReportsCountAsync()
+        {
+            var count = await _unitOfWork.Reports.CountPendingAsync();
+            return Result<int>.Success(count);
+        }
+
+        public async Task<Result<IEnumerable<PostReportResponseDto>>> GetRecentPendingReportsAsync(int count)
+        {
+           var reports = await _unitOfWork.Reports.GetRecentPendingAsync(count);
+            var dtos = _mapper.Map<IEnumerable<PostReportResponseDto>>(reports);
+            return Result<IEnumerable<PostReportResponseDto>>.Success(dtos);
+        }
     }
 }

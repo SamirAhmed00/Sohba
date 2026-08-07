@@ -24,5 +24,6 @@ namespace Sohba.Application.Interfaces
 
         // Administrative Actions
         Task<Result<bool>> KickMemberAsync(Guid groupId, Guid targetUserId, Guid adminId);
+        Task<Result<int>> GetGroupsCountAsync();
     }
 }

@@ -28,7 +28,7 @@ namespace Sohba.Controllers
             {
                 var recommendedGroups = await GroupService.GetRecommendedGroupsAsync(userId, 5);
                 ViewBag.RecommendedGroups = recommendedGroups.Value ?? new List<GroupResponseDto>();
-                SetJwtTokenInViewBag();
+                await SetJwtTokenInViewBag();
             }
 
             await next();
@@ -40,7 +40,7 @@ namespace Sohba.Controllers
             return userId != null ? Guid.Parse(userId) : Guid.Empty;
         }
 
-        protected void SetJwtTokenInViewBag()
+        protected async Task SetJwtTokenInViewBag()
         {
             var userId = GetCurrentUserId();
             try
@@ -57,10 +57,10 @@ namespace Sohba.Controllers
                 {
                     var jwtService = HttpContext.RequestServices.GetRequiredService<JwtService>();
                     var userManager = HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
-                    var user = userManager.FindByIdAsync(userId.ToString()).GetAwaiter().GetResult();
+                    var user = await userManager.FindByIdAsync(userId.ToString());
                     if (user != null)
                     {
-                        var roles = userManager.GetRolesAsync(user).GetAwaiter().GetResult();
+                        var roles = await userManager.GetRolesAsync(user);
                         var token = jwtService.GenerateToken(user, roles);
                         ViewBag.JwtToken = token;
                     }

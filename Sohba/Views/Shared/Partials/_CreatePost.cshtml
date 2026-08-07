@@ -162,7 +162,11 @@
            window.SohbaApp.handleImageSelect = function(event) {
                const file = event.target.files[0];
                if (!file) return;
-
+               if (file.size > 5 * 1024 * 1024) {
+                     window.SohbaApp.toast('Image must be smaller than 5MB', 'error');
+                     event.target.value = '';
+                     return;
+                }
                const reader = new FileReader();
                reader.onload = function(e) {
                    document.getElementById('imagePreview').src = e.target.result;

@@ -11,9 +11,10 @@ window.openStoryViewer = async function (userId) {
     currentUserId = userId;
     currentStoryIndex = 0;
 
-    // جلب stories الخاصه بالمستخدم
     const response = await fetch(`/Stories/GetUserStories?userId=${userId}`);
-    const stories = await response.json();
+    const payload = await response.json();
+
+    const stories = payload.data ?? payload.Data ?? (Array.isArray(payload) ? payload : []);
 
     if (stories && stories.length > 0) {
         currentUserStories = stories;
@@ -21,6 +22,8 @@ window.openStoryViewer = async function (userId) {
         document.getElementById('storyViewerModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         startProgress();
+    } else {
+        window.SohbaApp.toast('No stories available', 'info');
     }
 };
 

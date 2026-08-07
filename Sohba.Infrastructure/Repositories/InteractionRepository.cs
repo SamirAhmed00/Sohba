@@ -134,5 +134,41 @@ namespace Sohba.Infrastructure.Repositories
         {
             _context.Set<SavedPost>().Update(savedPost);
         }
+
+
+        // --- SavedCollection Implementation ---
+        public async Task<IEnumerable<SavedCollection>> GetCollectionsByUserAsync(Guid userId)
+        {
+            return await _context.Set<SavedCollection>()
+                .Include(c => c.SavedPosts)
+                .Where(c => c.UserId == userId)
+                .OrderBy(c => c.IsDefault ? 0 : 1)
+                .ThenBy(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<SavedCollection?> GetCollectionByIdAsync(Guid collectionId)
+        {
+            return await _context.Set<SavedCollection>()
+                .Include(c => c.SavedPosts)
+                .FirstOrDefaultAsync(c => c.Id == collectionId);
+        }
+
+        public async Task<SavedCollection?> GetCollectionByNameAsync(Guid userId, string name)
+        {
+            return await _context.Set<SavedCollection>()
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.Name == name);
+        }
+
+        public void AddCollection(SavedCollection collection)
+        {
+            _context.Set<SavedCollection>().Add(collection);
+        }
+
+        public async Task<SavedPost?> GetSavedPostByCollectionAsync(Guid userId, Guid postId, Guid collectionId)
+        {
+            return await _context.Set<SavedPost>()
+                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId && sp.CollectionId == collectionId);
+        }
     }
 }

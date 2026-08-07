@@ -28,9 +28,17 @@
             {
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
                     <div class="flex items-start gap-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
-                            @item.Name[0]
-                        </div>
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" class="w-14 h-14 rounded-2xl object-cover shadow-sm border border-slate-100" alt="@item.Name" />
+                        }
+                        else
+                        {
+                            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
+                                @item.Name[0]
+                            </div>
+                        }
+
                         <div class="flex-1">
                             <a href="/Pages/Details/@item.Id" class="font-bold text-gray-900 hover:text-emerald-600 transition">@item.Name</a>
                             <p class="text-gray-500 text-sm mt-1 line-clamp-2">@item.Description</p>

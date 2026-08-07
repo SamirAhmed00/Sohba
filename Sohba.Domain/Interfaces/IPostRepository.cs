@@ -13,7 +13,6 @@ namespace Sohba.Domain.Interfaces
            int pageSize = 10);
 
         // I will Reove it Later -- Kept Now for backward compatibility
-        Task<IEnumerable<Post>> GetTimelineAsync(Guid userId);
         Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
         Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag);
 
@@ -30,5 +29,7 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Post>> GetUserPostsAsync(Guid userId);
 
         Task<IEnumerable<Post>> SearchPostsAsync(string query, int limit = 10);
+
+        Task<IEnumerable<Post>> GetRecentAsync(int count);
     }
 }

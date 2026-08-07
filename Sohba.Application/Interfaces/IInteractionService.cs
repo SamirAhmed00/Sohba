@@ -18,7 +18,7 @@ namespace Sohba.Application.Interfaces
 
         // Comments
         Task<Result> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null);
-        Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId);
+        Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId, Guid currentUserId);
         Task<Result> DeleteCommentAsync(Guid userId, Guid commentId, bool isAdmin);
 
         Task<Result> AddReplyAsync(Guid userId, Guid commentId, string content);
@@ -29,5 +29,13 @@ namespace Sohba.Application.Interfaces
         Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsByTagAsync(Guid userId, SavedTag tag);
         Task<Result<SavedPostDto>> SavePostAsync(Guid userId, Guid postId, SavedTag tag = SavedTag.General, string? userTag = null);
         Task<Result> RemoveSavedPostAsync(Guid userId, Guid postId);
+
+        // Saved Collections (NEW)
+        Task<Result<IEnumerable<SavedCollectionDto>>> GetUserCollectionsAsync(Guid userId);
+        Task<Result<SavedCollectionDto>> CreateCollectionAsync(Guid userId, string name);
+        Task<Result> SavePostToCollectionAsync(Guid userId, Guid postId, Guid collectionId);
+        Task<Result> SavePostToFavoritesAsync(Guid userId, Guid postId);
+        Task<Result<IEnumerable<SavedPostsGroupedDto>>> GetSavedPostsGroupedAsync(Guid userId);
+
     }
 }

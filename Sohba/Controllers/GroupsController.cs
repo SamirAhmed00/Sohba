@@ -87,7 +87,7 @@ namespace Sohba.Controllers
             var result = await _groupService.CreateGroupAsync(dto, userId);
 
             if (result.IsSuccess)
-                return RedirectToAction("Index");
+                return RedirectToAction("Details", new { id = result.Value.Id });
 
             ModelState.AddModelError("", result.Error);
             return View(model);
@@ -116,6 +116,8 @@ namespace Sohba.Controllers
                 Group = groupResult.Value,
                 Members = membersResult.Value ?? new List<GroupMemberDto>()
             };
+            ViewBag.CurrentUserId = GetCurrentUserId();
+
             return View(viewModel);
         }
 
@@ -127,8 +129,8 @@ namespace Sohba.Controllers
             if (groupResult.IsFailure)
                 return NotFound();
 
-            //if (groupResult.Value.AdminName != GetCurrentUserName()) 
-              //  return Forbid();
+            if (groupResult.Value.AdminId != userId)
+                return Forbid();
 
             var viewModel = new GroupEditViewModel
             {

@@ -1,0 +1,24 @@
+﻿<div id="savePostModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeSavePostModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Save post to...</h3>
+                <button onclick="SohbaApp.closeSavePostModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-2" id="saveCollectionsList"></div>
+            <div class="p-4 border-t border-slate-100 flex gap-2">
+                <input id="newCollectionName" type="text" placeholder="New collection name..."
+                       class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20" />
+                <button onclick="SohbaApp.createNewCollection()"
+                        class="px-4 py-2 bg-[#345e69] text-white text-sm font-semibold rounded-xl hover:bg-[#2a4b55]">
+                    Create
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

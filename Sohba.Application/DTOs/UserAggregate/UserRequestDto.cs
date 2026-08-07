@@ -9,7 +9,7 @@ namespace Sohba.Application.DTOs.UserAggregate
         public string Name { get; set; }
         public string Email { get; set; }
         public string Bio { get; set; }
-        public string Password { get; set; }
+        
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
     }

@@ -36,19 +36,15 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @* @if (User.Identity?.Name == Model.Group.AdminName) *@
-                @* { *@
+                @if (ViewBag.CurrentUserId == Model.Group.AdminId)
+                {
                     <a asp-action="Edit" asp-route-id="@Model.Group.Id" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         Edit Group
                     </a>
-                @* } *@
-                <button onclick="leaveGroup('@Model.Group.Id')" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all">
-                    Leave
-                </button>
+                }
 
-                @*We Will Comment The Upper Button Leave And Uncomment That -- In Testing *@
-                @* @if (Model.Group.IsCurrentUserMember)
+                @if (Model.Group.IsCurrentUserMember)
                 {
                     <button onclick="leaveGroup('@Model.Group.Id')"
                             class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all">
@@ -61,7 +57,7 @@
                             class="px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-all">
                         Join Group
                     </button>
-                } *@
+                }
             </div>
         </div>
 
@@ -204,17 +200,7 @@
             }
         }
 
-        async function leaveGroup(groupId) {
-            if (!confirm('Are you sure you want to leave this group?')) return;
-
-            const result = await SohbaApp.post('/Groups/Leave', { groupId });
-            if (result.success) {
-                SohbaApp.toast('Left group successfully', 'success');
-                setTimeout(() => window.location.href = '/Groups', 1000);
-            } else {
-                SohbaApp.toast(result.error || 'Failed to leave group', 'error');
-            }
-        }
+        
 
         async function leaveGroup(groupId) {
             showConfirmModal({

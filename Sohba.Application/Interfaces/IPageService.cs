@@ -21,5 +21,6 @@ namespace Sohba.Application.Interfaces
         Task<Result<IEnumerable<PageFollowerDto>>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
         Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId);
 
+        Task<Result<int>> GetPagesCountAsync();
     }
 }

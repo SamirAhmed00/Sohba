@@ -22,11 +22,11 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromBody] IdRequestDto request)
         {
             try
             {
-                if (id == Guid.Empty)
+                if (request == null || request.Id == Guid.Empty)
                     return Json(BaseResponseDto<object>.FailureResponse("Invalid comment ID."));
 
                 var userId = GetCurrentUserId();
@@ -35,8 +35,7 @@ namespace Sohba.Controllers
 
                 // The domain rule (comment author or post owner) is strictly enforced inside DeleteCommentAsync
                 bool isAdmin = User.IsInRole("Admin");
-                var result = await _interactionService.DeleteCommentAsync(userId, id, isAdmin);
-
+                var result = await _interactionService.DeleteCommentAsync(userId, request.Id, isAdmin);
                 if (result.IsSuccess)
                     return Json(BaseResponseDto<object>.SuccessResponse(null));
 

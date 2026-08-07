@@ -17,6 +17,8 @@ namespace Sohba.Domain.Entities.UserAggregate
         public string? ProfilePictureUrl { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        public bool IsActive { get; set; } 
+
         //Privacy Settings
         public bool IsPrivateAccount { get; set; } = false;
         public bool ShowActivityStatus { get; set; } = true;

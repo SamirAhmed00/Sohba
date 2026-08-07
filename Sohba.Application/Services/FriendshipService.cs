@@ -93,29 +93,6 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-        //public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
-        //{
-        //    var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
-        //    var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
-
-        //    var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
-
-        //    if (!decision.IsSuccess)
-        //        return decision;
-
-        //    var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
-
-        //    if (friendship == null)
-        //        return Result.Failure("Friend request not found.");
-
-        //    friendship.Status = FriendshipStatus.Accepted;
-
-        //    _unitOfWork.Friendships.Update(friendship);
-        //    await _unitOfWork.CompleteAsync();
-
-        //    return Result.Success();
-        //}
-
         public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
         {
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
@@ -345,6 +322,11 @@ namespace Sohba.Application.Services
                 Status = f.Status.ToString()
             }).ToList();
             return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+        public async Task<bool> IsBlockedAsync(Guid userId, Guid targetId)
+        {
+            return await _unitOfWork.Friendships.IsUserBlockedAsync(userId, targetId);
         }
 
         // Suggestions

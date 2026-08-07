@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Sohba.Infrastructure.Repositories
 {
@@ -72,18 +73,13 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId)
         {
-            Console.WriteLine($"🔍 GetByUsersAsync - userId: {userId}, friendId: {friendId}");
-
             var friendship = await _context.Friends
                 .FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendId);
 
-            Console.WriteLine($"📊 Friendship found: {friendship != null}");
-
             if (friendship == null)
             {
-                var reversed = await _context.Friends
+                friendship = await _context.Friends
                     .FirstOrDefaultAsync(f => f.UserId == friendId && f.FriendUserId == userId);
-                Console.WriteLine($"📊 Reversed found: {reversed != null}");
             }
 
             return friendship;
@@ -121,22 +117,17 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
         {
-            Console.WriteLine($"🔍 HasPendingRequest - senderId: {senderId}, receiverId: {receiverId}");
-
             var exists = await _context.Friends
                 .AnyAsync(f => f.UserId == senderId &&
                                f.FriendUserId == receiverId &&
                                f.Status == FriendshipStatus.Pending);
 
-            Console.WriteLine($"📊 Pending request exists: {exists}");
-
             if (!exists)
             {
-                var reversedExists = await _context.Friends
+                exists = await _context.Friends
                     .AnyAsync(f => f.UserId == receiverId &&
                                    f.FriendUserId == senderId &&
                                    f.Status == FriendshipStatus.Pending);
-                Console.WriteLine($"📊 Reversed check: {reversedExists}");
             }
 
             return exists;

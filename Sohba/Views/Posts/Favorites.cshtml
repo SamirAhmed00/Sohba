@@ -98,13 +98,12 @@
         async function removeFromFavorites(postId) {
             if (!confirm('Remove from favorites?')) return;
 
-            const result = await SohbaApp.post('/Posts/RemoveSavedPost', { postId });
+            const result = await SohbaApp.post('/Posts/ToggleFavorite', { postId });
 
             if (result.success) {
                 SohbaApp.toast('Removed from favorites', 'success');
                 document.querySelector(`[data-post-id="${postId}"]`).remove();
 
-                // Update count
                 const remainingCount = document.querySelectorAll('[data-post-id]').length;
                 document.querySelector('.text-gray-500.mt-1').textContent = `${remainingCount} favorite posts`;
             }

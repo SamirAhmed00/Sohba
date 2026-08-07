@@ -35,7 +35,7 @@ async function deleteComment(commentId, postId = null) {
 
                     // Dynamically decrement comment count if postId is provided or found
                     if (postId) {
-                        const countEl = document.getElementById(`comment-count-${postId}`);
+                        const countEl = document.getElementById(`comments-count-${postId}`);
                         if (countEl) {
                             let currentCount = parseInt(countEl.innerText) || 0;
                             if (currentCount > 0) {
@@ -53,3 +53,5 @@ async function deleteComment(commentId, postId = null) {
         }
     });
 }
+
+window.SohbaApp.deleteComment = deleteComment;

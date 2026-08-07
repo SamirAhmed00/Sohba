@@ -74,6 +74,14 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                                     </div>
                                 </div>
                             `).join('')}
+
+                            <!-- Delete Reply Button -->
+                            ${reply.isAuthor ? `
+                                    <button onclick="SohbaApp.deleteComment('${reply.id}', '${reply.postId}')"
+                                            class="text-xs text-red-500 hover:underline font-medium ml-2">
+                                        Delete
+                                    </button>
+                                ` : ''}
                         </div>
                     `;
                 }
@@ -109,6 +117,15 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                                         View ${c.replyCount} replies
                                     </button>
                                 ` : ''}
+
+                                <!-- Delete button -->
+                                 ${c.isAuthor ? `
+                                    <button onclick="SohbaApp.deleteComment('${c.id}', '${c.postId}')"
+                                            class="text-xs text-red-500 hover:underline font-medium ml-2">
+                                        Delete
+                                    </button>
+                                ` : ''}
+
                             </div>
                             
                             <!-- Reply form (hidden by default) -->

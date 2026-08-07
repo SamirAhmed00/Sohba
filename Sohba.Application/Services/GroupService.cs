@@ -274,5 +274,11 @@ namespace Sohba.Application.Services
 
             return Result<IEnumerable<GroupResponseDto>>.Success(dtos);
         }
+
+        public async Task<Result<int>> GetGroupsCountAsync()
+        {
+            var count = await _unitOfWork.Groups.CountAsync();
+            return Result<int>.Success(count);
+        }
     }
 }

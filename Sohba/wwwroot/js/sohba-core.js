@@ -50,7 +50,9 @@ window.SohbaApp.post = async function (url, data) {
         if (!contentType.includes('application/json')) {
             const statusLabel = response.status === 401 || response.status === 302
                 ? 'Session expired. Please refresh and log in again.'
-                : `Server error (HTTP ${response.status}). Please try again.`;
+                : response.status === 429
+                    ? 'Too many requests. Please wait a moment and try again.'
+                    : `Server error (HTTP ${response.status}). Please try again.`;
             console.error(`[SohbaApp.post] Non-JSON response from ${url}:`, response.status, contentType);
             return { success: false, Success: false, error: statusLabel, Error: statusLabel };
         }
@@ -100,6 +102,19 @@ window.SohbaApp.postForm = async function (url, formData) {
     }
 };
 
+window.SohbaApp.get = async function (url) {
+    try {
+        const response = await fetch(url);
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            return { success: false, error: `Server error (HTTP ${response.status}).` };
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('[SohbaApp.get] Network error:', error);
+        return { success: false, error: 'Network error.' };
+    }
+};
 
 // Toggle Menu
 window.SohbaApp.toggleMenu = function (menuId) {

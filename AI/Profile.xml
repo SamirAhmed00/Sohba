@@ -1,0 +1,1532 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+The content has been processed where comments have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: Sohba/Controllers/ProfileController.cs, Sohba.Application/Interfaces/IUserService.cs, Sohba.Application/Services/UserService.cs, Sohba.Application/Interfaces/IUserSettingsService.cs, Sohba.Application/Services/UserSettingsService.cs, Sohba.Application/Interfaces/IPostService.cs, Sohba.Application/Interfaces/IFriendshipService.cs, Sohba.Application/DTOs/UserAggregate/UserResponseDto.cs, Sohba.Application/DTOs/UserAggregate/UserRequestDto.cs, Sohba.Application/DTOs/UserAggregate/UserSettingsDto.cs, Sohba.Application/DTOs/UserAggregate/FriendDto.cs, Sohba.Application/DTOs/PostAggregate/PostResponseDto.cs, Sohba/ViewModels/Profile/ProfileViewModel.cs, Sohba/ViewModels/Profile/EditProfileViewModel.cs, Sohba/ViewModels/Profile/SettingsViewModel.cs, Sohba.Domain/Entities/UserAggregate/User.cs, Sohba.Domain/Interfaces/IUserRepository.cs, Sohba.Domain/Domain Rules/Interface/IProfileDomainService.cs, Sohba.Domain/Domain Rules/Logic/ProfileDomainService.cs, Sohba.Domain/Common/Result.cs, Sohba.Infrastructure/Repositories/UserRepository.cs, Sohba/Views/Profile/Index.cshtml, Sohba/Views/Profile/PrivateProfile.cshtml, Sohba/Views/Profile/Settings.cshtml
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Code comments have been removed from supported file types
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Sohba/
+  Controllers/
+    ProfileController.cs
+  ViewModels/
+    Profile/
+      EditProfileViewModel.cs
+      ProfileViewModel.cs
+      SettingsViewModel.cs
+  Views/
+    Profile/
+      Index.cshtml
+      PrivateProfile.cshtml
+      Settings.cshtml
+Sohba.Application/
+  DTOs/
+    PostAggregate/
+      PostResponseDto.cs
+    UserAggregate/
+      FriendDto.cs
+      UserRequestDto.cs
+      UserResponseDto.cs
+      UserSettingsDto.cs
+  Interfaces/
+    IFriendshipService.cs
+    IPostService.cs
+    IUserService.cs
+    IUserSettingsService.cs
+  Services/
+    UserService.cs
+    UserSettingsService.cs
+Sohba.Domain/
+  Common/
+    Result.cs
+  Domain Rules/
+    Interface/
+      IProfileDomainService.cs
+    Logic/
+      ProfileDomainService.cs
+  Entities/
+    UserAggregate/
+      User.cs
+  Interfaces/
+    IUserRepository.cs
+Sohba.Infrastructure/
+  Repositories/
+    UserRepository.cs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Sohba/ViewModels/Profile/EditProfileViewModel.cs">
+namespace Sohba.ViewModels.Profile
+{
+    public class EditProfileViewModel
+    {
+        public string Name { get; set; }
+        public string Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Profile/PrivateProfile.cshtml">
+@model dynamic
+@{
+    ViewData["Title"] = "Private Profile";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-4xl mx-auto py-12">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
+        <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+        <h1 class="text-2xl font-black text-gray-900">This Profile is Private</h1>
+        <p class="text-gray-500 mt-2">You need to be friends to view this profile.</p>
+        <a asp-controller="Home" asp-action="Index"
+           class="inline-block mt-6 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+            Back to Feed
+        </a>
+    </div>
+</div>
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/UserRequestDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class UserRequestDto
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Bio { get; set; }
+        public string Password { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/UserResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class UserResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/UserSettingsDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class UserSettingsDto
+    {
+
+        public string Email { get; set; }
+        public string Name { get; set; }
+        public string? Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+
+
+        public bool IsPrivateAccount { get; set; }
+        public bool ShowActivityStatus { get; set; }
+
+
+        public bool EmailNotifications { get; set; }
+        public bool PushNotifications { get; set; }
+        public bool WeeklyDigest { get; set; }
+
+
+        public DateTime? LastPasswordChanged { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IUserSettingsService.cs">
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IUserSettingsService
+    {
+        Task<Result<UserSettingsDto>> GetSettingsAsync(Guid userId);
+        Task<Result> UpdateSettingsAsync(Guid userId, UserSettingsDto settings);
+        Task<Result> UpdateEmailAsync(Guid userId, string newEmail);
+        Task<Result> UpdatePasswordAsync(Guid userId, string currentPassword, string newPassword);
+        Task<Result> DeactivateAccountAsync(Guid userId);
+        Task<Result> DeleteAccountAsync(Guid userId);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Interface/IProfileDomainService.cs">
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Interface
+{
+    public interface IProfileDomainService
+    {
+        Result CanUpdateProfile(Guid userId, Guid profileOwnerId);
+        Result CanViewProfile(Guid viewerId, Guid ownerId, bool isPrivate, bool isFriend, bool isBlocked);
+
+
+        Result CanViewFriendsList(Guid viewerId, Guid ownerId, string privacySetting, bool isFriend);
+        Result CanViewContactInfo(Guid viewerId, Guid ownerId, bool isFriend);
+
+        Result CanChangeUsername(DateTime? lastChangedDate, int daysLimit);
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Domain Rules/Logic/ProfileDomainService.cs">
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Domain_Rules.Logic
+{
+    public class ProfileDomainService : IProfileDomainService
+    {
+        public Result CanUpdateProfile(Guid userId, Guid profileOwnerId)
+        {
+            if (userId != profileOwnerId)
+                return Result.Failure("You can only update your own profile.");
+
+            return Result.Success();
+        }
+
+        public Result CanViewProfile(Guid viewerId, Guid ownerId, bool isPrivate, bool isFriend, bool isBlocked)
+        {
+            if (isBlocked)
+                return Result.Failure("You cannot view this profile due to blocking.");
+
+            if (viewerId == ownerId) return Result.Success();
+
+            if (isPrivate && !isFriend)
+                return Result.Failure("This profile is private.");
+
+            return Result.Success();
+        }
+
+        public Result CanViewFriendsList(Guid viewerId, Guid ownerId, string privacySetting, bool isFriend)
+        {
+            if (viewerId == ownerId) return Result.Success();
+
+
+            if (privacySetting == "Private")
+                return Result.Failure("Friends list is private.");
+
+            if (privacySetting == "FriendsOnly" && !isFriend)
+                return Result.Failure("Only friends can view the friends list.");
+
+            return Result.Success();
+        }
+
+        public Result CanViewContactInfo(Guid viewerId, Guid ownerId, bool isFriend)
+        {
+            if (viewerId == ownerId) return Result.Success();
+
+
+            if (!isFriend)
+                return Result.Failure("Only friends can view contact information.");
+
+            return Result.Success();
+        }
+
+        public Result CanChangeUsername(DateTime? lastChangedDate, int daysLimit)
+        {
+
+            if (lastChangedDate == null) return Result.Success();
+
+
+            var nextAllowedDate = lastChangedDate.Value.AddDays(daysLimit);
+            if (DateTime.UtcNow < nextAllowedDate)
+            {
+                var remainingDays = (nextAllowedDate - DateTime.UtcNow).Days;
+                return Result.Failure($"You can change your username again in {remainingDays} days.");
+            }
+
+            return Result.Success();
+        }
+    }
+}
+</file>
+
+<file path="Sohba/ViewModels/Profile/ProfileViewModel.cs">
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.UserAggregate;
+
+namespace Sohba.ViewModels.Profile
+{
+    public class ProfileViewModel
+    {
+        public UserResponseDto Profile { get; set; }
+        public IEnumerable<FriendDto> Friends { get; set; }
+        public IEnumerable<PostResponseDto> Posts { get; set; }
+        public bool IsOwnProfile { get; set; }
+
+
+        public bool CanViewFriends { get; set; } = true;
+        public bool IsPrivate { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/ViewModels/Profile/SettingsViewModel.cs">
+namespace Sohba.ViewModels.Profile
+{
+    public class SettingsViewModel
+    {
+
+        public string Email { get; set; }
+        public string Name { get; set; }
+        public string? Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+
+
+        public bool IsPrivateAccount { get; set; }
+        public bool ShowActivityStatus { get; set; }
+
+
+        public bool EmailNotifications { get; set; }
+        public bool PushNotifications { get; set; }
+        public bool WeeklyDigest { get; set; }
+
+
+        public string? CurrentPassword { get; set; }
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Profile/Settings.cshtml">
+@model Sohba.ViewModels.Profile.SettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-5xl mx-auto page-transition">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <h1 class="text-2xl font-black text-gray-900 flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Settings
+        </h1>
+        <p class="text-gray-500 mt-1">Manage your account preferences</p>
+    </div>
+
+    <!-- Settings Sections -->
+    <div class="space-y-6">
+
+        <!-- Account Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Account
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Email Address</h3>
+                        <p class="text-sm text-gray-500">@Model.Email</p>
+                    </div>
+                    <button class="text-[#345e69] font-semibold text-sm hover:underline">Change</button>
+                </div>
+                <hr class="border-slate-100" />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Password</h3>
+                        <p class="text-sm text-gray-500">Last changed 3 months ago</p>
+                    </div>
+                    <button class="text-[#345e69] font-semibold text-sm hover:underline">Update</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Privacy
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <label class="flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Private Account</h3>
+                        <p class="text-sm text-gray-500">Only friends can see your posts</p>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" asp-for="IsPrivateAccount" class="peer sr-only" />
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
+                    </div>
+                </label>
+                <hr class="border-slate-100" />
+                <label class="flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Show Activity Status</h3>
+                        <p class="text-sm text-gray-500">Let friends see when you're online</p>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" asp-for="ShowActivityStatus" class="peer sr-only" checked />
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Notifications Settings -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Notifications
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Email notifications for new followers</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Push notifications for messages</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
+                    <span class="text-gray-700">Weekly digest email</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
+            <div class="p-6 border-b border-red-100">
+                <h2 class="font-bold text-red-600 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Danger Zone
+                </h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Deactivate Account</h3>
+                        <p class="text-sm text-gray-500">Temporarily disable your account</p>
+                    </div>
+                    <button class="px-4 py-2 border border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
+                        Deactivate
+                    </button>
+                </div>
+                <hr class="border-red-100" />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-red-600">Delete Account</h3>
+                        <p class="text-sm text-gray-500">Permanently delete all your data</p>
+                    </div>
+                    <button class="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-save toggle switches
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                SohbaApp.toast('Setting saved', 'success');
+            });
+        });
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/DTOs/UserAggregate/FriendDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.UserAggregate
+{
+    public class FriendDto
+    {
+        public Guid UserId { get; set; }
+        public Guid FriendUserId { get; set; }
+        public string FriendName { get; set; }
+        public string ReceiverName { get; set; }
+        public string Status { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Services/UserSettingsService.cs">
+using Microsoft.AspNetCore.Identity;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Services
+{
+    public class UserSettingsService : IUserSettingsService
+    {
+        private readonly UserManager<User> _userManager;
+        private readonly IUnitOfWork _unitOfWork;
+
+        public UserSettingsService(UserManager<User> userManager, IUnitOfWork unitOfWork)
+        {
+            _userManager = userManager;
+            _unitOfWork = unitOfWork;
+        }
+
+        public async Task<Result<UserSettingsDto>> GetSettingsAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result<UserSettingsDto>.Failure("User not found");
+
+
+            var settings = new UserSettingsDto
+            {
+                Email = user.Email,
+                Name = user.Name,
+                Bio = user.Bio,
+                ProfilePictureUrl = user.ProfilePictureUrl,
+
+
+                IsPrivateAccount = user.IsPrivateAccount,
+                ShowActivityStatus = user.ShowActivityStatus,
+                EmailNotifications = user.EmailNotifications,
+                PushNotifications = user.PushNotifications,
+                WeeklyDigest = user.WeeklyDigest,
+                LastPasswordChanged = null
+            };
+
+            return Result<UserSettingsDto>.Success(settings);
+        }
+
+        public async Task<Result> UpdateSettingsAsync(Guid userId, UserSettingsDto settings)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result.Failure("User not found");
+
+            user.Name = settings.Name;
+            user.Bio = settings.Bio;
+            user.ProfilePictureUrl = settings.ProfilePictureUrl;
+
+
+
+            user.IsPrivateAccount = settings.IsPrivateAccount;
+            user.ShowActivityStatus = settings.ShowActivityStatus;
+            user.EmailNotifications = settings.EmailNotifications;
+            user.PushNotifications = settings.PushNotifications;
+            user.WeeklyDigest = settings.WeeklyDigest;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+
+
+
+            return Result.Success();
+        }
+
+        public async Task<Result> UpdateEmailAsync(Guid userId, string newEmail)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result.Failure("User not found");
+
+            var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+            var result = await _userManager.ChangeEmailAsync(user, newEmail, token);
+
+            if (!result.Succeeded)
+                return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return Result.Success();
+        }
+
+        public async Task<Result> UpdatePasswordAsync(Guid userId, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result.Failure("User not found");
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            if (!result.Succeeded)
+                return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return Result.Success();
+        }
+
+        public async Task<Result> DeactivateAccountAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result.Failure("User not found");
+
+            user.IsDeleted = true;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return Result.Success();
+        }
+
+        public async Task<Result> DeleteAccountAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return Result.Failure("User not found");
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return Result.Success();
+        }
+    }
+
+}
+</file>
+
+<file path="Sohba.Domain/Common/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Common
+{
+    public class Result
+    {
+        public bool IsSuccess { get; }
+        public string Error { get; }
+        public bool IsFailure => !IsSuccess;
+
+        protected Result(bool isSuccess, string error)
+        {
+            if (isSuccess && !string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Success result cannot have an error message.");
+
+            if (!isSuccess && string.IsNullOrEmpty(error))
+                throw new InvalidOperationException("Failure result must have an error message.");
+
+            IsSuccess = isSuccess;
+            Error = error;
+        }
+
+        public static Result Success() => new Result(true, string.Empty);
+        public static Result Failure(string error) => new Result(false, error);
+    }
+
+    public class Result<T> : Result
+    {
+        private readonly T _value;
+
+        public T Value => IsSuccess
+            ? _value
+            : throw new InvalidOperationException("The value of a failure result cannot be accessed.");
+
+        protected Result(T value, bool isSuccess, string error)
+            : base(isSuccess, error)
+        {
+            _value = value;
+        }
+
+        public static Result<T> Success(T value) => new Result<T>(value, true, string.Empty);
+
+        public new static Result<T> Failure(string error) => new Result<T>(default, false, error);
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IFriendshipService.cs">
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IFriendshipService
+    {
+
+        Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId);
+        Task<Result> CancelFriendRequestAsync(Guid senderId, Guid receiverId);
+
+
+        Task<Result> UnfriendAsync(Guid userId, Guid friendId);
+        Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId);
+        Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
+        Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
+
+        Task<Result<IEnumerable<FriendDto>>> GetPendingRequestsAsync(Guid userId);
+        Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId);
+        Task<Result<int>> GetPendingRequestsCountAsync(Guid userId);
+
+
+        Task<Result> BlockUserAsync(Guid userId, Guid targetId);
+        Task<Result> UnblockUserAsync(Guid userId, Guid targetId);
+        Task<Result<IEnumerable<FriendDto>>> GetBlockedUsersAsync(Guid userId);
+
+
+        Task<Result<IEnumerable<UserResponseDto>>> GetFriendSuggestionsAsync(Guid userId, int count = 10);
+
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Interfaces/IUserRepository.cs">
+using Sohba.Domain.Entities.UserAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Domain.Interfaces
+{
+    public interface IUserRepository : IGenericRepository<User>
+    {
+        Task<User> GetByUsernameAsync(string username);
+
+
+
+
+        Task<IEnumerable<User>> GetRandomUsersAsync(List<Guid> excludeUserIds, int count);
+        Task<IEnumerable<User>> SearchUsersAsync(string query, Guid currentUserId, int limit = 10);
+
+    }
+}
+</file>
+
+<file path="Sohba.Infrastructure/Repositories/UserRepository.cs">
+using Microsoft.EntityFrameworkCore;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
+using Sohba.Infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Infrastructure.Repositories
+{
+    public class UserRepository : GenericRepository<User>, IUserRepository
+    {
+        public UserRepository(AppDbContext context) : base(context) { }
+
+        public override async Task<User> GetByIdAsync(Guid id)
+        {
+
+
+            var totalUsers = await _context.Users.CountAsync();
+
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user != null)
+            {
+                return user;
+            }
+
+            return user;
+        }
+        public async Task<User> GetByUsernameAsync(string username)
+        {
+            return await _context.Set<User>().FirstOrDefaultAsync(u => u.Name == username);
+        }
+
+
+
+
+
+        public async Task<IEnumerable<User>> GetRandomUsersAsync(List<Guid> excludeUserIds, int count)
+        {
+            return await _context.Set<User>()
+                .Where(u => !excludeUserIds.Contains(u.Id))
+                .OrderBy(u => Guid.NewGuid())
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> SearchUsersAsync(string query, Guid currentUserId, int limit = 10)
+        {
+            return await _context.Set<User>()
+                .Where(u => u.Id != currentUserId &&
+                           !u.IsDeleted &&
+                           u.Name.Contains(query))
+                .Take(limit)
+                .ToListAsync();
+        }
+    }
+}
+</file>
+
+<file path="Sohba/Views/Profile/Index.cshtml">
+@model Sohba.ViewModels.Profile.ProfileViewModel
+@{
+    ViewData["Title"] = Model.Profile.Name;
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Cover & Profile Header -->
+    <div class="relative mb-20">
+        <!-- Cover Image -->
+        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden">
+            <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        </div>
+
+        <!-- Profile Picture -->
+        <div class="absolute -bottom-12 left-8">
+            <div class="relative">
+                <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")"
+                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl" />
+                @if (Model.IsOwnProfile)
+                {
+                    <button class="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="absolute bottom-4 right-8 flex gap-3">
+            @if (Model.IsOwnProfile)
+            {
+                <a asp-action="Edit" class="px-6 py-2.5 bg-white/90 backdrop-blur text-[#345e69] font-bold rounded-xl hover:bg-white transition-colors shadow-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Profile
+                </a>
+            }
+            else
+            {
+                <button onclick="sendFriendRequestFromProfile('@Model.Profile.Id')"
+                        class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2"
+                        id="addFriendBtn">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        <span>Add Friend</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="px-8 mb-8">
+        <h1 class="text-3xl font-black text-gray-900">@Model.Profile.Name</h1>
+        <p class="text-gray-500 mt-1">@Model.Profile.Email</p>
+        <p class="text-gray-600 mt-3 max-w-2xl">@(Model.Profile.Bio ?? "No bio yet.")</p>
+
+        <div class="flex gap-6 mt-4 text-sm">
+            <span class="text-gray-500">
+                <strong class="text-gray-900">@Model.Friends.Count()</strong> Friends
+            </span>
+            <span class="text-gray-500">
+                <strong class="text-gray-900">@Model.Posts.Count()</strong> Posts
+            </span>
+            <span class="text-gray-500">
+                Joined <strong class="text-gray-900">@Model.Profile.CreatedAt.ToString("MMMM yyyy")</strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-8">
+        <!-- Left: Friends -->
+        @if (Model.CanViewFriends)
+        {
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-900">Friends</h3>
+                        <a href="#" class="text-[#345e69] text-sm font-semibold hover:underline">See All</a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        @foreach (var friend in Model.Friends.Take(6))
+                        {
+                            <div class="text-center group cursor-pointer">
+                                <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={friend.FriendName}&background=random")"
+                                     class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform" />
+                                <p class="text-xs font-semibold text-gray-700 mt-1 truncate">@friend.FriendName</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 text-center">
+                    <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <p class="text-sm text-slate-500">This profile's friends list is private</p>
+                </div>
+            </div>
+        }
+
+        <!-- Right: Posts -->
+        <div class="lg:col-span-2 space-y-6">
+            @if (Model.IsOwnProfile)
+            {
+                // TODO: Move This To A Shared Folder
+                <partial name="Partials/_CreatePost" />
+            }
+
+            @foreach (var post in Model.Posts)
+            {
+                <partial name="Partials/_PostCard" model="new[] { post }" />
+            }
+        </div>
+    </div>
+</div>
+
+
+@* @section Scripts {
+    <script>
+        async function sendFriendRequest(userId) {
+            try {
+                const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
+
+
+                if (result.success) {
+                    SohbaApp.toast('Friend request sent!', 'success');
+
+
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Request Sent</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to send request', 'error');
+                }
+            } catch (error) {
+                console.error('Error sending friend request:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
+
+        async function checkFriendshipStatus(targetUserId) {
+            try {
+                const response = await fetch(`/Friends/CheckStatus?userId=${targetUserId}`);
+                const data = await response.json();
+
+                if (data.status === 'pending') {
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Pending</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+                } else if (data.status === 'accepted') {
+                    const btn = document.getElementById('addFriendBtn');
+                    btn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Friends</span>
+                    `;
+                    btn.disabled = true;
+                    btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
+                    btn.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed');
+                }
+            } catch (error) {
+                console.error('Error checking friendship status:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('@Model.IsOwnProfile' === 'False') {
+                checkFriendshipStatus('@Model.Profile.Id');
+            }
+        });
+    </script>
+} *@
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!@Json.Serialize(Model.IsOwnProfile)) {
+                checkFriendshipStatus('@Model.Profile.Id');
+            }
+        });
+    </script>
+}
+</file>
+
+<file path="Sohba.Application/DTOs/PostAggregate/PostResponseDto.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.DTOs.PostAggregate
+{
+    public class PostResponseDto
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string? ImageUrl { get; set; }
+        public string AuthorName { get; set; }
+        public int CommentsCount { get; set; }
+        public int ReactionsCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string? CurrentUserReaction { get; set; }
+
+        public bool IsSaved { get; set; }
+        public string? SavedTag { get; set; }
+        public bool IsFavorite { get; set; }
+
+        public bool IsReportedByCurrentUser { get; set; }
+
+        public bool IsAuthor { get; set; }
+        public bool IsPrivate { get; set; }
+        public string SourceType { get; set; }
+        public string? SourceName { get; set; }
+        public Guid? SourceId { get; set; }
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IUserService.cs">
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Security;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IUserService
+    {
+
+
+        Task<Result<UserResponseDto>> GetProfileAsync(Guid userId);
+        Task<Result<bool>> UpdateProfileAsync(Guid userId, UserRequestDto updateDto);
+
+
+        Task<Result<UserResponseDto>> GetProfileAsync(Guid userId, Guid currentUserId);
+
+
+        Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync();
+        Task<Result<bool>> DeleteUserAsync(Guid userId);
+        Task<Result<IEnumerable<UserResponseDto>>> GetUsersByStatusAsync(string status);
+    }
+}
+</file>
+
+<file path="Sohba.Application/Services/UserService.cs">
+using AutoMapper;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Domain.Common;
+using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Services
+{
+    public class UserService : IUserService
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+        private readonly IProfileDomainService _profileDomainService;
+        private readonly IFriendshipRepository _friendshipRepository;
+
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IProfileDomainService profileDomainService, IFriendshipRepository friendshipRepository)
+        {
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
+            _profileDomainService = profileDomainService;
+            _friendshipRepository = friendshipRepository;
+        }
+
+
+        public async Task<Result<UserResponseDto>> GetProfileAsync(Guid userId)
+        {
+
+            return await GetProfileAsync(userId, userId);
+        }
+
+
+        public async Task<Result<UserResponseDto>> GetProfileAsync(Guid userId, Guid currentUserId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+
+            if (user == null)
+                return Result<UserResponseDto>.Failure("User profile not found.");
+
+
+            var isFriend = await _friendshipRepository.AreFriendsAsync(currentUserId, userId);
+            var isBlocked = await _friendshipRepository.IsUserBlockedAsync(currentUserId, userId);
+
+            var isPrivateAccount = user.IsPrivateAccount;
+
+            var canView = _profileDomainService.CanViewProfile(
+                currentUserId,
+                userId,
+                isPrivateAccount,
+                isFriend,
+                isBlocked
+            );
+
+            if (!canView.IsSuccess)
+                return Result<UserResponseDto>.Failure(canView.Error);
+
+            var response = _mapper.Map<UserResponseDto>(user);
+            return Result<UserResponseDto>.Success(response);
+        }
+
+        public async Task<Result<bool>> UpdateProfileAsync(Guid userId, UserRequestDto updateDto)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<bool>.Failure("User not found.");
+
+            var validation = _profileDomainService.CanUpdateProfile(userId, user.Id);
+            if (!validation.IsSuccess)
+                return Result<bool>.Failure(validation.Error);
+
+            _mapper.Map(updateDto, user);
+
+            _unitOfWork.Users.Update(user);
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
+            return Result<bool>.Success(affectedRows > 0);
+        }
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync()
+        {
+            var users = await _unitOfWork.Users.GetAllAsync();
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
+        }
+
+        public async Task<Result<bool>> DeleteUserAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return Result<bool>.Failure("User not found");
+
+            user.IsDeleted = true;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<IEnumerable<UserResponseDto>>> GetUsersByStatusAsync(string status)
+        {
+            var allUsers = await _unitOfWork.Users.GetAllAsync();
+
+            IEnumerable<User> filteredUsers;
+
+            switch (status.ToLower())
+            {
+                case "active":
+                    var blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
+                    var blockedIds = blockedUsers.Select(b => b.FriendUserId).ToList();
+                    filteredUsers = allUsers.Where(u => !blockedIds.Contains(u.Id));
+                    break;
+
+                case "blocked":
+                    blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
+                    filteredUsers = allUsers.Where(u => blockedUsers.Any(b => b.FriendUserId == u.Id));
+                    break;
+
+                default:
+                    filteredUsers = allUsers;
+                    break;
+            }
+
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(filteredUsers);
+            return Result<IEnumerable<UserResponseDto>>.Success(dtos);
+        }
+    }
+}
+</file>
+
+<file path="Sohba.Domain/Entities/UserAggregate/User.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Entities.PostAggregate;
+using Sohba.Domain.Entities.StoryAggregate;
+
+namespace Sohba.Domain.Entities.UserAggregate
+{
+    public class User : IdentityUser<Guid>
+    {
+        public string Name { get; set; }
+        public string Bio { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+
+        public bool IsPrivateAccount { get; set; } = false;
+        public bool ShowActivityStatus { get; set; } = true;
+        public bool EmailNotifications { get; set; } = true;
+        public bool PushNotifications { get; set; } = true;
+        public bool WeeklyDigest { get; set; } = false;
+
+
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+        public virtual ICollection<Story> Stories { get; set; } = new List<Story>();
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
+
+
+        public virtual ICollection<Friend> Friends { get; set; } = new List<Friend>();
+        public virtual ICollection<GroupMember> GroupMemberships { get; set; } = new List<GroupMember>();
+        public virtual ICollection<PageFollower> FollowedPages { get; set; } = new List<PageFollower>();
+        public virtual ICollection<PostReport> SentReports { get; set; } = new List<PostReport>();
+        public virtual ICollection<SavedPost> SavedPosts { get; set; } = new List<SavedPost>();
+
+        public virtual ICollection<Group> AdministeredGroups { get; set; } = new List<Group>();
+        public virtual ICollection<Page> AdministeredPages { get; set; } = new List<Page>();
+
+
+    }
+}
+</file>
+
+<file path="Sohba/Controllers/ProfileController.cs">
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Application.DTOs.UserAggregate;
+using Sohba.Application.Interfaces;
+using Sohba.Application.Services;
+
+using Sohba.ViewModels.Profile;
+
+namespace Sohba.Controllers
+{
+    [Authorize]
+    [EnableRateLimiting("Api")]
+
+    public class ProfileController : BaseController
+    {
+        private readonly IUserService _userService;
+
+        private readonly IPostService _postService;
+        private readonly IUserSettingsService _userSettingsService;
+        private readonly IFriendshipService _friendshipService;
+
+        public ProfileController(IUserService userService, IPostService postService, IUserSettingsService userSettingsService, IFriendshipService friendshipService)
+        {
+            _userService = userService;
+            _postService = postService;
+            _userSettingsService = userSettingsService;
+            _friendshipService = friendshipService;
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> Index(Guid? id)
+        {
+            var currentUserId = GetCurrentUserId();
+            var profileUserId = id ?? currentUserId;
+
+
+            var profileResult = await _userService.GetProfileAsync(profileUserId, currentUserId);
+
+            if (profileResult.IsFailure)
+            {
+                if (profileResult.Error != null && profileResult.Error.Contains("private", StringComparison.OrdinalIgnoreCase))
+                    return View("PrivateProfile", new { UserId = profileUserId });
+                return NotFound();
+            }
+
+
+            var friendsResult = await _friendshipService.GetFriendsListAsync(profileUserId);
+            var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
+
+
+            var isFriend = await _friendshipService.AreFriendsAsync(currentUserId, profileUserId);
+            var canViewFriends = currentUserId == profileUserId || isFriend;
+
+            var viewModel = new ProfileViewModel
+            {
+                Profile = profileResult.Value,
+                Friends = friendsResult.Value ?? new List<FriendDto>(),
+                Posts = postsResult.Value ?? new List<PostResponseDto>(),
+                IsOwnProfile = profileUserId == currentUserId,
+                CanViewFriends = canViewFriends
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _userService.GetProfileAsync(userId);
+
+            if (result.IsFailure) return NotFound();
+
+            var viewModel = new EditProfileViewModel
+            {
+                Name = result.Value.Name,
+                Bio = result.Value.Bio,
+                ProfilePictureUrl = result.Value.ProfilePictureUrl
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(EditProfileViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var userId = GetCurrentUserId();
+            var dto = new UserRequestDto
+            {
+                Name = model.Name,
+                Bio = model.Bio,
+                ProfilePictureUrl = model.ProfilePictureUrl
+            };
+
+            var result = await _userService.UpdateProfileAsync(userId, dto);
+
+            if (result.IsSuccess)
+                return RedirectToAction("Index");
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Settings()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _userSettingsService.GetSettingsAsync(userId);
+
+            if (result.IsFailure)
+                return NotFound();
+
+            var viewModel = new SettingsViewModel
+            {
+                Email = result.Value.Email,
+                Name = result.Value.Name,
+                Bio = result.Value.Bio,
+                ProfilePictureUrl = result.Value.ProfilePictureUrl,
+                IsPrivateAccount = result.Value.IsPrivateAccount,
+                ShowActivityStatus = result.Value.ShowActivityStatus,
+                EmailNotifications = result.Value.EmailNotifications,
+                PushNotifications = result.Value.PushNotifications,
+                WeeklyDigest = result.Value.WeeklyDigest
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Settings(SettingsViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = GetCurrentUserId();
+            var dto = new UserSettingsDto
+            {
+                Email = model.Email,
+                Name = model.Name,
+                Bio = model.Bio,
+                ProfilePictureUrl = model.ProfilePictureUrl,
+                IsPrivateAccount = model.IsPrivateAccount,
+                ShowActivityStatus = model.ShowActivityStatus,
+                EmailNotifications = model.EmailNotifications,
+                PushNotifications = model.PushNotifications,
+                WeeklyDigest = model.WeeklyDigest
+            };
+
+            var result = await _userSettingsService.UpdateSettingsAsync(userId, dto);
+            if (result.IsSuccess)
+            {
+                TempData["SuccessMessage"] = "Settings updated successfully";
+                return RedirectToAction("Settings");
+            }
+
+            ModelState.AddModelError("", result.Error);
+            return View(model);
+        }
+
+    }
+}
+</file>
+
+<file path="Sohba.Application/Interfaces/IPostService.cs">
+using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.PostAggregate;
+using Sohba.Domain.Common;
+using Sohba.Domain.Entities.PostAggregate;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Sohba.Application.Interfaces
+{
+    public interface IPostService
+    {
+
+        Task<Result<PagedResult<PostResponseDto>>> GetFeedAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 10);
+
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
+        Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
+        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
+        Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false);
+        Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetPagePostsAsync(Guid pageId, Guid currentUserId);
+        Task<Result<IEnumerable<PostResponseDto>>> GetUserPostsAsync(Guid userId, Guid currentUserId);
+
+
+        Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
+        Task<Result> HidePostAsync(Guid postId, Guid userId);
+
+        Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
+
+    }
+}
+</file>
+
+</files>

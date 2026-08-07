@@ -18,11 +18,12 @@ namespace Sohba.Application.Interfaces
 
         // Basic CRUD
         // Keep old method for backward compatibility -- I will Remove It Later
-        Task<Result<IEnumerable<PostResponseDto>>> GetFeedAsync(Guid userId);
+       
         Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
         Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
         Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false);
         Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
+        
 
         // Filtered PostsS
         Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId);
@@ -35,5 +36,7 @@ namespace Sohba.Application.Interfaces
         
         Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
 
+        Task<Result<int>> GetPostsCountAsync();        
+        Task<Result<IEnumerable<PostResponseDto>>> GetRecentPostsAsync(int count);
     }
 }

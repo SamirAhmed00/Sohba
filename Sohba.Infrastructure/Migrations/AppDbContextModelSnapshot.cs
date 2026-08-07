@@ -386,11 +386,15 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("GroupId");
 
                     b.HasIndex("PageId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SourceType", "SourceId");
+
+                    b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("Posts");
                 });
@@ -472,12 +476,47 @@ namespace Sohba.Infrastructure.Migrations
                     b.ToTable("Reactions");
                 });
 
+            modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedCollection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFavorites")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SavedCollections");
+                });
+
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedPost", b =>
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("PostId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CollectionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("PostId1")
@@ -493,6 +532,8 @@ namespace Sohba.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserId", "PostId");
+
+                    b.HasIndex("CollectionId");
 
                     b.HasIndex("PostId");
 
@@ -617,9 +658,13 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ReceiverId");
-
                     b.HasIndex("SenderId");
+
+                    b.HasIndex("CreatedAt", "IsRead");
+
+                    b.HasIndex("ReceiverId", "CreatedAt");
+
+                    b.HasIndex("ReceiverId", "IsRead");
 
                     b.ToTable("Notification");
                 });
@@ -952,8 +997,23 @@ namespace Sohba.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedCollection", b =>
+                {
+                    b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedPost", b =>
                 {
+                    b.HasOne("Sohba.Domain.Entities.PostAggregate.SavedCollection", "Collection")
+                        .WithMany("SavedPosts")
+                        .HasForeignKey("CollectionId");
+
                     b.HasOne("Sohba.Domain.Entities.PostAggregate.Post", "Post")
                         .WithMany()
                         .HasForeignKey("PostId")
@@ -969,6 +1029,8 @@ namespace Sohba.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Collection");
 
                     b.Navigation("Post");
 
@@ -1068,6 +1130,11 @@ namespace Sohba.Infrastructure.Migrations
                     b.Navigation("Reports");
 
                     b.Navigation("SavedByUsers");
+                });
+
+            modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedCollection", b =>
+                {
+                    b.Navigation("SavedPosts");
                 });
 
             modelBuilder.Entity("Sohba.Domain.Entities.StoryAggregate.Story", b =>

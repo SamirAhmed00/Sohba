@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
 
@@ -66,10 +67,12 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromBody] IdRequestDto request)
         {
-            var userId = GetCurrentUserId(); 
-            var result = await _pageService.DeletePageAsync(userId, id);
+            var userId = GetCurrentUserId();
+            if (request == null || request.Id == Guid.Empty)
+                    return Json(new { success = false, error = "Invalid page ID." });
+            var result = await _pageService.DeletePageAsync(userId, request.Id);
 
             if (result.IsSuccess)
                 return Json(new { success = true, message = "Page deleted successfully" });
@@ -128,18 +131,21 @@ namespace Sohba.Controllers
             var result = await _pageService.CreatePageAsync(userId, dto);
 
             if (result.IsSuccess)
-                return RedirectToAction("Index");
+                return RedirectToAction("Details", new { id = result.Value.Id });
 
             ModelState.AddModelError("", result.Error);
             return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ToggleFollow(Guid pageId)
+        public async Task<IActionResult> ToggleFollow([FromBody] ToggleFollowRequest request)
         {
             var userId = GetCurrentUserId();
 
-            var result = await _pageService.ToggleFollowPageAsync(userId, pageId);
+            if (request == null || request.PageId == Guid.Empty)
+                return Json(new { success = false, error = "Invalid page ID." });
+            
+            var result = await _pageService.ToggleFollowPageAsync(userId, request.PageId);
 
             return Json(new
             {
