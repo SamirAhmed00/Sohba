@@ -37,76 +37,76 @@ namespace Sohba.Application.Services
             _userService = userService;
         }
 
-        public async Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId)
-        {
-            var post = await _unitOfWork.Posts.GetByIdAsync(reportDto.PostId);
-            if (post == null)
-            {
-                _logger.LogWarning("Report failed: post {PostId} not found", reportDto.PostId);
-                return Result.Failure("Post not found.");
-            }
+        //public async Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId)
+        //{
+        //    var post = await _unitOfWork.Posts.GetByIdAsync(reportDto.PostId);
+        //    if (post == null)
+        //    {
+        //        _logger.LogWarning("Report failed: post {PostId} not found", reportDto.PostId);
+        //        return Result.Failure("Post not found.");
+        //    }
 
-            bool alreadyReported = await _unitOfWork.Reports
-                .HasUserReportedEntityAsync(reporterId, reportDto.PostId);
+        //    bool alreadyReported = await _unitOfWork.Reports
+        //        .HasUserReportedEntityAsync(reporterId, reportDto.PostId);
 
-            var validation = _reportingDomainService.CanReportEntity(reporterId, reportDto.PostId, alreadyReported);
-            if (!validation.IsSuccess)
-            {
-                _logger.LogWarning("Report rejected for user {ReporterId} on post {PostId}: {Reason}", reporterId, reportDto.PostId, validation.Error);
-                return Result.Failure(validation.Error);
-            }
+        //    var validation = _reportingDomainService.CanReportEntity(reporterId, reportDto.PostId, alreadyReported);
+        //    if (!validation.IsSuccess)
+        //    {
+        //        _logger.LogWarning("Report rejected for user {ReporterId} on post {PostId}: {Reason}", reporterId, reportDto.PostId, validation.Error);
+        //        return Result.Failure(validation.Error);
+        //    }
 
-            var report = _mapper.Map<PostReport>(reportDto);
-            report.UserId = reporterId;
-            report.ReportedAt = DateTime.UtcNow;
+        //    var report = _mapper.Map<PostReport>(reportDto);
+        //    report.UserId = reporterId;
+        //    report.ReportedAt = DateTime.UtcNow;
 
-            _unitOfWork.Reports.Add(report);
+        //    _unitOfWork.Reports.Add(report);
 
-            int currentReportCount = await _unitOfWork.Reports.GetReportCountForEntityAsync(reportDto.PostId);
-            int threshold = 5; 
+        //    int currentReportCount = await _unitOfWork.Reports.GetReportCountForEntityAsync(reportDto.PostId);
+        //    int threshold = 5; 
 
-            if (_reportingDomainService.ShouldAutoHideContent(currentReportCount + 1, threshold))
-            {
-                post.IsDeleted = true; 
-                _unitOfWork.Posts.Update(post);
-            }
+        //    if (_reportingDomainService.ShouldAutoHideContent(currentReportCount + 1, threshold))
+        //    {
+        //        post.IsDeleted = true; 
+        //        _unitOfWork.Posts.Update(post);
+        //    }
 
-            await _unitOfWork.CompleteAsync();
-            _logger.LogInformation("Post {PostId} reported by user {ReporterId}, reason: {Reason}", reportDto.PostId, reporterId, reportDto.Reason);
+        //    await _unitOfWork.CompleteAsync();
+        //    _logger.LogInformation("Post {PostId} reported by user {ReporterId}, reason: {Reason}", reportDto.PostId, reporterId, reportDto.Reason);
 
-            //  Send notification to post owner
-            if (post.UserId != reporterId)
-            {
-                var reporter = await _userService.GetProfileAsync(reporterId);
-                var reporterName = reporter.Value?.Name ?? "Someone";
+        //    //  Send notification to post owner
+        //    if (post.UserId != reporterId)
+        //    {
+        //        var reporter = await _userService.GetProfileAsync(reporterId);
+        //        var reporterName = reporter.Value?.Name ?? "Someone";
 
-                await _notificationService.CreateNotificationAsync(
-                    receiverId: post.UserId,
-                    message: $"{reporterName} reported your post",
-                    type: NotificationType.SystemAlert,
-                    senderId: reporterId,
-                    targetId: post.Id
-                );
-            }
+        //        await _notificationService.CreateNotificationAsync(
+        //            receiverId: post.UserId,
+        //            message: $"{reporterName} reported your post",
+        //            type: NotificationType.SystemAlert,
+        //            senderId: reporterId,
+        //            targetId: post.Id
+        //        );
+        //    }
 
-            //  Send notification to admin
-            var admins = await _userService.GetUsersByStatusAsync("active");
-            if (admins.IsSuccess && admins.Value.Any())
-            {
-                foreach (var admin in admins.Value.Where(u => u.Email == "admin@sohba.com"))
-                {
-                    await _notificationService.CreateNotificationAsync(
-                        receiverId: admin.Id,
-                        message: $"New report submitted for post: {post.Title}",
-                        type: NotificationType.SystemAlert,
-                        senderId: reporterId,
-                        targetId: post.Id
-                    );
-                }
-            }
+        //    //  Send notification to admin
+        //    var admins = await _userService.GetUsersByStatusAsync("active");
+        //    if (admins.IsSuccess && admins.Value.Any())
+        //    {
+        //        foreach (var admin in admins.Value.Where(u => u.Email == "admin@sohba.com"))
+        //        {
+        //            await _notificationService.CreateNotificationAsync(
+        //                receiverId: admin.Id,
+        //                message: $"New report submitted for post: {post.Title}",
+        //                type: NotificationType.SystemAlert,
+        //                senderId: reporterId,
+        //                targetId: post.Id
+        //            );
+        //        }
+        //    }
 
-            return Result.Success();
-        }
+        //    return Result.Success();
+        //}
 
         public async Task<Result<PostReportResponseDto>> ReportPostWithDetailsAsync(PostReportRequestDto reportDto, Guid reporterId)
         {

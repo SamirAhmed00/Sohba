@@ -123,12 +123,25 @@ namespace Sohba.Application.Services
             return Result<IEnumerable<GroupResponseDto>>.Success(response);
         }
 
+        // TODO : I Want To Refactor This Code And Remove The Overloading And Every Thing Depends on it
         public async Task<Result<GroupResponseDto>> GetGroupByIdAsync(Guid groupId)
+        {
+            return await GetGroupByIdAsync(groupId, Guid.Empty);
+        }
+
+        public async Task<Result<GroupResponseDto>> GetGroupByIdAsync(Guid groupId, Guid currentUserId)
         {
             var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
             if (group == null) return Result<GroupResponseDto>.Failure("Group not found.");
 
             var response = _mapper.Map<GroupResponseDto>(group);
+
+            response.AdminName = group.Admin?.Name ?? "System Admin";
+            response.MembersCount = group.GroupMembers?.Count ?? 0;
+            response.IsCurrentUserMember = currentUserId != Guid.Empty &&
+                                           group.GroupMembers != null &&
+                                           group.GroupMembers.Any(m => m.UserId == currentUserId);
+
             return Result<GroupResponseDto>.Success(response);
         }
 
@@ -181,8 +194,7 @@ namespace Sohba.Application.Services
             var validation = _groupDomainService.CanKickMember(adminId, adminRole, targetUserId, targetRole);
             if (!validation.IsSuccess) return Result<bool>.Failure(validation.Error);
 
-            var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
-            var memberToKick = group.GroupMembers.FirstOrDefault(m => m.UserId == targetUserId);
+            var memberToKick = await _unitOfWork.Groups.GetMemberByUserAndGroupAsync(groupId, targetUserId);
             if (memberToKick != null)
             {
                 _unitOfWork.Groups.RemoveMember(memberToKick);
@@ -198,7 +210,8 @@ namespace Sohba.Application.Services
             if (group == null)
                 return Result<bool>.Failure("Group not found.");
 
-            var member = group.GroupMembers.FirstOrDefault(m => m.UserId == userId);
+            // Load the member as a TRACKED entity to avoid the EF tracking conflict.
+            var member = await _unitOfWork.Groups.GetMemberByUserAndGroupAsync(groupId, userId);
             if (member == null)
                 return Result<bool>.Failure("You are not a member of this group.");
 

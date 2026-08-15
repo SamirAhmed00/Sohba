@@ -7,8 +7,8 @@ namespace Sohba.Domain.Entities.PostAggregate
 {
     public class SavedPost
     {
-        public Guid Id { get; set; }
-        public Guid UserId { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid UserId { get; set; } 
         public virtual UserAggregate.User User { get; set; }
         public Guid PostId { get; set; }
         public virtual Post Post { get; set; }

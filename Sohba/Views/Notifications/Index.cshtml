@@ -17,66 +17,89 @@
             _ => "📢"
         };
     }
+
+    private string GetNotificationUrl(Sohba.Application.DTOs.UserAggregate.NotificationResponseDto n)
+    {
+        return n.NotificationType switch
+        {
+            "PostLike" or "PostComment" => $"/Posts/Details/{n.TargetId}",
+            "GroupInvitation" => $"/Groups/Details/{n.TargetId}",
+            "FriendRequest" => "/Friends/Requests",
+            "SystemAlert" when n.TargetId.HasValue => $"/Groups/Details/{n.TargetId}",
+            _ => "/Notifications/Index"
+        };
+    }
 }
 
 <div class="max-w-7xl mx-auto page-transition">
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Notifications</h1>
-                <p class="text-gray-500 mt-1">Stay updated with your activity</p>
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900">Notifications</h1>
+                    <p class="text-gray-500 mt-1">Stay updated with your activity</p>
+                </div>
+                <button onclick="markAllRead()" class="text-sm text-[#345e69] font-semibold hover:underline">
+                    Mark all as read
+                </button>
             </div>
-            <button onclick="markAllRead()" class="text-sm text-[#345e69] font-semibold hover:underline">
-                Mark all as read
-            </button>
         </div>
-    </div>
 
-    <!-- Notifications List -->
-    <div class="space-y-2">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br  from-[#345e69] via-[#4a8291] to-[#345e69] p-12 text-center">
-            
-            <div class="absolute inset-0 bg-grid-white/10 [mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)]"></div>
-
-            <div class="relative z-10">
-                <div class="w-28 h-28 mx-auto bg-white/10 backdrop-blur-xl rounded-3xl flex items-center justify-center mb-6 border border-white/20">
-                    <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <!-- Notifications List -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="space-y-3">
+                @foreach (var notification in Model)
+                {
+                    <a href="@GetNotificationUrl(notification)"
+                       class="flex items-start gap-4 bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover:shadow-md transition-shadow @(notification.IsRead ? "opacity-60" : "border-l-4 border-l-[#345e69]")">
+                        <div class="w-12 h-12 rounded-full bg-[#345e69]/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-xl">@GetNotificationIcon(notification.NotificationType)</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-gray-800 text-sm">@notification.Message</p>
+                            <p class="text-xs text-gray-400 mt-1">@notification.TimeAgo</p>
+                        </div>
+                        @if (!notification.IsRead)
+                        {
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#345e69] flex-shrink-0 mt-2"></span>
+                        }
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-20">
+                <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                 </div>
-
-                <h3 class="text-4xl font-black text-white mb-2">Real-Time Notification</h3>
-                <p class="text-xl text-white/80 mb-8">Coming Soon with SignalR</p>
-
-                <div class="flex justify-center gap-3">
-                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">⚡ Live</span>
-                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">💬 Instant</span>
-                    <span class="px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl text-white font-semibold border border-white/20">🔄 Real-time</span>
-                </div>
+                <h3 class="text-lg font-bold text-gray-900">No notifications</h3>
+                <p class="text-gray-500 mt-2">You're all caught up!</p>
             </div>
-        </div>
-    </div>
-
-    @if (!Model.Any())
-    {
-        <div class="text-center py-20">
-            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900">No notifications</h3>
-            <p class="text-gray-500 mt-2">You're all caught up!</p>
-        </div>
-    }
+        }
 </div>
 
 @section Scripts {
-    @* <script>
+    <script>
         async function markAllRead() {
-            // Implement API call
-            SohbaApp.toast('All notifications marked as read', 'success');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const response = await fetch('/Notifications/MarkAllAsRead', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
+                SohbaApp.toast('All notifications marked as read', 'success');
+                window.location.reload();
+            } else {
+                SohbaApp.toast(result.error || 'Failed to mark all as read', 'error');
+            }
         }
-    </script> *@
-}   
+    </script>
+}

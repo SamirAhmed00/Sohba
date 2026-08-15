@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Filter functionality
-function filterUsers(filter) {
+function filterUsers(filter, event) {
     // Update active button
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active', 'bg-[#345e69]', 'text-white');
@@ -73,7 +73,7 @@ async function sendFriendRequest(userId) {
     }
 }
 
-function switchTab(tab) {
+function switchTab(tab, event) {
     console.log('Switching to tab:', tab);
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -104,6 +104,8 @@ async function acceptRequest(userId, btn) {
         SohbaApp.toast('Friend request accepted!', 'success');
         const elem = document.querySelector(`[data-request-id="${userId}"]`);
         if (elem) elem.remove();
+        updatePendingRequestCount(-1);
+
     } else {
         if (btn) { btn.disabled = false; }
         SohbaApp.toast(result.error || 'Failed to accept request', 'error');
@@ -119,20 +121,30 @@ async function rejectRequest(userId, btn) {
         SohbaApp.toast('Friend request declined', 'success');
         const elem = document.querySelector(`[data-request-id="${userId}"]`);
         if (elem) elem.remove();
+        updatePendingRequestCount(-1);
+
     } else {
         if (btn) { btn.disabled = false; }
         SohbaApp.toast(result.error || 'Failed to decline request', 'error');
     }
 }
 
-async function cancelRequest(userId) {
+function updatePendingRequestCount(delta) {
+    const tabBtn = document.querySelector('.tab-btn.active');
+    const countMatch = tabBtn && tabBtn.textContent.match(/\(\s*(\d+)\s*\)/);
+    if (!tabBtn || !countMatch) return;
+
+    const newCount = Math.max(0, parseInt(countMatch[1], 10) + delta);
+    tabBtn.textContent = tabBtn.textContent.replace(/\(\s*\d+\s*\)/, `(${newCount})`);
+}
+
+async function cancelRequest(userId, btn) {
     window.showConfirmModal({
         title: 'Cancel Friend Request',
         message: 'Are you sure you want to cancel this friend request?',
         type: 'warning',
         confirmText: 'Cancel Request',
         onConfirm: async () => {
-            const btn = event?.target;
             if (btn) { btn.disabled = true; btn.innerHTML = 'Cancelling...'; }
 
             try {
@@ -247,20 +259,26 @@ window.checkFriendshipStatus = async function (targetUserId) {
 
 
 async function blockUserFromProfile(userId) {
-    if (!confirm('Are you sure you want to block this user?')) return;
-
-    try {
-        const result = await SohbaApp.post('/Friends/BlockUser', { userId });
-        if (result.success) {
-            SohbaApp.toast('User blocked', 'success');
-            setTimeout(() => window.location.reload(), 800);
-        } else {
-            SohbaApp.toast(result.error || 'Failed to block user', 'error');
+    window.showConfirmModal({
+        title: 'Block User',
+        message: 'Are you sure you want to block this user? They will no longer be able to interact with you.',
+        type: 'warning',
+        confirmText: 'Block',
+        onConfirm: async () => {
+            try {
+                const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+                if (result.success) {
+                    SohbaApp.toast('User blocked', 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to block user', 'error');
+                }
+            } catch (error) {
+                console.error('Block error:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
         }
-    } catch (error) {
-        console.error('Block error:', error);
-        SohbaApp.toast('Network error', 'error');
-    }
+    });
 }
 
 async function unblockUserFromProfile(userId) {

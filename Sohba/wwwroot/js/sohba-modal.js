@@ -48,48 +48,26 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
         document.getElementById('modalPostContent').innerText = data.post.content;
 
         // ============================================================
-        // BUILD COMMENTS WITH REPLIES
+        // BUILD COMMENTS WITH NESTED REPLIES (max depth 4)
         // ============================================================
         if (data.comments && data.comments.length > 0) {
-            const commentsHtml = data.comments.map(c => {
+            function renderComment(c, depth) {
                 const commentId = `comment-${c.id}`;
                 const fullContent = c.content;
                 const maxLength = 100;
                 const shouldTruncate = fullContent.length > maxLength;
                 const shortContent = shouldTruncate ? fullContent.substring(0, maxLength) + '...' : fullContent;
+                const canReply = depth < 4;
+                const indent = Math.min(depth - 1, 3); // max 3 levels of indent
 
-                // Build replies HTML if any
-                let repliesHtml = '';
-                if (c.replies && c.replies.length > 0) {
-                    repliesHtml = `
-                        <div id="replies-${c.id}" class="mt-3 pl-4 border-l-2 border-slate-200 space-y-3">
-                            ${c.replies.map(reply => `
-                                <div class="flex items-start gap-3">
-                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(reply.userName)}&background=random" 
-                                         class="w-7 h-7 rounded-full flex-shrink-0">
-                                    <div>
-                                        <span class="font-semibold text-sm text-gray-900">${reply.userName}</span>
-                                        <p class="text-sm text-gray-700">${reply.content}</p>
-                                        <span class="text-xs text-gray-400">${new Date(reply.createdAt).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-
-                            <!-- Delete Reply Button -->
-                            ${reply.isAuthor ? `
-                                    <button onclick="SohbaApp.deleteComment('${reply.id}', '${reply.postId}')"
-                                            class="text-xs text-red-500 hover:underline font-medium ml-2">
-                                        Delete
-                                    </button>
-                                ` : ''}
-                        </div>
-                    `;
-                }
+                const replies = (c.replies || [])
+                    .map(r => renderComment(r, depth + 1))
+                    .join('');
 
                 return `
-                    <div class="flex items-start gap-3 mb-3">
+                    <div class="flex items-start gap-3" data-comment-id="${c.id}">
                         <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName)}&background=random" 
-                             class="w-8 h-8 rounded-full flex-shrink-0">
+                             class="w-${depth === 1 ? 8 : 7} h-${depth === 1 ? 8 : 7} rounded-full flex-shrink-0">
                         <div class="flex-1 min-w-0">
                             <span class="font-semibold text-sm text-gray-900">${c.userName}</span>
                             <div id="${commentId}" class="text-sm text-gray-700 break-words">
@@ -103,14 +81,14 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                             ` : ''}
                             <div class="flex items-center gap-3 mt-1">
                                 <span class="text-xs text-gray-400">${new Date(c.createdAt).toLocaleString()}</span>
-                                
-                                <!-- Reply button -->
-                                <button onclick="SohbaApp.showReplyForm('${c.id}', '${c.userName}')" 
-                                        class="text-xs text-[#345e69] hover:underline font-medium">
-                                    Reply
-                                </button>
-                                
-                                <!-- Show replies count -->
+
+                                ${canReply ? `
+                                    <button onclick="SohbaApp.showReplyForm('${c.id}', '${c.userName}')" 
+                                            class="text-xs text-[#345e69] hover:underline font-medium">
+                                        Reply
+                                    </button>
+                                ` : ''}
+
                                 ${c.replyCount > 0 ? `
                                     <button onclick="SohbaApp.toggleReplies('${c.id}')" 
                                             class="text-xs text-gray-500 hover:text-[#345e69]">
@@ -118,46 +96,53 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                                     </button>
                                 ` : ''}
 
-                                <!-- Delete button -->
-                                 ${c.isAuthor ? `
+                                ${c.isAuthor ? `
                                     <button onclick="SohbaApp.deleteComment('${c.id}', '${c.postId}')"
                                             class="text-xs text-red-500 hover:underline font-medium ml-2">
                                         Delete
                                     </button>
                                 ` : ''}
-
                             </div>
-                            
-                            <!-- Reply form (hidden by default) -->
-                            <div id="replyForm-${c.id}" class="mt-2 hidden">
-                                <div class="flex items-start gap-3">
-                                    <img src="https://ui-avatars.com/api/?name=You&background=345e69&color=fff" 
-                                         class="w-7 h-7 rounded-full flex-shrink-0">
-                                    <div class="flex-1">
-                                        <input type="text" 
-                                               id="replyInput-${c.id}" 
-                                               placeholder="Write a reply..."
-                                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
-                                        <div class="flex gap-2 mt-2">
-                                            <button onclick="SohbaApp.submitReply('${c.id}', '${c.postId}')" 
-                                                    class="px-4 py-1.5 bg-[#345e69] text-white text-sm font-semibold rounded-lg hover:bg-[#2a4b55]">
-                                                Reply
-                                            </button>
-                                            <button onclick="SohbaApp.hideReplyForm('${c.id}')" 
-                                                    class="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700">
-                                                Cancel
-                                            </button>
+
+                            ${canReply ? `
+                                <div id="replyForm-${c.id}" class="mt-2 hidden">
+                                    <div class="flex items-start gap-3">
+                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName)}&background=345e69&color=fff" 
+                                             class="w-7 h-7 rounded-full flex-shrink-0">
+                                        <div class="flex-1">
+                                            <input type="text" 
+                                                   id="replyInput-${c.id}" 
+                                                   placeholder="Reply to ${c.userName}..."
+                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
+                                            <div class="flex gap-2 mt-2">
+                                                <button onclick="SohbaApp.submitReply('${c.id}', '${c.postId}')" 
+                                                        class="px-4 py-1.5 bg-[#345e69] text-white text-sm font-semibold rounded-lg hover:bg-[#2a4b55]">
+                                                    Reply
+                                                </button>
+                                                <button onclick="SohbaApp.hideReplyForm('${c.id}')" 
+                                                        class="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700">
+                                                    Cancel
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Replies container -->
-                            ${repliesHtml}
+                            ` : ''}
+
+                            ${replies ? `
+                                <div id="replies-${c.id}" class="mt-3 ml-${indent + 2} border-l-2 border-slate-200 space-y-3 pl-3">
+                                    ${replies}
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
-            }).join('');
+            }
+
+            const commentsHtml = data.comments
+                .map(c => renderComment(c, c.depth || 1))
+                .join('');
+
             document.getElementById('modalComments').innerHTML = commentsHtml;
         } else {
             document.getElementById('modalComments').innerHTML = '<p class="text-slate-400 text-sm italic">No comments yet.</p>';

@@ -17,6 +17,6 @@ namespace Sohba.Domain.Domain_Rules.Interface
         Result CanDeleteComment(Guid userId, Guid commentOwnerId, Guid postOwnerId, bool isAdmin);
 
         // Replies
-        Result CanReplyToComment(Guid userId, bool isCommentDeleted, bool isThreadLocked);
+        Result CanReplyToComment(Guid userId, bool isCommentDeleted, bool isThreadLocked, int currentDepth);
     }
 }

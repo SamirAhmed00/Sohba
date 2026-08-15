@@ -9,7 +9,8 @@ namespace Sohba.Application.DTOs.StoryAggregate
     {
         public string Content { get; set; }
         public IFormFile? MediaFile { get; set; }  
-        public string? MediaUrl { get; set; }  
+        public string? MediaUrl { get; set; }
+        public string? MediaType { get; set; }
         public string Privacy { get; set; } = "Public";
     }
 }

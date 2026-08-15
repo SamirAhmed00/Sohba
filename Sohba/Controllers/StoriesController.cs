@@ -96,12 +96,11 @@ namespace Sohba.Controllers
         public async Task<IActionResult> GetUserStories(Guid userId)
         {
             var currentUserId = GetCurrentUserId();
-            var result = await _storyService.GetStoriesForFeedAsync(currentUserId);
+            var result = await _storyService.GetUserStoriesAsync(userId, currentUserId);
 
             if (result.IsSuccess)
             {
-                var userStories = result.Value.Where(s => s.UserId == userId).ToList();
-                return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(userStories));
+                return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(result.Value));
             }
 
             return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(new List<StoryResponseDto>()));

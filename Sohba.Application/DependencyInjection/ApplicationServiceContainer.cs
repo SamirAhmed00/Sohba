@@ -37,6 +37,7 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<JwtService>();
             services.AddScoped<IUserSettingsService, UserSettingsService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IJwtService, JwtService>();
 
             // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();

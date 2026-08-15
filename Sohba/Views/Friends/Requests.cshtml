@@ -39,28 +39,28 @@
             <div class="space-y-3">
                 @foreach (var request in Model.PendingRequests)
                 {
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover-lift" data-request-id="@request.UserId">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
-                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
-                            <div>
-                                <h3 class="font-bold text-gray-900">@request.FriendName</h3>
-                                <p class="text-sm text-gray-500">Wants to connect with you</p>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover-lift" data-request-id="@request.FriendUserId">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <img src="@(request.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={request.FriendName}&background=345e69&color=fff")"
+                                     class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                                <div>
+                                    <h3 class="font-bold text-gray-900">@request.FriendName</h3>
+                                    <p class="text-sm text-gray-500">Wants to connect with you</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="acceptRequest('@request.FriendUserId', this)"
+                                        class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                    Accept
+                                </button>
+                                <button onclick="rejectRequest('@request.FriendUserId', this)"
+                                        class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                    Decline
+                                </button>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                                <button onclick="acceptRequest('@request.UserId', this)"
-                                        class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
-                                Accept
-                            </button>
-                                <button onclick="rejectRequest('@request.UserId', this)"
-                                    class="px-5 py-2 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
-                                Decline
-                            </button>
-                        </div>
                     </div>
-                </div>
                 }
             </div>
         }
@@ -95,7 +95,7 @@
                                     <p class="text-sm text-gray-500">Request sent · Pending</p>
                                 </div>
                             </div>
-                            <button onclick="cancelRequest('@request.FriendUserId')"
+                            <button onclick="cancelRequest('@request.FriendUserId', this)"
                                     class="px-5 py-2 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors">
                                 Cancel Request
                             </button>

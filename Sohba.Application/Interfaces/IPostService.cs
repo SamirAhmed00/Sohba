@@ -32,7 +32,7 @@ namespace Sohba.Application.Interfaces
 
         // Admin
         Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync();
-        Task<Result> HidePostAsync(Guid postId, Guid userId);
+        Task<Result> HidePostAsync(Guid postId, Guid userId, bool isAdmin = false);
         
         Task<Result<IEnumerable<PostResponseDto>>> MapPostsWithInteractions(IEnumerable<Post> posts, Guid currentUserId);
 

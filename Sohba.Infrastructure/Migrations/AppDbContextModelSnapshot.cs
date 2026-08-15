@@ -281,6 +281,9 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<DateTime>("DateUpdated")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Depth")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("ParentCommentId")
                         .HasColumnType("uniqueidentifier");
 
@@ -507,16 +510,14 @@ namespace Sohba.Infrastructure.Migrations
 
             modelBuilder.Entity("Sohba.Domain.Entities.PostAggregate.SavedPost", b =>
                 {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("PostId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("CollectionId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("PostId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("PostId1")
@@ -528,16 +529,21 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<int>("Tag")
                         .HasColumnType("int");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("UserTag")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("UserId", "PostId");
+                    b.HasKey("Id");
 
                     b.HasIndex("CollectionId");
 
                     b.HasIndex("PostId");
 
                     b.HasIndex("PostId1");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("SavedPost");
                 });
@@ -703,6 +709,9 @@ namespace Sohba.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("EmailNotifications")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
@@ -1012,7 +1021,8 @@ namespace Sohba.Infrastructure.Migrations
                 {
                     b.HasOne("Sohba.Domain.Entities.PostAggregate.SavedCollection", "Collection")
                         .WithMany("SavedPosts")
-                        .HasForeignKey("CollectionId");
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Sohba.Domain.Entities.PostAggregate.Post", "Post")
                         .WithMany()

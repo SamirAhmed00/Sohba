@@ -1,12 +1,13 @@
 ﻿@using System.Globalization
-@using Sohba.Application.DTOs.PostAggregate
 @using System.Text.RegularExpressions
+@using Sohba.Application.DTOs.PostAggregate
+@using Sohba.Domain.Enums
 @model IEnumerable<PostResponseDto>
 
 @functions {
     private string GetTimeAgo(DateTime createdAt)
     {
-        var timeSpan = DateTime.UtcNow - createdAt.ToLocalTime();
+        var timeSpan = DateTime.UtcNow - createdAt;
 
         if (timeSpan.TotalSeconds < 60)
             return "Just now";
@@ -24,11 +25,15 @@
         return $"{(int)(timeSpan.TotalDays / 365)}y ago";
     }
 
-    private string GetPrivacyIcon(bool isPrivate)
+    private string GetPrivacyIcon(PostPrivacy privacy)
     {
-        return isPrivate ?
-            "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' /></svg> Private" :
-            "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' /></svg> Public";
+        return privacy switch
+        {
+            PostPrivacy.Private => "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' /></svg> Private" ,
+            PostPrivacy.Friends => "<svg class='w-3 h-3' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' /></svg> Public",
+            _ => "<svg ...> Public"
+
+        };
     }
     private string GetReactionClass(string? type)
     {
@@ -123,7 +128,7 @@
                                         </span>
                                     }
                                     <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                    <span class="flex items-center gap-1">@Html.Raw(GetPrivacyIcon(post.IsPrivate))</span>
+                                    <span class="flex items-center gap-1">@Html.Raw(GetPrivacyIcon(post.Privacy))</span>
                                 </div>
                             </div>
                         </div>
@@ -139,7 +144,7 @@
                             <div id="@menuId" class="hidden absolute right-0 top-11 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
                                 <div class="py-1.5">
                                     <button data-save-button="@post.Id"
-                                            onclick="SohbaApp.openSavePostModal('@post.Id')"
+                                            onclick="SohbaApp.toggleSavePost('@post.Id', @(post.IsSaved ? "true" : "false"))"
                                             class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm @(post.IsSaved ? "text-amber-600 bg-amber-50" : "")">
                                         @if (post.IsSaved)
                                         {
@@ -164,14 +169,7 @@
                                         }
 
                                         <span class="btn-text">
-                                            @if (post.IsSaved)
-                                            {
-                                                @(post.IsFavorite ? "Favorited" : "Saved")
-                                            }
-                                            else
-                                            {
-                                                @("Save Post")
-                                            }
+                                            @(post.IsSaved ? "Saved" : "Save Post")
                                         </span>
                                     </button>
 
@@ -241,10 +239,10 @@
                         @using System.Text.RegularExpressions
                         @{
                             var contentWithLinks = Regex.Replace(
-                            post.Content ?? "",
-                                                    @"#(\w+)",
-                                                "<a href='/Posts/Hashtag?tag=$1' class='text-[#345e69] hover:underline font-bold'>#$1</a>"
-                            );
+                                post.Content ?? "",
+                                                        @"#([A-Za-z_][A-Za-z0-9_]*)",
+                                                    "<a href='/Posts/Hashtag?tag=$1' class='text-[#345e69] hover:underline font-bold'>#$1</a>"
+                                );
                         }
 
                         <p class="post-content text-slate-600 leading-relaxed text-sm sm:text-base whitespace-pre-line">
@@ -298,7 +296,7 @@
 
 
                             <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                            <span>0 shares</span> @* Will be dynamic later *@
+                           
                         </div>
                     </div>
 
@@ -317,7 +315,7 @@
                                                     "Angry" => "😠",
                                     _ => "React"
                                 };
-                                var likeText = currentReaction == "React" ? "" : "";
+                                var likeText = currentReaction == "React" ? "" : currentReaction;
                                 var reactionClass = GetReactionClass(currentReaction);
                             }
 
@@ -359,153 +357,6 @@
             }
         </div>
     }
-
-  
-
-    @Html.AntiForgeryToken()
-    <!-- Report Post Modal -->
-    <div id="reportModal" class="fixed inset-0 z-[100] hidden">
-        <!-- Overlay -->
-        <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeReportModal()"></div>
-
-        <!-- Modal Container -->
-        <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-
-                <!-- Header -->
-                <div class="flex items-center justify-between p-4 border-b">
-                    <h3 class="text-lg font-bold text-gray-900">Report Post</h3>
-                    <button onclick="SohbaApp.closeReportModal()" class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Content -->
-                <div class="p-4">
-                    <p class="text-sm text-gray-600 mb-4">Why are you reporting this post? Your report is anonymous.</p>
-
-                    <div class="space-y-3">
-                        <!-- Spam -->
-                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                            <input type="radio" name="reportReason" value="Spam" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Spam</span>
-                        </label>
-
-                        <!-- Harassment -->
-                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                            <input type="radio" name="reportReason" value="Harassment" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Harassment or bullying</span>
-                        </label>
-
-                        <!-- Inappropriate Content -->
-                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                            <input type="radio" name="reportReason" value="InappropriateContent" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Inappropriate content</span>
-                        </label>
-
-                        <!-- Violence -->
-                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                            <input type="radio" name="reportReason" value="Violence" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Violence or dangerous organizations</span>
-                        </label>
-
-                        <!-- Other -->
-                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                            <input type="radio" name="reportReason" value="Other" class="w-4 h-4 text-[#345e69] focus:ring-[#345e69]">
-                            <span class="ml-3 text-sm font-medium text-gray-700">Something else</span>
-                        </label>
-                    </div>
-
-                    <!-- Additional info (ظهر بس لو اختار Other) -->
-                    <div id="otherReasonContainer" class="mt-4 hidden">
-                        <textarea id="otherReasonText" rows="3" placeholder="Please describe the issue..."
-                                  class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all"></textarea>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="flex gap-3 p-4 border-t bg-slate-50">
-                    <button onclick="SohbaApp.closeReportModal()"
-                            class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors">
-                        Cancel
-                    </button>
-                    <button onclick="SohbaApp.submitReport()"
-                            class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-600/30 transition-colors">
-                        Submit Report
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-
-
-
-    <!-- Share Post Modal -->
-    <div id="shareModal" class="fixed inset-0 z-[100] hidden">
-        <!-- Overlay -->
-        <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeShareModal()"></div>
-
-        <!-- Modal Container -->
-        <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-                <!-- Header -->
-                <div class="flex items-center justify-between p-4 border-b">
-                    <h3 class="text-lg font-bold text-gray-900">Share Post</h3>
-                    <button onclick="SohbaApp.closeShareModal()" class="p-1 text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Content -->
-                <div class="p-6">
-                    <p class="text-sm text-gray-600 mb-3">Share this post with others</p>
-
-                    <!-- Post URL -->
-                    <div class="flex items-center gap-2 mb-4">
-                        <input id="sharePostUrl" type="text" readonly
-                               class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none"
-                               value="">
-                        <button onclick="SohbaApp.copyShareLink()"
-                                class="px-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                            Copy
-                        </button>
-                    </div>
-
-                    <!-- Social Share Options (اختياري) -->
-                    <div class="flex justify-center gap-4 mt-4">
-                        <button class="p-3 bg-blue-600 text-white rounded-full hover:scale-110 transition-transform" title="Share on Facebook" aria-label="Share on Facebook>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                            </svg>
-                        </button>
-                    <button class="p-3 bg-sky-500 text-white rounded-full hover:scale-110 transition-transform" title="Share on Twitter" aria-label="Share on Twitter>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                            </svg>
-                        </button>
-                <button class="p-3 bg-green-600 text-white rounded-full hover:scale-110 transition-transform" title="Share on WhatsApp" aria-label="Share on WhatsApp>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12c0 1.9.53 3.68 1.45 5.2L2.3 21.3c-.1.4.2.8.6.6l4.1-1.4C8.4 21.4 10.1 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.5 0-2.9-.4-4.1-1.1l-.3-.2-3.1 1.1 1.1-3.1-.2-.3c-.7-1.2-1.1-2.6-1.1-4.1 0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8zm4.5-6.5c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.7 1-.1.2-.2.2-.4.1-1.5-.7-2.5-1.3-3.5-2.3-.3-.3-.5-.5-.7-.8-.1-.2 0-.4.1-.5.1-.1.2-.2.3-.3.1-.1.2-.2.2-.3.1-.2 0-.4 0-.5-.1-.2-.5-1.1-.6-1.5-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.8.8-1.2 1.8-1.1 2.9.1 1.1.5 2.1 1.2 3 .7.9 1.6 1.6 2.7 2 .5.2 1 .3 1.5.3.6 0 1.1-.2 1.5-.5.3-.3.5-.6.6-1 .1-.3 0-.5-.1-.6-.1-.1-.2-.1-.3-.2z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    @*-----------------------------------------------------------------------*@
 
 
 

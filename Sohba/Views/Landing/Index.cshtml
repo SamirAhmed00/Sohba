@@ -8,24 +8,24 @@
             extend: {
                 colors: {
                     primary: {
-                        DEFAULT: '#3d8b8b', [cite: 1, 2]
-                        50: '#f0f9f9', [cite: 1, 2]
-                        100: '#d9f0f0', [cite: 1, 2]
-                        200: '#b3e0e0', [cite: 1, 2]
-                        300: '#80c9c9', [cite: 1, 2]
-                        400: '#5aadad', [cite: 1, 2]
-                        500: '#3d8b8b', [cite: 1, 2]
-                        600: '#317070', [cite: 1, 2]
-                        700: '#295959', [cite: 1, 2]
-                        800: '#234848', [cite: 1, 2]
-                        900: '#1d3c3c', [cite: 1, 2]
+                        DEFAULT: '#3d8b8b', 
+                        50: '#f0f9f9', 
+                        100: '#d9f0f0',
+                        200: '#b3e0e0',
+                        300: '#80c9c9',
+                        400: '#5aadad',
+                        500: '#3d8b8b',
+                        600: '#317070',
+                        700: '#295959',
+                        800: '#234848',
+                        900: '#1d3c3c',
                     },
-                    background: '#f7fafa', [cite: 1, 2]
-                    foreground: '#1a2e35', [cite: 1, 2]
-                    card: '#ffffff', [cite: 1, 2]
-                    muted: '#f1f5f5', [cite: 1, 2]
-                    'muted-foreground': '#64748b', [cite: 1, 2]
-                    border: '#e2eaea', [cite: 1, 2]
+                    background: '#f7fafa', 
+                    foreground: '#1a2e35', 
+                    card: '#ffffff', 
+                    muted: '#f1f5f5',
+                    'muted-foreground': '#64748b', 
+                    border: '#e2eaea', 
                 },
             },
         },
@@ -620,43 +620,43 @@
 
 
     // Animation For Landing
-    const observerOptions = { threshold: 0.5 };[cite: 1, 2]
+    const observerOptions = { threshold: 0.5 };
     const statsObserver = new IntersectionObserver((entries) => {
-    [cite: 1, 2]
+    
     entries.forEach(entry => {
-    [cite: 1, 2]
+    
     if (entry.isIntersecting) {
-    [cite: 1, 2]
-    const statNumbers = entry.target.querySelectorAll('.stat-number');[cite: 1, 2]
+    ]
+    const statNumbers = entry.target.querySelectorAll('.stat-number');
     statNumbers.forEach(stat => {
-    [cite: 1, 2]
-    const target = parseInt(stat.dataset.target);[cite: 1, 2]
-    animateCounter(stat, target);[cite: 1, 2]
-    });[cite: 1, 2]
-    statsObserver.unobserve(entry.target);[cite: 1, 2]
-    } [cite: 1, 2]
-    });[cite: 1, 2]
-    }, observerOptions);[cite: 1, 2]
+    
+    const target = parseInt(stat.dataset.target);
+    animateCounter(stat, target);
+    });
+    statsObserver.unobserve(entry.target);
+    } 
+    });
+    }, observerOptions);
 
-    const statsSection = document.querySelector('section.bg-primary');[cite: 1, 2]
-    if (statsSection) { statsObserver.observe(statsSection); } [cite: 1, 2]
+    const statsSection = document.querySelector('section.bg-primary');
+    if (statsSection) { statsObserver.observe(statsSection); } 
 
     function animateCounter(element, target) {
-    [cite: 1, 2]
-    let current = 0;[cite: 1, 2]
-    const increment = target / 50;[cite: 1, 2]
+    
+    let current = 0;
+    const increment = target / 50;
     const timer = setInterval(() => {
-    [cite: 1, 2]
-    current += increment;[cite: 1, 2]
+    
+    current += increment;
     if (current >= target) {
-    [cite: 1, 2]
-    element.textContent = target;[cite: 1, 2]
-    clearInterval(timer);[cite: 1, 2]
+    
+    element.textContent = target;
+    clearInterval(timer);
     } else {
-    [cite: 1, 2]
-    element.textContent = Math.floor(current);[cite: 1, 2]
-    } [cite: 1, 2]
-    }, 30);[cite: 1, 2]
+    
+    element.textContent = Math.floor(current);
+    } 
+    }, 30);
     }
 
 

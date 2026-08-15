@@ -12,7 +12,7 @@ namespace Sohba.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<SavedPost> builder)
         {
-            builder.HasKey(sp => new { sp.UserId, sp.PostId });
+            builder.HasKey(sp => sp.Id);
 
             builder.HasOne(sp => sp.User)
                    .WithMany(u => u.SavedPosts)
@@ -23,6 +23,11 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany()
                    .HasForeignKey(sp => sp.PostId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(sp => sp.Collection)
+                   .WithMany(c => c.SavedPosts)
+                   .HasForeignKey(sp => sp.CollectionId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -342,7 +342,7 @@
 
     // Join group from sidebar
     async function joinGroupFromSidebar(groupId, buttonElement) {
-        const result = await SohbaApp.post('/Groups/Join', { groupId });
+        const result = await SohbaApp.post('/Groups/Join', { id: groupId });
         if (result.success) {
             SohbaApp.toast('Joined group successfully!', 'success');
 

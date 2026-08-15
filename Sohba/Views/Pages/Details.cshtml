@@ -35,8 +35,8 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @* @if (User.Identity?.Name == Model.AdminName)
-                { *@
+                @if (ViewBag.CurrentUserId == Model.AdminId)
+                {
                     <a asp-action="Edit" asp-route-id="@Model.Id"
                        class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@
                         </svg>
                         Edit Page
                     </a>
-                @* } *@
+                }
 
                 <button onclick="toggleFollow()" id="followBtn"
                         class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2">

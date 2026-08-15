@@ -74,8 +74,24 @@ namespace Sohba.Infrastructure.Repositories
             _context.Set<GroupMember>().Add(member);
         }
 
+        // Loads the member as a TRACKED entity WITHOUT navigation properties.
+        // This avoids the duplicate-User tracking conflict seen when removing a member
+        // pulled from a detached group graph.
+        public async Task<GroupMember?> GetMemberByUserAndGroupAsync(Guid groupId, Guid userId)
+        {
+            return await _context.Set<GroupMember>()
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+        }
+
         public void RemoveMember(GroupMember member)
         {
+            if (member == null) return;
+
+            // Detach navigation properties so EF does not re-attach duplicate User/Group
+            // instances that may already be tracked by the shared DbContext.
+            member.User = null;
+            member.Group = null;
+
             _context.Set<GroupMember>().Remove(member);
         }
         public async Task<IEnumerable<Group>> SearchGroupsAsync(string query, int limit = 10)

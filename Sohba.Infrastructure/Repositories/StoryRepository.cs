@@ -81,6 +81,29 @@ namespace Sohba.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId)
+        {
+            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+
+            // Owner always sees their own stories; otherwise only public stories
+            // (or friends-only stories if the viewer is a friend) are returned.
+            var isFriend = await _context.Friends
+                .AnyAsync(f => (f.UserId == currentUserId && f.FriendUserId == userId)
+                            || (f.UserId == userId && f.FriendUserId == currentUserId)
+                            && f.Status == FriendshipStatus.Accepted);
+
+            return await _context.Stories
+                .Include(s => s.User)
+                .Where(s => s.UserId == userId &&
+                           s.CreatedAt >= cutoffTime &&
+                           !s.IsDeleted &&
+                           (s.UserId == currentUserId ||
+                            s.Privacy == StoryPrivacy.Public ||
+                            (s.Privacy == StoryPrivacy.FriendsOnly && isFriend)))
+                .OrderBy(s => s.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
         {
             var friendships = await _context.Friends

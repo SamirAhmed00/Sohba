@@ -190,7 +190,9 @@ namespace Sohba.Application.Services
 
 
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
-            var isSaved = savedPosts.Any(s => s.PostId == postId);
+
+            // A post is "saved" only when it is in a NON-Favorite collection.
+            var isSaved = savedPosts.Any(s => s.PostId == postId && s.Tag != SavedTag.Favorite);
             var isFavorite = savedPosts.Any(s => s.PostId == postId && s.Tag == SavedTag.Favorite);
 
             var response = _mapper.Map<PostResponseDto>(post);
@@ -217,7 +219,7 @@ namespace Sohba.Application.Services
                 return Result.Failure("Post not found.");
 
             // 1. Delegate permission check to Domain Service
-            var canUpdate = _postDomainService.CanUpdatePost(userId, post.UserId, post.IsDeleted);
+            var canUpdate = _postDomainService.CanUpdatePost(userId, post.UserId, post.UserId, post.IsDeleted);
             if (!canUpdate.IsSuccess)
                 return canUpdate;
 
@@ -280,15 +282,19 @@ namespace Sohba.Application.Services
         public async Task<Result<IEnumerable<PostResponseDto>>> GetAllPostsAsync()
         {
             var posts = await _unitOfWork.Posts.GetAllAsync();
-            return await MapPostsWithInteractions(posts, Guid.Empty);
+            var dtos = posts.Select(p => _mapper.Map<PostResponseDto>(p)).ToList();
+            return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
 
 
-        public async Task<Result> HidePostAsync(Guid postId, Guid userId)
+        public async Task<Result> HidePostAsync(Guid postId, Guid userId, bool isAdmin = false)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null)
                 return Result.Failure("Post not found");
+
+            if (!isAdmin && post.UserId != userId)
+                return Result.Failure("You are not authorized to hide this post.");
 
             post.IsHidden = true; 
             _unitOfWork.Posts.Update(post);
@@ -350,7 +356,11 @@ namespace Sohba.Application.Services
             var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
 
             var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
-            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+            // A post can be saved to multiple collections (e.g. a named collection AND Favorites).
+            // Group by PostId and collect all tags so we don't throw on duplicate keys.
+            var savedDict = userSavedPosts
+                .GroupBy(s => s.PostId)
+                .ToDictionary(g => g.Key, g => g.Select(s => s.Tag).ToList());
 
             var response = postList.Select(p =>
             {
@@ -359,7 +369,12 @@ namespace Sohba.Application.Services
                 dto.CommentsCount = countData.comments;
                 dto.ReactionsCount = countData.reactions;
                 dto.IsSaved = savedDict.ContainsKey(p.Id);
-                dto.IsFavorite = savedDict.TryGetValue(p.Id, out var tag) && tag == SavedTag.Favorite;
+
+                if (savedDict.TryGetValue(p.Id, out var tags))
+                {
+                    dto.IsFavorite = tags.Contains(SavedTag.Favorite);
+                    dto.SavedTag = dto.IsFavorite ? SavedTag.Favorite.ToString() : tags.First().ToString();
+                }
                 dto.IsAuthor = p.UserId == currentUserId;
                 if (reactionDict.TryGetValue(p.Id, out var reaction))
                     dto.CurrentUserReaction = reaction;
@@ -427,6 +442,11 @@ namespace Sohba.Application.Services
             return Result<int>.Success(count);
         }
 
+
+        /// <summary>
+        /// Returns the most recent non-deleted posts (admin dashboard widget).
+        /// For the user feed, use GetFeedAsync (paged + privacy-filtered).
+        /// </summary>
         public async Task<Result<IEnumerable<PostResponseDto>>> GetRecentPostsAsync(int count)
         {
             var posts = await _unitOfWork.Posts.GetRecentAsync(count);

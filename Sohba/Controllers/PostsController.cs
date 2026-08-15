@@ -25,9 +25,9 @@ namespace Sohba.Controllers
         private readonly IFileStorageService _fileStorage;
 
         public PostsController(
-            IPostService postService, 
-            IInteractionService interactionService, 
-            IReportingService reportingService, 
+            IPostService postService,
+            IInteractionService interactionService,
+            IReportingService reportingService,
             IHashtagService hashtagService,
             IFileStorageService fileStorage)
         {
@@ -82,7 +82,7 @@ namespace Sohba.Controllers
                 ImageUrl = imageUrl,
                 Privacy = model.Privacy
             };
-            
+
             if (groupId.HasValue)
             {
                 dto.SourceType = PostSourceType.Group;
@@ -121,44 +121,79 @@ namespace Sohba.Controllers
 
             var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId);
 
+            //return Json(new
+            //{
+            //    success = true,
+            //    post = new
+            //    {
+            //        id = postResult.Value.Id,
+            //        title = postResult.Value.Title,
+            //        content = postResult.Value.Content,
+            //        imageUrl = postResult.Value.ImageUrl,
+            //        authorName = postResult.Value.AuthorName,
+            //        createdAt = postResult.Value.CreatedAt,
+            //        commentsCount = postResult.Value.CommentsCount,
+            //        reactionsCount = postResult.Value.ReactionsCount,
+            //        currentUserReaction = postResult.Value.CurrentUserReaction,
+            //        isSaved = postResult.Value.IsSaved,
+            //        isFavorite = postResult.Value.IsFavorite
+            //    },
+            //    comments = comments.Select(c => new
+            //    {
+            //        id = c.Id,
+            //        postId = c.PostId,
+            //        content = c.Content,
+            //        userName = c.UserName,
+            //        createdAt = c.CreatedAt,
+            //        parentCommentId = c.ParentCommentId,
+            //        replyCount = c.ReplyCount,
+            //        isAuthor = c.IsAuthor,
+            //        depth = c.Depth,
+            //        replies = (c.Replies ?? new List<CommentResponseDto>()).Select(r => new
+            //        {
+            //            id = r.Id,
+            //            postId = r.PostId,
+            //            content = r.Content,
+            //            userName = r.UserName,
+            //            createdAt = r.CreatedAt,
+            //            parentCommentId = r.ParentCommentId,
+            //            isAuthor = r.IsAuthor,
+            //            depth = r.Depth,
+            //            replyCount = r.ReplyCount,
+            //            replies = (r.Replies ?? new List<CommentResponseDto>()).Select(r2 => new
+            //            {
+            //                id = r2.Id,
+            //                postId = r2.PostId,
+            //                content = r2.Content,
+            //                userName = r2.UserName,
+            //                createdAt = r2.CreatedAt,
+            //                parentCommentId = r2.ParentCommentId,
+            //                isAuthor = r2.IsAuthor,
+            //                depth = r2.Depth,
+            //                replyCount = r2.ReplyCount,
+            //                replies = (r2.Replies ?? new List<CommentResponseDto>()).Select(r3 => new
+            //                {
+            //                    id = r3.Id,
+            //                    postId = r3.PostId,
+            //                    content = r3.Content,
+            //                    userName = r3.UserName,
+            //                    createdAt = r3.CreatedAt,
+            //                    parentCommentId = r3.ParentCommentId,
+            //                    isAuthor = r3.IsAuthor,
+            //                    depth = r3.Depth,
+            //                    replyCount = r3.ReplyCount,
+            //                    replies = new List<CommentResponseDto>()
+            //                })
+            //            })
+            //        })
+            //    })
+            //});
+
             return Json(new
             {
                 success = true,
-                post = new
-                {
-                    id = postResult.Value.Id,
-                    title = postResult.Value.Title,
-                    content = postResult.Value.Content,
-                    imageUrl = postResult.Value.ImageUrl,
-                    authorName = postResult.Value.AuthorName,
-                    createdAt = postResult.Value.CreatedAt,
-                    commentsCount = postResult.Value.CommentsCount,
-                    reactionsCount = postResult.Value.ReactionsCount,
-                    currentUserReaction = postResult.Value.CurrentUserReaction,
-                    isSaved = postResult.Value.IsSaved,
-                    isFavorite = postResult.Value.IsFavorite
-                },
-                comments = comments.Select(c => new
-                {
-                    id = c.Id,
-                    postId = c.PostId,
-                    content = c.Content,
-                    userName = c.UserName,
-                    createdAt = c.CreatedAt,
-                    parentCommentId = c.ParentCommentId,
-                    replyCount = c.ReplyCount,
-                    isAuthor = c.IsAuthor,
-                    replies = (c.Replies ?? new List<CommentResponseDto>()).Select(r => new
-                    {
-                        id = r.Id,
-                        postId = r.PostId,
-                        content = r.Content,
-                        userName = r.UserName,
-                        createdAt = r.CreatedAt,
-                        parentCommentId = r.ParentCommentId,
-                        isAuthor = r.IsAuthor
-                    })
-                })
+                post = postResult.Value,
+                comments = comments
             });
         }
 
@@ -166,9 +201,9 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var userId = GetCurrentUserId(); 
+            var userId = GetCurrentUserId();
 
-            var result = await _postService.GetPostByIdAsync(id, userId); 
+            var result = await _postService.GetPostByIdAsync(id, userId);
 
             if (result.IsFailure || result.Value == null)
             {
@@ -190,6 +225,9 @@ namespace Sohba.Controllers
             }
 
             var post = result.Value;
+
+            if (!post.IsAuthor && !User.IsInRole("Admin"))
+                return Forbid();
 
             //return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(PostUpdateDto));
             // In an ideal scenario, AutoMapper should map PostResponseDto to PostEditViewModel
@@ -213,7 +251,7 @@ namespace Sohba.Controllers
                 return Json(BaseResponseDto<object>.FailureResponse("Invalid form data submitted."));
 
             var userId = GetCurrentUserId();
-            if (userId == Guid.Empty) 
+            if (userId == Guid.Empty)
                 return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
 
             string imageUrl = model.ImageUrl;
@@ -223,8 +261,8 @@ namespace Sohba.Controllers
                 var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
                 if (!uploadResult.IsSuccess)
                     return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
-                    
-                if (uploadResult.Value != null) 
+
+                if (uploadResult.Value != null)
                     imageUrl = uploadResult.Value;
             }
 
@@ -263,7 +301,8 @@ namespace Sohba.Controllers
 
             return Json(BaseResponseDto<object>.FailureResponse(result.Error));
         }
-        public class DeletePostModel{
+        public class DeletePostModel
+        {
             public Guid id { get; set; }
         }
 
@@ -338,24 +377,19 @@ namespace Sohba.Controllers
 
             if (!result.IsSuccess)
                 return Json(new { success = false, error = result.Error });
+            var latestCommentId = result.Value;
+            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId, userId);
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId, request.UserId); // I Added Request.UserID To Avoid Run Errors 
-            //var latest = comments.FirstOrDefault(c => c.ParentCommentId == request.ParentCommentId) ?? comments.First();
-            CommentResponseDto latest;
-             if (request.ParentCommentId.HasValue)
-             {
-                   latest = comments
-                             .SelectMany(c => c.Replies)
-                             .Where(r => r.ParentCommentId == request.ParentCommentId)
-                             .OrderByDescending(r => r.CreatedAt)
-                             .FirstOrDefault();
-             }
-             else
-                 {
-                latest = comments.FirstOrDefault(); 
-                 }
-            
-             if (latest == null)
+            // Find the newly created comment anywhere in the recursive tree (levels 1-4).
+            CommentResponseDto latest = null;
+
+            foreach (var topLevel in comments)
+            {
+                latest = FindCommentNode(topLevel, latestCommentId);
+                if (latest != null) break;
+            }
+
+            if (latest == null)
                 return Json(new { success = false, error = "Comment created but could not be retrieved." });
 
 
@@ -384,8 +418,7 @@ namespace Sohba.Controllers
 
             var tag = request.IsFavorite ? SavedTag.Favorite : SavedTag.General;
 
-            var existingSave = (await _interactionService.GetSavedPostsAsync(userId)).Value?
-                .FirstOrDefault(sp => sp.Id == request.PostId);
+            var existingSave = await _interactionService.GetSavedPostAsync(userId, request.PostId);
 
             if (existingSave != null)
             {
@@ -512,34 +545,40 @@ namespace Sohba.Controllers
             return Json(new { success = false, error = result.Error });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFromSaved([FromBody] RemoveSavedRequestDto request)
+        {
+            var userId = GetCurrentUserId();
+            if (request == null || request.PostId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request."));
 
-        // The Old 
-        //[HttpGet]
-        //public async Task<IActionResult> SavedPosts(string tag = "all")
-        //{
-        //    var userId = GetCurrentUserId();
-        //    Result<IEnumerable<PostResponseDto>> result;
+            var result = await _interactionService.RemoveSavedPostsFromCollectionsAsync(userId, request.PostId);
 
-        //    if (tag == "all")
-        //        result = await _interactionService.GetSavedPostsAsync(userId);
-        //    else if (Enum.TryParse<SavedTag>(tag, true, out var savedTag))
-        //        result = await _interactionService.GetSavedPostsByTagAsync(userId, savedTag);
-        //    else
-        //        result = await _interactionService.GetSavedPostsAsync(userId);
+            if (!result.IsSuccess)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
 
-        //    ViewBag.CurrentTag = tag;
-        //    return View(result.Value ?? new List<PostResponseDto>());
-        //}
+            return Json(new { success = true });
+        }
 
 
         [HttpGet]
-        public async Task<IActionResult> SavedPosts(string tag = "all")
+        public async Task<IActionResult> SavedPosts(int page = 1, int pageSize = 10)
         {
             var userId = GetCurrentUserId();
-            var result = await _interactionService.GetSavedPostsGroupedAsync(userId);
-            ViewBag.CurrentTag = tag;
-            return View(result.Value ?? new List<SavedPostsGroupedDto>());
+            var result = await _interactionService.GetSavedPostsGroupedPagedAsync(userId, page, pageSize);
+
+            if (result.IsFailure)
+                return View(new PagedResult<SavedPostsGroupedDto>());
+
+            ViewBag.Page = result.Value.Page;
+            ViewBag.PageSize = result.Value.PageSize;
+            ViewBag.TotalPages = result.Value.TotalPages;
+
+            return View(result.Value);
         }
+
+
         [HttpGet]
         public async Task<IActionResult> Hashtag(string tag)
         {
@@ -567,6 +606,24 @@ namespace Sohba.Controllers
 
 
 
-       
+        // -- Helper 
+
+        // Local function: recursively find a comment node by id in the reply tree.
+        static CommentResponseDto FindCommentNode(CommentResponseDto node, Guid id)
+        {
+            if (node.Id == id) return node;
+
+            if (node.Replies != null)
+            {
+                foreach (var reply in node.Replies)
+                {
+                    var match = FindCommentNode(reply, id);
+                    if (match != null) return match;
+                }
+            }
+
+            return null;
+        }
+
     }
 }

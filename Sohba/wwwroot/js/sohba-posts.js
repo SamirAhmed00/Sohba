@@ -93,9 +93,12 @@ window.SohbaApp.addToFavorites = async function (postId) {
         if (result.success) {
             const btn = document.querySelector(`[data-fav-button="${postId}"]`);
             const isCurrentlyFav = btn && btn.classList.contains('text-pink-600');
-            updateSaveFavoriteButtons(postId, true, !isCurrentlyFav);
+            const newFavState = !isCurrentlyFav;
 
-            window.SohbaApp.toast(isCurrentlyFav ? 'Removed from favorites' : 'Added to favorites!', 'success');
+            // Only update the Favorite button; the Save button state is unchanged.
+            updateSaveFavoriteButtons(postId, null, newFavState);
+
+            window.SohbaApp.toast(newFavState ? 'Added to favorites!' : 'Removed from favorites', 'success');
         } else {
             window.SohbaApp.toast(result.error || 'Failed to update favorites', 'error');
         }
@@ -108,33 +111,33 @@ window.SohbaApp.addToFavorites = async function (postId) {
 function updateSaveFavoriteButtons(postId, isSaved, isFavorite) {
     const saveBtn = document.querySelector(`[data-save-button="${postId}"]`);
     const favBtn = document.querySelector(`[data-fav-button="${postId}"]`);
-    
-        if (saveBtn) {
-                const icon = saveBtn.querySelector('svg');
-                const text = saveBtn.querySelector('.btn-text');
-                if (isSaved) {
-                        saveBtn.classList.add('text-amber-600', 'bg-amber-50');
-                        icon.setAttribute('fill', 'currentColor');
-                        text.textContent = isFavorite ? 'Favorited' : 'Saved';
-                    } else {
-                        saveBtn.classList.remove('text-amber-600', 'bg-amber-50');
-                        icon.setAttribute('fill', 'none');
-                        text.textContent = 'Save Post';
-                    }
+
+    if (saveBtn && isSaved !== null && isSaved !== undefined) {
+        const icon = saveBtn.querySelector('svg');
+        const text = saveBtn.querySelector('.btn-text');
+        if (isSaved) {
+            saveBtn.classList.add('text-amber-600', 'bg-amber-50');
+            icon.setAttribute('fill', 'currentColor');
+            text.textContent = 'Saved';
+        } else {
+            saveBtn.classList.remove('text-amber-600', 'bg-amber-50');
+            icon.setAttribute('fill', 'none');
+            text.textContent = 'Save Post';
         }
-        if (favBtn) {
-            const icon = favBtn.querySelector('svg');
-            const text = favBtn.querySelector('.btn-text');
-            if (isFavorite) {
-                    favBtn.classList.add('text-pink-600', 'bg-pink-50');
-                    icon.setAttribute('fill', 'currentColor');
-                    text.textContent = 'Favorited';
-            } else {
-                    favBtn.classList.remove('text-pink-600', 'bg-pink-50');
-                    icon.setAttribute('fill', 'none');
-                    text.textContent = 'Add to Favorites';
-            }
+    }
+    if (favBtn && isFavorite !== null && isFavorite !== undefined) {
+        const icon = favBtn.querySelector('svg');
+        const text = favBtn.querySelector('.btn-text');
+        if (isFavorite) {
+            favBtn.classList.add('text-pink-600', 'bg-pink-50');
+            icon.setAttribute('fill', 'currentColor');
+            text.textContent = 'Favorited';
+        } else {
+            favBtn.classList.remove('text-pink-600', 'bg-pink-50');
+            icon.setAttribute('fill', 'none');
+            text.textContent = 'Add to Favorites';
         }
+    }
 }
 
 // ------------ Comment Functions -------------
@@ -147,13 +150,7 @@ window.SohbaApp.submitComment = async function () {
     if (!content) return;
 
     try {
-        // const response = await fetch('/Posts/Comment', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ postId, content })
-        // });
-        // const result = await response.json();
-
+       
         const result = await window.SohbaApp.post('/Posts/Comment', { postId, content });
 
         if (!result.success) {
@@ -161,16 +158,7 @@ window.SohbaApp.submitComment = async function () {
             return;
         }
 
-        // const commentHtml = `
-        //     <div class="flex items-start gap-3">
-        //         <img src="https:ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random" class="w-8 h-8 rounded-full">
-        //         <div class="flex-1">
-        //             <span class="font-semibold text-sm">${result.comment.userName}</span>
-        //             <p class="text-sm text-gray-700">${result.comment.content}</p>
-        //             <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
-        //         </div>
-        //     </div>`;
-        // document.getElementById('modalComments').insertAdjacentHTML('afterbegin', commentHtml);
+        
 
         const commentId = `comment-${result.comment.id}`;
         const commentHtml = `
@@ -188,12 +176,16 @@ window.SohbaApp.submitComment = async function () {
                                     class="text-xs text-[#345e69] hover:underline font-medium">
                                 Reply
                             </button>
+                            <button onclick="SohbaApp.deleteComment('${result.comment.id}', '${result.comment.postId}')"
+                                    class="text-xs text-red-500 hover:underline font-medium ml-2">
+                                Delete
+                            </button>
                         </div>
 
                         <!-- Reply form (hidden by default) -->
                         <div id="replyForm-${result.comment.id}" class="mt-2 hidden">
                             <div class="flex items-start gap-3">
-                                <img src="https://ui-avatars.com/api/?name=You&background=345e69&color=fff"
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=345e69&color=fff"
                                      class="w-7 h-7 rounded-full flex-shrink-0">
                                 <div class="flex-1">
                                     <input type="text" id="replyInput-${result.comment.id}"
@@ -371,6 +363,29 @@ window.SohbaApp.editPostModal = function (postId) {
 
 
 // --------------- Save Posts ------------
+
+// Toggle Save behaviour: if already saved -> remove from collections; otherwise -> open the picker.
+window.SohbaApp.toggleSavePost = async function (postId, isSaved) {
+    if (isSaved) {
+        try {
+            const result = await window.SohbaApp.post('/Posts/RemoveFromSaved', { postId });
+
+            if (result.success) {
+                const favBtn = document.querySelector(`[data-fav-button="${postId}"]`);
+                const isFavorite = favBtn && favBtn.classList.contains('text-pink-600');
+                updateSaveFavoriteButtons(postId, false, isFavorite);
+                window.SohbaApp.toast('Removed from saved', 'success');
+            } else {
+                window.SohbaApp.toast(result.error || 'Failed to remove from saved', 'error');
+            }
+        } catch (error) {
+            console.error('Remove saved error:', error);
+            window.SohbaApp.toast('Network error', 'error');
+        }
+    } else {
+        window.SohbaApp.openSavePostModal(postId);
+    }
+};
 
 window.SohbaApp.openSavePostModal = async function (postId) {
     const modal = document.getElementById('savePostModal');

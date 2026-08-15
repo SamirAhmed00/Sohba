@@ -46,6 +46,7 @@ namespace Sohba.Application.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Description = dto.Description,
+                ImageUrl = dto.ImageUrl,
                 AdminId = adminId,
                 CreatedAt = DateTime.UtcNow
             };

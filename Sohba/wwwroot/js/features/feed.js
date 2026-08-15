@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
     currentPage = parseInt(urlParams.get('page')) || 1;
 
+    // Populate the dedup Set with already-rendered post IDs
+    collectRenderedPostIds();
+
+
     // Check if there's a "Load More" button (for non-infinite scroll)
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     if (loadMoreBtn) {
@@ -29,22 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
         setupInfiniteScroll();
     }
 });
-
-// function setupInfiniteScroll() {
-//     //Detect when user scrolls near bottom
-//     window.addEventListener('scroll', function () {
-//         if (isLoading || !hasMore) return;
-
-//         const scrollHeight = document.documentElement.scrollHeight;
-//         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-//         const clientHeight = document.documentElement.clientHeight;
-
-//         //Load more when user is 200px from bottom
-//         if (scrollTop + clientHeight >= scrollHeight - 200) {
-//             loadMorePosts();
-//         }
-//     });
-// }
 
 
 const renderedPostIds = new Set();

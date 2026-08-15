@@ -10,6 +10,7 @@ namespace Sohba.Domain.Enums
         PostComment = 2,
         FriendRequest = 3,
         GroupInvitation = 4,
-        SystemAlert = 5
+        SystemAlert = 5,
+        PageFollow = 6
     }
 }

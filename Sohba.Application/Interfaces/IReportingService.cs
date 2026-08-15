@@ -8,7 +8,7 @@ namespace Sohba.Application.Interfaces
 {
     public interface IReportingService
     {
-        Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId);
+        //Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId);
         Task<Result<PostReportResponseDto>> ReportPostWithDetailsAsync(PostReportRequestDto reportDto, Guid reporterId);
 
         // Admin

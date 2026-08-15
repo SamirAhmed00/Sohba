@@ -149,13 +149,23 @@ namespace Sohba.Infrastructure.Repositories
 
 
         
-        public async Task<IEnumerable<Post>> SearchPostsAsync(string query, int limit = 10)
+        public async Task<IEnumerable<Post>> SearchPostsAsync(string query,Guid currentUserId, int limit = 10)
         {
+            var friendIds = await _context.Friends
+                 .Where(f => (f.UserId == currentUserId || f.FriendUserId == currentUserId)
+                             && f.Status == FriendshipStatus.Accepted)
+                 .Select(f => f.UserId == currentUserId ? f.FriendUserId : f.UserId)
+                 .ToListAsync();
+
             return await _context.Set<Post>()
                 .Include(p => p.User)
                 .Where(p => !p.IsDeleted &&
                            (p.Title.Contains(query) ||
-                            p.Content.Contains(query)))
+                            p.Content.Contains(query)) &&
+                           // Privacy: own posts, public posts, or friends' posts
+                           (p.UserId == currentUserId ||
+                            p.Privacy == PostPrivacy.Public ||
+                            (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
                 .ToListAsync();
@@ -176,6 +186,7 @@ namespace Sohba.Infrastructure.Repositories
         {
             return await _context.Set<Post>()
                 .Include(p => p.User)
+                .Where(p => !p.IsDeleted)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(count)
                 .ToListAsync();

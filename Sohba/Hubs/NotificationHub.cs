@@ -34,38 +34,6 @@ namespace Sohba.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        // Method to send notification to a specific user
-        public async Task SendNotificationToUser(string userId, object notification)
-        {
-            if (_userConnections.TryGetValue(userId, out var connectionId))
-            {
-                await Clients.Client(connectionId).SendAsync("ReceiveNotification", notification);
-            }
-        }
-
-        // Method to send notification to multiple users
-        public async Task SendNotificationToUsers(string[] userIds, object notification)
-        {
-            var connectionIds = new List<string>();
-            foreach (var userId in userIds)
-            {
-                if (_userConnections.TryGetValue(userId, out var connectionId))
-                {
-                    connectionIds.Add(connectionId);
-                }
-            }
-
-            if (connectionIds.Any())
-            {
-                await Clients.Clients(connectionIds).SendAsync("ReceiveNotification", notification);
-            }
-        }
-
-        // Method to broadcast to all connected users (admin use)
-        public async Task BroadcastNotification(object notification)
-        {
-            await Clients.All.SendAsync("ReceiveNotification", notification);
-        }
 
         // Method to join a group (optional)
         public async Task JoinGroup(string groupName)

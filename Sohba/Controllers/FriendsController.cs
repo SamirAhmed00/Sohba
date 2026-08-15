@@ -147,13 +147,13 @@ namespace Sohba.Controllers
             return Json(BaseResponseDto<int>.SuccessResponse(result.Value));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Find()
-        {
-            var userId = GetCurrentUserId();
-            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
-            return View(suggestions.Value);
-        }
+        //[HttpGet]
+        //public async Task<IActionResult> Find()
+        //{
+        //    var userId = GetCurrentUserId();
+        //    var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
+        //    return View(suggestions.Value);
+        //}
 
         [HttpGet]
         public async Task<IActionResult> CheckStatus(Guid userId)

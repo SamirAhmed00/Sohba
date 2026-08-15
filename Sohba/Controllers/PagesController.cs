@@ -63,6 +63,8 @@ namespace Sohba.Controllers
             if (result.IsFailure)
                 return NotFound();
 
+
+            ViewBag.CurrentUserId = GetCurrentUserId();
             return View(result.Value);
         }
 

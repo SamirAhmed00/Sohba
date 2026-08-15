@@ -13,6 +13,17 @@ function getNotificationIcon(type) {
     return icons[type] || '📢';
 }
 
+function getNotificationUrl(notif) {
+    const type = notif.notificationType;
+    const targetId = notif.targetId || '';
+
+    if (type === 'PostLike' || type === 'PostComment') return `/Posts/Details/${targetId}`;
+    if (type === 'GroupInvitation') return `/Groups/Details/${targetId}`;
+    if (type === 'FriendRequest') return '/Friends/Requests';
+    if (type === 'SystemAlert' && targetId) return `/Groups/Details/${targetId}`;
+    return '/Notifications/Index'; 
+}
+
 async function updateNotificationCount() {
     try {
         const response = await fetch('/Notifications/GetUnreadCount');
@@ -53,7 +64,8 @@ async function loadNotifications() {
             if (badge) badge.textContent = result.data.length;
 
             list.innerHTML = result.data.map(notif => `
-                <div class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${notif.isRead ? 'opacity-60' : 'bg-blue-50/30'}">
+                <a href="${getNotificationUrl(notif)}"
+                   class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${notif.isRead ? 'opacity-60' : 'bg-blue-50/30'}">
                     <div class="w-10 h-10 rounded-full bg-[#345e69]/10 flex items-center justify-center flex-shrink-0">
                         <span class="text-[#345e69]">${getNotificationIcon(notif.notificationType)}</span>
                     </div>
@@ -62,12 +74,12 @@ async function loadNotifications() {
                         <p class="text-xs text-gray-400 mt-0.5">${notif.timeAgo}</p>
                     </div>
                     ${!notif.isRead ? `
-                        <button onclick="markNotificationAsRead('${notif.id}')"
+                        <button onclick="event.preventDefault(); event.stopPropagation(); markNotificationAsRead('${notif.id}')"
                                 class="text-xs text-[#345e69] hover:underline self-start mt-1">
                             Mark read
                         </button>
                     ` : ''}
-                </div>
+                </a>
             `).join('');
         } else {
             list.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">No new notifications</div>';
@@ -313,6 +325,14 @@ function initNotificationSystem() {
 
     notifDropdown.addEventListener('click', function (e) {
         e.stopPropagation();
+    });
+
+    notifDropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const markReadBtn = e.target.closest('button');
+        if (markReadBtn) {
+            e.preventDefault(); // Do not follow the parent <a> when clicking "Mark read".
+        }
     });
 }
 

@@ -23,7 +23,7 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
 
         Task<HashSet<Guid>> GetFriendIdsSetAsync(Guid userId);
-
+        Task<IEnumerable<Friend>> GetAllBlockedAsync();
 
         // Check Methods
         Task<bool> AreFriendsAsync(Guid userId, Guid friendId);

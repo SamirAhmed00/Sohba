@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -17,9 +18,11 @@ namespace Sohba.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IInteractionDomainService _interactionDomainService;
+        private readonly IPostDomainService _postDomainService;
         private readonly IMapper _mapper;
 
         private readonly INotificationService _notificationService;
+        private readonly IPostService _postService;
         private readonly IUserService _userService;
         private readonly ILogger<InteractionService> _logger;
 
@@ -29,7 +32,9 @@ namespace Sohba.Application.Services
             IMapper mapper,
             INotificationService notificationService,
             IUserService userService,
-            ILogger<InteractionService> logger)
+            ILogger<InteractionService> logger,
+            IPostDomainService postDomainService,
+            IPostService postService)
         {
             _unitOfWork = unitOfWork;
             _interactionDomainService = interactionDomainService;
@@ -37,72 +42,93 @@ namespace Sohba.Application.Services
             _notificationService = notificationService;
             _userService = userService;
             _logger = logger;
+            _postDomainService = postDomainService;
+            _postService = postService;
         }
 
-        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId , Guid currentUserId)
+        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId, Guid currentUserId)
         {
+
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null || post.IsDeleted)
+                return new List<CommentResponseDto>();
+
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
+            var canView = _postDomainService.CanViewPost(currentUserId, post.UserId, post.IsPrivate, isFriend);
+            if (!canView.IsSuccess)
+                return new List<CommentResponseDto>();
+
             var comments = await _unitOfWork.Interactions.GetCommentsByPostIdAsync(postId);
 
-            // Build comment tree (top-level comments with their replies)
             var commentDtos = _mapper.Map<IEnumerable<CommentResponseDto>>(comments).ToList();
 
-            // Group replies by parent comment ID
             var replyLookup = commentDtos
                 .Where(c => c.ParentCommentId.HasValue)
                 .GroupBy(c => c.ParentCommentId.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // Build the tree: only return top-level comments (no parent)
-            var result = new List<CommentResponseDto>();
-
-
-
-            // Do I Delete This Or What???????????????????????????????????????
-            foreach (var comment in commentDtos.Where(c => !c.ParentCommentId.HasValue))
+            CommentResponseDto AssignTree(CommentResponseDto node, int depth)
             {
-                comment.Replies = replyLookup.ContainsKey(comment.Id)
-                    ? replyLookup[comment.Id]
-                    : new List<CommentResponseDto>();
-                comment.ReplyCount = comment.Replies.Count;
-                result.Add(comment);
-            }
+                node.Depth = depth;
+                node.IsAuthor = node.UserId == currentUserId;
 
-            foreach (var comment in result)
-            {
-                comment.IsAuthor = comment.UserId == currentUserId;
-                foreach (var reply in comment.Replies)
+                if (replyLookup.ContainsKey(node.Id))
                 {
-                    reply.IsAuthor = reply.UserId == currentUserId;
+                    node.Replies = replyLookup[node.Id]
+                        .Select(r => AssignTree(r, depth + 1))
+                        .OrderByDescending(r => r.CreatedAt)
+                        .ToList();
                 }
+                else
+                {
+                    node.Replies = new List<CommentResponseDto>();
+                }
+
+                node.ReplyCount = node.Depth < 4 ? node.Replies.Count : 0;
+                return node;
             }
-            return result.OrderByDescending(c => c.CreatedAt).ToList();
+
+            var result = commentDtos
+                .Where(c => !c.ParentCommentId.HasValue)
+                .Select(c => AssignTree(c, 1))
+                .OrderByDescending(c => c.CreatedAt)
+                .ToList();
+
+            return result;
         }
 
-        public async Task<Result> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null)
+        public async Task<Result<Guid>> AddCommentAsync(Guid userId, Guid postId, string content, Guid? parentCommentId = null)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null)
             {
                 _logger.LogWarning("Comment failed: post {PostId} not found", postId);
-                return Result.Failure("Post not found.");
+                return Result<Guid>.Failure("Post not found.");
             }
 
+            int parentDepth = 0;
             if (parentCommentId.HasValue)
             {
                 var parentComment = await _unitOfWork.Interactions.GetCommentByIdAsync(parentCommentId.Value);
                 if (parentComment == null)
-                    return Result.Failure("Parent comment not found.");
+                    return Result<Guid>.Failure("Parent comment not found.");
 
                 if (parentComment.PostId != postId)
-                    return Result.Failure("Parent comment does not belong to this post.");
+                    return Result<Guid>.Failure("Parent comment does not belong to this post.");
+
+                parentDepth = await GetCommentDepthAsync(parentCommentId.Value);
+                var canReplyDepth = _interactionDomainService.CanReplyToComment(userId, false, false, parentDepth);
+                if (!canReplyDepth.IsSuccess)
+                    return Result<Guid>.Failure(canReplyDepth.Error);
             }
 
 
-            var canComment = _interactionDomainService.CanAddComment(userId, content, post.IsDeleted, isBlockedByOwner: false);
+            var isBlockedByOwner = await _unitOfWork.Friendships.IsUserBlockedAsync(post.UserId, userId);
+            var canComment = _interactionDomainService.CanAddComment(userId, content, post.IsDeleted, isBlockedByOwner);
             if (!canComment.IsSuccess)
             {
                 _logger.LogWarning("Comment rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, canComment.Error);
-                return canComment;
+                return Result<Guid>.Failure(canComment.Error);
             }
 
             var comment = new Comment
@@ -111,8 +137,10 @@ namespace Sohba.Application.Services
                 PostId = postId,
                 Content = content,
                 CreatedAt = DateTime.UtcNow,
-                ParentCommentId = parentCommentId
+                ParentCommentId = parentCommentId,
+                Depth = parentDepth + 1
             };
+
 
             _unitOfWork.Interactions.AddComment(comment);
             await _unitOfWork.CompleteAsync();
@@ -135,7 +163,7 @@ namespace Sohba.Application.Services
                 );
             }
 
-            return Result.Success();
+            return Result<Guid>.Success(comment.Id);
         }
 
         public async Task<Result> DeleteCommentAsync(Guid userId, Guid commentId, bool isAdmin)
@@ -159,7 +187,7 @@ namespace Sohba.Application.Services
             var parentComment = await _unitOfWork.Interactions.GetCommentByIdAsync(commentId);
             if (parentComment == null) return Result.Failure("Parent comment not found.");
 
-            var canReply = _interactionDomainService.CanReplyToComment(userId, isCommentDeleted: false, isThreadLocked: false);
+            var canReply = _interactionDomainService.CanReplyToComment(userId, isCommentDeleted: false, isThreadLocked: false, currentDepth: parentComment.Depth);
             if (!canReply.IsSuccess) return canReply;
 
             // Reuse the comment-creation logic with the parent comment id.
@@ -171,7 +199,7 @@ namespace Sohba.Application.Services
         {
             var reaction = await _unitOfWork.Interactions.GetReactionAsync(userId, postId);
             if (reaction == null)
-                return Result.Failure("No reaction found");
+                return Result.Success();
 
             _unitOfWork.Interactions.RemoveReaction(reaction);
             await _unitOfWork.CompleteAsync();
@@ -185,6 +213,16 @@ namespace Sohba.Application.Services
 
         public async Task<Result> AddReactionAsync(Guid userId, Guid postId, ReactionType type)
         {
+            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+            if (post == null)
+                return Result.Failure("Post not found.");
+
+            var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(post.UserId, userId);
+            var canReact = _interactionDomainService.CanAddReaction(userId, post.IsDeleted, isBlocked);
+            if (!canReact.IsSuccess)
+                return canReact;
+
+
             var existingReaction = await _unitOfWork.Interactions.GetReactionAsync(userId, postId);
 
             if (existingReaction != null)
@@ -209,7 +247,6 @@ namespace Sohba.Application.Services
             await _unitOfWork.CompleteAsync();
 
             // Send notification to post owner
-            var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post != null && post.UserId != userId)
             {
                 var user = await _userService.GetProfileAsync(userId);
@@ -232,12 +269,22 @@ namespace Sohba.Application.Services
             return await _unitOfWork.Interactions.GetReactionCountAsync(postId);
         }
 
+        public async Task<Result<SavedPostDto?>> GetSavedPostAsync(Guid userId, Guid postId)
+        {
+            var saved = await _unitOfWork.Interactions.GetSavedPostAsync(userId, postId);
+            if (saved == null)
+                return Result<SavedPostDto?>.Success(null);
+
+            var dto = _mapper.Map<SavedPostDto>(saved);
+            return Result<SavedPostDto?>.Success(dto);
+        }
         public async Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsAsync(Guid userId)
         {
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
             var posts = savedPosts.Select(s => s.Post).ToList();
 
-            var dtos = await MapPostsToResponse(posts, userId);
+            var mapped = await _postService.MapPostsWithInteractions(posts, userId);
+            var dtos = mapped.Value ?? new List<PostResponseDto>();
 
             return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
@@ -247,7 +294,8 @@ namespace Sohba.Application.Services
             var favoriteSaves = await _unitOfWork.Interactions.GetSavedPostsByUserAndTagAsync(userId, SavedTag.Favorite);
             var posts = favoriteSaves.Select(s => s.Post).ToList();
 
-            var dtos = await MapPostsToResponse(posts, userId);
+            var mapped = await _postService.MapPostsWithInteractions(posts, userId);
+            var dtos = mapped.Value ?? new List<PostResponseDto>();
 
             return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
@@ -302,16 +350,39 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
+
+        // Removes the post from ALL the user's collections but KEEPS the Favorites membership.
+        public async Task<Result> RemoveSavedPostsFromCollectionsAsync(Guid userId, Guid postId)
+        {
+            var savedPosts = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId))
+                .Where(s => s.PostId == postId && s.Tag != SavedTag.Favorite)
+                .ToList();
+
+            if (savedPosts.Count == 0)
+                return Result.Success(); // Nothing to remove from collections (still favorited).
+
+            foreach (var savedPost in savedPosts)
+            {
+                _unitOfWork.Interactions.RemoveSavedPost(savedPost);
+            }
+
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+
+
         public async Task<Result<IEnumerable<PostResponseDto>>> GetSavedPostsByTagAsync(Guid userId, SavedTag tag)
         {
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAndTagAsync(userId, tag);
             var posts = savedPosts.Select(s => s.Post).ToList();
 
-            var dtos = await MapPostsToResponse(posts, userId);
+            var mapped = await _postService.MapPostsWithInteractions(posts, userId);
+            var dtos = mapped.Value ?? new List<PostResponseDto>();
 
             foreach (var dto in dtos)
             {
-                dto.IsSaved = true;
+                // Favorite rows are NOT "saved to a collection". The flags must stay independent.
+                dto.IsSaved = tag != SavedTag.Favorite;
                 dto.IsFavorite = tag == SavedTag.Favorite;
             }
 
@@ -330,25 +401,44 @@ namespace Sohba.Application.Services
             var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
 
             var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
-            var savedDict = userSavedPosts.ToDictionary(s => s.PostId, s => s.Tag);
+            // A post can be saved to multiple collections (e.g. a named collection AND Favorites).
+            // Group by PostId and collect all tags so we don't throw on duplicate keys.
+            var savedDict = userSavedPosts
+                .GroupBy(s => s.PostId)
+                .ToDictionary(g => g.Key, g => g.Select(s => s.Tag).ToList());
 
-            return postList.Select(p => {
+            return postList.Select(p =>
+            {
                 counts.TryGetValue(p.Id, out var countData);
                 var dto = _mapper.Map<PostResponseDto>(p);
                 dto.CommentsCount = countData.comments;
                 dto.ReactionsCount = countData.reactions;
-                dto.IsSaved = savedDict.ContainsKey(p.Id);
 
-                if (savedDict.TryGetValue(p.Id, out var tag))
+                if (savedDict.TryGetValue(p.Id, out var tags))
                 {
-                    dto.SavedTag = tag.ToString(); 
-                    dto.IsFavorite = tag == SavedTag.Favorite;
+                    // A post is "saved" only when it is in a NON-Favorite collection.
+                    // Favorites alone does NOT imply Saved.
+                    dto.IsSaved = tags.Any(t => t != SavedTag.Favorite);
+                    dto.IsFavorite = tags.Contains(SavedTag.Favorite);
+                    dto.SavedTag = dto.IsFavorite ? SavedTag.Favorite.ToString() : tags.First().ToString();
                 }
+                else
+                {
+                    dto.IsSaved = false;
+                    dto.IsFavorite = false;
+                }
+
                 dto.CurrentUserReaction = reactionDict.GetValueOrDefault(p.Id);
                 return dto;
             });
         }
 
+        // Walks up ParentCommentId to compute how deep a comment is (1 = top-level comment).
+        private async Task<int> GetCommentDepthAsync(Guid commentId)
+        {
+            var parent = await _unitOfWork.Interactions.GetCommentByIdAsync(commentId);
+            return parent?.Depth ?? 0;
+        }
 
 
         // ------------------------
@@ -485,42 +575,74 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-        public async Task<Result<IEnumerable<SavedPostsGroupedDto>>> GetSavedPostsGroupedAsync(Guid userId)
+        public async Task<Result<PagedResult<SavedPostsGroupedDto>>> GetSavedPostsGroupedPagedAsync(Guid userId, int page = 1, int pageSize = 10)
         {
-            var collections = await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId);
-            var allSaved = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId);
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
 
-            var result = new List<SavedPostsGroupedDto>
+            var collections = (await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId)).ToList();
+            var allSaved = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId))
+                .OrderByDescending(s => s.SavedAt)
+                .ToList();
+
+            var result = new List<SavedPostsGroupedDto>();
+
+            // "All Saved" group — paginated over ALL non-Favorite rows, plus favorite rows
+            // are included only if they are also saved to a collection. For the grouped page,
+            // the all-saved group paginates the union of posts.
+            var allPosts = allSaved
+                .Where(s => s.Tag != SavedTag.Favorite || s.CollectionId != null)
+                .Select(s => s.Post)
+                .DistinctBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var allMapped = await MapPostsToResponse(allPosts, userId);
+            result.Add(new SavedPostsGroupedDto
             {
-                // Always show the default "Saved" collection first.
-                new SavedPostsGroupedDto
-                {
-                    CollectionId = Guid.Empty,
-                    CollectionName = "All Saved",
-                    IsFavorites = false,
-                    Posts = (await MapPostsToResponse(allSaved.Select(s => s.Post).ToList(), userId)).ToList()
-                }
-            };
+                CollectionId = Guid.Empty,
+                CollectionName = "All Saved",
+                IsFavorites = false,
+                Posts = allMapped.ToList()
+            });
 
             foreach (var collection in collections)
             {
                 var collectionSaves = allSaved
                     .Where(s => s.CollectionId == collection.Id)
+                    .OrderByDescending(s => s.SavedAt)
                     .ToList();
 
                 if (collectionSaves.Count == 0 && !collection.IsDefault && !collection.IsFavorites)
                     continue;
 
+                var pagedSaves = collectionSaves
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var mapped = await MapPostsToResponse(pagedSaves.Select(s => s.Post).ToList(), userId);
                 result.Add(new SavedPostsGroupedDto
                 {
                     CollectionId = collection.Id,
                     CollectionName = collection.Name,
                     IsFavorites = collection.IsFavorites,
-                    Posts = (await MapPostsToResponse(collectionSaves.Select(s => s.Post).ToList(), userId)).ToList()
+                    Posts = mapped.ToList()
                 });
             }
 
-            return Result<IEnumerable<SavedPostsGroupedDto>>.Success(result);
+            var totalPosts = allPosts.Count; // used only for the paging summary
+            var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalPosts / pageSize));
+
+            return Result<PagedResult<SavedPostsGroupedDto>>.Success(new PagedResult<SavedPostsGroupedDto>
+            {
+                Items = result,
+                TotalCount = totalPosts,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages
+            });
         }
     }
 }

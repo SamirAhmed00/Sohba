@@ -22,6 +22,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete([FromBody] IdRequestDto request)
         {
             try
@@ -43,8 +44,9 @@ namespace Sohba.Controllers
             }
             catch (Exception ex)
             {
-                // Global exception handling standard per RULES.md §6
-                return Json(BaseResponseDto<object>.FailureResponse($"An unexpected error occurred: {ex.Message}"));
+                // Log the full exception server-side; return a generic message to the client
+                Logger.LogError(ex, "Unexpected error deleting comment {CommentId}", request?.Id);
+                return Json(BaseResponseDto<object>.FailureResponse("An unexpected error occurred. Please try again."));
             }
         }
     }

@@ -28,6 +28,7 @@ namespace Sohba.Application.Mappings
 
             // --- Post Mapping ---
             CreateMap<PostCreateDto, Post>();
+            CreateMap<PostUpdateDto, Post>();
             CreateMap<Post, PostResponseDto>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
                 .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))

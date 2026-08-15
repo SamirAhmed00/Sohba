@@ -25,7 +25,7 @@ namespace Sohba.Application.Services
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
                 return Result<SearchResultDto>.Success(new SearchResultDto());
 
-            var posts = await _unitOfWork.Posts.SearchPostsAsync(query, 5);
+            var posts = await _unitOfWork.Posts.SearchPostsAsync(query, currentUserId, 5);
             var users = await _unitOfWork.Users.SearchUsersAsync(query, currentUserId, 5);
             var groups = await _unitOfWork.Groups.SearchGroupsAsync(query, 5);
             var pages = await _unitOfWork.Pages.SearchPagesAsync(query, 5);
@@ -41,9 +41,9 @@ namespace Sohba.Application.Services
             return Result<SearchResultDto>.Success(result);
         }
 
-        public async Task<Result<List<PostSearchResultDto>>> SearchPostsAsync(string query)
+        public async Task<Result<List<PostSearchResultDto>>> SearchPostsAsync(string query, Guid currentUserId)
         {
-            var posts = await _unitOfWork.Posts.SearchPostsAsync(query);
+            var posts = await _unitOfWork.Posts.SearchPostsAsync(query, currentUserId);
             var dtos = _mapper.Map<List<PostSearchResultDto>>(posts);
             return Result<List<PostSearchResultDto>>.Success(dtos);
         }

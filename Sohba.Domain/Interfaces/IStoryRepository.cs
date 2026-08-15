@@ -13,7 +13,7 @@ namespace Sohba.Domain.Interfaces
         Task<bool> HasUserViewedStoryAsync(Guid storyId, Guid userId);
         Task<int> GetViewersCountAsync(Guid storyId);
         Task DeleteExpiredStoriesAsync();
-
+        Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId);
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
     }
 }

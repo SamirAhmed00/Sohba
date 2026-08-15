@@ -11,7 +11,12 @@ namespace Sohba.Application.Interfaces
         // Basic CRUD
         Task<Result<IEnumerable<GroupResponseDto>>> GetAllGroupsAsync(Guid? currentUserId = null);
         Task<Result<IEnumerable<GroupResponseDto>>> GetUserGroupsAsync(Guid userId);
+
+        // TODO : I Want To Refactor This Code And Remove The Overloading And Every Thing Depends on it
         Task<Result<GroupResponseDto>> GetGroupByIdAsync(Guid groupId);
+        Task<Result<GroupResponseDto>> GetGroupByIdAsync(Guid groupId, Guid currentUserId);
+
+
         Task<Result<GroupResponseDto>> CreateGroupAsync(GroupCreateDto groupDto, Guid adminId);
         Task<Result<bool>> DeleteGroupAsync(Guid groupId, Guid userId);
         Task<Result<GroupResponseDto>> UpdateGroupAsync(GroupUpdateDto updateDto, Guid userId);

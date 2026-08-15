@@ -49,7 +49,7 @@ namespace Sohba.Application.Services
                 UserId = userId,
                 Content = storyDto.Content,
                 MediaUrl = storyDto.MediaUrl,
-                MediaType = storyDto.MediaUrl != null ? "image" : null,
+                MediaType = storyDto.MediaType ?? (storyDto.MediaUrl != null ? "image" : null),
                 CreatedAt = now,
                 ExpiresAt = now.AddHours(24),
                 IsDeleted = false,
@@ -153,7 +153,7 @@ namespace Sohba.Application.Services
             var canView = _storyDomainService.CanViewStory(
                 currentUserId,
                 story.UserId,
-                isFriend,  // ✅ Now using actual friendship check
+                isFriend,  //  Now using actual friendship check
                 story.CreatedAt);
 
             if (!canView.IsSuccess)
@@ -187,8 +187,7 @@ namespace Sohba.Application.Services
 
             if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
                 return Result.Failure("Story not found or expired.");
-
-            // منع تسجيل المشاهدة لو صاحب الstory نفسه
+            
             if (story.UserId == userId)
                 return Result.Success();
 
@@ -217,6 +216,36 @@ namespace Sohba.Application.Services
             await _unitOfWork.CompleteAsync();
 
             return Result.Success();
+        }
+
+        public async Task<Result<IEnumerable<StoryResponseDto>>> GetUserStoriesAsync(Guid userId, Guid currentUserId)
+        {
+            var stories = await _unitOfWork.Stories.GetUserStoriesAsync(userId, currentUserId);
+
+            var result = new List<StoryResponseDto>();
+            foreach (var story in stories)
+            {
+                var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(story.Id);
+                var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(story.Id, currentUserId);
+
+                result.Add(new StoryResponseDto
+                {
+                    Id = story.Id,
+                    UserId = story.UserId,
+                    Content = story.Content,
+                    MediaUrl = story.MediaUrl,
+                    MediaType = story.MediaType,
+                    UserName = story.User?.Name,
+                    UserProfilePicture = story.User?.ProfilePictureUrl,
+                    CreatedAt = story.CreatedAt,
+                    ExpiresAt = story.ExpiresAt,
+                    ViewersCount = viewersCount,
+                    HasUserViewed = hasViewed,
+                    Privacy = story.Privacy.ToString()
+                });
+            }
+
+            return Result<IEnumerable<StoryResponseDto>>.Success(result);
         }
     }
 }

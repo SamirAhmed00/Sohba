@@ -53,7 +53,7 @@
                 }
                 else
                 {
-                    <button onclick="joinGroup('@Model.Group.Id')"
+                    <button id="groupJoinBtn" onclick="joinGroup('@Model.Group.Id', this)"
                             class="px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-all">
                         Join Group
                     </button>
@@ -82,7 +82,7 @@
             </div>
 
             <div id="group-content-area">
-                <partial name="Partials/_PostCard" model="ViewBag.Posts" />
+                <div class="text-center py-10 text-gray-500">Loading posts...</div>
             </div>
         </div>
 
@@ -201,6 +201,30 @@
         }
 
         
+        async function joinGroup(groupId, button) {
+            try {
+                const result = await SohbaApp.post('/Groups/Join', { id: groupId });
+
+                if (result.success) {
+                    SohbaApp.toast('Joined group successfully!', 'success');
+
+                    // Swap the button to "Leave Group" in place — no reload required.
+                    if (button) {
+                        button.outerHTML = `
+                            <button onclick="leaveGroup('${groupId}')"
+                                    class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all">
+                                Leave Group
+                            </button>
+                        `;
+                    }
+                } else {
+                    SohbaApp.toast(result.error || 'Failed to join group', 'error');
+                }
+            } catch (error) {
+                console.error('Error joining group:', error);
+                SohbaApp.toast('Network error', 'error');
+            }
+        }
 
         async function leaveGroup(groupId) {
             showConfirmModal({

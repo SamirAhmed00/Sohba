@@ -96,6 +96,13 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Friend>> GetAllBlockedAsync()
+        {
+            return await _context.Friends
+                .Include(f => f.FriendUser)
+                .Where(f => f.Status == FriendshipStatus.Blocked)
+                .ToListAsync();
+        }
         public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
         {
             return await _context.Friends

@@ -18,13 +18,14 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        public Result CanUpdatePost(Guid userId, Guid postId, bool isPostDeleted)
+        public Result CanUpdatePost(Guid userId, Guid postId, Guid postOwnerId, bool isPostDeleted)
         {
             if (isPostDeleted)
                 return Result.Failure("Cannot update a deleted post.");
 
-            // Note: Ownership check usually happens before calling this service or via another parameter, 
-            // but here we focus on the state of the post itself as per the interface signature.
+            if (userId != postOwnerId)
+                return Result.Failure("You are not authorized to edit this post.");
+
             return Result.Success();
         }
 

@@ -109,14 +109,13 @@ namespace Sohba.Application.Services
             switch (status.ToLower())
             {
                 case "active":
-                    var blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
-                    var blockedIds = blockedUsers.Select(b => b.FriendUserId).ToList();
-                    filteredUsers = allUsers.Where(u => !blockedIds.Contains(u.Id));
+                    filteredUsers = allUsers.Where(u => !u.IsDeleted);
                     break;
 
                 case "blocked":
-                    blockedUsers = await _friendshipRepository.GetBlockedUsersAsync(Guid.Empty);
-                    filteredUsers = allUsers.Where(u => blockedUsers.Any(b => b.FriendUserId == u.Id));
+                    var allBlocked = await _unitOfWork.Friendships.GetAllBlockedAsync();
+                    var blockedIds = allBlocked.Select(b => b.FriendUserId).Distinct().ToList();
+                    filteredUsers = allUsers.Where(u => blockedIds.Contains(u.Id));
                     break;
 
                 default:
@@ -158,22 +157,12 @@ namespace Sohba.Application.Services
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null) return Result.Failure("User not found.");
 
-            // Delete related data (posts, comments, friendships, saved collections) per domain rules
-            await _unitOfWork.BeginTransactionAsync();
-            try
-            {
-                // NOTE: implement the cascade deletion carefully in the repository
-                // (delete friendships, group memberships, page admin rows, posts, comments, saved)
-                _unitOfWork.Users.Delete(user);
-                await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
-                return Result.Success();
-            }
-            catch
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                throw;
-            }
+            user.IsDeleted = true;
+            user.IsActive = false;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+
+            return Result.Success();
         }
     }
 }

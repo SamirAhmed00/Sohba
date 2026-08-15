@@ -28,7 +28,7 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Post>> GetPagePostsAsync(Guid pageId);
         Task<IEnumerable<Post>> GetUserPostsAsync(Guid userId);
 
-        Task<IEnumerable<Post>> SearchPostsAsync(string query, int limit = 10);
+        Task<IEnumerable<Post>> SearchPostsAsync(string query, Guid currentUserId, int limit = 10);
 
         Task<IEnumerable<Post>> GetRecentAsync(int count);
     }

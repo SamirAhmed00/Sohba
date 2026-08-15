@@ -8,6 +8,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
 {
     public class InteractionDomainService : IInteractionDomainService
     {
+        private const int MaxReplyDepth = 4;
         public Result CanAddComment(Guid userId, string text, bool isContentDeleted, bool isBlockedByOwner)
         {
             // Cannot interact with deleted content
@@ -66,13 +67,18 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        public Result CanReplyToComment(Guid userId, bool isCommentDeleted, bool isThreadLocked)
+
+        
+        public Result CanReplyToComment(Guid userId, bool isCommentDeleted, bool isThreadLocked, int currentDepth)
         {
             if (isCommentDeleted)
                 return Result.Failure("Cannot reply to a deleted comment.");
 
             if (isThreadLocked)
                 return Result.Failure("This discussion thread is locked.");
+
+            if (currentDepth >= MaxReplyDepth)
+                return Result.Failure($"Maximum reply depth reached ({MaxReplyDepth} levels).");
 
             return Result.Success();
         }

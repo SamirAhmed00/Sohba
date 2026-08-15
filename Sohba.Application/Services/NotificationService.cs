@@ -19,7 +19,7 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly INotificationEventHandler _eventHandler;
 
-        protected readonly ILogger<NotificationService> _logger;
+        private readonly ILogger<NotificationService> _logger;
         public NotificationService(
             IUnitOfWork unitOfWork,
             INotificationDomainService domainService,

@@ -13,5 +13,7 @@ namespace Sohba.Application.Interfaces
         Task<Result<IEnumerable<StoryResponseDto>>> GetStoriesForFeedAsync(Guid userId);
         Task<Result<StoryResponseDto>> GetStoryByIdAsync(Guid storyId, Guid currentUserId);
         Task<Result> MarkStoryAsViewedAsync(Guid storyId, Guid userId);
+
+        Task<Result<IEnumerable<StoryResponseDto>>> GetUserStoriesAsync(Guid userId, Guid currentUserId);
     }
 }

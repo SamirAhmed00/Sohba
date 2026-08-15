@@ -1,8 +1,8 @@
-﻿@model IEnumerable<Sohba.Application.DTOs.PostAggregate.SavedPostsGroupedDto>
+﻿@* @model Sohba.Application.DTOs.Common.PagedResult<Sohba.Application.DTOs.PostAggregate.SavedPostsGroupedDto>
 @{
     ViewData["Title"] = "Saved Posts";
     Layout = "_AppLayout";
-}
+} *@
 
 
 @* @model IEnumerable<Sohba.Application.DTOs.PostAggregate.PostResponseDto>
@@ -12,7 +12,7 @@
     var currentTag = ViewBag.CurrentTag ?? "all";
 } *@
 
-
+@* 
 <div class="max-w-5xl mx-auto page-transition">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
         <div class="flex items-center gap-3">
@@ -28,10 +28,10 @@
         </div>
     </div>
 
-    @if (Model != null && Model.Any())
+    @if (Model != null && Model.Items != null && Model.Items.Any())
     {
         <div class="space-y-8">
-            @foreach (var group in Model)
+            @foreach (var group in Model.Items)
             {
                 <div>
                     <div class="flex items-center gap-2 mb-4">
@@ -78,7 +78,29 @@
         </div>
     }
 </div>
-
+@if (Model != null && Model.TotalPages > 1)
+{
+    <div class="flex items-center justify-center gap-4 mt-8">
+        @if (Model.HasPreviousPage)
+        {
+            <a href="/Posts/SavedPosts?page=@(Model.Page - 1)&pageSize=@Model.PageSize"
+               class="px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-all">
+                Prev
+            </a>
+        }
+        <span class="text-sm text-gray-500 font-semibold">
+            Page @Model.Page of @Model.TotalPages
+        </span>
+        @if (Model.HasNextPage)
+        {
+            <a href="/Posts/SavedPosts?page=@(Model.Page + 1)&pageSize=@Model.PageSize"
+               class="px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-all">
+                Next
+            </a>
+        }
+    </div>
+}
+</div>
 
 
 
@@ -121,6 +143,226 @@
         }
         
         // Close menus when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick*="toggleMenu"]')) {
+                document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden'));
+            }
+        });
+    </script>
+} *@
+
+
+
+
+
+
+@model Sohba.Application.DTOs.Common.PagedResult<Sohba.Application.DTOs.PostAggregate.SavedPostsGroupedDto>
+@{
+    ViewData["Title"] = "Saved Posts";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-6xl mx-auto px-4 py-6 page-transition space-y-8">
+
+    <!-- Hero Header -->
+    <div class="relative overflow-hidden bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center text-amber-600 shadow-sm shrink-0">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Saved Collections</h1>
+                    <p class="text-slate-500 text-sm sm:text-base mt-1">Organize and browse your saved posts by topics</p>
+                </div>
+            </div>
+
+            @if (Model != null && Model.Items != null && Model.Items.Any())
+            {
+                <div class="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200/60 self-start sm:self-auto">
+                    <span class="flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                    <span class="text-xs font-bold text-slate-600">@Model.TotalCount Collections Saved</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Collections Feed -->
+    @if (Model != null && Model.Items != null && Model.Items.Any())
+    {
+        <div class="space-y-10">
+            @foreach (var group in Model.Items)
+            {
+                <div class="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-200/70 p-5 sm:p-7 shadow-sm hover:shadow-md transition-shadow">
+
+                    <!-- Collection Header -->
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2.5 h-6 bg-[#345e69] rounded-full"></div>
+                            <h2 class="text-xl font-bold text-slate-900 tracking-tight">@group.CollectionName</h2>
+
+                            @if (group.IsFavorites)
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-pink-600 border border-pink-200/60 text-xs font-bold rounded-full">
+                                    <svg class="w-3.5 h-3.5 fill-current text-pink-500" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    Favorites
+                                </span>
+                            }
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg">
+                            @group.Posts.Count @(group.Posts.Count == 1 ? "Item" : "Items")
+                        </span>
+                    </div>
+
+                    <!-- Posts Grid -->
+                    @if (group.Posts.Any())
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            @foreach (var post in group.Posts)
+                            {
+                                <partial name="Partials/_PostCard" model="new[] { post }" />
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                            <p class="text-sm font-medium text-slate-400">No posts saved in this collection yet.</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Modern Pagination Controls -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200/80">
+                <span class="text-sm font-medium text-slate-500 order-2 sm:order-1">
+                    Showing page <span class="font-bold text-slate-800">@Model.Page</span> of <span class="font-bold text-slate-800">@Model.TotalPages</span>
+                </span>
+
+                <div class="flex items-center gap-2 order-1 sm:order-2">
+                    <!-- Previous Button -->
+                    @if (Model.HasPreviousPage)
+                    {
+                        <a href="/Posts/SavedPosts?page=@(Model.Page - 1)&pageSize=@Model.PageSize"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm active:scale-95">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span>Previous</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed opacity-60">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            <span>Previous</span>
+                        </span>
+                    }
+
+                    <!-- Page Indicator Badge -->
+                    <div class="px-4 py-2.5 bg-[#345e69] text-white font-bold text-sm rounded-xl shadow-sm">
+                        @Model.Page
+                    </div>
+
+                    <!-- Next Button -->
+                    @if (Model.HasNextPage)
+                    {
+                        <a href="/Posts/SavedPosts?page=@(Model.Page + 1)&pageSize=@Model.PageSize"
+                           class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-all shadow-sm active:scale-95">
+                            <span>Next</span>
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed opacity-60">
+                            <span>Next</span>
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Empty State View -->
+        <div class="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+            <div class="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">No saved posts yet</h3>
+            <p class="text-slate-500 mt-2 max-w-sm mx-auto text-sm">When you save posts or bookmark collections, they will show up organized here.</p>
+            <a asp-controller="Home" asp-action="Index"
+               class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-[#345e69] text-white font-bold rounded-2xl hover:bg-[#2a4b55] transition-all shadow-md active:scale-95">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m7-7l-7 7 7 7" />
+                </svg>
+                <span>Browse Feed</span>
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Redirect to filtered saved posts view based on selected tag
+        function filterByTag(tag) {
+            window.location.href = tag === 'all' ? '/Posts/SavedPosts' : `/Posts/SavedPosts?tag=${tag}`;
+        }
+
+        // Toggle options dropdown menu for a specific post
+        function toggleMenu(postId) {
+            document.querySelectorAll('[id^="menu-"]').forEach(m => m.classList.add('hidden'));
+            document.getElementById(`menu-${postId}`).classList.toggle('hidden');
+        }
+
+        // Change collection tag for a saved post
+        async function changeTag(postId, tag) {
+            const result = await SohbaApp.post('/Posts/ChangeSavedPostTag', { postId, tag });
+            if (result.success) {
+                SohbaApp.toast(`Moved to ${tag}`, 'success');
+                location.reload();
+            }
+        }
+
+        // Unsave post with UI element removal and count update
+        async function unsavePost(postId) {
+            if (!confirm('Remove from saved?')) return;
+            const result = await SohbaApp.post('/Posts/RemoveSavedPost', { postId });
+            if (result.success) {
+                SohbaApp.toast('Removed from saved', 'success');
+
+                const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postElement) {
+                    postElement.remove();
+                }
+
+                // Update post counter dynamically
+                const remainingCount = document.querySelectorAll('[data-post-id]').length;
+                const counterElement = document.querySelector('.text-slate-500.mt-1');
+                if (counterElement) {
+                    counterElement.textContent = `${remainingCount} posts saved`;
+                }
+            }
+        }
+
+        // Hide active context dropdown menus on outside click
         document.addEventListener('click', function(e) {
             if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick*="toggleMenu"]')) {
                 document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden'));

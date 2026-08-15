@@ -30,7 +30,7 @@ namespace Sohba.Infrastructure.DBInitializer
             await SeedRolesAsync();
             await SeedAdminUserAsync();
             await SeedTestUsersAsync(); 
-            await SeedSampleDataAsync();
+            //await SeedSampleDataAsync();
             await SeedExtraTestDataAsync();
         }
 
@@ -190,6 +190,10 @@ namespace Sohba.Infrastructure.DBInitializer
                 "Digital Artist | Photographer | Traveler 🌍",
                 "https://ui-avatars.com/api/?name=Youssef&background=EC4899&color=fff&size=128"
             );
+
+            // User 9 : Samir@Sohba.com -> Samir123@
+            // User 10: QATesting @Sohba.com  -> QATesting@1 
+
 
             // Now create relationships (Friends, Groups, Pages, Posts)
             await CreateRelationshipsAsync(mohammed, ahmed, sara, khaled, layla, omar, nour, youssef);
@@ -589,6 +593,16 @@ namespace Sohba.Infrastructure.DBInitializer
 
         private async Task CreatePostAsync(string title, string content, Guid userId, string? imageUrl, string[] hashtags)
         {
+
+            var exists = await _context.Posts.AnyAsync(p =>
+                   p.UserId == userId &&
+                   p.Title == title &&
+                   p.Content == content
+                   
+            );
+
+            if (exists)
+                return;
             var post = new Post
             {
                 Id = Guid.NewGuid(),
@@ -638,11 +652,11 @@ namespace Sohba.Infrastructure.DBInitializer
             }
         }
 
-        private async Task SeedSampleDataAsync()
-        {
-            // This is now handled by SeedTestUsersAsync
-            await Task.CompletedTask;
-        }
+        //private async Task SeedSampleDataAsync()
+        //{
+        //    // This is now handled by SeedTestUsersAsync
+        //    await Task.CompletedTask;
+        //}
 
 
         
@@ -781,6 +795,7 @@ namespace Sohba.Infrastructure.DBInitializer
             // ================= 6. بوستات محفوظة (Saved/Favorite) =================
             _context.SavedPost.Add(new SavedPost
             {
+                Id = Guid.NewGuid(),
                 UserId = mohammed.Id,
                 PostId = adminTestPost.Id,
                 SavedAt = DateTime.UtcNow,

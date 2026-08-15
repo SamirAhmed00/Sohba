@@ -123,24 +123,24 @@ namespace Sohba.Controllers
         }
 
         //  NEW: Load more posts via AJAX (for infinite scroll)
-        [HttpGet]
-        public async Task<IActionResult> LoadMore(int page = 2, int pageSize = 10)
-        {
-            var userId = GetCurrentUserId();
-            var result = await _postService.GetFeedAsync(userId, page, pageSize);
+        //[HttpGet]
+        //public async Task<IActionResult> LoadMore(int page = 2, int pageSize = 10)
+        //{
+        //    var userId = GetCurrentUserId();
+        //    var result = await _postService.GetFeedAsync(userId, page, pageSize);
 
-            if (result.IsFailure)
-                return Json(new { success = false, error = result.Error });
+        //    if (result.IsFailure)
+        //        return Json(new { success = false, error = result.Error });
 
-            return Json(new
-            {
-                success = true,
-                posts = result.Value.Items,
-                hasMore = result.Value.HasNextPage,
-                currentPage = result.Value.Page,
-                totalPages = result.Value.TotalPages
-            });
-        }
+        //    return Json(new
+        //    {
+        //        success = true,
+        //        posts = result.Value.Items,
+        //        hasMore = result.Value.HasNextPage,
+        //        currentPage = result.Value.Page,
+        //        totalPages = result.Value.TotalPages
+        //    });
+        //}
 
 
 

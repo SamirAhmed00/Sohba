@@ -24,7 +24,13 @@ namespace Sohba.Controllers
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var userId = GetCurrentUserId();
-            if (userId != Guid.Empty)
+
+            // Skip heavy work for unauthenticated requests and JSON/AJAX endpoints
+            var isJsonRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                || context.HttpContext.Request.Path.Value?.Contains("/Get", StringComparison.OrdinalIgnoreCase) == true
+                || context.HttpContext.Request.Path.Value?.Contains("/Quick", StringComparison.OrdinalIgnoreCase) == true;
+
+            if (userId != Guid.Empty && !isJsonRequest)
             {
                 var recommendedGroups = await GroupService.GetRecommendedGroupsAsync(userId, 5);
                 ViewBag.RecommendedGroups = recommendedGroups.Value ?? new List<GroupResponseDto>();
@@ -37,7 +43,7 @@ namespace Sohba.Controllers
         protected Guid GetCurrentUserId()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return userId != null ? Guid.Parse(userId) : Guid.Empty;
+            return Guid.TryParse(userId, out var parsed) ? parsed : Guid.Empty;
         }
 
         protected async Task SetJwtTokenInViewBag()

@@ -23,7 +23,7 @@ namespace Sohba.Application.Services
         private readonly INotificationService _notificationService;
         private readonly IUserService _userService;
 
-        protected readonly ILogger<FriendshipService> _logger;
+        private readonly ILogger<FriendshipService> _logger;
 
         public FriendshipService(
             IFriendshipDomainService domainService,

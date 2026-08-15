@@ -6,7 +6,7 @@ using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
-
+using Sohba.Domain.Common;
 using Sohba.ViewModels.Profile;
 
 namespace Sohba.Controllers
@@ -49,12 +49,15 @@ namespace Sohba.Controllers
                 return NotFound();
             }
 
-            // Get friends list (may be empty if not allowed to view)
-            var friendsResult = await _friendshipService.GetFriendsListAsync(profileUserId);
-            var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
 
             // Check if user can view friends list
             var isFriend = await _friendshipService.AreFriendsAsync(currentUserId, profileUserId);
+
+            var friendsResult = isFriend || currentUserId == profileUserId
+                ? await _friendshipService.GetFriendsListAsync(profileUserId)
+                : Result<IEnumerable<FriendDto>>.Success(new List<FriendDto>());
+
+            var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
 
             var friendshipStatus = "none";
             if (isFriend)

@@ -37,7 +37,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </span>
-            <input type="text" placeholder="Search friends..." 
+            <input type="text" id="searchInput" placeholder="Search friends..."
                    class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all" />
         </div>
     </div>
@@ -46,7 +46,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         @foreach (var friend in Model)
         {
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group user-card" data-name="@friend.FriendName">
                 <div class="flex items-center gap-4">
                     <div class="relative">
                         <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={friend.FriendName}&background=345e69&color=fff")" 
@@ -121,9 +121,10 @@
         async function loadPendingRequestsCount() {
             const response = await fetch('/Friends/GetPendingRequestsCount');
             const data = await response.json();
-            if (data.count > 0) {
-                const badge = document.getElementById('pendingRequestsBadge');
-                badge.textContent = data.count;
+            const count = data.data ?? data.Data ?? 0;
+            const badge = document.getElementById('pendingRequestsBadge');
+            if (count > 0 && badge) {
+                badge.textContent = count > 99 ? '99+' : count;
                 badge.classList.remove('hidden');
             }
         }

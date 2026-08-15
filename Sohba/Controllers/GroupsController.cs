@@ -106,7 +106,8 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var groupResult = await _groupService.GetGroupByIdAsync(id);
+            var currentUserId = GetCurrentUserId();
+            var groupResult = await _groupService.GetGroupByIdAsync(id, currentUserId);
             if (groupResult.IsFailure)
                 return NotFound();
 
@@ -116,7 +117,7 @@ namespace Sohba.Controllers
                 Group = groupResult.Value,
                 Members = membersResult.Value ?? new List<GroupMemberDto>()
             };
-            ViewBag.CurrentUserId = GetCurrentUserId();
+            ViewBag.CurrentUserId = currentUserId;
 
             return View(viewModel);
         }
@@ -216,39 +217,39 @@ namespace Sohba.Controllers
         }
 
 
-        [HttpGet]
-        public async Task<IActionResult> GetGroupMembers(Guid groupId)
-        {
-            var membersResult = await _groupService.GetGroupMembersAsync(groupId);
+        //[HttpGet]
+        //public async Task<IActionResult> GetGroupMembers(Guid groupId)
+        //{
+        //    var membersResult = await _groupService.GetGroupMembersAsync(groupId);
 
-            if (!membersResult.IsSuccess)
-                return Content($"<div class='text-center py-10 text-red-500'>{membersResult.Error}</div>");
+        //    if (!membersResult.IsSuccess)
+        //        return Content($"<div class='text-center py-10 text-red-500'>{membersResult.Error}</div>");
 
-            ViewBag.GroupId = groupId;
-            return PartialView("_MembersTab", membersResult.Value ?? new List<GroupMemberDto>());
-        }
+        //    ViewBag.GroupId = groupId;
+        //    return PartialView("_MembersTab", membersResult.Value ?? new List<GroupMemberDto>());
+        //}
 
-        [HttpGet]
-        public async Task<IActionResult> GetAboutTab(Guid groupId)
-        {
-            var groupResult = await _groupService.GetGroupByIdAsync(groupId);
-            if (!groupResult.IsSuccess)
-                return Content($"<div class='text-center py-10 text-red-500'>Group not found</div>");
+        //[HttpGet]
+        //public async Task<IActionResult> GetAboutTab(Guid groupId)
+        //{
+        //    var groupResult = await _groupService.GetGroupByIdAsync(groupId);
+        //    if (!groupResult.IsSuccess)
+        //        return Content($"<div class='text-center py-10 text-red-500'>Group not found</div>");
 
-            var membersResult = await _groupService.GetGroupMembersAsync(groupId);
-            var postsResult = await _postService.GetGroupPostsAsync(groupId, Guid.Empty);
-            var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
+        //    var membersResult = await _groupService.GetGroupMembersAsync(groupId);
+        //    var postsResult = await _postService.GetGroupPostsAsync(groupId, GetCurrentUserId());
+        //    var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
 
-            var viewModel = new
-            {
-                Group = groupResult.Value,
-                Members = membersResult.Value ?? new List<GroupMemberDto>(),
-                PostsCount = postsCount
-            };
+        //    var viewModel = new
+        //    {
+        //        Group = groupResult.Value,
+        //        Members = membersResult.Value ?? new List<GroupMemberDto>(),
+        //        PostsCount = postsCount
+        //    };
 
-            ViewBag.GroupId = groupId;
-            return PartialView("_AboutTab", viewModel);
-        }
+        //    ViewBag.GroupId = groupId;
+        //    return PartialView("_AboutTab", viewModel);
+        //}
 
         [HttpPost]
         [ValidateAntiForgeryToken]

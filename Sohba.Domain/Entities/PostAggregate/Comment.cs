@@ -11,7 +11,7 @@ namespace Sohba.Domain.Entities.PostAggregate
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime DateUpdated { get; set; }
-
+        public int Depth { get; set; }
         public Guid? ParentCommentId { get; set; }
 
         // Navigation Properties

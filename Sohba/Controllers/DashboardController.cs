@@ -201,7 +201,7 @@ namespace Sohba.Controllers
         {
             if (model == null || model.postId == Guid.Empty)
                     return Json(new { success = false, error = "Invalid post ID." });
-            var result = await _postService.DeletePostAsync(model.postId, GetCurrentUserId());
+            var result = await _postService.DeletePostAsync(model.postId, GetCurrentUserId(), isAdmin: true);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
