@@ -18,5 +18,7 @@ namespace Sohba.ViewModels.Profile
         public bool IsPrivate { get; set; }
         public bool IsBlocked { get; set; }
 
+        public bool HasActiveStory { get; set; }
+
     }
 }

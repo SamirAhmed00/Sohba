@@ -8,7 +8,12 @@
 <div class="max-w-7xl mx-auto page-transition px-4">
     <!-- Header -->
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-        <div class="h-48 bg-gradient-to-r from-[#345e69] to-[#4a8291] relative">
+        <div class="h-48 bg-gradient-to-r from-[#345e69] to-[#4a8291] relative overflow-hidden @(!string.IsNullOrEmpty(Model.Group.BackgroundImageUrl) ? "cursor-pointer" : "")"
+             @(!string.IsNullOrEmpty(Model.Group.BackgroundImageUrl) ? $"onclick=\"SohbaApp.openImageLightbox('{Model.Group.BackgroundImageUrl}')\"" : "")>
+            @if (!string.IsNullOrEmpty(Model.Group.BackgroundImageUrl))
+            {
+                <img src="@Model.Group.BackgroundImageUrl" class="w-full h-full object-cover" alt="Group background" />
+            }
             <div class="absolute -bottom-12 left-8">
                 <div class="w-32 h-32 bg-white p-2 rounded-3xl shadow-lg">
                     @if (!string.IsNullOrEmpty(Model.Group.ImageUrl))

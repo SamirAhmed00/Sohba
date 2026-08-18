@@ -85,12 +85,17 @@ namespace Sohba.Infrastructure.Repositories
         {
             var cutoffTime = DateTime.UtcNow.AddHours(-24);
 
-            // Owner always sees their own stories; otherwise only public stories
-            // (or friends-only stories if the viewer is a friend) are returned.
             var isFriend = await _context.Friends
-                .AnyAsync(f => (f.UserId == currentUserId && f.FriendUserId == userId)
-                            || (f.UserId == userId && f.FriendUserId == currentUserId)
-                            && f.Status == FriendshipStatus.Accepted);
+                 .AnyAsync(f =>
+                     ((f.UserId == currentUserId && f.FriendUserId == userId)
+                      || (f.UserId == userId && f.FriendUserId == currentUserId))
+                     && f.Status == FriendshipStatus.Accepted);
+
+            var owner = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            var isOwnerAccountPrivate = owner?.IsPrivateAccount ?? false;
+
+            if (userId != currentUserId && isOwnerAccountPrivate && !isFriend)
+                return Enumerable.Empty<Story>();
 
             return await _context.Stories
                 .Include(s => s.User)
@@ -113,6 +118,37 @@ namespace Sohba.Infrastructure.Repositories
 
             var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId).ToList();
             return friendIds;
+        }
+
+
+        public async Task<IEnumerable<StoryViewer>> GetViewersAsync(Guid storyId)
+        {
+            return await _context.Set<StoryViewer>()
+                .Include(v => v.User)
+                .Where(v => v.StoryId == storyId)
+                .OrderByDescending(v => v.ViewedAt)
+                .ToListAsync();
+        }
+
+        public async Task<StoryReaction?> GetReactionAsync(Guid storyId, Guid userId)
+        {
+            return await _context.Set<StoryReaction>()
+                .FirstOrDefaultAsync(r => r.StoryId == storyId && r.UserId == userId);
+        }
+
+        public async Task<int> GetReactionCountAsync(Guid storyId)
+        {
+            return await _context.Set<StoryReaction>().CountAsync(r => r.StoryId == storyId);
+        }
+
+        public void AddReaction(StoryReaction reaction)
+        {
+            _context.Set<StoryReaction>().Add(reaction);
+        }
+
+        public void RemoveReaction(StoryReaction reaction)
+        {
+            _context.Set<StoryReaction>().Remove(reaction);
         }
     }
 }

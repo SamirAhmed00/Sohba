@@ -18,6 +18,9 @@ namespace Sohba.Application.DTOs.StoryAggregate
         public int ViewersCount { get; set; }
         public bool HasUserViewed { get; set; }
         public string Privacy { get; set; }
+
+        public int ReactionsCount { get; set; }
+        public bool CurrentUserReacted { get; set; }
     }
 
 }

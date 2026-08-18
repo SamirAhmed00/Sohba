@@ -36,5 +36,13 @@ namespace Sohba.Infrastructure.Repositories
                 .Where(n => n.CreatedAt<cutoffDate && n.IsRead)
                 .ToListAsync();
         }
+
+
+        public async Task<IEnumerable<Notification>> GetByReceiverAndTargetAsync(Guid receiverId, Guid targetId)
+        {
+            return await _context.Set<Notification>()
+                .Where(n => n.ReceiverId == receiverId && n.TargetId == targetId && !n.IsRead)
+                .ToListAsync();
+        }
     }
 }

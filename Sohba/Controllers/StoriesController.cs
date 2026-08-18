@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
+using Sohba.Domain.Entities.StoryAggregate;
+using Sohba.Domain.Enums;
 
 namespace Sohba.Controllers
 {
@@ -104,6 +107,37 @@ namespace Sohba.Controllers
             }
 
             return Json(BaseResponseDto<IEnumerable<StoryResponseDto>>.SuccessResponse(new List<StoryResponseDto>()));
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> React([FromBody] StoryReactionRequestDto request)
+        {
+            if (request == null || request.StoryId == Guid.Empty || string.IsNullOrWhiteSpace(request.ReactionType))
+                return Json(new { success = false, error = "Invalid request." });
+
+            var userId = GetCurrentUserId();
+            if (!Enum.TryParse<ReactionType>(request.ReactionType, true, out var type))
+                return Json(new { success = false, error = "Invalid reaction type." });
+
+            var result = await _storyService.ToggleStoryReactionAsync(userId, request.StoryId, type);
+            if (!result.IsSuccess)
+                return Json(new { success = false, error = result.Error });
+
+            return Json(new { success = true, action = result.Value.Added ? "added" : "removed", newCount = result.Value.NewCount });
+        }
+
+        // [ADDED]
+        [HttpGet]
+        public async Task<IActionResult> GetStoryViewers(Guid storyId)
+        {
+            var userId = GetCurrentUserId();
+            var result = await _storyService.GetStoryViewersAsync(storyId, userId);
+
+            if (!result.IsSuccess)
+                return Json(BaseResponseDto<IEnumerable<StoryViewerDto>>.FailureResponse(result.Error));
+
+            return Json(BaseResponseDto<IEnumerable<StoryViewerDto>>.SuccessResponse(result.Value));
         }
 
     }

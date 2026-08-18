@@ -1,4 +1,5 @@
 ﻿using Sohba.Domain.Common;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,8 +14,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
         Result CanDeletePost(Guid userId, Guid postId, Guid postOwnerId, bool isAdmin);
 
         // Privacy & Audience -- It will internally depend on the FriendshipService.
-        Result CanViewPost(Guid userId, Guid postOwnerId, bool isPrivate, bool isFriend);
-
+        Result CanViewPost(Guid userId, Guid postOwnerId, PostPrivacy privacy, bool isFriend);
         // Interactions
         Result CanCommentOnPost(Guid userId, Guid postOwnerId, bool isDeleted, bool isBlocked);
         Result CanReactToPost(Guid userId, Guid postOwnerId, bool isDeleted);

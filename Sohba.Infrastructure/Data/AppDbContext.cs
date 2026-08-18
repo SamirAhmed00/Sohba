@@ -36,8 +36,8 @@ namespace Sohba.Infrastructure.Data
         public DbSet<User> Users { get; set; }
 
         public DbSet<Story> Stories { get; set; }
+        public DbSet<StoryReaction> StoryReactions { get; set; }
 
-        
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

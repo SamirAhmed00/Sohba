@@ -15,6 +15,7 @@
     {
         <meta name="jwt-token" content="@ViewBag.JwtToken" />
     }
+    <meta name="current-user-id" content="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
     <script type="importmap"></script>
     <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -57,6 +58,8 @@
     <!-- Save Post Modal -->
     <partial name="Partials/_SavePostModal" />
 
+     <!-- Image Lightbox (global, reused by Profile/Group/Page images) -->
+    <partial name="Partials/_ImageLightbox" />
 
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

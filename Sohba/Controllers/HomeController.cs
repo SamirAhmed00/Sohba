@@ -122,32 +122,25 @@ namespace Sohba.Controllers
             return View(viewModel);
         }
 
-        //  NEW: Load more posts via AJAX (for infinite scroll)
-        //[HttpGet]
-        //public async Task<IActionResult> LoadMore(int page = 2, int pageSize = 10)
+
+
+        //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        //public IActionResult Error()
         //{
-        //    var userId = GetCurrentUserId();
-        //    var result = await _postService.GetFeedAsync(userId, page, pageSize);
-
-        //    if (result.IsFailure)
-        //        return Json(new { success = false, error = result.Error });
-
-        //    return Json(new
-        //    {
-        //        success = true,
-        //        posts = result.Value.Items,
-        //        hasMore = result.Value.HasNextPage,
-        //        currentPage = result.Value.Page,
-        //        totalPages = result.Value.TotalPages
-        //    });
+        //    return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         //}
 
-
-
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(int? code = null)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            if (code.HasValue)
+                Response.StatusCode = code.Value;
+
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                StatusCode = code
+            });
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Sohba.Application.DTOs.UserAggregate
         public string Email { get; set; }
         public string Bio { get; set; }
         public string? ProfilePictureUrl { get; set; }
+        public string? BackgroundImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

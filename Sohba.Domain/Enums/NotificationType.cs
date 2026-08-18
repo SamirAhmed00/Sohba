@@ -11,6 +11,7 @@ namespace Sohba.Domain.Enums
         FriendRequest = 3,
         GroupInvitation = 4,
         SystemAlert = 5,
-        PageFollow = 6
+        PageFollow = 6,
+        StoryLike = 7
     }
 }

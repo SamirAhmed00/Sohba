@@ -14,6 +14,28 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
     document.getElementById('modalComments').innerHTML = '<p class="text-slate-400 text-sm italic">Loading comments...</p>';
     document.getElementById('modalAuthorAvatar').src = '';
 
+    // Post context icon (Group / Page) + Privacy indicator
+    const sourceEl = document.getElementById('modalSourceContext');
+    const privacyEl = document.getElementById('modalPrivacyIndicator');
+    
+    if (data.post.sourceType === 'Group' || data.post.sourceType === 'Page') {
+            const icon = data.post.sourceType === 'Group' ? '👪' : '📄';
+            sourceEl.innerHTML = `<span>•</span><span>${icon} ${data.post.sourceName || data.post.sourceType}</span>`;
+            sourceEl.classList.remove('hidden'); sourceEl.classList.add('flex');
+    } else {
+        sourceEl.classList.add('hidden'); sourceEl.classList.remove('flex'); sourceEl.innerHTML = '';
+    }
+    
+    const privacyLabels = { 0: '🌐 Public', 1: '👥 Friends Only', 2: '🔒 Only Me' };
+    privacyEl.innerHTML = `<span>•</span><span>${privacyLabels[data.post.privacy] ?? privacyLabels[0]}</span>`;
+    privacyEl.classList.remove('hidden'); privacyEl.classList.add('flex');
+    
+    // Multiple images: thumbnail strip; falls back to the single legacy image.
+    const images = (data.post.imageUrls && data.post.imageUrls.length > 0)
+                ? data.post.imageUrls
+                : (data.post.imageUrl ? [data.post.imageUrl] : []);
+    const thumbStrip = document.getElementById('modalImageThumbnails');
+
     try {
         const response = await fetch(`/Posts/GetPostDetails?postId=${postId}`);
         if (!response.ok) throw new Error('Failed to load');
@@ -30,8 +52,18 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
         }
         modalContainer.style.justifyContent = 'flex-start';
 
-        if (data.post.imageUrl) {
-            document.getElementById('modalPostImage').src = data.post.imageUrl;
+        if (images.length > 0) {
+            document.getElementById('modalPostImage').src = images[0];
+            if (images.length > 1) {
+                    thumbStrip.innerHTML = images.map((url, idx) => `
+                        <button type="button" class="w-12 h-12 rounded-lg overflow-hidden border-2 ${idx === 0 ? 'border-white' : 'border-transparent'} flex-shrink-0"
+                                    onclick="document.getElementById('modalPostImage').src='${url}'; document.querySelectorAll('#modalImageThumbnails button').forEach(b=>b.classList.remove('border-white')); this.classList.add('border-white');">
+                                <img src="${url}" class="w-full h-full object-cover">
+                            </button>`).join('');
+                    thumbStrip.classList.remove('hidden'); thumbStrip.classList.add('flex');
+            } else {
+                    thumbStrip.classList.add('hidden'); thumbStrip.innerHTML = '';
+            }
         } else {
             if (leftSide) leftSide.style.display = 'none';
             if (rightSide) {
@@ -39,6 +71,7 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                 rightSide.classList.add('w-full');
             }
             modalContainer.style.justifyContent = 'center';
+            thumbStrip.classList.add('hidden');
         }
 
         const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.post.authorName)}&background=345e69&color=fff`;

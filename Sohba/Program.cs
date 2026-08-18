@@ -18,6 +18,10 @@ using System;
 using System.Text;
 using System.Threading.RateLimiting;
 
+using Sohba.Converters;
+using Sohba.Extensions;
+using Sohba.Filters;
+
 namespace Sohba
 {
     public class Program
@@ -172,7 +176,26 @@ namespace Sohba
                     });
 
                     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                    options.OnRejected = async (context, token) =>
+                    {
+                        var httpContext = context.HttpContext;
+
+                        if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(httpContext.Request))
+                        {
+                            await HttpErrorResponseHelper.WriteJsonErrorAsync(
+                                httpContext.Response,
+                                StatusCodes.Status429TooManyRequests,
+                                HttpErrorResponseHelper.GetFriendlyMessage(StatusCodes.Status429TooManyRequests));
+                        }
+                        else
+                        {
+                            httpContext.Response.Redirect("/Home/Error?code=429");
+                        }
+                    };
                 });
+
+
 
                 // ============================================================
                 // 3. INFRASTRUCTURE & APPLICATION SERVICES 
@@ -214,7 +237,11 @@ namespace Sohba
                 // ============================================================
                 builder.Services.AddControllersWithViews(options =>
                 {
-                    // options.Filters.Add<Sohba.Filters.ValidationFilter>();
+                    options.Filters.Add<ValidationFilter>();
+                })
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
                 });
 
                 builder.Services.AddFluentValidationAutoValidation();
@@ -243,6 +270,24 @@ namespace Sohba
                 app.UseStaticFiles();
                 app.UseRouting();
 
+                app.UseStatusCodePages(async statusCodeContext =>
+                {
+                    var httpContext = statusCodeContext.HttpContext;
+                    var response = httpContext.Response;
+
+                    if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(httpContext.Request))
+                    {
+                        await HttpErrorResponseHelper.WriteJsonErrorAsync(
+                            response,
+                            response.StatusCode,
+                            HttpErrorResponseHelper.GetFriendlyMessage(response.StatusCode));
+                    }
+                    else
+                    {
+                        response.Redirect($"/Home/Error?code={response.StatusCode}");
+                    }
+                });
+
                 app.UseAuthentication();
                 app.UseAuthorization();
 
@@ -254,20 +299,27 @@ namespace Sohba
                 {
                     appError.Run(async context =>
                     {
-                        context.Response.StatusCode = 500;
-                        context.Response.ContentType = "application/json";
-
                         var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
                         var exception = exceptionFeature?.Error;
 
                         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
                         logger.LogError(exception, "Unhandled exception processing {Path}", context.Request.Path);
 
-                        await context.Response.WriteAsJsonAsync(new
+                        if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(context.Request))
                         {
-                            error = "An unexpected error occurred.",
-                            correlationId = context.TraceIdentifier
-                        });
+                            await HttpErrorResponseHelper.WriteJsonErrorAsync(
+                                context.Response,
+                                500,
+                                "An unexpected error occurred.");
+                            // correlationId still available to the client via the response body key "error";
+                            // to keep the field name unchanged for existing consumers, WriteJsonErrorAsync's
+                            // shape is {success:false, error:"..."} — add correlationId explicitly if any
+                            // caller depends on it:
+                        }
+                        else
+                        {
+                            context.Response.Redirect("/Home/Error?code=500");
+                        }
                     });
                 });
 

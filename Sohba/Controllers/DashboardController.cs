@@ -7,6 +7,7 @@ using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.ViewModels.Dashboard;
+using Sohba.Domain.Enums;
 
 namespace Sohba.Controllers
 {
@@ -20,6 +21,7 @@ namespace Sohba.Controllers
         private readonly IPageService _pageService;
         private readonly IReportingService _reportingService;
         private readonly IFriendshipService _friendshipService;
+        private readonly INotificationService _notificationService;
 
         public DashboardController(
             IUserService userService,
@@ -27,7 +29,8 @@ namespace Sohba.Controllers
             IGroupService groupService,
             IPageService pageService,
             IReportingService reportingService,
-            IFriendshipService friendshipService)
+            IFriendshipService friendshipService,
+            INotificationService notificationService)
         {
             _userService = userService;
             _postService = postService;
@@ -35,6 +38,7 @@ namespace Sohba.Controllers
             _pageService = pageService;
             _reportingService = reportingService;
             _friendshipService = friendshipService;
+            _notificationService = notificationService;
         }
 
         // GET: /Dashboard
@@ -197,11 +201,33 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeletePost([FromBody] IdWrapperPostId model)
+        public async Task<IActionResult> DeletePost([FromBody] AdminDeletePostModel model)
         {
             if (model == null || model.postId == Guid.Empty)
                     return Json(new { success = false, error = "Invalid post ID." });
+            if (string.IsNullOrWhiteSpace(model.reason))
+                    return Json(new { success = false, error = "A deletion reason is required." });
+            // Fetch owner + title BEFORE deleting: Post has a global query filter on
+                        // IsDeleted, so it becomes unfetchable via the normal EF path immediately
+                        // after the soft-delete completes.
+            var postResult = await _postService.GetPostByIdAsync(model.postId, GetCurrentUserId());
+            if (postResult.IsFailure)
+                    return Json(new { success = false, error = postResult.Error });
+            
+            var postOwnerId = postResult.Value.UserId;
+            var postTitle = postResult.Value.Title;
+            
             var result = await _postService.DeletePostAsync(model.postId, GetCurrentUserId(), isAdmin: true);
+            
+            if (result.IsSuccess && postOwnerId != GetCurrentUserId())
+            {
+                await _notificationService.CreateNotificationAsync(
+                receiverId: postOwnerId,
+                message: $"Your post \"{postTitle}\" was removed by an administrator. Reason: {model.reason.Trim()}",
+                type: NotificationType.SystemAlert,
+                senderId: GetCurrentUserId());
+            }
+            
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
@@ -322,6 +348,7 @@ namespace Sohba.Controllers
 
         public class IdWrapperUserId { public Guid userId { get; set; } }
         public class IdWrapperPostId { public Guid postId { get; set; } }
+        public class AdminDeletePostModel { public Guid postId { get; set; } public string reason { get; set; } }
         public class IdWrapperReportId { public Guid reportId { get; set; } }
         public class DeleteReportedPostModel { public Guid postId { get; set; } public Guid reportId { get; set; } }
     }

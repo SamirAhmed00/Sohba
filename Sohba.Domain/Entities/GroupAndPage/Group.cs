@@ -10,6 +10,7 @@ namespace Sohba.Domain.Entities.GroupAndPage
         public string Name { get; set; }
         public string Description { get; set; }
         public string? ImageUrl { get; set; }
+        public string? BackgroundImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // Navigation Properties

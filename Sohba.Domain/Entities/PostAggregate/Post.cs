@@ -26,6 +26,8 @@ namespace Sohba.Domain.Entities.PostAggregate
         // Optional Image URL
         public string ?ImageUrl { get; set; }
 
+        public string? ImageUrls { get; set; }
+
         // Navigation Properties
         public Guid? PageId { get; set; }
         public virtual Page Page { get; set; }

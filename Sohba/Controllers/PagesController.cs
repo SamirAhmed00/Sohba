@@ -272,12 +272,23 @@ namespace Sohba.Controllers
             }
             if (uploadResult.Value != null) imageUrl = uploadResult.Value;
 
+            string backgroundImageUrl = model.BackgroundImageUrl;
+            var backgroundUploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "pages");
+            if (!backgroundUploadResult.IsSuccess)
+            {
+                ModelState.AddModelError("BackgroundImageFile", backgroundUploadResult.Error);
+                return View(model);
+            }
+            if (backgroundUploadResult.Value != null) backgroundImageUrl = backgroundUploadResult.Value;
+
+
             var updateDto = new PageUpdateDto
             {
                 Id = model.Id,
                 Name = model.Name,
                 Description = model.Description,
-                ImageUrl = imageUrl
+                ImageUrl = imageUrl,
+                BackgroundImageUrl = backgroundImageUrl
             };
 
             var result = await _pageService.UpdatePageAsync(updateDto, userId);

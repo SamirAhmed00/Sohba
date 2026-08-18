@@ -18,12 +18,14 @@ namespace Sohba.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IStoryDomainService _storyDomainService;
+        private readonly INotificationService _notificationService;
 
-        public StoryService(IUnitOfWork unitOfWork, IMapper mapper, IStoryDomainService storyDomainService)
+        public StoryService(IUnitOfWork unitOfWork, IMapper mapper, IStoryDomainService storyDomainService, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _storyDomainService = storyDomainService;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<StoryResponseDto>> CreateStoryAsync(StoryCreateDto storyDto, Guid userId)
@@ -150,11 +152,12 @@ namespace Sohba.Application.Services
             // PRIVACY CHECK: Check if user is friends with story creator
             var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, story.UserId);
 
+            var owner = await _unitOfWork.Users.GetByIdAsync(story.UserId);
+            var isOwnerAccountPrivate = owner?.IsPrivateAccount ?? false;
+
             var canView = _storyDomainService.CanViewStory(
-                currentUserId,
-                story.UserId,
-                isFriend,  //  Now using actual friendship check
-                story.CreatedAt);
+                    currentUserId, story.UserId, story.Privacy, isOwnerAccountPrivate, isFriend, story.CreatedAt);
+
 
             if (!canView.IsSuccess)
                 return Result<StoryResponseDto>.Failure(canView.Error);
@@ -187,9 +190,12 @@ namespace Sohba.Application.Services
 
             if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
                 return Result.Failure("Story not found or expired.");
-            
+
             if (story.UserId == userId)
+            {
+                await _notificationService.MarkNotificationsByTargetAsReadAsync(userId, storyId);
                 return Result.Success();
+            }
 
             var alreadyViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(storyId, userId);
             if (!alreadyViewed)
@@ -228,6 +234,10 @@ namespace Sohba.Application.Services
                 var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(story.Id);
                 var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(story.Id, currentUserId);
 
+                var reactionsCount = await _unitOfWork.Stories.GetReactionCountAsync(story.Id);
+                var userReaction = await _unitOfWork.Stories.GetReactionAsync(story.Id, currentUserId);
+
+
                 result.Add(new StoryResponseDto
                 {
                     Id = story.Id,
@@ -241,11 +251,90 @@ namespace Sohba.Application.Services
                     ExpiresAt = story.ExpiresAt,
                     ViewersCount = viewersCount,
                     HasUserViewed = hasViewed,
-                    Privacy = story.Privacy.ToString()
+                    Privacy = story.Privacy.ToString(),
+                    ReactionsCount = reactionsCount,
+                    CurrentUserReacted = userReaction != null
                 });
             }
 
             return Result<IEnumerable<StoryResponseDto>>.Success(result);
+        }
+
+
+        public async Task<Result<(bool Added, int NewCount)>> ToggleStoryReactionAsync(Guid userId, Guid storyId, ReactionType type)
+        {
+            var story = await _unitOfWork.Stories.GetByIdAsync(storyId);
+            if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
+                return Result<(bool, int)>.Failure("Story not found or expired.");
+
+            // Reuse the same visibility check as viewing — you cannot react to a story you
+            // are not authorized to see.
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, story.UserId);
+            var owner = await _unitOfWork.Users.GetByIdAsync(story.UserId);
+            var canView = _storyDomainService.CanViewStory(
+                userId, story.UserId, story.Privacy, owner?.IsPrivateAccount ?? false, isFriend, story.CreatedAt);
+            if (!canView.IsSuccess)
+                return Result<(bool, int)>.Failure(canView.Error);
+
+            var existing = await _unitOfWork.Stories.GetReactionAsync(storyId, userId);
+            bool added;
+
+            if (existing != null)
+            {
+                _unitOfWork.Stories.RemoveReaction(existing);
+                added = false;
+            }
+            else
+            {
+                _unitOfWork.Stories.AddReaction(new StoryReaction
+                {
+                    Id = Guid.NewGuid(),
+                    StoryId = storyId,
+                    UserId = userId,
+                    Type = type,
+                    CreatedAt = DateTime.UtcNow
+                });
+                added = true;
+            }
+
+            await _unitOfWork.CompleteAsync();
+            var newCount = await _unitOfWork.Stories.GetReactionCountAsync(storyId);
+
+            if (added && story.UserId != userId)
+            {
+                var reactorName = owner != null ? (await _unitOfWork.Users.GetByIdAsync(userId))?.Name ?? "Someone" : "Someone";
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: story.UserId,
+                    message: $"{reactorName} reacted to your story",
+                    type: NotificationType.StoryLike,
+                    senderId: userId,
+                    targetId: storyId);
+            }
+
+            return Result<(bool, int)>.Success((added, newCount));
+        }
+
+        public async Task<Result<IEnumerable<StoryViewerDto>>> GetStoryViewersAsync(Guid storyId, Guid currentUserId)
+        {
+            var story = await _unitOfWork.Stories.GetByIdAsync(storyId);
+            if (story == null)
+                return Result<IEnumerable<StoryViewerDto>>.Failure("Story not found.");
+
+            // Backend-enforced ownership check — this is the actual authorization boundary,
+            // not just a UI decision.
+            if (story.UserId != currentUserId)
+                return Result<IEnumerable<StoryViewerDto>>.Failure("Only the story owner can view this information.");
+
+            var viewers = await _unitOfWork.Stories.GetViewersAsync(storyId);
+            var dtos = viewers.Select(v => new StoryViewerDto
+            {
+                UserId = v.UserId,
+                UserName = v.User?.Name ?? "Unknown",
+                ProfilePictureUrl = v.User?.ProfilePictureUrl,
+                ViewedAt = v.ViewedAt
+            });
+
+            return Result<IEnumerable<StoryViewerDto>>.Success(dtos);
         }
     }
 }

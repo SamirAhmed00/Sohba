@@ -13,6 +13,18 @@ namespace Sohba.Infrastructure.Repositories
     {
         public PostRepository(AppDbContext context) : base(context) { }
 
+        public override async Task<Post> GetByIdAsync(Guid id)
+        {
+            // GenericRepository.GetByIdAsync uses bare FindAsync (no Include), which left
+            // User/Group/Page unloaded here. PostResponseDto mapping requires User.Name
+            // (AuthorName), causing GetPostByIdAsync (Modal/Details/Edit) to throw and
+            // return nothing to the client — this fixes author name and image together.
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Include(p => p.Group)
+                .Include(p => p.Page)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
 
         public async Task<(IEnumerable<Post> Items, int TotalCount)> GetTimelineAsync(
             Guid userId,

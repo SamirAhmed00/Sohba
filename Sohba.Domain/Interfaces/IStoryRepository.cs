@@ -15,5 +15,12 @@ namespace Sohba.Domain.Interfaces
         Task DeleteExpiredStoriesAsync();
         Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId);
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
+
+        Task<IEnumerable<StoryViewer>> GetViewersAsync(Guid storyId);
+        Task<StoryReaction?> GetReactionAsync(Guid storyId, Guid userId);
+        Task<int> GetReactionCountAsync(Guid storyId);
+        void AddReaction(StoryReaction reaction);
+        void RemoveReaction(StoryReaction reaction);
+
     }
 }

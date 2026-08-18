@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" />
+	<PackageReference Include="SixLabors.ImageSharp" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>

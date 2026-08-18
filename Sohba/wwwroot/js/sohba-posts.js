@@ -475,3 +475,11 @@ window.SohbaApp.submitReply = window.submitReply;
 window.SohbaApp.toggleReplies = window.toggleReplies;
 window.SohbaApp.deleteComment = window.deleteComment;
 
+// Close any open reaction picker when clicking outside it or its toggle button —
+// mirrors the existing pattern used for notifDropdown/profileDropdown in header.js.
+document.addEventListener('click', function (e) {
+    if (e.target.closest('[id^="reaction-picker-"]') || e.target.closest('[data-like-button]')) {
+        return;
+    }
+    document.querySelectorAll('[id^="reaction-picker-"]').forEach(p => p.classList.add('hidden'));
+});

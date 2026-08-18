@@ -243,5 +243,19 @@ namespace Sohba.Application.Services
             await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
+
+        public async Task<Result> MarkNotificationsByTargetAsReadAsync(Guid receiverId, Guid targetId)
+        {
+            var notifications = await _unitOfWork.Notifications.GetByReceiverAndTargetAsync(receiverId, targetId);
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+                _unitOfWork.Notifications.Update(notification);
+            }
+
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
     }
 }

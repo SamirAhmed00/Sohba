@@ -97,6 +97,7 @@ async function loadMorePosts() {
                 const temp = document.createElement('div');
                 temp.innerHTML = result.html;
 
+                const spacingContainer = container.querySelector('.space-y-5') || container;
                 const uniqueCards = Array.from(temp.querySelectorAll('[data-post-id]')).filter(card => {
                     const id = card.dataset.postId;
                     if (!id || renderedPostIds.has(id)) return false;
@@ -105,7 +106,7 @@ async function loadMorePosts() {
                 });
 
                 if (uniqueCards.length > 0) {
-                    uniqueCards.forEach(card => container.appendChild(card));
+                    uniqueCards.forEach(card => spacingContainer.appendChild(card));
                 }
             }
             currentPage = result.currentPage ?? nextPage;

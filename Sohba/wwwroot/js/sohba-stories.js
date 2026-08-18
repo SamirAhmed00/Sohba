@@ -52,7 +52,17 @@ function showStory(index) {
         contentDiv.innerHTML = `<img src="${story.mediaUrl || 'https://via.placeholder.com/600'}" class="max-h-full max-w-full object-contain">`;
     }
 
-    // Mark as viewed
+
+    const currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+    const isOwner = currentUserId && story.userId === currentUserId;
+    document.getElementById('storyOwnerActions').classList.toggle('hidden', !isOwner);
+    document.getElementById('storyViewersTrigger').style.cursor = isOwner ? 'pointer' : 'default';
+    document.getElementById('storyViewersTrigger').onclick = isOwner ? openStoryViewersPanel : null;
+
+    // reaction state
+    document.getElementById('storyLikeCount').textContent = story.reactionsCount || 0;
+    document.getElementById('storyLikeIcon').textContent = story.currentUserReacted ? '❤️' : '🤍';
+
     fetch('/Stories/MarkAsViewed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,6 +102,91 @@ window.navigateStory = function (direction) {
         }
     }
 };
+
+
+
+// Delete
+window.deleteCurrentStory = function () {
+    const story = currentUserStories[currentStoryIndex];
+    if (!story) return;
+
+    window.showConfirmModal({
+        title: 'Delete Story',
+        message: 'Are you sure you want to delete this story? This cannot be undone.',
+        type: 'delete',
+        confirmText: 'Delete',
+        onConfirm: async () => {
+            const result = await SohbaApp.post('/Stories/Delete', { id: story.id });
+            if (result.success) {
+                SohbaApp.toast('Story deleted', 'success');
+                currentUserStories.splice(currentStoryIndex, 1);
+                if (currentUserStories.length === 0) {
+                    closeStoryViewer();
+                } else {
+                    showStory(Math.min(currentStoryIndex, currentUserStories.length - 1));
+                }
+            } else {
+                SohbaApp.toast(result.error || 'Failed to delete story', 'error');
+            }
+        }
+    });
+};
+
+// Like/unlike toggle
+window.toggleCurrentStoryLike = async function () {
+    const story = currentUserStories[currentStoryIndex];
+    if (!story) return;
+
+    const result = await SohbaApp.post('/Stories/React', { storyId: story.id, reactionType: 'Like' });
+    if (!result.success) {
+        SohbaApp.toast(result.error || 'Failed to react', 'error');
+        return;
+    }
+
+    story.currentUserReacted = result.action === 'added';
+    story.reactionsCount = result.newCount;
+    document.getElementById('storyLikeCount').textContent = result.newCount;
+    document.getElementById('storyLikeIcon').textContent = story.currentUserReacted ? '❤️' : '🤍';
+};
+
+// Owner-only viewers list
+window.openStoryViewersPanel = async function () {
+    const story = currentUserStories[currentStoryIndex];
+    if (!story) return;
+
+    const listEl = document.getElementById('storyViewersList');
+    listEl.innerHTML = '<p class="text-white/60 text-sm">Loading...</p>';
+    document.getElementById('storyViewersPanel').classList.remove('hidden');
+
+    const response = await fetch(`/Stories/GetStoryViewers?storyId=${story.id}`);
+    const result = await response.json();
+
+    if (!result.success) {
+        listEl.innerHTML = `<p class="text-white/60 text-sm">${result.error || 'Unable to load viewers.'}</p>`;
+        return;
+    }
+
+    const viewers = result.data || [];
+    listEl.innerHTML = viewers.length === 0
+        ? '<p class="text-white/60 text-sm">No views yet.</p>'
+        : viewers.map(v => `
+            <div class="flex items-center gap-3">
+                <img src="${v.profilePictureUrl || `https://ui-avatars.com/api/?name=${v.userName}&background=345e69&color=fff`}" class="w-9 h-9 rounded-full object-cover">
+                <span class="text-white text-sm">${v.userName}</span>
+            </div>`).join('');
+};
+
+window.closeStoryViewersPanel = function () {
+    document.getElementById('storyViewersPanel').classList.add('hidden');
+};
+
+
+
+
+
+
+
+
 
 // Close viewer
 window.closeStoryViewer = function () {

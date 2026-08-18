@@ -1,5 +1,6 @@
 ﻿using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -40,17 +41,18 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Failure("You are not authorized to delete this post.");
         }
 
-        public Result CanViewPost(Guid userId, Guid postOwnerId, bool isPrivate, bool isFriend)
+        public Result CanViewPost(Guid userId, Guid postOwnerId, PostPrivacy privacy, bool isFriend)
         {
             // Rule 1: Owner always sees their post
             if (userId == postOwnerId) return Result.Success();
 
-            // Rule 2: If public, anyone sees it
-            if (!isPrivate) return Result.Success();
+            // Rule 2: Public posts are visible to everyone
+            if (privacy == PostPrivacy.Public) return Result.Success();
 
-            // Rule 3: If private, only friends see it
-            if (isPrivate && isFriend) return Result.Success();
+            // Rule 3: Friends-only posts require friendship
+            if (privacy == PostPrivacy.Friends && isFriend) return Result.Success();
 
+            // Rule 4: Private ("Only Me") posts are visible only to the owner (Rule 1)
             return Result.Failure("This post is private.");
         }
 

@@ -63,8 +63,23 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty) return RedirectToAction("Login", "Auth");
 
             string imageUrl = null;
+            var imageUrls = new List<string>();
 
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            if (model.ImageFiles != null && model.ImageFiles.Any(f => f != null && f.Length > 0))
+            {
+                foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
+                {
+                    var uploadResult = await _fileStorage.SaveFileAsync(file, "posts");
+                    if (!uploadResult.IsSuccess)
+                    {
+                        ModelState.AddModelError("ImageFiles", uploadResult.Error);
+                        return View(model);
+                    }
+                    if (uploadResult.Value != null)
+                    imageUrls.Add(uploadResult.Value);
+                }
+            }
+            else if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
                 var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
                 if (!uploadResult.IsSuccess)
@@ -73,14 +88,20 @@ namespace Sohba.Controllers
                     return View(model);
                 }
                 imageUrl = uploadResult.Value;
+                if (imageUrl != null) imageUrls.Add(imageUrl);
             }
+
+            var isGroupOrPagePost = groupId.HasValue || pageId.HasValue;
 
             var dto = new PostCreateDto
             {
                 Title = model.Title,
                 Content = model.Content,
-                ImageUrl = imageUrl,
-                Privacy = model.Privacy
+                ImageUrl = imageUrl ?? imageUrls.FirstOrDefault(),
+                ImageUrls = imageUrls,
+                Privacy = isGroupOrPagePost
+                    ? PostPrivacy.Public
+                    : (model.IsPrivate ? PostPrivacy.Private : model.Privacy)
             };
 
             if (groupId.HasValue)
@@ -119,75 +140,7 @@ namespace Sohba.Controllers
             if (postResult.IsFailure)
                 return NotFound(new { success = false, error = postResult.Error });
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId);
-
-            //return Json(new
-            //{
-            //    success = true,
-            //    post = new
-            //    {
-            //        id = postResult.Value.Id,
-            //        title = postResult.Value.Title,
-            //        content = postResult.Value.Content,
-            //        imageUrl = postResult.Value.ImageUrl,
-            //        authorName = postResult.Value.AuthorName,
-            //        createdAt = postResult.Value.CreatedAt,
-            //        commentsCount = postResult.Value.CommentsCount,
-            //        reactionsCount = postResult.Value.ReactionsCount,
-            //        currentUserReaction = postResult.Value.CurrentUserReaction,
-            //        isSaved = postResult.Value.IsSaved,
-            //        isFavorite = postResult.Value.IsFavorite
-            //    },
-            //    comments = comments.Select(c => new
-            //    {
-            //        id = c.Id,
-            //        postId = c.PostId,
-            //        content = c.Content,
-            //        userName = c.UserName,
-            //        createdAt = c.CreatedAt,
-            //        parentCommentId = c.ParentCommentId,
-            //        replyCount = c.ReplyCount,
-            //        isAuthor = c.IsAuthor,
-            //        depth = c.Depth,
-            //        replies = (c.Replies ?? new List<CommentResponseDto>()).Select(r => new
-            //        {
-            //            id = r.Id,
-            //            postId = r.PostId,
-            //            content = r.Content,
-            //            userName = r.UserName,
-            //            createdAt = r.CreatedAt,
-            //            parentCommentId = r.ParentCommentId,
-            //            isAuthor = r.IsAuthor,
-            //            depth = r.Depth,
-            //            replyCount = r.ReplyCount,
-            //            replies = (r.Replies ?? new List<CommentResponseDto>()).Select(r2 => new
-            //            {
-            //                id = r2.Id,
-            //                postId = r2.PostId,
-            //                content = r2.Content,
-            //                userName = r2.UserName,
-            //                createdAt = r2.CreatedAt,
-            //                parentCommentId = r2.ParentCommentId,
-            //                isAuthor = r2.IsAuthor,
-            //                depth = r2.Depth,
-            //                replyCount = r2.ReplyCount,
-            //                replies = (r2.Replies ?? new List<CommentResponseDto>()).Select(r3 => new
-            //                {
-            //                    id = r3.Id,
-            //                    postId = r3.PostId,
-            //                    content = r3.Content,
-            //                    userName = r3.UserName,
-            //                    createdAt = r3.CreatedAt,
-            //                    parentCommentId = r3.ParentCommentId,
-            //                    isAuthor = r3.IsAuthor,
-            //                    depth = r3.Depth,
-            //                    replyCount = r3.ReplyCount,
-            //                    replies = new List<CommentResponseDto>()
-            //                })
-            //            })
-            //        })
-            //    })
-            //});
+            var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId);         
 
             return Json(new
             {
@@ -226,7 +179,7 @@ namespace Sohba.Controllers
 
             var post = result.Value;
 
-            if (!post.IsAuthor && !User.IsInRole("Admin"))
+            if (!post.IsAuthor)
                 return Forbid();
 
             //return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(PostUpdateDto));
@@ -255,6 +208,7 @@ namespace Sohba.Controllers
                 return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
 
             string imageUrl = model.ImageUrl;
+            string previousImageUrl = model.ImageUrl;
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
@@ -279,6 +233,12 @@ namespace Sohba.Controllers
 
             if (result.IsSuccess)
             {
+                if (!string.IsNullOrEmpty(previousImageUrl) &&
+                    !string.Equals(previousImageUrl, imageUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _fileStorage.DeleteFileAsync(previousImageUrl);
+                }
+
                 var updatedPost = await _postService.GetPostByIdAsync(model.Id, userId);
                 return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(updatedPost.Value));
             }

@@ -240,6 +240,7 @@ namespace Sohba.Application.Services
             page.Name = updateDto.Name;
             page.Description = updateDto.Description;
             page.ImageUrl = updateDto.ImageUrl ?? page.ImageUrl;
+            page.BackgroundImageUrl = updateDto.BackgroundImageUrl ?? page.BackgroundImageUrl;
 
             _unitOfWork.Pages.Update(page);
             await _unitOfWork.CompleteAsync();

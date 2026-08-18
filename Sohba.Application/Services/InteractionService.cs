@@ -54,7 +54,7 @@ namespace Sohba.Application.Services
                 return new List<CommentResponseDto>();
 
             var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
-            var canView = _postDomainService.CanViewPost(currentUserId, post.UserId, post.IsPrivate, isFriend);
+            var canView = _postDomainService.CanViewPost(currentUserId, post.UserId, post.Privacy, isFriend);
             if (!canView.IsSuccess)
                 return new List<CommentResponseDto>();
 

@@ -107,37 +107,29 @@
                 <div class="space-y-2">
                     <label asp-for="ImageFile" class="block text-sm font-semibold text-slate-700">Image (Optional)</label>
                     <div class="relative group">
-                        <input asp-for="ImageFile" type="file" accept="image/*" id="imageInput"
+                        <input asp-for="ImageFiles" type="file" accept="image/*" id="imageInput" multiple
                                class="w-full px-5 py-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl text-slate-600 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#345e69] file:text-white hover:file:bg-[#2a4b55] file:transition-all file:duration-200 cursor-pointer focus:outline-none focus:border-[#345e69] focus:bg-white transition-all duration-200" />
                         <p class="mt-2 text-xs text-slate-500 flex items-center gap-1">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Supported: JPG, PNG, GIF, WEBP • Max: 5MB
+                            Supported: JPG, PNG, GIF, WEBP • Max: 5MB per image • Multiple images allowed
                         </p>
                     </div>
-                    <span asp-validation-for="ImageFile" class="text-xs text-red-500 font-medium"></span>
+                    <span asp-validation-for="ImageFiles" class="text-xs text-red-500 font-medium"></span>
                 </div>
 
                 <!-- Image Preview -->
                 <div id="previewContainer" class="hidden space-y-2 animate-fade-in">
                     <label class="block text-sm font-semibold text-slate-700">Preview</label>
-                    <div class="relative inline-block group">
-                        <img id="imagePreview" src="" alt="Preview" class="max-h-72 rounded-2xl shadow-lg border border-slate-200 object-cover" />
-                        <button type="button" onclick="removeImage()"
-                                class="absolute -top-3 -right-3 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200 group-hover:animate-bounce-subtle">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+                    <div id="imagePreviewGrid" class="flex flex-wrap gap-2"></div>
                 </div>
 
                 <!-- Actions Bar -->
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-slate-100">
 
                     <!-- Privacy Toggle -->
-                    <label class="flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-xl hover:bg-slate-50 transition-colors">
+                    <label class="@(string.IsNullOrEmpty(groupId) && string.IsNullOrEmpty(pageId) ? "flex" : "hidden") items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-xl hover:bg-slate-50 transition-colors">
                         <div class="relative">
                             <input asp-for="IsPrivate" type="checkbox" class="peer sr-only" />
                             <div class="w-12 h-7 bg-slate-200 peer-focus:ring-4 peer-focus:ring-[#345e69]/20 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all after:shadow-sm peer-checked:bg-[#345e69]"></div>
@@ -149,7 +141,7 @@
                     </label>
 
                     <!-- Buttons -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 sm:ml-auto">
                         <a asp-action="Index" asp-controller="Home"
                            class="px-6 py-3 bg-white border-2 border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all duration-200 flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,37 +187,34 @@
         }
 
         // Image Preview Handler
+        const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+
         imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) { hidePreview(); return; }
 
-            if (!file) {
-                hidePreview();
-                return;
-            }
-
-            // Validation
-            const maxSize = 5 * 1024 * 1024; // 5MB
+            const maxSize = 5 * 1024 * 1024;
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-            if (file.size > maxSize) {
-                showError('File size must be less than 5MB');
-                imageInput.value = '';
-                return;
+            for (const file of files) {
+                if (file.size > maxSize) { showError('Each image must be less than 5MB'); imageInput.value = ''; hidePreview(); return; }
+                if (!allowedTypes.includes(file.type)) { showError('Please select valid image files (JPG, PNG, GIF, or WEBP)'); imageInput.value = ''; hidePreview(); return; }
             }
 
-            if (!allowedTypes.includes(file.type)) {
-                showError('Please select a valid image file (JPG, PNG, GIF, or WEBP)');
-                imageInput.value = '';
-                return;
-            }
+            imagePreviewGrid.innerHTML = '';
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const img = document.createElement('img');
+                    img.src = ev.target.result;
+                    img.alt = 'Preview';
+                    img.className = 'max-h-40 rounded-2xl shadow-lg border border-slate-200 object-cover';
+                    imagePreviewGrid.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
 
-            // Read and display
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                showPreview();
-            };
-            reader.readAsDataURL(file);
+            showPreview();
         });
 
         function showPreview() {
@@ -235,13 +224,10 @@
 
         function hidePreview() {
             previewContainer.classList.add('hidden');
-            imagePreview.src = '';
+            if (imagePreviewGrid) imagePreviewGrid.innerHTML = '';
         }
 
-        function removeImage() {
-            imageInput.value = '';
-            hidePreview();
-        }
+        function removeImage() { imageInput.value = ''; hidePreview(); }
 
         function showError(message) {
             // Create temporary error toast

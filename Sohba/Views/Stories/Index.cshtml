@@ -43,7 +43,7 @@
                     <!-- Time -->
                     <div class="absolute top-4 right-4">
                         <span class="text-white/80 text-sm bg-black/30 px-3 py-1 rounded-full">
-                            @((DateTime.Now - story.CreatedAt).TotalHours.ToString("0"))h ago
+                               @((DateTime.UtcNow - story.CreatedAt).TotalHours.ToString("0"))h ago
                         </span>
                     </div>
                 </div>

@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.Json;
 
 namespace Sohba.Application.Mappings
 {
@@ -27,7 +28,7 @@ namespace Sohba.Application.Mappings
             CreateMap<User, UserResponseDto>();
 
             // --- Post Mapping ---
-            CreateMap<PostCreateDto, Post>();
+            CreateMap<PostCreateDto, Post>().ForMember(dest => dest.ImageUrls, opt => opt.Ignore());
             CreateMap<PostUpdateDto, Post>();
             CreateMap<Post, PostResponseDto>()
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
@@ -37,7 +38,8 @@ namespace Sohba.Application.Mappings
                 .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
                     src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
                     src.SourceType == PostSourceType.Page && src.Page != null ? src.Page.Name :
-                    null));
+                    null))
+                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => DeserializePostImageUrls(src.ImageUrls)));
 
             // --- Comment Mapping ---
             CreateMap<CommentRequestDto, Comment>();
@@ -145,6 +147,22 @@ namespace Sohba.Application.Mappings
                 .ForMember(dest => dest.NotificationType, opt => opt.MapFrom(src => src.Type.ToString()))
                 .ForMember(dest => dest.SenderName, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.Name : "System"))
                 .ForMember(dest => dest.SenderProfilePicture, opt => opt.MapFrom(src => src.Sender != null ? src.Sender.ProfilePictureUrl : null));
+
+
+    
+        }
+        // --- Helper Class ---
+        private static List<string> DeserializePostImageUrls(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new List<string>();
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+            }
+            catch
+            {
+                return new List<string>();
+            }
         }
     }
 }

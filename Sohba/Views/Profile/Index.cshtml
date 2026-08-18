@@ -8,15 +8,24 @@
     <!-- Cover & Profile Header -->
     <div class="relative mb-20">
         <!-- Cover Image -->
-        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden">
-            <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden @(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? "cursor-pointer" : "")"
+             @(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? $"onclick=\"SohbaApp.openImageLightbox('{Model.Profile.BackgroundImageUrl}')\"" : "")>
+            @if (!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl))
+            {
+                <img src="@Model.Profile.BackgroundImageUrl" class="w-full h-full object-cover" alt="Profile background" />
+            }
+            else
+            {
+                <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' ...');"></div>
+            }
         </div>
 
         <!-- Profile Picture -->
         <div class="absolute -bottom-12 left-8">
             <div class="relative">
                 <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")"
-                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl" />
+                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl cursor-pointer"
+                     onclick="SohbaApp.openImageLightbox('@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")')" />
                 @if (Model.IsOwnProfile)
                 {
                     <button class="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
@@ -25,6 +34,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </button>
+                }
+                @if (Model.HasActiveStory)
+                {
+                    <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#345e69] text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap cursor-pointer"
+                          onclick="openStoryViewer('@Model.Profile.Id')">
+                        View Story
+                    </span>
                 }
             </div>
         </div>

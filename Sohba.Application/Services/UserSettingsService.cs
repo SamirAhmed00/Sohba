@@ -53,12 +53,6 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result.Failure("User not found");
 
-            user.Name = settings.Name;
-            user.Bio = settings.Bio;
-            user.ProfilePictureUrl = settings.ProfilePictureUrl;
-           
-            
-            //   Update privacy settings
             user.IsPrivateAccount = settings.IsPrivateAccount;
             user.ShowActivityStatus = settings.ShowActivityStatus;
             user.EmailNotifications = settings.EmailNotifications;
@@ -69,8 +63,6 @@ namespace Sohba.Application.Services
             if (!result.Succeeded)
                 return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-
-            // TODO: Update other settings in settings table
 
             return Result.Success();
         }

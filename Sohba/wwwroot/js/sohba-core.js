@@ -18,10 +18,9 @@ window.SohbaApp.toast = function (message, type = 'info') {
     toast.setAttribute('role', 'status');
     toast.setAttribute('aria-live', 'polite');
     toast.setAttribute('aria-atomic', 'true');
-    toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded-lg text-white shadow-lg z-[10000] transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`;
+    toast.className = `px-4 py-2 rounded-lg text-white shadow-lg transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`;
     toast.textContent = message;
-    container.appendChild(toast);
-    // document.body.appendChild(toast);
+    container.appendChild(toast);    
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
@@ -183,3 +182,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+
+
+// Simple, reusable image lightbox — reuses the same fixed-overlay custom-modal
+// pattern established by _ConfirmModal.cshtml / other Sohba modals, no new UI library.
+window.SohbaApp.openImageLightbox = function (url) {
+    if (!url) return;
+    const modal = document.getElementById('imageLightbox');
+    const img = document.getElementById('imageLightboxImg');
+    if (!modal || !img) return;
+    img.src = url;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.SohbaApp.closeImageLightbox = function () {
+    const modal = document.getElementById('imageLightbox');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};

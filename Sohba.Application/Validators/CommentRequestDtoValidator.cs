@@ -9,8 +9,8 @@ namespace Sohba.Application.Validators
         {
             RuleFor(x => x.Content)
                 .NotEmpty().WithMessage("Comment cannot be empty.")
-                .MaximumLength(500).WithMessage("Comment cannot exceed 500 characters.");
-            
+                .MaximumLength(1000).WithMessage("Comment cannot exceed 1000 characters.");
+
             RuleFor(x => x.PostId)
                 .NotEmpty().WithMessage("Post ID is required.");
         }

@@ -83,7 +83,9 @@
             {
                 var menuId = $"menu-{post.Id}";
                 var timeAgo = GetTimeAgo(post.CreatedAt);
-                var hasImage = !string.IsNullOrEmpty(post.ImageUrl);
+                var images = (post.ImageUrls != null && post.ImageUrls.Any())
+                    ? post.ImageUrls
+                    : (!string.IsNullOrEmpty(post.ImageUrl) ? new List<string> { post.ImageUrl } : new List<string>());
 
                 <article class="bg-white rounded-3xl border border-slate-200 overflow-hidden" data-post-id="@post.Id" data-reactions="@post.ReactionsCount">
 
@@ -251,16 +253,32 @@
                     </div>
 
                     @* Media *@
-                    @if (hasImage)
+                    @if (images.Any())
                     {
                         <div class="mt-2 bg-slate-100 cursor-pointer" onclick="SohbaApp.openPostModal('@post.Id')">
-                            <div class="aspect-[16/9] overflow-hidden">
-                                <img src="@post.ImageUrl" 
-                                    class="post-image w-full h-full object-cover" 
-                                    alt="Post image" 
-                                    loading="lazy"
-                                     onerror="this.style.display='none'">
-                            </div>
+                            @if (images.Count == 1)
+                            {
+                                <div class="aspect-[16/9] overflow-hidden">
+                                    <img src="@images[0]" class="post-image w-full h-full object-cover" alt="Post image" loading="lazy" onerror="this.style.display='none'">
+                                </div>
+                             }
+                            else
+                            {
+                                <div class="grid grid-cols-2 gap-0.5">
+                                    @foreach (var (img, idx) in images.Take(4).Select((u, i) => (u, i)))
+                                    {
+                                        <div class="aspect-square overflow-hidden relative">
+                                            <img src="@img" class="post-image w-full h-full object-cover" alt="Post image" loading="lazy" onerror="this.style.display='none'">
+                                            @if (idx == 3 && images.Count > 4)
+                                            {
+                                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl">
+                                                    @(images.Count - 4)
+                                                </div>
+                                            }
+                                        </div>
+                                     }
+                                </div>
+                            }
                         </div>
                     }
 

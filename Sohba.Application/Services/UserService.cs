@@ -72,7 +72,10 @@ namespace Sohba.Application.Services
             if (!validation.IsSuccess)
                 return Result<bool>.Failure(validation.Error);
 
-            _mapper.Map(updateDto, user);
+            user.Name = updateDto.Name;
+            user.Bio = updateDto.Bio;
+            user.ProfilePictureUrl = updateDto.ProfilePictureUrl;
+            user.BackgroundImageUrl = updateDto.BackgroundImageUrl;
 
             _unitOfWork.Users.Update(user);
             var affectedRows = await _unitOfWork.CompleteAsync();

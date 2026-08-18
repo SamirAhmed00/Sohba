@@ -22,14 +22,16 @@ namespace Sohba.Controllers
         private readonly IUserSettingsService _userSettingsService;
         private readonly IFriendshipService _friendshipService;
         private readonly IFileStorageService _fileStorage;
+        private readonly IStoryService _storyService;
 
-        public ProfileController(IUserService userService, IPostService postService, IUserSettingsService userSettingsService, IFriendshipService friendshipService, IFileStorageService fileStorage)
+        public ProfileController(IUserService userService, IPostService postService, IUserSettingsService userSettingsService, IFriendshipService friendshipService, IFileStorageService fileStorage, IStoryService storyService)
         {
             _userService = userService;
             _postService = postService;
             _userSettingsService = userSettingsService;
             _friendshipService = friendshipService;
             _fileStorage = fileStorage;
+            _storyService = storyService;
         }
 
 
@@ -79,6 +81,9 @@ namespace Sohba.Controllers
             var isBlocked = currentUserId != profileUserId &&
                    await _friendshipService.IsBlockedAsync(currentUserId, profileUserId);
 
+            var storiesResult = await _storyService.GetUserStoriesAsync(profileUserId, currentUserId);
+            var hasActiveStory = storiesResult.IsSuccess && storiesResult.Value.Any();
+
             var viewModel = new ProfileViewModel
             {
                 Profile = profileResult.Value,
@@ -87,7 +92,8 @@ namespace Sohba.Controllers
                 IsOwnProfile = profileUserId == currentUserId,
                 CanViewFriends = canViewFriends,
                 IsBlocked = isBlocked,
-                FriendshipStatus = friendshipStatus
+                FriendshipStatus = friendshipStatus,
+                HasActiveStory = hasActiveStory
             };
 
             return View(viewModel);
@@ -105,7 +111,8 @@ namespace Sohba.Controllers
             {
                 Name = result.Value.Name,
                 Bio = result.Value.Bio,
-                ProfilePictureUrl = result.Value.ProfilePictureUrl
+                ProfilePictureUrl = result.Value.ProfilePictureUrl,
+                BackgroundImageUrl = result.Value.BackgroundImageUrl
             };
 
             return View(viewModel);
@@ -122,7 +129,8 @@ namespace Sohba.Controllers
             {
                 Name = model.Name,
                 Bio = model.Bio,
-                ProfilePictureUrl = model.ProfilePictureUrl
+                ProfilePictureUrl = model.ProfilePictureUrl,
+                BackgroundImageUrl = model.BackgroundImageUrl
             };
 
             // Persist any new uploaded image through IFileStorageService
@@ -134,6 +142,19 @@ namespace Sohba.Controllers
                 else
                     ModelState.AddModelError("ProfileImageFile", uploadResult.Error);
             }
+
+            // Persist any new uploaded background/banner image through the same storage service.
+            if (model.BackgroundImageFile != null && model.BackgroundImageFile.Length > 0)
+            {
+                var uploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "profiles");
+                if (uploadResult.IsSuccess)
+                    dto.BackgroundImageUrl = uploadResult.Value;
+                else
+                    ModelState.AddModelError("BackgroundImageFile", uploadResult.Error);
+            }
+
+            if (!ModelState.IsValid)
+                return View(model);
 
             var result = await _userService.UpdateProfileAsync(userId, dto);
 

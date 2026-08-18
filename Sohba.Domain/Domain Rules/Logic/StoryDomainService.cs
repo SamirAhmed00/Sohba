@@ -1,5 +1,6 @@
 ﻿using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,19 +22,25 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        public Result CanViewStory(Guid viewerId, Guid creatorId, bool isFriend, DateTime createdAt)
+        public Result CanViewStory(Guid viewerId, Guid creatorId, StoryPrivacy privacy, bool isCreatorAccountPrivate, bool isFriend, DateTime createdAt)
         {
-            // Rule 1: Check expiration
             if (IsStoryExpired(createdAt))
                 return Result.Failure("This story has expired.");
 
-            // Rule 2: Privacy (assuming stories are for friends only or owner)
             if (viewerId == creatorId) return Result.Success();
 
-            if (!isFriend)
-                return Result.Failure("You must be friends to view this story.");
+            if (isCreatorAccountPrivate)
+            {
+                return isFriend
+                    ? Result.Success()
+                    : Result.Failure("This account is private. You must be friends to view this story.");
+            }
 
-            return Result.Success();
+            if (privacy == StoryPrivacy.Public) return Result.Success();
+
+            if (privacy == StoryPrivacy.FriendsOnly && isFriend) return Result.Success();
+
+            return Result.Failure("You must be friends to view this story.");
         }
 
         public Result CanReplyToStory(Guid userId, bool isCreatorAcceptingReplies, bool isExpired)

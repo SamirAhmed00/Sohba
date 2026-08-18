@@ -12,5 +12,8 @@ namespace Sohba.Application.DTOs.UserAggregate
         
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
+
+        public string? BackgroundImageUrl { get; set; }
+        
     }
 }

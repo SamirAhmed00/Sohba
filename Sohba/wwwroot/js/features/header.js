@@ -8,7 +8,8 @@ function getNotificationIcon(type) {
         'PostComment': '💬',
         'FriendRequest': '👥',
         'GroupInvitation': '👪',
-        'SystemAlert': '🔔'
+        'SystemAlert': '🔔',
+        'StoryLike': '⭐'
     };
     return icons[type] || '📢';
 }
@@ -299,6 +300,8 @@ function initNotificationSystem() {
 
     updateNotificationCount();
     setInterval(updateNotificationCount, 30000);
+
+    initializeSignalR();
 
     notifBtn.addEventListener('click', function (e) {
         e.stopPropagation();

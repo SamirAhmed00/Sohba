@@ -26,5 +26,7 @@ namespace Sohba.Application.Interfaces
         // Delete
         Task<Result> DeleteNotificationAsync(Guid notificationId, Guid userId);
         Task<Result> DeleteOldNotificationsAsync(int daysOld = 30);
+
+        Task<Result> MarkNotificationsByTargetAsReadAsync(Guid receiverId, Guid targetId);
     }
 }

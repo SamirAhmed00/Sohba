@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace Sohba.Application.Services
 {
@@ -118,6 +119,13 @@ namespace Sohba.Application.Services
             post.UserId = userId;
             post.CreatedAt = DateTime.UtcNow;
 
+            if (postDto.ImageUrls != null && postDto.ImageUrls.Any())
+            {
+                post.ImageUrls = JsonSerializer.Serialize(postDto.ImageUrls);
+                if (string.IsNullOrEmpty(post.ImageUrl))
+                   post.ImageUrl = postDto.ImageUrls.First();
+            }
+
             if (postDto.SourceId.HasValue)
             {
                 post.SourceType = postDto.SourceType;
@@ -174,7 +182,7 @@ namespace Sohba.Application.Services
             var canView = _postDomainService.CanViewPost(
                 currentUserId,
                 post.UserId,
-                post.IsPrivate,
+                post.Privacy,
                 isFriend
             );
 
@@ -332,7 +340,7 @@ namespace Sohba.Application.Services
                 var canView = _postDomainService.CanViewPost(
                     currentUserId,
                     post.UserId,
-                    post.IsPrivate,
+                    post.Privacy,
                     isFriend
                 );
 

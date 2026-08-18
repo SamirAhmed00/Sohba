@@ -12,5 +12,7 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Notification>> GetByReceiverPagedAsync(Guid userId, int page, int pageSize);
 
         Task<IEnumerable<Notification>> GetOldReadNotificationsAsync(DateTime cutoffDate);
+
+        Task<IEnumerable<Notification>> GetByReceiverAndTargetAsync(Guid receiverId, Guid targetId);
     }
 }

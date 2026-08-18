@@ -1,4 +1,5 @@
 ﻿using Sohba.Domain.Common;
+using Sohba.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
     public interface IStoryDomainService
     {
         Result CanCreateStory(Guid userId, bool hasMedia, int dailyStoryLimit, int currentStoryCount);
-        Result CanViewStory(Guid viewerId, Guid creatorId, bool isFriend, DateTime createdAt);
+        Result CanViewStory(Guid viewerId, Guid creatorId, StoryPrivacy privacy, bool isCreatorAccountPrivate, bool isFriend, DateTime createdAt);
         Result CanReplyToStory(Guid userId, bool isCreatorAcceptingReplies, bool isExpired);
 
         // Logic check for expiration
