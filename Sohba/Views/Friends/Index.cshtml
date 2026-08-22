@@ -100,27 +100,39 @@
 
 @section Scripts {
     <script>
-        async function unfriend(userId) {
-            if (!confirm('Are you sure you want to remove this friend?')) return;
-            
-            const result = await SohbaApp.post('/Friends/Unfriend', { friendId: userId });
-            if (result.success) {
-                SohbaApp.toast('Friend removed', 'success');
-                location.reload();
-            } else {
-                SohbaApp.toast(result.error || 'Failed to remove friend', 'error');
-            }
+        function unfriend(userId) {
+            window.showConfirmModal({
+                title: 'Remove Friend',
+                message: 'Are you sure you want to remove this friend?',
+                type: 'warning',
+                confirmText: 'Remove',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/Unfriend', { friendId: userId });
+                    if (result.success) {
+                        SohbaApp.toast('Friend removed', 'success');
+                        location.reload();
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to remove friend', 'error');
+                    }
+                }
+            });
         }
-        async function blockUser(userId) {
-            if (!confirm('Are you sure you want to block this user? They will be removed from your friends list.')) return;
-
-            const result = await SohbaApp.post('/Friends/BlockUser', { userId });
-            if (result.success) {
-                SohbaApp.toast('User blocked', 'success');
-                location.reload();
-            } else {
-                SohbaApp.toast(result.error || 'Failed to block user', 'error');
-            }
+        function blockUser(userId) {
+            window.showConfirmModal({
+                title: 'Block User',
+                message: 'Are you sure you want to block this user? They will be removed from your friends list.',
+                type: 'warning',
+                confirmText: 'Block',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+                    if (result.success) {
+                        SohbaApp.toast('User blocked', 'success');
+                        location.reload();
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to block user', 'error');
+                    }
+                }
+            });
         }
 
 

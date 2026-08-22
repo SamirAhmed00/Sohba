@@ -1,0 +1,41 @@
+{
+    "output": {
+        "filePath": "repomix-output.xml",
+        "style": "xml",
+        "directoryStructure": true,
+        "fileSummary": true
+    },
+    "ignore": {
+        "useGitignore": true,
+        "useDefaultPatterns": true,
+        "customPatterns": [
+            "**/node_modules/**",
+            "**/bin/**",
+            "**/obj/**",
+            "**/.git/**",
+            "**/.vs/**",
+            "**/.kilo/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/coverage/**",
+            "**/*.user",
+            "**/*.suo",
+            "**/*.pdb",
+            "**/*.dll",
+            "**/*.exe",
+            "**/*.zip",
+            "**/*.7z",
+            "**/*.rar",
+            "**/*.png",
+            "**/*.jpg",
+            "**/*.jpeg",
+            "**/*.gif",
+            "**/*.webp",
+            "**/wwwroot/js/uikit.min.js",
+            "**/wwwroot/js/simplebar.js",
+            "**/wwwroot/syntax-highlighter/**",
+            "**/wwwroot/lib/**",
+            "**/Migrations/**"
+        ]
+    }
+}
