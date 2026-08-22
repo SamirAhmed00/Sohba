@@ -75,7 +75,7 @@ namespace Sohba.Application.Mappings
             // --- Post Report Mapping ---
             CreateMap<PostReportRequestDto, PostReport>();
             CreateMap<PostReport, PostReportResponseDto>()
-                .ForMember(dest => dest.ReporterName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.ReporterName, opt => opt.MapFrom(src => src.User != null ? src.User.Name : "Anonymous"))
                 .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.Reason.ToString()));
 
             // --- Saved Post Mapping ---

@@ -12,6 +12,12 @@ namespace Sohba.Infrastructure.Repositories
     {
         public ReportingRepository(AppDbContext context) : base(context) { }
 
+        public override async Task<IEnumerable<PostReport>> GetAllAsync() 
+        { 
+            return await _context.Set<PostReport>() 
+                .Include(r => r.User) 
+                .ToListAsync(); 
+        } 
         public async Task<bool> HasUserReportedEntityAsync(Guid userId, Guid entityId)
         {
             return await _context.Set<PostReport>()
@@ -32,6 +38,7 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<PostReport>> GetRecentPendingAsync(int count)
         {
             return await _context.Set<PostReport>()
+                .Include(r => r.User)
                 .Where(r => !r.IsResolved)
                 .OrderByDescending(r => r.ReportedAt)
                 .Take(count)

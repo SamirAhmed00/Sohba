@@ -18,7 +18,7 @@ namespace Sohba.Application.Interfaces
 
 
         Task<Result<GroupResponseDto>> CreateGroupAsync(GroupCreateDto groupDto, Guid adminId);
-        Task<Result<bool>> DeleteGroupAsync(Guid groupId, Guid userId);
+        Task<Result<bool>> DeleteGroupAsync(Guid groupId, Guid userId, string reason);
         Task<Result<GroupResponseDto>> UpdateGroupAsync(GroupUpdateDto updateDto, Guid userId);
         Task<Result<IEnumerable<GroupResponseDto>>> GetRecommendedGroupsAsync(Guid userId, int count = 5);
 
@@ -30,5 +30,10 @@ namespace Sohba.Application.Interfaces
         // Administrative Actions
         Task<Result<bool>> KickMemberAsync(Guid groupId, Guid targetUserId, Guid adminId);
         Task<Result<int>> GetGroupsCountAsync();
+
+        Task<Result<bool>> PromoteMemberAsync(Guid groupId, Guid targetUserId, Guid actionUserId);
+        Task<Result<bool>> AddMemberAsync(Guid groupId, Guid targetUserId, Guid adminId);
+        Task<string> GetUserRoleInGroupAsync(Guid groupId, Guid userId);
+        Task<Result<bool>> IsMemberAsync(Guid groupId, Guid userId);
     }
 }

@@ -47,6 +47,11 @@ namespace Sohba.Infrastructure.Repositories
             _context.Reactions.Add(reaction);
         }
 
+        public void RemoveCollection(SavedCollection collection)
+        {
+            _context.Set<SavedCollection>().Remove(collection);
+        }
+
         public void RemoveReaction(Reaction reaction)
         {
             _context.Reactions.Remove(reaction);

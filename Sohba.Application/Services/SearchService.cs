@@ -25,14 +25,29 @@ namespace Sohba.Application.Services
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
                 return Result<SearchResultDto>.Success(new SearchResultDto());
 
-            var posts = await _unitOfWork.Posts.SearchPostsAsync(query, currentUserId, 5);
-            var users = await _unitOfWork.Users.SearchUsersAsync(query, currentUserId, 5);
-            var groups = await _unitOfWork.Groups.SearchGroupsAsync(query, 5);
-            var pages = await _unitOfWork.Pages.SearchPagesAsync(query, 5);
+            var term = query.Trim();
+            List<PostSearchResultDto> postDtos;
+
+            if (term.StartsWith("#") && term.Length > 1)
+            {
+                var tag = term.TrimStart('#').Trim();
+                var hashtagPosts = await _unitOfWork.Posts.GetPostsByHashtagAsync(tag);
+                postDtos = _mapper.Map<List<PostSearchResultDto>>(hashtagPosts.Take(5));
+                term = tag;
+            }
+            else
+            {
+                var posts = await _unitOfWork.Posts.SearchPostsAsync(term, currentUserId, 5);
+                postDtos = _mapper.Map<List<PostSearchResultDto>>(posts);
+            }
+
+            var users = await _unitOfWork.Users.SearchUsersAsync(term, currentUserId, 5);
+            var groups = await _unitOfWork.Groups.SearchGroupsAsync(term, 5);
+            var pages = await _unitOfWork.Pages.SearchPagesAsync(term, 5);
 
             var result = new SearchResultDto
             {
-                Posts = _mapper.Map<List<PostSearchResultDto>>(posts),
+                Posts = postDtos,
                 Users = _mapper.Map<List<UserSearchResultDto>>(users),
                 Groups = _mapper.Map<List<GroupSearchResultDto>>(groups),
                 Pages = _mapper.Map<List<PageSearchResultDto>>(pages)

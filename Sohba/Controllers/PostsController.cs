@@ -23,24 +23,35 @@ namespace Sohba.Controllers
         private readonly IInteractionService _interactionService;
         private readonly IHashtagService _hashtagService;
         private readonly IFileStorageService _fileStorage;
+        private readonly IGroupService _groupService;
 
         public PostsController(
             IPostService postService,
             IInteractionService interactionService,
             IReportingService reportingService,
             IHashtagService hashtagService,
-            IFileStorageService fileStorage)
+            IFileStorageService fileStorage,
+            IGroupService groupService)
         {
             _postService = postService;
             _interactionService = interactionService;
             _reportingService = reportingService;
             _hashtagService = hashtagService;
             _fileStorage = fileStorage;
+            _groupService = groupService;
         }
 
         [HttpGet]
-        public IActionResult Create(Guid? groupId = null, Guid? pageId = null)
+        public async Task<IActionResult> Create(Guid? groupId = null, Guid? pageId = null)
         {
+            if (groupId.HasValue)
+            {
+                
+                var isMemberResult = await _groupService.IsMemberAsync(groupId.Value, GetCurrentUserId());
+                if (!isMemberResult.IsSuccess || !isMemberResult.Value)
+                    return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+            }
+
             ViewBag.GroupId = groupId;
             ViewBag.PageId = pageId;
             return View();
@@ -140,7 +151,8 @@ namespace Sohba.Controllers
             if (postResult.IsFailure)
                 return NotFound(new { success = false, error = postResult.Error });
 
-            var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId);         
+            var comments = await _interactionService.GetCommentsByPostIdAsync(postId, userId, User.IsInRole("Admin"));
+
 
             return Json(new
             {
@@ -321,8 +333,18 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Comment([FromBody] CommentRequestDto request)
         {
-            if (request == null || request.PostId == Guid.Empty || string.IsNullOrWhiteSpace(request.Content))
-                return BadRequest(new { success = false, error = "Invalid data." });
+            if (request == null)
+                return BadRequest(new { success = false, error = "Invalid request." });
+
+            if (request.PostId == Guid.Empty)
+                return BadRequest(new { success = false, error = "Post ID is required." });
+
+            if (string.IsNullOrWhiteSpace(request.Content))
+                return BadRequest(new { success = false, error = "Comment cannot be empty." });
+
+            if (request.Content.Length > 1000)
+                return BadRequest(new { success = false, error = "Comment cannot exceed 1000 characters." });
+
 
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty)
@@ -338,7 +360,7 @@ namespace Sohba.Controllers
             if (!result.IsSuccess)
                 return Json(new { success = false, error = result.Error });
             var latestCommentId = result.Value;
-            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId, userId);
+            var comments = await _interactionService.GetCommentsByPostIdAsync(request.PostId, userId, User.IsInRole("Admin"));
 
             // Find the newly created comment anywhere in the recursive tree (levels 1-4).
             CommentResponseDto latest = null;
@@ -421,6 +443,19 @@ namespace Sohba.Controllers
                 return Json(BaseResponseDto.FailureResponse(result.Error));
 
             return Json(BaseResponseDto<SavedCollectionDto>.SuccessResponse(result.Value));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCollection([FromBody] DeleteSavedCollectionRequestDto request)
+        {
+            var userId = GetCurrentUserId();
+            if (request == null || request.CollectionId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request."));
+            var result = await _interactionService.DeleteCollectionAsync(userId, request.CollectionId);
+            if (!result.IsSuccess)
+                return Json(BaseResponseDto.FailureResponse(result.Error));
+            return Json(new { success = true });
         }
 
         [HttpPost]

@@ -43,7 +43,7 @@ namespace Sohba.Application.Services
 
             //  PRIVACY CHECK: Verify user can view this profile
             var isFriend = await _friendshipRepository.AreFriendsAsync(currentUserId, userId);
-            var isBlocked = await _friendshipRepository.IsUserBlockedAsync(currentUserId, userId);
+            var isBlocked = await _friendshipRepository.IsBlockedEitherDirectionAsync(currentUserId, userId);
 
             var isPrivateAccount = user.IsPrivateAccount; 
 
@@ -97,6 +97,7 @@ namespace Sohba.Application.Services
                 return Result<bool>.Failure("User not found");
 
             user.IsDeleted = true;
+            user.IsActive = false;
             _unitOfWork.Users.Update(user);
             await _unitOfWork.CompleteAsync();
 
@@ -112,13 +113,11 @@ namespace Sohba.Application.Services
             switch (status.ToLower())
             {
                 case "active":
-                    filteredUsers = allUsers.Where(u => !u.IsDeleted);
+                    filteredUsers = allUsers.Where(u => !u.IsDeleted && !u.IsBlocked);
                     break;
 
                 case "blocked":
-                    var allBlocked = await _unitOfWork.Friendships.GetAllBlockedAsync();
-                    var blockedIds = allBlocked.Select(b => b.FriendUserId).Distinct().ToList();
-                    filteredUsers = allUsers.Where(u => blockedIds.Contains(u.Id));
+                    filteredUsers = allUsers.Where(u => u.IsBlocked);
                     break;
 
                 default:
@@ -165,6 +164,28 @@ namespace Sohba.Application.Services
             _unitOfWork.Users.Update(user);
             await _unitOfWork.CompleteAsync();
 
+            return Result.Success();
+        }
+
+        public async Task<Result> BlockUserAccountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("User not found.");
+
+            user.IsBlocked = true;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+
+        public async Task<Result> UnblockUserAccountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("User not found.");
+
+            user.IsBlocked = false;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
     }

@@ -35,16 +35,12 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @if (ViewBag.CurrentUserId == Model.AdminId)
-                {
-                    <a asp-action="Edit" asp-route-id="@Model.Id"
-                       class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Page
-                    </a>
-                }
+                <span id="pageAdminActions" class="hidden">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all">Edit Page</a>
+                    <button onclick="openPageDeleteReasonModal()" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100">Delete Page</button>
+                </span>
+                <button onclick="leavePage()" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200">Leave Page</button>
+                
 
                 <button onclick="toggleFollow()" id="followBtn"
                         class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2">
@@ -180,8 +176,54 @@
 
 @section Scripts {
     <script>
-        let currentPageId = '@Model.Id';
+
+        let currentUserId = '@ViewBag.CurrentUserId';
         let isFollowing = false;
+        let isCurrentUserAdmin = false;
+
+        async function checkPageRole() {
+            const response = await fetch(`/Pages/CheckFollowStatus?pageId=${currentPageId}`);
+            // Reuses the same authorized, current-user-only data already fetched for
+            // follow status; role is derived server-side via the new endpoint below.
+        }
+
+        window.kickPageMember = async function (targetUserId) {
+            window.showConfirmModal({
+                title: 'Remove Member', message: 'Remove this member from the page?', type: 'warning', confirmText: 'Remove',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Pages/KickMember', { pageId: currentPageId, targetUserId });
+                    if (result.success) { SohbaApp.toast('Member removed', 'success'); loadAllFollowers(); }
+                    else SohbaApp.toast(result.error || 'Failed to remove member', 'error');
+                }
+            });
+        };
+
+        window.promotePageMember = async function (targetUserId) {
+            window.showConfirmModal({
+                title: 'Promote to Admin', message: 'Promote this member to Page Admin?', type: 'info', confirmText: 'Promote',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Pages/PromoteMember', { pageId: currentPageId, targetUserId });
+                    if (result.success) { SohbaApp.toast('Member promoted', 'success'); loadAllFollowers(); }
+                    else SohbaApp.toast(result.error || 'Failed to promote member', 'error');
+                }
+            });
+        };
+
+        window.leavePage = async function () {
+            showConfirmModal({
+                title: 'Leave Page', message: 'Are you sure you want to leave this page?', type: 'warning', confirmText: 'Leave',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Pages/Leave', { pageId: currentPageId });
+                    if (result.success) {
+                        SohbaApp.toast(result.outcome === 'deleted' ? 'Page deleted (no members remaining)' : 'You left the page', 'success');
+                        setTimeout(() => window.location.href = '/Pages', 1000);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to leave page', 'error');
+                    }
+                }
+            });
+        };
+
 
         // Load page data
         document.addEventListener('DOMContentLoaded', function() {
@@ -279,13 +321,20 @@
 
                 if (data.success && data.followers && data.followers.length > 0) {
                     container.innerHTML = data.followers.map(f => `
-                        <div class="text-center group cursor-pointer">
-                            <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
-                                 class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
-                            <p class="text-xs font-semibold text-gray-700 mt-2 truncate">${f.userName}</p>
-                            <p class="text-xs text-gray-400">Joined ${new Date(f.followedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
-                        </div>
-                    `).join('');
+                        <div class="text-center group">
+                            <a href="/Profile/Index/${f.userId}" class="cursor-pointer block">
+                                <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
+                                        class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
+                                <p class="text-xs font-semibold text-gray-700 mt-2 truncate hover:text-emerald-600">${f.userName}</p>
+                                <p class="text-xs text-gray-400">Joined ${new Date(f.followedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                            </a>
+                            ${isCurrentUserAdmin && f.userId !== currentUserId ? `
+                                <div class="flex gap-1 mt-2 justify-center">
+                                    <button onclick="promotePageMember('${f.userId}')" class="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-semibold">Promote</button>
+                                    <button onclick="kickPageMember('${f.userId}')" class="text-[10px] px-2 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-semibold">Remove</button>
+                                </div>` : ''}
+                        </div>`).join('');
+
                 } else {
                     container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">No followers yet</div>';
                 }

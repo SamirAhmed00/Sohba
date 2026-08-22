@@ -23,7 +23,7 @@
             <div class="flex-1 min-w-[200px]">
                 <div class="relative">
                     <input type="text"
-                           id="searchInput"
+                           id="dashboardSearchInput"
                            value="@Model.SearchTerm"
                            placeholder="Search by title or content..."
                            class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20" />
@@ -221,19 +221,19 @@
 @section Scripts {
     <script src="~/js/features/dashboard.js" asp-append-version="true"></script>
     <script>
-               (function () {
-            var searchTimeout;
+        (function () {
+            
 
             document.addEventListener('DOMContentLoaded', function () {
-                const searchInput = document.getElementById('searchInput');
+                const searchInput = document.getElementById('dashboardSearchInput');
                 const sourceFilter = document.getElementById('sourceFilter');
 
                 if (searchInput) {
-                    searchInput.addEventListener('input', function () {
-                        clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(function () {
-                            window.applyFilters();
-                        }, 500);
+                    searchInput.addEventListener('keydown', function (e) { 
+                    if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    window.applyFilters(); 
+                    } 
                     });
                 }
 
@@ -248,7 +248,7 @@
             // Filters
             // =========================
             window.applyFilters = function () {
-                const search = document.getElementById('searchInput')?.value || '';
+        const search = document.getElementById('dashboardSearchInput')?.value || '';
                 const source = document.getElementById('sourceFilter')?.value || 'all';
                 window.location.href = `/Dashboard/Posts?search=${encodeURIComponent(search)}&source=${source}`;
             };

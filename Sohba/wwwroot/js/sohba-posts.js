@@ -115,6 +115,9 @@ function updateSaveFavoriteButtons(postId, isSaved, isFavorite) {
     if (saveBtn && isSaved !== null && isSaved !== undefined) {
         const icon = saveBtn.querySelector('svg');
         const text = saveBtn.querySelector('.btn-text');
+        saveBtn.setAttribute('onclick', `SohbaApp.toggleSavePost('${postId}', ${isSaved})`);
+        saveBtn.dataset.saved = isSaved ? 'true' : 'false';
+
         if (isSaved) {
             saveBtn.classList.add('text-amber-600', 'bg-amber-50');
             icon.setAttribute('fill', 'currentColor');
@@ -366,7 +369,15 @@ window.SohbaApp.editPostModal = function (postId) {
 
 // Toggle Save behaviour: if already saved -> remove from collections; otherwise -> open the picker.
 window.SohbaApp.toggleSavePost = async function (postId, isSaved) {
-    if (isSaved) {
+
+    const saveBtn = document.querySelector(`[data-save-button="${postId}"]`);
+    const isCurrentlySaved = (isSaved !== undefined && isSaved !== null)
+        ? isSaved
+        : (saveBtn && (saveBtn.classList.contains('text-amber-600') || saveBtn.dataset.saved === 'true'));
+
+
+    if (isCurrentlySaved) {
+
         try {
             const result = await window.SohbaApp.post('/Posts/RemoveFromSaved', { postId });
 

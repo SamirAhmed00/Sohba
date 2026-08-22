@@ -37,6 +37,8 @@ namespace Sohba.Domain.Interfaces
         Task<SavedCollection?> GetCollectionByIdAsync(Guid collectionId);
         Task<SavedCollection?> GetCollectionByNameAsync(Guid userId, string name);
         void AddCollection(SavedCollection collection);
+        void RemoveCollection(SavedCollection collection);
+
         Task<SavedPost?> GetSavedPostByCollectionAsync(Guid userId, Guid postId, Guid collectionId);
     }
 }

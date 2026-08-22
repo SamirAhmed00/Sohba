@@ -70,7 +70,7 @@ namespace Sohba.Application.Services
             bool isBanned = _unitOfWork.Groups.IsUserBannedFromGroup(userId, groupId);
 
 
-            var validation = _groupDomainService.CanJoinGroup(userId, false, isBanned);
+            var validation = _groupDomainService.CanJoinGroup(userId, group.IsPrivate, isBanned);
             if (!validation.IsSuccess)
                 return Result<bool>.Failure(validation.Error);
 
@@ -145,19 +145,27 @@ namespace Sohba.Application.Services
             return Result<GroupResponseDto>.Success(response);
         }
 
-        public async Task<Result<bool>> DeleteGroupAsync(Guid groupId, Guid userId)
+        public async Task<Result<bool>> DeleteGroupAsync(Guid groupId, Guid userId, string reason)
         {
+            if (string.IsNullOrWhiteSpace(reason))
+                return Result<bool>.Failure("A deletion reason is required.");
+
             var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
             if (group == null) return Result<bool>.Failure("Group not found.");
 
-            // Domain Rule: Check if user is owner
+            // Domain Rule: Check if user is owner — unchanged, reused as-is.
             var validation = _groupDomainService.CanDeleteGroup(userId, group.AdminId);
             if (!validation.IsSuccess) return Result<bool>.Failure(validation.Error);
+
+
+            _logger.LogInformation("Group {GroupId} ('{Name}') deleted by owner {UserId}. Reason: {Reason}",
+                groupId, group.Name, userId, reason);
 
             _unitOfWork.Groups.Delete(group);
             var affectedRows = await _unitOfWork.CompleteAsync();
             return Result<bool>.Success(affectedRows > 0);
         }
+
 
         public async Task<Result<IEnumerable<GroupMemberDto>>> GetGroupMembersAsync(Guid groupId)
         {
@@ -293,5 +301,63 @@ namespace Sohba.Application.Services
             var count = await _unitOfWork.Groups.CountAsync();
             return Result<int>.Success(count);
         }
+
+
+        public async Task<Result<bool>> PromoteMemberAsync(Guid groupId, Guid targetUserId, Guid actionUserId)
+        {
+            var actionUserRole = _unitOfWork.Groups.GetUserRoleInGroup(actionUserId, groupId);
+            var targetRole = _unitOfWork.Groups.GetUserRoleInGroup(targetUserId, groupId);
+
+            var validation = _groupDomainService.CanPromoteMember(actionUserId, actionUserRole, targetRole);
+            if (!validation.IsSuccess) return Result<bool>.Failure(validation.Error);
+
+            var member = await _unitOfWork.Groups.GetMemberByUserAndGroupAsync(groupId, targetUserId);
+            if (member == null) return Result<bool>.Failure("Member not found.");
+
+            member.Role = GroupRole.Admin;
+            var affectedRows = await _unitOfWork.CompleteAsync();
+            return Result<bool>.Success(affectedRows > 0);
+        }
+
+        public async Task<Result<bool>> AddMemberAsync(Guid groupId, Guid targetUserId, Guid adminId)
+        {
+            var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
+            if (group == null) return Result<bool>.Failure("Group not found.");
+
+            var adminRole = _unitOfWork.Groups.GetUserRoleInGroup(adminId, groupId);
+            if (adminRole != GroupRole.Admin.ToString())
+                return Result<bool>.Failure("Only a group admin can add members directly.");
+
+            var isAlreadyMember = await _unitOfWork.Groups.IsMemberAsync(targetUserId, groupId);
+            if (isAlreadyMember)
+                return Result<bool>.Failure("User is already a member of this group.");
+
+            if (_unitOfWork.Groups.IsUserBannedFromGroup(targetUserId, groupId))
+                return Result<bool>.Failure("This user is banned from the group.");
+
+            var newMember = new GroupMember
+            {
+                GroupId = groupId,
+                UserId = targetUserId,
+                Role = GroupRole.Member,
+                JoinedAt = DateTime.UtcNow,
+                IsBanned = false
+            };
+            _unitOfWork.Groups.AddMember(newMember);
+            var affectedRows = await _unitOfWork.CompleteAsync();
+            return Result<bool>.Success(affectedRows > 0);
+        }
+
+        public Task<string> GetUserRoleInGroupAsync(Guid groupId, Guid userId)
+        {
+            return Task.FromResult(_unitOfWork.Groups.GetUserRoleInGroup(userId, groupId));
+        }
+
+        public async Task<Result<bool>> IsMemberAsync(Guid groupId, Guid userId)
+        {
+            var isMember = await _unitOfWork.Groups.IsMemberAsync(userId, groupId);
+            return Result<bool>.Success(isMember);
+        }
+
     }
 }

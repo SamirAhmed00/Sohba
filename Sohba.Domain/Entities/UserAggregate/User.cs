@@ -13,6 +13,7 @@ namespace Sohba.Domain.Entities.UserAggregate
         public string Name { get; set; }     
         public string Bio { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsBlocked { get; set; } // Admin-level account ban — distinct from Friend.Status.Blocked (peer-to-peer social blocking)
         public DateTime DateOfBirth { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public string? BackgroundImageUrl { get; set; }

@@ -14,6 +14,8 @@ namespace Sohba.Application.DTOs.PostAggregate
 
         public bool IsAuthor { get; set; }
         public Guid UserId { get; set; }
+        public bool CanDelete { get; set; }
+
 
         // Reply 
         public Guid? ParentCommentId { get; set; }

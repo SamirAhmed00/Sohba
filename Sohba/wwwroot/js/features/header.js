@@ -144,34 +144,46 @@ async function markAllNotificationsAsRead() {
 
 async function deleteNotification(notificationId) {
     if (!notificationId) return;
-    if (!confirm('Delete this notification?')) return;
+    if (typeof window.showConfirmModal !== 'function') return;
 
-    try {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-        const response = await fetch(`/Notifications/Delete?id=${notificationId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token
-            }
-        });
-        const result = await response.json();
+    window.showConfirmModal({
+        title: 'Delete notification',
+        message: 'Delete this notification?',
+        type: 'delete',
+        confirmText: 'Delete',
+        onConfirm: async function () {
 
-        if (result.success) {
-            const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
-            if (item) {
-                item.style.transition = 'opacity 0.3s ease';
-                item.style.opacity = '0';
-                setTimeout(() => item.remove(), 300);
-            }
-            await updateNotificationCount();
-            if (typeof SohbaApp !== 'undefined' && SohbaApp.toast) {
-                SohbaApp.toast('Notification deleted', 'success');
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const response = await fetch(`/Notifications/Delete?id=${notificationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                    if (item) {
+                        item.style.transition = 'opacity 0.3s ease';
+                        item.style.opacity = '0';
+                        setTimeout(() => item.remove(), 300);
+                    }
+                    await updateNotificationCount();
+                    if (typeof SohbaApp !== 'undefined' && SohbaApp.toast) {
+                        SohbaApp.toast('Notification deleted', 'success');
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                if (typeof SohbaApp !== 'undefined' && SohbaApp.toast) {
+                    SohbaApp.toast('Failed to delete notification', 'error');
+                }
             }
         }
-    } catch (error) {
-        console.error('Error deleting notification:', error);
-    }
+    });
 }
 
 // ============================================================
@@ -350,23 +362,6 @@ if (document.readyState === 'loading') {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Mobile Search
-    const searchBtn = document.getElementById('mobileSearchBtn');
-    const searchContainer = document.getElementById('mobileSearchContainer');
-    if (searchBtn && searchContainer) {
-        searchBtn.addEventListener('click', function () {
-            const isClosed = searchContainer.classList.contains('max-h-0');
-            searchContainer.classList.toggle('max-h-0', !isClosed);
-            searchContainer.classList.toggle('opacity-0', !isClosed);
-            searchContainer.classList.toggle('border-transparent', !isClosed);
-            searchContainer.classList.toggle('max-h-40', isClosed);
-            searchContainer.classList.toggle('opacity-100', isClosed);
-            searchContainer.classList.toggle('border-slate-100', isClosed);
-            if (isClosed) {
-                setTimeout(() => searchContainer.querySelector('input')?.focus(), 100);
-            }
-        });
-    }
 
     // Profile Dropdown
     const profileBtn = document.getElementById('profileBtn');
@@ -392,134 +387,4 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ============================================================
-    // QUICK SEARCH
-    // ============================================================
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        let searchTimeout;
-        const quickResults = document.getElementById('quickSearchResults');
-
-        searchInput.addEventListener('input', function (e) {
-            const query = e.target.value.trim();
-            clearTimeout(searchTimeout);
-            if (query.length < 2) {
-                if (quickResults) quickResults.classList.add('hidden');
-                return;
-            }
-            searchTimeout = setTimeout(async () => {
-                try {
-                    const response = await fetch(`/Search/QuickSearch?q=${encodeURIComponent(query)}`);
-                    const data = await response.json();
-
-                    if (data.success && data.data.totalCount > 0) {
-                        let html = '';
-
-                        if (data.data.users.length > 0) {
-                            html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PEOPLE</div>';
-                            data.data.users.forEach(user => {
-                                html += `
-                                    <a href="${user.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                                        <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=345e69&color=fff`}"
-                                             class="w-8 h-8 rounded-full object-cover">
-                                        <div>
-                                            <div class="font-semibold text-gray-900">${user.name}</div>
-                                            <div class="text-xs text-gray-500">${user.bio || 'User'}</div>
-                                        </div>
-                                    </a>
-                                `;
-                            });
-                        }
-
-                        if (data.data.posts.length > 0) {
-                            html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">POSTS</div>';
-                            data.data.posts.forEach(post => {
-                                html += `
-                                    <a href="${post.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                                        ${post.imageUrl ?
-                                        `<img src="${post.imageUrl}" class="w-8 h-8 rounded object-cover">` :
-                                        `<div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-500">📝</div>`
-                                    }
-                                        <div>
-                                            <div class="font-semibold text-gray-900">${post.title}</div>
-                                            <div class="text-xs text-gray-500">${post.authorName}</div>
-                                        </div>
-                                    </a>
-                                `;
-                            });
-                        }
-
-                        if (data.data.groups.length > 0) {
-                            html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">GROUPS</div>';
-                            data.data.groups.forEach(group => {
-                                html += `
-                                    <a href="${group.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">
-                                            ${group.name[0]}
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-gray-900">${group.name}</div>
-                                            <div class="text-xs text-gray-500">${group.membersCount} members</div>
-                                        </div>
-                                    </a>
-                                `;
-                            });
-                        }
-
-                        if (data.data.pages.length > 0) {
-                            html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PAGES</div>';
-                            data.data.pages.forEach(page => {
-                                html += `
-                                    <a href="${page.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">
-                                            ${page.name[0]}
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-gray-900">${page.name}</div>
-                                        </div>
-                                    </a>
-                                `;
-                            });
-                        }
-
-                        if (data.data.totalCount > 3) {
-                            html += `
-                                <div class="p-3 border-t border-gray-100 text-center">
-                                    <a href="/Search?q=${encodeURIComponent(query)}"
-                                       class="text-sm text-[#345e69] font-semibold hover:underline">
-                                        See all ${data.data.totalCount} results →
-                                    </a>
-                                </div>
-                            `;
-                        }
-
-                        quickResults.innerHTML = html;
-                        quickResults.classList.remove('hidden');
-                    } else {
-                        quickResults.innerHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
-                        quickResults.classList.remove('hidden');
-                    }
-                } catch (error) {
-                    console.error('Search error:', error);
-                }
-            }, 300);
-        });
-
-        document.addEventListener('click', function (e) {
-            if (!searchInput.contains(e.target) && quickResults && !quickResults.contains(e.target)) {
-                quickResults.classList.add('hidden');
-            }
-        });
-
-        searchInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const query = this.value.trim();
-                if (query.length >= 2) {
-                    document.getElementById('searchQueryHidden').value = query;
-                    document.getElementById('searchForm').submit();
-                }
-            }
-        });
-    }
 });

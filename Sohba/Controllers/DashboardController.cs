@@ -8,6 +8,7 @@ using Sohba.Domain.Common;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.ViewModels.Dashboard;
 using Sohba.Domain.Enums;
+using Sohba.Application.DTOs.PostAggregate;
 
 namespace Sohba.Controllers
 {
@@ -67,20 +68,45 @@ namespace Sohba.Controllers
             viewModel.RecentPosts = recentPosts.Value?.ToList() ?? new();
             viewModel.RecentReports = recentReports.Value?.ToList() ?? new();
 
-            // TODO: Get users count for last 7 days
-            viewModel.UsersLast7Days = new List<int> { 5, 8, 12, 7, 15, 10, 20 };
-            viewModel.Last7DaysLabels = new List<string> {
-                DateTime.Now.AddDays(-6).ToString("MMM dd"),
-                DateTime.Now.AddDays(-5).ToString("MMM dd"),
-                DateTime.Now.AddDays(-4).ToString("MMM dd"),
-                DateTime.Now.AddDays(-3).ToString("MMM dd"),
-                DateTime.Now.AddDays(-2).ToString("MMM dd"),
-                DateTime.Now.AddDays(-1).ToString("MMM dd"),
-                DateTime.Now.ToString("MMM dd")
-            };
+            var allUsersResult = await _userService.GetAllUsersAsync();
+            var allUsers = allUsersResult.Value?.ToList() ?? new List<UserResponseDto>();
+            var allPostsResult = await _postService.GetAllPostsAsync();
+            var allPosts = allPostsResult.Value?.ToList() ?? new List<PostResponseDto>();
+
+            var todayUtc = DateTime.UtcNow.Date; 
+            viewModel.NewUsersToday = allUsers.Count(u => u.CreatedAt.Date == todayUtc); 
+            viewModel.NewPostsToday = allPosts.Count(p => p.CreatedAt.Date == todayUtc); 
+            var labels = new List<string>(); 
+            var counts = new List<int>(); 
+            for (int i = 6; i >= 0; i--) 
+            { 
+                var targetDate = DateTime.UtcNow.Date.AddDays(-i); 
+                labels.Add(targetDate.ToString("MMM dd"));
+                counts.Add(allUsers.Count(u => u.CreatedAt.Date == targetDate)); 
+            } 
+            viewModel.Last7DaysLabels = labels;
+            viewModel.UsersLast7Days = counts; 
 
             return View(viewModel);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserActivity(int days = 7)
+        { 
+            if (days <= 0) days = 7; 
+            var allUsersResult = await _userService.GetAllUsersAsync(); 
+            var allUsers = allUsersResult.Value?.ToList() ?? new List<UserResponseDto>(); 
+            var labels = new List<string>(); 
+            var counts = new List<int>(); 
+            for (int i = days - 1; i >= 0; i--) 
+            { 
+                var targetDate = DateTime.UtcNow.Date.AddDays(-i); 
+                labels.Add(targetDate.ToString("MMM dd")); 
+                counts.Add(allUsers.Count(u => u.CreatedAt.Date == targetDate));
+            } 
+            return Json(new { labels, data = counts }); 
+        }
+
 
         // ==================== Users Management ====================
 
@@ -134,7 +160,7 @@ namespace Sohba.Controllers
         {
             if (model == null || model.userId == Guid.Empty)
                     return Json(new { success = false, error = "Invalid user ID." });
-            var result = await _friendshipService.BlockUserAsync(GetCurrentUserId(), model.userId);
+            var result = await _userService.BlockUserAccountAsync(model.userId);
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
@@ -144,7 +170,8 @@ namespace Sohba.Controllers
             if (model == null || model.userId == Guid.Empty)
                          return Json(new { success = false, error = "Invalid user ID." });
 
-            var result = await _friendshipService.UnblockUserAsync(GetCurrentUserId(), model.userId);
+            var result = await _userService.UnblockUserAccountAsync(model.userId);
+
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
@@ -300,8 +327,8 @@ namespace Sohba.Controllers
         public async Task<IActionResult> DeleteReportedPost([FromBody] DeleteReportedPostModel model)
         {
             if (model == null || model.postId == Guid.Empty || model.reportId == Guid.Empty)
-                    return Json(new { success = false, error = "Invalid post or report ID." });            
-            var deleteResult = await _postService.DeletePostAsync(model.postId, GetCurrentUserId());
+                    return Json(new { success = false, error = "Invalid post or report ID." });
+            var deleteResult = await _postService.DeletePostAsync(model.postId, GetCurrentUserId(), isAdmin: true);
             if (deleteResult.IsSuccess)
             {
                 await _reportingService.ResolveReportAsync(model.reportId);

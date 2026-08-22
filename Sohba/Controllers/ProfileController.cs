@@ -48,7 +48,12 @@ namespace Sohba.Controllers
             {
                 if (profileResult.Error != null && profileResult.Error.Contains("private", StringComparison.OrdinalIgnoreCase))
                     return View("PrivateProfile", new { UserId = profileUserId });
+
+                if (profileResult.Error != null && profileResult.Error.Contains("block", StringComparison.OrdinalIgnoreCase))
+                    return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+
                 return NotFound();
+
             }
 
 

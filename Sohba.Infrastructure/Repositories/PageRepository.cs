@@ -1,9 +1,10 @@
-﻿using Sohba.Domain.Entities.GroupAndPage;
+﻿using Microsoft.EntityFrameworkCore;
+using Sohba.Domain.Entities.GroupAndPage;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using Sohba.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace Sohba.Infrastructure.Repositories
@@ -86,6 +87,26 @@ namespace Sohba.Infrastructure.Repositories
                 .Take(pageSize)
                 .ToListAsync();
         }
+
+        public string GetUserRoleInPage(Guid userId, Guid pageId)
+        {
+            var follower = _context.Set<PageFollower>()
+                .FirstOrDefault(f => f.PageId == pageId && f.UserId == userId);
+            return follower == null ? "None" : follower.Role.ToString();
+        }
+
+        public async Task<int> GetAdminCountAsync(Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .CountAsync(f => f.PageId == pageId && f.Role == PageRole.Admin);
+        }
+
+        public async Task<PageFollower?> GetFollowerAsync(Guid userId, Guid pageId)
+        {
+            return await _context.Set<PageFollower>()
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.PageId == pageId);
+        }
+
 
     }
 

@@ -69,19 +69,22 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete([FromBody] IdRequestDto request)
+        public async Task<IActionResult> Delete([FromBody] DeletePageRequest request)
         {
             var userId = GetCurrentUserId();
             if (request == null || request.Id == Guid.Empty)
-                    return Json(new { success = false, error = "Invalid page ID." });
-            var result = await _pageService.DeletePageAsync(userId, request.Id);
+                return Json(new { success = false, error = "Invalid page ID." });
+            if (string.IsNullOrWhiteSpace(request.Reason))
+                return Json(new { success = false, error = "A deletion reason is required." });
+
+            var result = await _pageService.DeletePageAsync(userId, request.Id, request.Reason);
 
             if (result.IsSuccess)
                 return Json(new { success = true, message = "Page deleted successfully" });
 
             return Json(new { success = false, error = result.Error });
         }
-
+        public class DeletePageRequest { public Guid Id { get; set; } public string Reason { get; set; } }
 
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -220,10 +223,12 @@ namespace Sohba.Controllers
 
             var result = await _pageService.IsFollowingAsync(userId, pageId);
 
-            return Json(new { isFollowing = result.Value });
+            var isAdmin = await _pageService.IsPageAdminAsync(userId, pageId);
+            return Json(new { isFollowing = result.Value, isAdmin = isAdmin.Value });
+
         }
 
-        
+
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
@@ -321,19 +326,50 @@ namespace Sohba.Controllers
             });
         }
 
-       
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> KickMember([FromBody] PageMemberActionRequest request)
+        {
+            var adminId = GetCurrentUserId();
+            if (request == null || request.PageId == Guid.Empty || request.TargetUserId == Guid.Empty)
+                return Json(new { success = false, error = "Invalid request." });
+            var result = await _pageService.KickPageMemberAsync(request.PageId, request.TargetUserId, adminId);
+            return Json(new { success = result.IsSuccess, error = result.Error });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PromoteMember([FromBody] PageMemberActionRequest request)
+        {
+            var adminId = GetCurrentUserId();
+            if (request == null || request.PageId == Guid.Empty || request.TargetUserId == Guid.Empty)
+                return Json(new { success = false, error = "Invalid request." });
+            var result = await _pageService.PromotePageMemberAsync(request.PageId, request.TargetUserId, adminId);
+            return Json(new { success = result.IsSuccess, error = result.Error });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Leave([FromBody] LeavePageRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (request == null || request.PageId == Guid.Empty)
+                return Json(new { success = false, error = "Invalid page ID." });
+
+            var result = await _pageService.LeavePageAsync(request.PageId, userId);
+            return Json(new { success = result.IsSuccess, error = result.Error, outcome = result.IsSuccess ? result.Value : null });
+        }
+
+        public class PageMemberActionRequest { public Guid PageId { get; set; } public Guid TargetUserId { get; set; } }
+        public class LeavePageRequest { public Guid PageId { get; set; } }
+
+
 
         public class ToggleFollowRequest
         {
             public Guid PageId { get; set; }
         }
-        //private Guid GetCurrentUserId()
-        //{
-        //    //var userIdStr = HttpContext.Session.GetString("UserId");
-        //    //return string.IsNullOrEmpty(userIdStr) ? Guid.Empty : Guid.Parse(userIdStr);
-        //    return new Guid("36FF9501-0409-F111-9291-902B34AC4276");
-
-        //}
+        
     }
 
 }

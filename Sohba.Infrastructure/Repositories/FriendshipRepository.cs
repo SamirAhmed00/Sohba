@@ -160,6 +160,24 @@ namespace Sohba.Infrastructure.Repositories
 
             return friendIds.ToHashSet();
         }
+
+        public async Task<bool> IsBlockedEitherDirectionAsync(Guid userId, Guid otherUserId)
+        {
+            return await _context.Friends
+                .AnyAsync(f =>
+                    ((f.UserId == userId && f.FriendUserId == otherUserId) ||
+                     (f.UserId == otherUserId && f.FriendUserId == userId)) &&
+                    f.Status == FriendshipStatus.Blocked);
+        }
+
+        public async Task<IEnumerable<Guid>> GetBlockedByAsync(Guid userId)
+        {
+            return await _context.Friends
+                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Blocked)
+                .Select(f => f.UserId)
+                .ToListAsync();
+        }
+
     }
 
 }

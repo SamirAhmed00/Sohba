@@ -23,7 +23,7 @@
             <div class="flex-1 min-w-[200px]">
                 <div class="relative">
                     <input type="text"
-                           id="searchInput"
+                           id="dashboardSearchInput"
                            value="@Model.SearchTerm"
                            placeholder="Search by name or email..."
                            class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20" />
@@ -65,19 +65,26 @@
                         {
                             <tr class="hover:bg-slate-50 transition-colors" data-user-id="@user.Id">
                                 <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
-                                             class="w-10 h-10 rounded-full object-cover" />
-                                        <div>
-                                            <div class="font-semibold text-gray-900">@user.Name</div>
-                                            <div class="text-xs text-gray-500">ID: @user.Id.ToString().Substring(0, 8)...</div>
-                                        </div>
-                                    </div>
+                                    <a href="/Profile/Index/@user.Id" class="flex items-center gap-3 group"> 
+                                        <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")" 
+                                             class="w-10 h-10 rounded-full object-cover group-hover:opacity-80 transition-opacity" /> 
+                                        <div> 
+                                            <div class="font-semibold text-gray-900 group-hover:text-[#345e69] transition-colors">@user.Name</div> 
+                                            <div class="text-xs text-gray-500">ID: @user.Id.ToString().Substring(0, 8)...</div> 
+                                        </div> 
+                                    </a>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-600">@user.Email</td>
                                 <td class="px-6 py-4 text-sm text-gray-600">@user.CreatedAt.ToString("MMM dd, yyyy")</td>
                                 <td class="px-6 py-4">
-                                    <span class="status-badge px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Active</span>
+                                    @if (user.IsBlocked) 
+                                    { 
+                                        <span class="status-badge px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">Blocked</span> 
+                                    } 
+                                    else 
+                                    { 
+                                        <span class="status-badge px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">Active</span> 
+                                    }
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
@@ -86,11 +93,22 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </button>
-                                        <button onclick="blockUser('@user.Id')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Block">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
-                                        </button>
+                                       @if (user.IsBlocked) 
+                                        { 
+                                            <button onclick="unblockUser('@user.Id')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors" title="Unblock"> 
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> 
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /> 
+                                                </svg> 
+                                            </button> 
+                                        } 
+                                        else 
+                                        { 
+                                            <button onclick="blockUser('@user.Id')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Block"> 
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> 
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /> 
+                                                </svg> 
+                                            </button> 
+                                        }
                                         <button onclick="deleteUser('@user.Id')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -166,19 +184,19 @@
     <script>
         (function () {
             
-            var searchTimeout;
+            
 
             document.addEventListener('DOMContentLoaded', function () {
 
-                const searchInput = document.getElementById('searchInput');
+                const searchInput = document.getElementById('dashboardSearchInput');
                 const statusFilter = document.getElementById('statusFilter');
 
                 if (searchInput) {
-                    searchInput.addEventListener('input', function () {
-                        clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(function () {
-                            window.applyFilters();
-                        }, 500);
+                    searchInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                        e.preventDefault();
+                        window.applyFilters();
+                        }
                     });
                 }
 
@@ -194,7 +212,7 @@
             // Filters
             // =========================
             window.applyFilters = function () {
-                const search = document.getElementById('searchInput')?.value || '';
+                const search = document.getElementById('dashboardSearchInput')?.value || '';
                 const status = document.getElementById('statusFilter')?.value || '';
 
                 window.location.href =
@@ -248,8 +266,20 @@
                         if (result.success) {
                             SohbaApp.toast('User unblocked successfully', 'success');
                             const badge = document.querySelector(`tr[data-user-id="${userId}"] .status-badge`);
+                            if (badge) {
                             badge.textContent = 'Active';
                             badge.className = 'status-badge px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full';
+                            }
+                            const unblockBtn = document.querySelector(`tr[data-user-id="${userId}"] button[onclick*="unblockUser"]`);
+                                if (unblockBtn) {
+                                unblockBtn.outerHTML = `
+                                <button onclick="blockUser('${userId}')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Block">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                </button>
+                                `;
+                                }
                         } else {
                             SohbaApp.toast(result.error || 'Failed to unblock user', 'error');
                         }

@@ -15,9 +15,11 @@
                         statusEl.textContent = isResolved ? 'Resolved' : 'Dismissed';
                         statusEl.className = isResolved ? 'text-green-600' : 'text-gray-500';
                     }
-                    // Remove action buttons to prevent double-action
-                    const btnContainer = event.target.closest('.flex.gap-3');
-                    if (btnContainer) btnContainer.remove();
+                    const reportRow = document.querySelector(`tr[data-report-id="${reportId}"]`); 
+                    if (reportRow) { 
+                        const actionsCell = reportRow.querySelector('td:last-child'); 
+                        if (actionsCell) actionsCell.innerHTML = '<span class="text-xs text-gray-400">No actions</span>'; 
+                    } 
                 } else {
                     SohbaApp.toast(result.error || `Failed to ${actionText} report.`, 'error');
                 }

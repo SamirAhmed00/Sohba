@@ -55,15 +55,139 @@ function refineSearch() {
 // HEADER GLOBAL SEARCH (quick results + submit on Enter/Button)
 // ============================================================
 function initializeGlobalSearch() {
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('globalSearchInput');
     const quickResults = document.getElementById('quickSearchResults');
     const searchForm = document.getElementById('searchForm');
     const searchQueryHidden = document.getElementById('searchQueryHidden');
     const searchBtn = document.getElementById('globalSearchBtn');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
 
     if (!searchInput) return;
 
     let searchTimeout;
+
+
+    async function runQuickSearch(query, resultsEl) {
+        try {
+            const response = await fetch(`/Search/QuickSearch?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (!resultsEl) return;
+
+            if (data.success === false || data.data === null) {
+                resultsEl.innerHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
+                resultsEl.classList.remove('hidden');
+                return;
+            }
+
+            const payload = data.data;
+            if (!payload || payload.totalCount === 0) {
+                resultsEl.innerHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
+                resultsEl.classList.remove('hidden');
+                return;
+            }
+
+            let html = '';
+
+            const users = payload.users || [];
+            if (users.length > 0) {
+                html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PEOPLE</div>';
+                html += users.map(user => `
+                    <a href="${user.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=345e69&color=fff`}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <div class="font-semibold text-gray-900">${user.name}</div>
+                            <div class="text-xs text-gray-500">${user.bio || 'User'}</div>
+                        </div>
+                    </a>`).join('');
+            }
+
+            const posts = payload.posts || [];
+            if (posts.length > 0) {
+                html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">POSTS</div>';
+                html += posts.map(post => `
+                    <a href="${post.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        ${post.imageUrl
+                        ? `<img src="${post.imageUrl}" class="w-8 h-8 rounded object-cover">`
+                        : '<div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-500">📝</div>'}
+                        <div>
+                            <div class="font-semibold text-gray-900">${post.title}</div>
+                            <div class="text-xs text-gray-500">${post.authorName}</div>
+                        </div>
+                    </a>`).join('');
+            }
+
+            const groups = payload.groups || [];
+            if (groups.length > 0) {
+                html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">GROUPS</div>';
+                html += groups.map(group => `
+                    <a href="${group.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${group.name[0]}</div>
+                        <div>
+                            <div class="font-semibold text-gray-900">${group.name}</div>
+                            <div class="text-xs text-gray-500">${group.membersCount} members</div>
+                        </div>
+                    </a>`).join('');
+            }
+
+            const pages = payload.pages || [];
+            if (pages.length > 0) {
+                html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PAGES</div>';
+                html += pages.map(page => `
+                    <a href="${page.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${page.name[0]}</div>
+                        <div class="font-semibold text-gray-900">${page.name}</div>
+                    </a>`).join('');
+            }
+
+            if (payload.totalCount > 3) {
+                html += `
+                    <div class="p-3 border-t border-gray-100 text-center">
+                        <a href="/Search/Index?q=${encodeURIComponent(query)}"
+                           class="text-sm text-[#345e69] font-semibold hover:underline">
+                            See all ${payload.totalCount} results →
+                        </a>
+                    </div>`;
+            }
+
+            resultsEl.innerHTML = html;
+            resultsEl.classList.remove('hidden');
+        } catch (error) {
+            console.error('Search error:', error);
+            if (window.SohbaApp && SohbaApp.toast) {
+                SohbaApp.toast('Search failed', 'error');
+            }
+        }
+    }
+
+    function onSearchInput(e, resultsEl) {
+        const query = e.target.value.trim();
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            if (resultsEl) resultsEl.classList.add('hidden');
+            return;
+        }
+
+        searchTimeout = setTimeout(() => runQuickSearch(query, resultsEl), 300);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function (e) {
+            onSearchInput(e, quickResults);
+        });
+    }
+
+    if (mobileSearchInput) {
+        mobileSearchInput.addEventListener('input', function (e) {
+            onSearchInput(e, quickResults);
+        });
+    }
+
+
+
+
+
 
     searchInput.addEventListener('input', function (e) {
         const query = e.target.value.trim();
@@ -168,7 +292,7 @@ function initializeGlobalSearch() {
     });
 
     function submitSearch() {
-        const query = searchInput.value.trim();
+        const query = (sourceInput || searchInput || mobileSearchInput)?.value.trim();
         if (query.length >= 2 && searchForm) {
             if (searchQueryHidden) searchQueryHidden.value = query;
             searchForm.submit();
@@ -182,19 +306,32 @@ function initializeGlobalSearch() {
     if (searchBtn) {
         searchBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            submitSearch();
+            submitSearch(searchInput);
         });
     }
 
-    searchInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            submitSearch();
-        }
-    });
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitSearch(searchInput);
+            }
+        });
+    }
+
+    if (mobileSearchInput) {
+        mobileSearchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitSearch(mobileSearchInput);
+            }
+        });
+    }
 
     document.addEventListener('click', function (e) {
-        if (quickResults && !searchInput.contains(e.target) && !quickResults.contains(e.target)) {
+        const inDesktop = searchInput && searchInput.contains(e.target);
+        const inMobile = mobileSearchInput && mobileSearchInput.contains(e.target);
+        if (quickResults && !inDesktop && !inMobile && !quickResults.contains(e.target)) {
             quickResults.classList.add('hidden');
         }
     });
@@ -217,7 +354,7 @@ function initializeMobileSearch() {
             searchContainer.classList.toggle('opacity-100', isOpen);
             searchContainer.classList.toggle('border-slate-100', isOpen);
             if (isOpen) {
-                setTimeout(() => searchContainer.querySelector('input')?.focus(), 100);
+                setTimeout(() => document.getElementById('mobileSearchInput')?.focus(), 100);
             }
         });
     }

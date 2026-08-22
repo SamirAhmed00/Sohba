@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sohba.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sohba.Infrastructure.Data;
 namespace Sohba.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819153411_AddUserIsBlocked")]
+    partial class AddUserIsBlocked
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,9 +267,6 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
 
                     b.HasKey("PageId", "UserId");
 

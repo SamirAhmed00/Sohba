@@ -11,6 +11,8 @@ namespace Sohba.Domain.Entities.GroupAndPage
         public string Description { get; set; }
         public string? ImageUrl { get; set; }
         public string? BackgroundImageUrl { get; set; }
+        public bool IsPrivate { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         // Navigation Properties

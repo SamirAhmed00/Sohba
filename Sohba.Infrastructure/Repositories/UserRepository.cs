@@ -60,5 +60,13 @@ namespace Sohba.Infrastructure.Repositories
                 .Take(count)
                 .ToListAsync();
         }
+
+        public async Task<User?> GetByEmailIncludingDeletedAsync(string email)
+        {
+            return await _context.Set<User>()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
     }
 }

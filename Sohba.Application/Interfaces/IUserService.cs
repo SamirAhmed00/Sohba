@@ -28,5 +28,8 @@ namespace Sohba.Application.Interfaces
 
         Task<Result> DeactivateAccountAsync(Guid userId);
         Task<Result> DeleteMyAccountAsync(Guid userId);
+
+        Task<Result> BlockUserAccountAsync(Guid userId);
+        Task<Result> UnblockUserAccountAsync(Guid userId);
     }
 }

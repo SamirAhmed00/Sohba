@@ -46,7 +46,7 @@ namespace Sohba.Application.Services
             _postService = postService;
         }
 
-        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId, Guid currentUserId)
+        public async Task<IEnumerable<CommentResponseDto>> GetCommentsByPostIdAsync(Guid postId, Guid currentUserId, bool isAdmin = false)
         {
 
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
@@ -71,6 +71,8 @@ namespace Sohba.Application.Services
             {
                 node.Depth = depth;
                 node.IsAuthor = node.UserId == currentUserId;
+                node.CanDelete = node.UserId == currentUserId || post.UserId == currentUserId || isAdmin;
+
 
                 if (replyLookup.ContainsKey(node.Id))
                 {
@@ -117,7 +119,10 @@ namespace Sohba.Application.Services
                     return Result<Guid>.Failure("Parent comment does not belong to this post.");
 
                 parentDepth = await GetCommentDepthAsync(parentCommentId.Value);
-                var canReplyDepth = _interactionDomainService.CanReplyToComment(userId, false, false, parentDepth);
+                var existingReplies = await _unitOfWork.Interactions.GetRepliesByCommentIdAsync(parentCommentId.Value);
+                var directReplyCount = existingReplies.Count();
+
+                var canReplyDepth = _interactionDomainService.CanReplyToComment(userId, false, false, parentDepth, directReplyCount);
                 if (!canReplyDepth.IsSuccess)
                     return Result<Guid>.Failure(canReplyDepth.Error);
             }
@@ -175,19 +180,33 @@ namespace Sohba.Application.Services
 
             var canDelete = _interactionDomainService.CanDeleteComment(userId, comment.UserId, post.UserId, isAdmin);
             if (!canDelete.IsSuccess) return canDelete;
+            await RemoveReplySubtreeAsync(commentId);
 
             _unitOfWork.Interactions.RemoveComment(comment);
             await _unitOfWork.CompleteAsync();
 
             return Result.Success();
         }
+        private async Task RemoveReplySubtreeAsync(Guid commentId)
+        {
+            var directReplies = await _unitOfWork.Interactions.GetRepliesByCommentIdAsync(commentId);
+            foreach (var reply in directReplies)
+            {
+                await RemoveReplySubtreeAsync(reply.Id);
+                _unitOfWork.Interactions.RemoveComment(reply);
+            }
+        }
+
 
         public async Task<Result> AddReplyAsync(Guid userId, Guid commentId, string content)
         {
             var parentComment = await _unitOfWork.Interactions.GetCommentByIdAsync(commentId);
             if (parentComment == null) return Result.Failure("Parent comment not found.");
 
-            var canReply = _interactionDomainService.CanReplyToComment(userId, isCommentDeleted: false, isThreadLocked: false, currentDepth: parentComment.Depth);
+            var existingReplies = await _unitOfWork.Interactions.GetRepliesByCommentIdAsync(commentId);
+
+
+            var canReply = _interactionDomainService.CanReplyToComment(userId, isCommentDeleted: false, isThreadLocked: false, currentDepth: parentComment.Depth, directReplyCount: existingReplies.Count());
             if (!canReply.IsSuccess) return canReply;
 
             // Reuse the comment-creation logic with the parent comment id.
@@ -466,6 +485,10 @@ namespace Sohba.Application.Services
                 return Result<SavedCollectionDto>.Failure("Collection name is required.");
 
             var trimmed = name.Trim();
+            if (trimmed.Length > 50)
+                return Result<SavedCollectionDto>.Failure("Collection name cannot exceed 50 characters.");
+            if (trimmed.Equals("Favorites", StringComparison.OrdinalIgnoreCase) || trimmed.Equals("All Saved", StringComparison.OrdinalIgnoreCase))
+                return Result<SavedCollectionDto>.Failure("This collection name is reserved.");
 
             var existing = await _unitOfWork.Interactions.GetCollectionByNameAsync(userId, trimmed);
             if (existing != null)
@@ -495,6 +518,20 @@ namespace Sohba.Application.Services
             };
 
             return Result<SavedCollectionDto>.Success(dto);
+        }
+
+        public async Task<Result> DeleteCollectionAsync(Guid userId, Guid collectionId)
+        {
+            var collection = await _unitOfWork.Interactions.GetCollectionByIdAsync(collectionId);
+            if (collection == null)
+                return Result.Failure("Collection not found.");
+            if (collection.UserId != userId)
+                return Result.Failure("You do not have permission to delete this collection.");
+            if (collection.IsDefault || collection.IsFavorites)
+                return Result.Failure("Default collections cannot be deleted.");
+            _unitOfWork.Interactions.RemoveCollection(collection);
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
         }
 
         public async Task<Result> SavePostToCollectionAsync(Guid userId, Guid postId, Guid collectionId)
@@ -580,25 +617,34 @@ namespace Sohba.Application.Services
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 50);
 
-            var collections = (await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId)).ToList();
+            var collections = (await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId))
+                .Where(c => !c.IsFavorites)
+                .ToList();
+
+            // Exclude standalone Favorites rows from Saved Posts
             var allSaved = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId))
+                .Where(s => s.Tag != SavedTag.Favorite && (s.CollectionId == null || !s.Collection.IsFavorites))
                 .OrderByDescending(s => s.SavedAt)
                 .ToList();
 
             var result = new List<SavedPostsGroupedDto>();
 
-            // "All Saved" group — paginated over ALL non-Favorite rows, plus favorite rows
-            // are included only if they are also saved to a collection. For the grouped page,
-            // the all-saved group paginates the union of posts.
-            var allPosts = allSaved
-                .Where(s => s.Tag != SavedTag.Favorite || s.CollectionId != null)
+            var allSavedPostsList = allSaved
                 .Select(s => s.Post)
                 .DistinctBy(p => p.Id)
+                .ToList();
+
+            var totalUniquePosts = allSavedPostsList.Count;
+
+            var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalUniquePosts / pageSize));
+
+            var pagedAllPosts = allSavedPostsList
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            var allMapped = await MapPostsToResponse(allPosts, userId);
+            var allMapped = await MapPostsToResponse(pagedAllPosts, userId);
+
             result.Add(new SavedPostsGroupedDto
             {
                 CollectionId = Guid.Empty,
@@ -606,39 +652,33 @@ namespace Sohba.Application.Services
                 IsFavorites = false,
                 Posts = allMapped.ToList()
             });
-
+            
             foreach (var collection in collections)
             {
                 var collectionSaves = allSaved
                     .Where(s => s.CollectionId == collection.Id)
                     .OrderByDescending(s => s.SavedAt)
                     .ToList();
-
-                if (collectionSaves.Count == 0 && !collection.IsDefault && !collection.IsFavorites)
+                if (collectionSaves.Count == 0 && !collection.IsDefault)
                     continue;
-
                 var pagedSaves = collectionSaves
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();
-
                 var mapped = await MapPostsToResponse(pagedSaves.Select(s => s.Post).ToList(), userId);
                 result.Add(new SavedPostsGroupedDto
                 {
                     CollectionId = collection.Id,
                     CollectionName = collection.Name,
-                    IsFavorites = collection.IsFavorites,
+                    IsFavorites = false,
                     Posts = mapped.ToList()
                 });
             }
 
-            var totalPosts = allPosts.Count; // used only for the paging summary
-            var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalPosts / pageSize));
-
             return Result<PagedResult<SavedPostsGroupedDto>>.Success(new PagedResult<SavedPostsGroupedDto>
             {
                 Items = result,
-                TotalCount = totalPosts,
+                TotalCount = totalUniquePosts,
                 Page = page,
                 PageSize = pageSize,
                 TotalPages = totalPages

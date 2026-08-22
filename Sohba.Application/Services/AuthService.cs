@@ -6,6 +6,7 @@ using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
 using Sohba.Domain.Common;
 using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Interfaces;
 
 public class AuthService : IAuthService
 {
@@ -14,6 +15,7 @@ public class AuthService : IAuthService
     private readonly JwtService _jwtService;
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
@@ -22,7 +24,8 @@ public class AuthService : IAuthService
         JwtService jwtService,
         IMapper mapper,
         IEmailService emailService,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        IUnitOfWork unitOfWork)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -30,6 +33,7 @@ public class AuthService : IAuthService
         _mapper = mapper;
         _emailService = emailService;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterDto registerDto)
@@ -79,8 +83,22 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(loginDto.Email);
         if (user == null)
         {
+            var deletedUser = await _unitOfWork.Users.GetByEmailIncludingDeletedAsync(loginDto.Email);
+            if (deletedUser != null && deletedUser.IsDeleted)
+            {
+                _logger.LogWarning("Login rejected: account is deleted for email {Email}", loginDto.Email);
+                return Result<AuthResponseDto>.Failure("This account has been deleted and is no longer available.");
+            }
+
+
             _logger.LogWarning("Login failed: user not found for email {Email}", loginDto.Email);
             return Result<AuthResponseDto>.Failure("Invalid email or password.");
+        }
+
+        if (user.IsBlocked)
+        {
+            _logger.LogWarning("Login rejected: account is blocked for user {UserId} ({Email})", user.Id, loginDto.Email);
+            return Result<AuthResponseDto>.Failure("Your account has been blocked. Please contact support.");
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, lockoutOnFailure: true);

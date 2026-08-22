@@ -47,7 +47,7 @@ namespace Sohba.Application.Services
             // Domain pre-checks: self-request, duplicate, blocked, already friends
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
-            var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(senderId, receiverId);
+            var isBlocked = await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(senderId, receiverId);
 
             var decision = _domainService.CanSendFriendRequest(
                 senderId,
@@ -340,11 +340,14 @@ namespace Sohba.Application.Services
 
             var blocked = await _unitOfWork.Friendships.GetBlockedUsersAsync(userId);
             var blockedIds = blocked.Select(b => b.FriendUserId).ToList();
+            var blockedByIds = await _unitOfWork.Friendships.GetBlockedByAsync(userId);
+
 
             var excludeIds = new List<Guid> { userId };
             excludeIds.AddRange(friendIds);
             excludeIds.AddRange(sentIds);
             excludeIds.AddRange(blockedIds);
+            excludeIds.AddRange(blockedByIds);
 
             var suggestions = await _unitOfWork.Users.GetRandomUsersAsync(excludeIds, count);
 

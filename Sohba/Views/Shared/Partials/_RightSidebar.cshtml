@@ -28,14 +28,11 @@
             {
                 @foreach (var hashtag in ViewBag.TrendingHashtags)
                 {
-                    <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2">
+                    <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2" data-hashtag-tag="@hashtag.Tag">
                         <div class="flex justify-between items-start">
                             <span class="text-xs text-gray-400 font-medium">Trending</span>
                         </div>
-                        <!-- Hashtag link navigates to Search so results render in Results.cshtml
-                             instead of triggering a page refresh or a missing route. -->
-                             
-                        <a href="/Search/Index?q=@Uri.EscapeDataString("#" + hashtag.Tag)" class="block">
+                        <a href="/Posts/Hashtag?tag=@Uri.EscapeDataString(hashtag.Tag)" class="block">
                             <h4 class="font-bold text-gray-800 text-sm mt-0.5 hover:text-[#345e69]">
                                 #@hashtag.Tag
                             </h4>
@@ -50,7 +47,7 @@
             }
         </div>
 
-        <button class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">
+        <<button type="button" id="showMoreHashtagsBtn" class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">
             Show More
         </button>
     </div>

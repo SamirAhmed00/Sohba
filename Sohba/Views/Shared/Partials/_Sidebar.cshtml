@@ -66,7 +66,8 @@
         <div>
             <div class="flex justify-between items-center px-2 mb-3">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pages For You</h3>
-                <a href="#" class="text-xs text-[#345e69] hover:underline font-semibold">See All</a>
+                <a asp-controller="Pages" asp-action="Index" class="text-xs text-[#345e69] hover:underline font-semibold">See All</a>
+
             </div>
 
             <div class="space-y-3" id="sidebarPagesContainer">
@@ -280,8 +281,11 @@
             if(document.getElementById('sidebarPagesContainer').children.length === 0){
                  document.getElementById('sidebarPagesContainer').innerHTML = '<div class="text-xs text-center text-slate-400 py-2">All caught up!</div>';
             }
+        } else {
+            SohbaApp.toast(result.error || 'Failed to follow page', 'error');
         }
     }
+    
 
     // Join Group directly from the sidebar
     async function joinGroup(groupId) {

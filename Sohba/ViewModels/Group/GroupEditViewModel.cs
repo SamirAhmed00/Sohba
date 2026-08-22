@@ -8,6 +8,8 @@
         public string? ImageUrl { get; set; }
         public string? BackgroundImageUrl { get; set; }
         public IFormFile? ImageFile { get; set; }
+        public bool IsPrivate { get; set; }
+
         public IFormFile? BackgroundImageFile { get; set; }
     }
 }

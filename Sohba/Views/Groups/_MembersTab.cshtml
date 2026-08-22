@@ -23,19 +23,24 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="membersGrid">
         @foreach (var member in Model)
         {
-            <div class="member-card text-center group cursor-pointer" 
-                 data-name="@member.UserName.ToLower()" 
-                 data-role="@member.Role.ToLower()">
-                <div class="relative">
-                    <img src="https://ui-avatars.com/api/?name=@member.UserName&background=345e69&color=fff"
-                         class="w-full aspect-square rounded-2xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" 
-                         alt="@member.UserName"
-                         onerror="this.src='https://ui-avatars.com/api/?name=User&background=345e69&color=fff'" />
-                    <span class="absolute -top-1 -right-1 w-4 h-4 @(member.Role == "Admin" ? "bg-purple-500" : member.Role == "Moderator" ? "bg-blue-500" : "bg-green-500") rounded-full border-2 border-white"></span>
-                </div>
-                <p class="text-sm font-semibold text-gray-900 mt-2 truncate" title="@member.UserName">@member.UserName</p>
-                <p class="text-xs text-gray-500">@member.Role</p>
-                <p class="text-xs text-gray-400">Joined @member.JoinedAt.ToString("MMM yyyy")</p>
+            <div class="member-card text-center group" data-name="@member.UserName.ToLower()" data-role="@member.Role.ToLower()">
+                <a asp-controller="Profile" asp-action="Index" asp-route-id="@member.UserId" class="cursor-pointer block">
+                    <div class="relative">
+                        <img src="https://ui-avatars.com/api/?name=@member.UserName&background=345e69&color=fff" ... />
+                        <span class="absolute -top-1 -right-1 w-4 h-4 ..."></span>
+                    </div>
+                    <p class="text-sm font-semibold text-gray-900 mt-2 truncate hover:text-[#345e69]" title="@member.UserName">@member.UserName</p>
+                    <p class="text-xs text-gray-500">@member.Role</p>
+                    <p class="text-xs text-gray-400">Joined @member.JoinedAt.ToString("MMM yyyy")</p>
+                </a>
+                @* Admin action buttons — see item 2/3/4 below *@
+                @if (ViewBag.CurrentUserRole?.ToString() == "Admin" && member.UserId != (Guid)ViewBag.CurrentUserId && member.Role != "Admin")
+                {
+                    <div class="flex gap-1 mt-2 justify-center">
+                        <button onclick="promoteMember('@ViewBag.GroupId', '@member.UserId')" class="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-semibold">Promote</button>
+                        <button onclick="kickMember('@ViewBag.GroupId', '@member.UserId')" class="text-[10px] px-2 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-semibold">Kick</button>
+                    </div>
+                }
             </div>
         }
     </div>

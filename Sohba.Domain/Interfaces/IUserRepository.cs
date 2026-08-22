@@ -16,6 +16,7 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<User>> SearchUsersAsync(string query, Guid currentUserId, int limit = 10);
 
         Task<IEnumerable<User>> GetRecentAsync(int count);
+        Task<User?> GetByEmailIncludingDeletedAsync(string email);
 
     }
 }

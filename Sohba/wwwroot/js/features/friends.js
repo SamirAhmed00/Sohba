@@ -4,7 +4,7 @@
 
 // Search functionality for Find Friends
 document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('friendsSearchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function (e) {
             const searchTerm = e.target.value.toLowerCase().trim();
@@ -73,18 +73,17 @@ async function sendFriendRequest(userId) {
     }
 }
 
-function switchTab(tab, event) {
-    console.log('Switching to tab:', tab);
+function switchTab(tab, btnEl) {
+    
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active', 'border-[#345e69]', 'text-[#345e69]');
         btn.classList.add('border-transparent', 'text-gray-400');
     });
 
-    const target = event.target || event.currentTarget;
-    if (target) {
-        target.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
-        target.classList.remove('border-transparent', 'text-gray-400');
+    if (btnEl) {
+        btnEl.classList.add('active', 'border-[#345e69]', 'text-[#345e69]');
+        btnEl.classList.remove('border-transparent', 'text-gray-400');
     }
 
     // Show/hide tabs

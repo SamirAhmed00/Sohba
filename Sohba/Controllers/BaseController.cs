@@ -25,6 +25,49 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
 
+            if (userId != Guid.Empty)
+            {
+                // Enforce account lifecycle state on every authenticated request — the closest
+                // available equivalent to "real-time logout" since no SignalR forced-disconnect
+                // hook exists anywhere in the app (NotificationHub only tracks connections).
+                // A blocked or deleted account is signed out on its very next request instead
+                // of only being rejected at the next login attempt.
+                var userManager = HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+                var currentUser = await userManager.FindByIdAsync(userId.ToString());
+
+                // FindByIdAsync respects the global !IsDeleted filter, so null here for an
+                // otherwise-authenticated request means the account was deleted after the
+                // session cookie was issued.
+                if (currentUser == null || currentUser.IsBlocked)
+                {
+                    var signInManager = HttpContext.RequestServices.GetRequiredService<SignInManager<User>>();
+                    await signInManager.SignOutAsync();
+
+                    var message = currentUser == null
+                        ? "This account has been deleted and is no longer available."
+                        : "Your account has been blocked. Please contact support.";
+
+                    bool isAjaxOrJson = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                        || context.HttpContext.Request.Headers["Accept"].ToString().Contains("application/json");
+
+                    if (isAjaxOrJson)
+                    {
+                        context.Result = new JsonResult(Sohba.Application.DTOs.Common.BaseResponseDto.FailureResponse(message))
+                        {
+                            StatusCode = StatusCodes.Status401Unauthorized
+                        };
+                    }
+                    else
+                    {
+                        context.Result = new RedirectToActionResult("Login", "Auth", null);
+                    }
+                    return;
+                }
+            }
+
+
+
+
             // Skip heavy work for unauthenticated requests and JSON/AJAX endpoints
             var isJsonRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
                 || context.HttpContext.Request.Path.Value?.Contains("/Get", StringComparison.OrdinalIgnoreCase) == true

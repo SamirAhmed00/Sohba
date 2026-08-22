@@ -129,7 +129,7 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                                     </button>
                                 ` : ''}
 
-                                ${c.isAuthor ? `
+                                ${c.canDelete ? `
                                     <button onclick="SohbaApp.deleteComment('${c.id}', '${c.postId}')"
                                             class="text-xs text-red-500 hover:underline font-medium ml-2">
                                         Delete

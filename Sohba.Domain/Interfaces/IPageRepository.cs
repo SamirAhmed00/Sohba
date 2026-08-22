@@ -14,5 +14,10 @@ namespace Sohba.Domain.Interfaces
         Task<bool> IsFollowingAsync(Guid userId, Guid pageId);
         Task<int> GetFollowersCountAsync(Guid pageId);
         Task<IEnumerable<PageFollower>> GetFollowersAsync(Guid pageId, int page = 1, int pageSize = 20);
+
+        string GetUserRoleInPage(Guid userId, Guid pageId);
+        Task<int> GetAdminCountAsync(Guid pageId);
+        Task<PageFollower?> GetFollowerAsync(Guid userId, Guid pageId);
+
     }
 }

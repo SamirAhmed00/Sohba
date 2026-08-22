@@ -122,7 +122,15 @@ namespace Sohba.Controllers
             return View(viewModel);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> TrendingHashtags(int count = 15)
+        {
+            var result = await _hashtagService.GetTrendingHashtagsAsync(count);
+            if (result.IsFailure)
+                return Json(BaseResponseDto<IEnumerable<HashtagDto>>.FailureResponse(result.Error));
 
+            return Json(BaseResponseDto<IEnumerable<HashtagDto>>.SuccessResponse(result.Value));
+        }
 
         //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         //public IActionResult Error()

@@ -28,6 +28,9 @@ namespace Sohba.Domain.Interfaces
         // Check Methods
         Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
         Task<bool> IsUserBlockedAsync(Guid userId, Guid targetId);
+
+        Task<bool> IsBlockedEitherDirectionAsync(Guid userId, Guid otherUserId);
+        Task<IEnumerable<Guid>> GetBlockedByAsync(Guid userId);
         Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
     }
 

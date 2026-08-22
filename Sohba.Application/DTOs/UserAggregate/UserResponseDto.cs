@@ -13,5 +13,7 @@ namespace Sohba.Application.DTOs.UserAggregate
         public string? ProfilePictureUrl { get; set; }
         public string? BackgroundImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsBlocked { get; set; }
+        public bool IsActive { get; set; }
     }
 }

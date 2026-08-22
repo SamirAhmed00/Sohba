@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -20,19 +21,22 @@ namespace Sohba.Application.Services
 
         private readonly INotificationService _notificationService;
         private readonly IUserService _userService;
+        private readonly ILogger<PageService> _logger;
 
         public PageService(
             IPageDomainService pageDomainService,
             IUnitOfWork unitOfWork,
             IMapper mapper,
             IUserService userService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            ILogger<PageService> logger)
         {
             _pageDomainService = pageDomainService;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _userService = userService;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<Result<PageResponseDto>> CreatePageAsync(Guid adminId, PageCreateDto dto)
@@ -57,7 +61,8 @@ namespace Sohba.Application.Services
             {
                 UserId = adminId,
                 PageId = page.Id,
-                FollowedAt = DateTime.UtcNow
+                FollowedAt = DateTime.UtcNow,
+                Role = PageRole.Admin
             };
             _unitOfWork.Pages.AddFollower(follower);
             await _unitOfWork.CompleteAsync();
@@ -167,20 +172,23 @@ namespace Sohba.Application.Services
             return Result<IEnumerable<PageResponseDto>>.Success(dtos);
         }
 
-        public async Task<Result> DeletePageAsync(Guid adminId, Guid pageId)
+        public async Task<Result> DeletePageAsync(Guid adminId, Guid pageId, string reason)
         {
+            if (string.IsNullOrWhiteSpace(reason))
+                return Result.Failure("A deletion reason is required.");
+
             var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null) return Result.Failure("Page not found");
 
-            if (page == null)
-                return Result.Failure("Page not found");
+            var role = _unitOfWork.Pages.GetUserRoleInPage(adminId, pageId);
+            var validation = _pageDomainService.CanDeletePage(adminId, role);
+            if (!validation.IsSuccess) return validation;
 
-            if (page.AdminId != adminId)
-                return Result.Failure("You are not authorized to delete this page.");
+            _logger.LogInformation("Page {PageId} ('{Name}') deleted by admin {UserId}. Reason: {Reason}",
+                pageId, page.Name, adminId, reason);
 
             _unitOfWork.Pages.Delete(page);
-
             await _unitOfWork.CompleteAsync();
-
             return Result.Success();
         }
 
@@ -195,16 +203,19 @@ namespace Sohba.Application.Services
 
             if (isFollowing.Value)
             {
-                // Unfollow
-                await UnfollowPageAsync(userId, pageId);
-                return Result<bool>.Success(false);
+                var unfollowResult = await UnfollowPageAsync(userId, pageId);
+                return unfollowResult.IsSuccess
+                    ? Result<bool>.Success(false)
+                    : Result<bool>.Failure(unfollowResult.Error);
             }
             else
             {
-                // Follow
-                await FollowPageAsync(userId, pageId);
-                return Result<bool>.Success(true);
+                var followResult = await FollowPageAsync(userId, pageId);
+                return followResult.IsSuccess
+                    ? Result<bool>.Success(true)
+                    : Result<bool>.Failure(followResult.Error);
             }
+
         }
 
         public async Task<Result<bool>> IsFollowingAsync(Guid userId, Guid pageId)
@@ -226,6 +237,13 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<PageFollowerDto>>(followers);
             return Result<IEnumerable<PageFollowerDto>>.Success(dtos);
         }
+
+        public Task<Result<bool>> IsPageAdminAsync(Guid userId, Guid pageId)
+        {
+            var role = _unitOfWork.Pages.GetUserRoleInPage(userId, pageId);
+            return Task.FromResult(Result<bool>.Success(role == "Admin"));
+        }
+
 
         public async Task<Result<PageResponseDto>> UpdatePageAsync(PageUpdateDto updateDto, Guid userId)
         {
@@ -254,6 +272,71 @@ namespace Sohba.Application.Services
             var count = await _unitOfWork.Pages.CountAsync();
             return Result<int>.Success(count);
         }
+
+        public async Task<Result<bool>> KickPageMemberAsync(Guid pageId, Guid targetUserId, Guid adminId)
+        {
+            var actionRole = _unitOfWork.Pages.GetUserRoleInPage(adminId, pageId);
+            var targetRole = _unitOfWork.Pages.GetUserRoleInPage(targetUserId, pageId);
+
+            var validation = _pageDomainService.CanKickPageMember(adminId, actionRole, targetUserId, targetRole);
+            if (!validation.IsSuccess) return Result<bool>.Failure(validation.Error);
+
+            _unitOfWork.Pages.RemoveFollower(targetUserId, pageId);
+            var affectedRows = await _unitOfWork.CompleteAsync();
+            return Result<bool>.Success(affectedRows > 0);
+        }
+
+        public async Task<Result<bool>> PromotePageMemberAsync(Guid pageId, Guid targetUserId, Guid adminId)
+        {
+            var actionRole = _unitOfWork.Pages.GetUserRoleInPage(adminId, pageId);
+            var targetRole = _unitOfWork.Pages.GetUserRoleInPage(targetUserId, pageId);
+
+            var validation = _pageDomainService.CanPromotePageMember(adminId, actionRole, targetRole);
+            if (!validation.IsSuccess) return Result<bool>.Failure(validation.Error);
+
+            var follower = await _unitOfWork.Pages.GetFollowerAsync(targetUserId, pageId);
+            if (follower == null) return Result<bool>.Failure("Member not found.");
+
+            follower.Role = PageRole.Admin;
+            var affectedRows = await _unitOfWork.CompleteAsync();
+            return Result<bool>.Success(affectedRows > 0);
+        }
+
+        public async Task<Result<string>> LeavePageAsync(Guid pageId, Guid userId)
+        {
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null) return Result<string>.Failure("Page not found.");
+
+            var follower = await _unitOfWork.Pages.GetFollowerAsync(userId, pageId);
+            if (follower == null) return Result<string>.Failure("You are not following this page.");
+
+            var followersCount = await _unitOfWork.Pages.GetFollowersCountAsync(pageId);
+
+            // Page with zero members after leaving -> follow the intended deletion
+            // lifecycle rule (Page has no members = Page is deleted).
+            if (followersCount <= 1)
+            {
+                _unitOfWork.Pages.RemoveFollower(userId, pageId);
+                _unitOfWork.Pages.Delete(page);
+                await _unitOfWork.CompleteAsync();
+                return Result<string>.Success("deleted");
+            }
+
+            if (follower.Role == PageRole.Admin)
+            {
+                var adminCount = await _unitOfWork.Pages.GetAdminCountAsync(pageId);
+                if (adminCount <= 1)
+                {
+                    // Same terminology as the Group lifecycle rule for consistency.
+                    return Result<string>.Failure("You are the only admin. Please promote another member before leaving.");
+                }
+            }
+
+            _unitOfWork.Pages.RemoveFollower(userId, pageId);
+            await _unitOfWork.CompleteAsync();
+            return Result<string>.Success("left");
+        }
+
     }
 
 }
