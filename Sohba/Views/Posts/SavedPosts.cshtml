@@ -51,7 +51,10 @@
                             </span>
                             @if (group.CollectionId != Guid.Empty)
                             {
-                                <button onclick="deleteSavedCollection('@group.CollectionId', '@group.CollectionName')"
+                                <button type="button"
+                                        data-action="delete-collection"
+                                        data-collection-id="@group.CollectionId"
+                                        data-collection-name="@group.CollectionName"
                                         class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                                         title="Delete Collection">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,33 +168,39 @@
 
 @section Scripts {
     <script>
-        async function deleteSavedCollection(collectionId, collectionName) {
-            window.showConfirmModal({
-                title: 'Delete Collection',
-                message: `Are you sure you want to delete "${collectionName}"? The collection will be removed, but your posts will remain intact.`,
-                type: 'delete',
-                confirmText: 'Delete',
-                onConfirm: async () => {
-                    try {
-                        const result = await SohbaApp.post('/Posts/DeleteCollection', { collectionId: collectionId });
-                        if (result.success) {
-                            SohbaApp.toast('Collection deleted successfully.', 'success');
-                            const groupEl = document.getElementById(`collection-group-${collectionId}`);
-                            if (groupEl) {
-                                groupEl.style.transition = 'opacity 0.3s ease';
-                                groupEl.style.opacity = '0';
-                                setTimeout(() => groupEl.remove(), 300);
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-action="delete-collection"]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const collectionId = this.dataset.collectionId;
+                    const collectionName = this.dataset.collectionName || 'this collection';
+
+                    window.showConfirmModal({
+                        title: 'Delete Collection',
+                        message: `Are you sure you want to delete "${collectionName}"? The collection will be removed, but your posts will remain in All Saved.`,
+                        type: 'delete',
+                        confirmText: 'Delete',
+                        onConfirm: async () => {
+                            try {
+                                const result = await SohbaApp.post('/Posts/DeleteCollection', { collectionId: collectionId });
+                                if (result.success) {
+                                    SohbaApp.toast('Collection deleted successfully.', 'success');
+                                    const groupEl = document.getElementById(`collection-group-${collectionId}`);
+                                    if (groupEl) {
+                                        groupEl.style.transition = 'opacity 0.3s ease';
+                                        groupEl.style.opacity = '0';
+                                        setTimeout(() => groupEl.remove(), 300);
+                                    }
+                                } else {
+                                    SohbaApp.toast(result.error || 'Failed to delete collection.', 'error');
+                                }
+                            } catch (err) {
+                                console.error('Delete collection error:', err);
+                                SohbaApp.toast('Network error.', 'error');
                             }
-                        } else {
-                            SohbaApp.toast(result.error || 'Failed to delete collection.', 'error');
                         }
-                    } catch (err) {
-                        console.error('Delete collection error:', err);
-                        SohbaApp.toast('Network error.', 'error');
-                    }
-                }
+                    });
+                });
             });
-        }
+        });
     </script>
 }
-

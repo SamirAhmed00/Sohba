@@ -27,7 +27,10 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.HasOne(sp => sp.Collection)
                    .WithMany(c => c.SavedPosts)
                    .HasForeignKey(sp => sp.CollectionId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasIndex(sp => new { sp.UserId, sp.PostId, sp.CollectionId });
         }
     }
+
 }
