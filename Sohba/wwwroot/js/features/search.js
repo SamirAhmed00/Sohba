@@ -6,7 +6,7 @@
  * Switches the active results tab and updates the URL without a page reload.
  * @param {string} tab - One of: 'all', 'posts', 'people', 'groups', 'pages'
  */
-function switchTab(tab) {
+function Search_SwitchTab(tab) {
     // Sync the URL so sharing / back-navigation lands on the same tab.
     const url = new URL(window.location);
     url.searchParams.set('tab', tab);

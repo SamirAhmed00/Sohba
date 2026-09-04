@@ -31,23 +31,23 @@
 
         <!-- Tabs -->
         <div class="flex gap-2 mt-6 border-b border-slate-100">
-            <button onclick="switchTab('all')" 
+            <button onclick="Search_SwitchTab('all')" 
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "all" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 All (@Model.Results.TotalCount)
             </button>
-            <button onclick="switchTab('posts')" 
+            <button onclick="Search_SwitchTab('posts')" 
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "posts" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Posts (@Model.Results.Posts.Count)
             </button>
-            <button onclick="switchTab('people')" 
+            <button onclick="Search_SwitchTab('people')" 
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "people" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 People (@Model.Results.Users.Count)
             </button>
-            <button onclick="switchTab('groups')" 
+            <button onclick="Search_SwitchTab('groups')" 
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "groups" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Groups (@Model.Results.Groups.Count)
             </button>
-            <button onclick="switchTab('pages')" 
+            <button onclick="Search_SwitchTab('pages')" 
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "pages" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Pages (@Model.Results.Pages.Count)
             </button>
@@ -91,7 +91,7 @@
                         </div>
                         @if (Model.Results.Users.Count > 4)
                         {
-                            <button onclick="switchTab('people')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                            <button onclick="Search_SwitchTab('people')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
                                 See all @Model.Results.Users.Count people →
                             </button>
                         }
@@ -127,7 +127,7 @@
                         </div>
                         @if (Model.Results.Posts.Count > 3)
                         {
-                            <button onclick="switchTab('posts')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                            <button onclick="Search_SwitchTab('posts')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
                                 See all @Model.Results.Posts.Count posts →
                             </button>
                         }
@@ -162,7 +162,7 @@
                         </div>
                         @if (Model.Results.Groups.Count > 4)
                         {
-                            <button onclick="switchTab('groups')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                            <button onclick="Search_SwitchTab('groups')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
                                 See all @Model.Results.Groups.Count groups →
                             </button>
                         }
@@ -196,7 +196,7 @@
                         </div>
                         @if (Model.Results.Pages.Count > 4)
                         {
-                            <button onclick="switchTab('pages')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
+                            <button onclick="Search_SwitchTab('pages')" class="mt-4 text-sm text-[#345e69] font-semibold hover:underline">
                                 See all @Model.Results.Pages.Count pages →
                             </button>
                         }
