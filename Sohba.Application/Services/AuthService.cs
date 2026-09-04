@@ -45,6 +45,13 @@ public class AuthService : IAuthService
             return Result<AuthResponseDto>.Failure("Email already registered.");
         }
 
+        var deletedUser = await _unitOfWork.Users.GetByEmailIncludingDeletedAsync(registerDto.Email);
+        if (deletedUser != null && deletedUser.IsDeleted)
+        {
+            _logger.LogWarning("Registration rejected: email {Email} belongs to a deleted account", registerDto.Email);
+            return Result<AuthResponseDto>.Failure("This email is associated with a deactivated account. Please contact support.");
+        }
+
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -54,8 +61,10 @@ public class AuthService : IAuthService
             DateOfBirth = registerDto.DateOfBirth,
             Bio = registerDto.Bio ?? "",
             CreatedAt = DateTime.UtcNow,
+            IsActive = true,
             EmailConfirmed = false
         };
+
 
         var result = await _userManager.CreateAsync(user, registerDto.Password);
         if (!result.Succeeded)
@@ -160,7 +169,7 @@ public class AuthService : IAuthService
         if (user == null)
         {
             _logger.LogWarning("Password reset requested for unknown email {Email}", email);
-            return Result.Failure("User not found.");
+            return Result.Success();
         }
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -169,14 +178,22 @@ public class AuthService : IAuthService
         // Instead of hardcoding base url, we ideally want to construct callback URL properly. The controller will pass it. 
         var resetLink = $"{fallbackUrl}?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
 
-        await _emailService.SendEmailAsync(
-            email, 
-            "Sohba Password Reset", 
-            $"Please reset your password by clicking here: <a href='{resetLink}'>Reset Password</a>", 
-            isHtml: true);
+        try
+        {
+            await _emailService.SendEmailAsync(
+                email,
+                "Sohba Password Reset",
+                $"Please reset your password by clicking here: <a href='{resetLink}'>Reset Password</a>",
+                isHtml: true);
 
-        _logger.LogInformation("Password reset email sent to {Email}", email);
-        return Result.Success();
+            _logger.LogInformation("Password reset email sent to {Email}", email);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deliver password reset email to {Email}", email);
+            return Result.Failure("We were unable to deliver the password reset email. Please try again later or contact support.");
+        }
     }
 
     public async Task<Result> ResetPasswordAsync(string email, string token, string newPassword)
