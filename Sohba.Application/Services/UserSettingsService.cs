@@ -101,7 +101,7 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result.Failure("User not found");
 
-            user.IsDeleted = true;
+            user.IsActive = false;
             var result = await _userManager.UpdateAsync(user);
 
             if (!result.Succeeded)
@@ -109,6 +109,7 @@ namespace Sohba.Application.Services
 
             return Result.Success();
         }
+
 
         public async Task<Result> DeleteAccountAsync(Guid userId)
         {

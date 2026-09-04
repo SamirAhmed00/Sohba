@@ -5,128 +5,148 @@
 }
 
 <div class="max-w-7xl mx-auto page-transition">
-    <!-- Cover & Profile Header -->
-    <div class="relative mb-20">
-        <!-- Cover Image -->
-        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden @(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? "cursor-pointer" : "")"
-             @(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? $"onclick=\"SohbaApp.openImageLightbox('{Model.Profile.BackgroundImageUrl}')\"" : "")>
+    <!-- Cover & Profile Header Card -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden mb-6">
+        <!-- Cover Banner -->
+        <div class="relative h-44 sm:h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] overflow-hidden @(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? "cursor-pointer" : "")"
+             onclick="@(!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl) ? $"SohbaApp.openImageLightbox('{Model.Profile.BackgroundImageUrl}')" : null)">
             @if (!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl))
             {
                 <img src="@Model.Profile.BackgroundImageUrl" class="w-full h-full object-cover" alt="Profile background" />
             }
             else
             {
-                <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' ...');"></div>
+                <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
             }
         </div>
 
-        <!-- Profile Picture -->
-        <div class="absolute -bottom-12 left-8">
-            <div class="relative">
-                <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")"
-                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl cursor-pointer"
-                     onclick="SohbaApp.openImageLightbox('@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")')" />
-                @if (Model.IsOwnProfile)
-                {
-                    <button class="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
-                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </button>
-                }
-                @if (Model.HasActiveStory)
-                {
-                    <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#345e69] text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap cursor-pointer"
-                          onclick="openStoryViewer('@Model.Profile.Id')">
-                        View Story
-                    </span>
-                }
-            </div>
-        </div>
+        <!-- Profile Details Bar (Clean Mobile & Desktop Flow) -->
+        <div class="px-5 sm:px-8 pb-6 pt-0 relative">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <!-- Avatar & Identity -->
+                <div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-16 text-center sm:text-left">
+                    <div class="relative group/avatar shrink-0">
+                        @{
+                            var avatarUrl = Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(Model.Profile.Name ?? "User")}&background=345e69&color=fff";
+                        }
+                        @if (Model.HasActiveStory)
+                        {
+                            <div class="p-1 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-emerald-400 cursor-pointer shadow-xl hover:scale-105 transition-transform"
+                                 onclick="openStoryViewer('@Model.Profile.Id')" title="Click to view story">
+                                <img src="@avatarUrl" class="w-28 h-28 sm:w-36 sm:h-36 rounded-xl object-cover border-2 border-white" alt="@Model.Profile.Name" />
+                            </div>
+                            <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-md cursor-pointer hover:bg-emerald-700 transition"
+                                  onclick="openStoryViewer('@Model.Profile.Id')">
+                                View Story
+                            </span>
+                        }
+                        else
+                        {
+                            <img src="@avatarUrl"
+                                 class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover border-4 border-white shadow-xl cursor-pointer hover:opacity-95 transition"
+                                 onclick="SohbaApp.openImageLightbox('@avatarUrl')" alt="@Model.Profile.Name" title="Click to view photo" />
+                        }
 
-        <!-- Actions -->
-        <div class="absolute bottom-4 right-8 flex gap-3">
-            @if (Model.IsOwnProfile)
-            {
-                <a asp-action="Edit" class="px-6 py-2.5 bg-white/90 backdrop-blur text-[#345e69] font-bold rounded-xl hover:bg-white transition-colors shadow-lg flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit Profile
-                </a>
-            }
-            else
-            {
-                 @if (!Model.IsBlocked)
-                {
-                    @if (Model.FriendshipStatus == "accepted")
+                        @if (Model.IsOwnProfile)
+                        {
+                            <a asp-action="Edit" class="absolute -bottom-2 -right-2 bg-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform text-[#345e69] border border-slate-100" title="Edit Profile">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </a>
+                        }
+                    </div>
+
+                    <div class="sm:mb-2">
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">@Model.Profile.Name</h1>
+                        <p class="text-slate-500 text-xs sm:text-sm mt-0.5">@Model.Profile.Email</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons (Responsive Action Row) -->
+                <div class="flex items-center justify-center sm:justify-end gap-2.5 sm:mb-2 w-full sm:w-auto">
+                    @if (Model.IsOwnProfile)
                     {
-                        <button class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 cursor-not-allowed" disabled>
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <a asp-action="Edit" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                            <svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            <span>Friends</span>
-                        </button>
-                    }
-                    else if (Model.FriendshipStatus == "pending")
-                    {
-                        <button class="px-6 py-2.5 bg-yellow-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 cursor-not-allowed" disabled>
-                            <span>Pending</span>
-                        </button>
+                            Edit Profile
+                        </a>
                     }
                     else
                     {
-                        <button onclick="sendFriendRequestFromProfile('@Model.Profile.Id')"
-                                class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2"
-                                id="addFriendBtn">
-                            <span>Add Friend</span>
-                        </button>
+                        @if (!Model.IsBlocked)
+                        {
+                            @if (Model.FriendshipStatus == "accepted")
+                            {
+                                <button class="px-4 py-2.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl flex items-center gap-1.5 text-sm border border-emerald-200 cursor-default" disabled>
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Friends</span>
+                                </button>
+                                <button onclick="unfriendUserFromProfile('@Model.Profile.Id')"
+                                        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition text-sm"
+                                        id="unfriendBtn">
+                                    <span>Unfriend</span>
+                                </button>
+                            }
+                            else if (Model.FriendshipStatus == "pending")
+                            {
+                                <button class="px-5 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 font-bold rounded-xl flex items-center gap-2 cursor-not-allowed text-sm" disabled>
+                                    <span>Request Pending</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button onclick="sendFriendRequestFromProfile('@Model.Profile.Id')"
+                                        class="flex-1 sm:flex-initial px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-all shadow-md flex items-center justify-center gap-2 text-sm"
+                                        id="addFriendBtn">
+                                    <span>Add Friend</span>
+                                </button>
+                            }
+
+                            <button onclick="blockUserFromProfile('@Model.Profile.Id')"
+                                    class="px-4 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-xl hover:bg-rose-100 transition-colors text-sm border border-rose-100 flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <span>Block</span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="unblockUserFromProfile('@Model.Profile.Id')"
+                                    class="px-5 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition shadow-sm flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <span>Unblock</span>
+                            </button>
+                        }
                     }
+                </div>
+            </div>
 
-                    <button onclick="blockUserFromProfile('@Model.Profile.Id')"
-                            class="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors shadow-sm flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                            </svg>
-                            <span>Block</span>
-                    </button>
-                }
-                else
-                {
-                    <button onclick="unblockUserFromProfile('@Model.Profile.Id')"
-                            class="px-6 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors shadow-sm flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            <span>Unblock</span>
-                    </button>
-                }
-            }
+            <!-- Bio & Stats Section -->
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <p class="text-slate-600 text-sm max-w-2xl whitespace-pre-line leading-relaxed text-center sm:text-left">@(Model.Profile.Bio ?? "No bio yet.")</p>
+
+                <div class="flex items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500 shrink-0">
+                    <span><strong class="text-slate-900 font-bold">@Model.Friends.Count()</strong> Friends</span>
+                    <span><strong class="text-slate-900 font-bold">@Model.Posts.Count()</strong> Posts</span>
+                    <span>Joined <strong class="text-slate-900 font-bold">@Model.Profile.CreatedAt.ToString("MMMM yyyy")</strong></span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Profile Info -->
-    <div class="px-8 mb-8">
-        <h1 class="text-3xl font-black text-gray-900">@Model.Profile.Name</h1>
-        <p class="text-gray-500 mt-1">@Model.Profile.Email</p>
-        <p class="text-gray-600 mt-3 max-w-2xl">@(Model.Profile.Bio ?? "No bio yet.")</p>
-
-        <div class="flex gap-6 mt-4 text-sm">
-            <span class="text-gray-500">
-                <strong class="text-gray-900">@Model.Friends.Count()</strong> Friends
-            </span>
-            <span class="text-gray-500">
-                <strong class="text-gray-900">@Model.Posts.Count()</strong> Posts
-            </span>
-            <span class="text-gray-500">
-                Joined <strong class="text-gray-900">@Model.Profile.CreatedAt.ToString("MMMM yyyy")</strong>
-            </span>
-        </div>
-    </div>
+            
 
     <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 px-8 pb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6  pb-8">
         <!-- Left: Friends -->
         @if (Model.CanViewFriends)
         {
@@ -134,16 +154,23 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-gray-900">Friends</h3>
-                        <a href="#" class="text-[#345e69] text-sm font-semibold hover:underline">See All</a>
+                        @if (Model.IsOwnProfile)
+                        {
+                            <a asp-controller="Friends" asp-action="Index" class="text-[#345e69] text-sm font-semibold hover:underline">See All</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Friends" asp-route-id="@Model.Profile.Id" class="text-[#345e69] text-sm font-semibold hover:underline">See All</a>
+                        }
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         @foreach (var friend in Model.Friends.Take(6))
                         {
-                            <div class="text-center group cursor-pointer">
-                                <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={friend.FriendName}&background=random")"
-                                     class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform" />
-                                <p class="text-xs font-semibold text-gray-700 mt-1 truncate">@friend.FriendName</p>
-                            </div>
+                            <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.FriendUserId" class="text-center group cursor-pointer block">
+                                <img src="@(friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(friend.FriendName ?? "User")}&background=random")"
+                                     class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border border-slate-100" alt="@friend.FriendName" />
+                                <p class="text-xs font-semibold text-gray-700 mt-1 truncate group-hover:text-[#345e69] transition-colors">@friend.FriendName</p>
+                            </a>
                         }
                     </div>
                 </div>
@@ -166,11 +193,25 @@
         <div class="lg:col-span-2 space-y-6">
             @if (Model.IsOwnProfile)
             {
-                // TODO: Move This To A Shared Folder
                 <partial name="Partials/_CreatePost" />
             }
 
-            <partial name="Partials/_PostCard" model="Model.Posts" />
+            @if (Model.CanViewPosts)
+            {
+                <partial name="Partials/_PostCard" model="Model.Posts" />
+            }
+            else
+            {
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center">
+                    <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900">Posts are private</h2>
+                    <p class="text-slate-500 text-sm mt-1">Posts aren't available because this account is private. Follow this account to see their posts.</p>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -180,6 +221,110 @@
 
 @section Scripts {
     <script>
+        window.sendFriendRequestFromProfile = async function (userId) {
+            if (!userId) return;
+            const btn = document.getElementById('addFriendBtn');
+            if (btn) {
+                if (btn.disabled) return;
+                SohbaApp.setButtonLoading(btn, 'Sending...');
+            }
+
+            const result = await SohbaApp.post('/Friends/SendRequest', {
+                receiverId: userId,
+                targetId: userId,
+                id: userId
+            });
+
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.className = 'px-5 py-2 bg-amber-50 text-amber-700 border border-amber-200 font-bold rounded-xl flex items-center gap-2 cursor-not-allowed text-sm';
+                    btn.innerHTML = '<span>Request Pending</span>';
+                }
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send friend request', 'error');
+                if (btn) SohbaApp.resetButton(btn);
+            }
+        };
+
+
+        window.unfriendUserFromProfile = function (userId) {
+            if (!userId) return;
+            const btn = document.getElementById('unfriendBtn');
+
+            showConfirmModal({
+                title: 'Unfriend',
+                message: 'Are you sure you want to remove this user from your friends?',
+                type: 'warning',
+                confirmText: 'Unfriend',
+                onConfirm: async function () {
+                    if (btn) SohbaApp.setButtonLoading(btn, 'Removing...');
+                    const result = await SohbaApp.post('/Friends/Unfriend', {
+                        id: userId,
+                        friendId: userId,
+                        targetId: userId
+                    });
+
+                    if (result.success) {
+                        SohbaApp.toast('Friend removed successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 500);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to unfriend user', 'error');
+                        if (btn) SohbaApp.resetButton(btn);
+                    }
+                }
+            });
+        };
+
+
+        window.blockUserFromProfile = function (userId) {
+            if (!userId) return;
+            showConfirmModal({
+                title: 'Block User',
+                message: 'Are you sure you want to block this user? They will not be able to view your profile or posts.',
+                type: 'delete',
+                confirmText: 'Block User',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/BlockUser', {
+                        userId: userId
+                    });
+                    if (result.success) {
+                        SohbaApp.toast('User blocked successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 600);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to block user', 'error');
+                    }
+                }
+            });
+        };
+
+        window.unblockUserFromProfile = function (userId) {
+            if (!userId) return;
+            showConfirmModal({
+                title: 'Unblock User',
+                message: 'Are you sure you want to unblock this user?',
+                type: 'warning',
+                confirmText: 'Unblock',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/UnblockUser', {
+                        userId: userId
+                    });
+                    if (result.success) {
+                        SohbaApp.toast('User unblocked successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 600);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to unblock user', 'error');
+                    }
+                }
+            });
+        };
+
+
+        window.checkFriendshipStatus = function (userId) {
+            // Status is pre-evaluated on server-side rendering
+        };
+
         document.addEventListener('DOMContentLoaded', function () {
             const profileUserId = '@Model.Profile.Id';
             if (!@Json.Serialize(Model.IsOwnProfile) && typeof window.checkFriendshipStatus === 'function') {

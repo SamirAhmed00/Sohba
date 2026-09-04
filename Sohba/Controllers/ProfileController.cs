@@ -47,24 +47,54 @@ namespace Sohba.Controllers
             if (profileResult.IsFailure)
             {
                 if (profileResult.Error != null && profileResult.Error.Contains("private", StringComparison.OrdinalIgnoreCase))
-                    return View("PrivateProfile", new { UserId = profileUserId });
+                {
+                    var publicUserResult = await _userService.GetProfileAsync(profileUserId);
+                    if (publicUserResult.IsFailure)
+                        return NotFound();
+
+                    var senderPendingPrivate = await _friendshipService.HasPendingRequestAsync(profileUserId, currentUserId);
+                    var receiverPendingPrivate = await _friendshipService.HasPendingRequestAsync(currentUserId, profileUserId);
+                    var privateFriendshipStatus = (senderPendingPrivate || receiverPendingPrivate) ? "pending" : "none";
+
+                    var isBlockedPrivate = currentUserId != profileUserId &&
+                        await _friendshipService.IsBlockedAsync(currentUserId, profileUserId);
+
+                    var privateViewModel = new ProfileViewModel
+                    {
+                        Profile = publicUserResult.Value,
+                        Friends = new List<FriendDto>(),
+                        Posts = new List<PostResponseDto>(),
+                        IsOwnProfile = false,
+                        CanViewFriends = false,
+                        IsBlocked = isBlockedPrivate,
+                        FriendshipStatus = privateFriendshipStatus,
+                        HasActiveStory = false
+                    };
+
+                    return View("PrivateProfile", privateViewModel);
+                }
 
                 if (profileResult.Error != null && profileResult.Error.Contains("block", StringComparison.OrdinalIgnoreCase))
                     return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
 
                 return NotFound();
-
             }
 
 
-            // Check if user can view friends list
             var isFriend = await _friendshipService.AreFriendsAsync(currentUserId, profileUserId);
+            var isOwnProfile = profileUserId == currentUserId;
+            var isPrivateAccount = profileResult.Value.IsPrivateAccount;
 
-            var friendsResult = isFriend || currentUserId == profileUserId
+            var canViewFriends = isOwnProfile || isFriend || !isPrivateAccount;
+            var canViewPosts = isOwnProfile || isFriend || !isPrivateAccount;
+
+            var friendsResult = canViewFriends
                 ? await _friendshipService.GetFriendsListAsync(profileUserId)
                 : Result<IEnumerable<FriendDto>>.Success(new List<FriendDto>());
 
-            var postsResult = await _postService.GetUserPostsAsync(profileUserId, currentUserId);
+            var postsResult = canViewPosts
+                ? await _postService.GetUserPostsAsync(profileUserId, currentUserId)
+                : Result<IEnumerable<PostResponseDto>>.Success(new List<PostResponseDto>());
 
             var friendshipStatus = "none";
             if (isFriend)
@@ -81,8 +111,6 @@ namespace Sohba.Controllers
                 }
             }
 
-            var canViewFriends = currentUserId == profileUserId || isFriend;
-
             var isBlocked = currentUserId != profileUserId &&
                    await _friendshipService.IsBlockedAsync(currentUserId, profileUserId);
 
@@ -94,12 +122,15 @@ namespace Sohba.Controllers
                 Profile = profileResult.Value,
                 Friends = friendsResult.Value ?? new List<FriendDto>(),
                 Posts = postsResult.Value ?? new List<PostResponseDto>(),
-                IsOwnProfile = profileUserId == currentUserId,
+                IsOwnProfile = isOwnProfile,
                 CanViewFriends = canViewFriends,
+                CanViewPosts = canViewPosts,
+                IsPrivate = isPrivateAccount,
                 IsBlocked = isBlocked,
                 FriendshipStatus = friendshipStatus,
                 HasActiveStory = hasActiveStory
             };
+
 
             return View(viewModel);
         }
@@ -130,44 +161,127 @@ namespace Sohba.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var userId = GetCurrentUserId();
-            var dto = new UserRequestDto
-            {
-                Name = model.Name,
-                Bio = model.Bio,
-                ProfilePictureUrl = model.ProfilePictureUrl,
-                BackgroundImageUrl = model.BackgroundImageUrl
-            };
 
-            // Persist any new uploaded image through IFileStorageService
-            if (model.ProfileImageFile != null && model.ProfileImageFile.Length > 0)
+            // 1. Read current database values
+            var profileResult = await _userService.GetProfileAsync(userId);
+            if (profileResult.IsFailure)
             {
-                var uploadResult = await _fileStorage.SaveFileAsync(model.ProfileImageFile, "profiles");
-                if (uploadResult.IsSuccess)
-                    dto.ProfilePictureUrl = uploadResult.Value;
-                else
-                    ModelState.AddModelError("ProfileImageFile", uploadResult.Error);
-            }
-
-            // Persist any new uploaded background/banner image through the same storage service.
-            if (model.BackgroundImageFile != null && model.BackgroundImageFile.Length > 0)
-            {
-                var uploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "profiles");
-                if (uploadResult.IsSuccess)
-                    dto.BackgroundImageUrl = uploadResult.Value;
-                else
-                    ModelState.AddModelError("BackgroundImageFile", uploadResult.Error);
-            }
-
-            if (!ModelState.IsValid)
+                ModelState.AddModelError(string.Empty, "User profile not found.");
                 return View(model);
+            }
 
-            var result = await _userService.UpdateProfileAsync(userId, dto);
+            var currentProfile = profileResult.Value;
+            var oldProfilePictureUrl = currentProfile.ProfilePictureUrl;
+            var oldBackgroundImageUrl = currentProfile.BackgroundImageUrl;
 
-            if (result.IsSuccess)
-                return RedirectToAction("Index");
+            string? newProfilePictureUrl = null;
+            string? newBackgroundImageUrl = null;
 
-            ModelState.AddModelError("", result.Error);
-            return View(model);
+            try
+            {
+                // 2. Upload new profile picture if provided
+                if (model.ProfileImageFile != null && model.ProfileImageFile.Length > 0)
+                {
+                    var uploadResult = await _fileStorage.SaveFileAsync(model.ProfileImageFile, "profiles");
+                    if (!uploadResult.IsSuccess)
+                    {
+                        ModelState.AddModelError(nameof(model.ProfileImageFile), uploadResult.Error);
+                        return View(model);
+                    }
+                    newProfilePictureUrl = uploadResult.Value;
+                }
+
+                // 3. Upload new background image if provided
+                if (model.BackgroundImageFile != null && model.BackgroundImageFile.Length > 0)
+                {
+                    var uploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "profiles");
+                    if (!uploadResult.IsSuccess)
+                    {
+                        // Clean up newly uploaded profile image if background upload fails
+                        if (!string.IsNullOrEmpty(newProfilePictureUrl))
+                        {
+                            await _fileStorage.DeleteFileAsync(newProfilePictureUrl);
+                        }
+                        ModelState.AddModelError(nameof(model.BackgroundImageFile), uploadResult.Error);
+                        return View(model);
+                    }
+                    newBackgroundImageUrl = uploadResult.Value;
+                }
+
+                // 4. Construct DTO with new URLs if uploaded, otherwise fallback to trusted database URLs
+                var dto = new UserRequestDto
+                {
+                    Name = model.Name,
+                    Bio = model.Bio,
+                    ProfilePictureUrl = newProfilePictureUrl ?? oldProfilePictureUrl,
+                    BackgroundImageUrl = newBackgroundImageUrl ?? oldBackgroundImageUrl
+                };
+
+                // 5. Commit database update
+                var updateResult = await _userService.UpdateProfileAsync(userId, dto);
+                if (!updateResult.IsSuccess)
+                {
+                    // Database update failed: rollback newly created physical files
+                    if (!string.IsNullOrEmpty(newProfilePictureUrl))
+                    {
+                        await _fileStorage.DeleteFileAsync(newProfilePictureUrl);
+                    }
+                    if (!string.IsNullOrEmpty(newBackgroundImageUrl))
+                    {
+                        await _fileStorage.DeleteFileAsync(newBackgroundImageUrl);
+                    }
+
+                    ModelState.AddModelError(string.Empty, updateResult.Error);
+                    return View(model);
+                }
+
+                // 6. ONLY AFTER successful database persistence, safely delete replaced old files
+                if (!string.IsNullOrEmpty(newProfilePictureUrl) &&
+                    !string.IsNullOrEmpty(oldProfilePictureUrl) &&
+                    oldProfilePictureUrl.StartsWith("/uploads/profiles/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        await _fileStorage.DeleteFileAsync(oldProfilePictureUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to delete old profile picture {Url} for user {UserId}", oldProfilePictureUrl, userId);
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(newBackgroundImageUrl) &&
+                    !string.IsNullOrEmpty(oldBackgroundImageUrl) &&
+                    oldBackgroundImageUrl.StartsWith("/uploads/profiles/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        await _fileStorage.DeleteFileAsync(oldBackgroundImageUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to delete old background image {Url} for user {UserId}", oldBackgroundImageUrl, userId);
+                    }
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                // Emergency cleanup on unexpected exception
+                if (!string.IsNullOrEmpty(newProfilePictureUrl))
+                {
+                    await _fileStorage.DeleteFileAsync(newProfilePictureUrl);
+                }
+                if (!string.IsNullOrEmpty(newBackgroundImageUrl))
+                {
+                    await _fileStorage.DeleteFileAsync(newBackgroundImageUrl);
+                }
+
+                Logger.LogError(ex, "Unexpected error occurred while updating profile for user {UserId}", userId);
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred while saving your changes.");
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -229,6 +343,7 @@ namespace Sohba.Controllers
 
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate()
         {
             var userId = GetCurrentUserId();
@@ -237,6 +352,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount()
         {
             var userId = GetCurrentUserId();
@@ -244,5 +360,47 @@ namespace Sohba.Controllers
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> Friends(Guid id)
+        {
+            var currentUserId = GetCurrentUserId();
+            var targetUserId = id;
+
+            // If navigating to own friends, redirect to standard Friends controller
+            if (targetUserId == currentUserId)
+            {
+                return RedirectToAction("Index", "Friends");
+            }
+
+            var profileResult = await _userService.GetProfileAsync(targetUserId, currentUserId);
+            if (profileResult.IsFailure)
+            {
+                if (profileResult.Error != null && profileResult.Error.Contains("private", StringComparison.OrdinalIgnoreCase))
+                    return View("PrivateProfile", new ProfileViewModel { Profile = (await _userService.GetProfileAsync(targetUserId)).Value });
+
+                if (profileResult.Error != null && profileResult.Error.Contains("block", StringComparison.OrdinalIgnoreCase))
+                    return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+
+                return NotFound();
+            }
+
+            var isFriend = await _friendshipService.AreFriendsAsync(currentUserId, targetUserId);
+            var canViewFriends = isFriend || currentUserId == targetUserId || !profileResult.Value.IsPrivateAccount;
+
+            var friendsResult = canViewFriends
+                ? await _friendshipService.GetFriendsListAsync(targetUserId)
+                : Result<IEnumerable<FriendDto>>.Success(new List<FriendDto>());
+
+            var viewModel = new ProfileFriendsViewModel
+            {
+                Profile = profileResult.Value,
+                Friends = friendsResult.Value ?? new List<FriendDto>(),
+                IsOwnProfile = false,
+                CanViewFriends = canViewFriends
+            };
+
+            return View(viewModel);
+        }
     }
 }

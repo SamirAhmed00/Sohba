@@ -20,8 +20,8 @@ namespace Sohba.Infrastructure.Repositories
 
             // Try with no filters
             var user = await _context.Users
-                .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == id);
+                //.AsNoTracking()
 
             return user;
         }

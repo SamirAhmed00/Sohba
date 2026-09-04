@@ -1,200 +1,211 @@
-﻿@model Sohba.ViewModels.Profile.SettingsViewModel
+﻿
+@model Sohba.ViewModels.Profile.SettingsViewModel
 @{
-    ViewData["Title"] = "Settings";
+    ViewData["Title"] = "Account Settings";
     Layout = "_AppLayout";
 }
 
-<div class="max-w-5xl mx-auto page-transition">
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
-        <h1 class="text-2xl font-black text-gray-900 flex items-center gap-3">
-            <svg class="w-7 h-7 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+<div class="max-w-4xl mx-auto page-transition space-y-6 pb-12">
+    <!-- Header Banner -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <div class="w-10 h-10 rounded-2xl bg-[#345e69]/10 flex items-center justify-center text-[#345e69]">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Settings & Privacy</h1>
+            </div>
+            <p class="text-slate-500 text-sm">Manage your profile privacy, preferences, and account security</p>
+        </div>
+        <a asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Settings
-        </h1>
-        <p class="text-gray-500 mt-1">Manage your account preferences</p>
+            Back to Profile
+        </a>
     </div>
 
-    <!-- Settings Sections -->
-    <div class="space-y-6">
-        <form asp-action="Settings" asp-controller="Profile" method="post">
-            <!-- Account Settings -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
-                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="font-bold text-gray-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Account
-                    </h2>
-                </div>
-                <div class="p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Email Address</h3>
-                            <p class="text-sm text-gray-500">@Model.Email</p>
-                        </div>
-                        <button class="text-[#345e69] font-semibold text-sm hover:underline">Change</button>
-                    </div>
-                    <hr class="border-slate-100" />
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Password</h3>
-                            <p class="text-sm text-gray-500">Last changed 3 months ago</p>
-                        </div>
-                        <button class="text-[#345e69] font-semibold text-sm hover:underline">Update</button>
-                    </div>
-                </div>
-            </div>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl flex items-center gap-3 shadow-sm">
+            <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span class="font-semibold text-sm">@TempData["SuccessMessage"]</span>
+        </div>
+    }
 
-            <!-- Privacy Settings -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
-                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="font-bold text-gray-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Privacy
-                    </h2>
-                </div>
-                <div class="p-6 space-y-4">
-                    <label class="flex items-center justify-between cursor-pointer">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Private Account</h3>
-                            <p class="text-sm text-gray-500">Only friends can see your posts</p>
-                        </div>
-                        <div class="relative">
-                            <input type="checkbox" asp-for="IsPrivateAccount" class="peer sr-only" />
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
-                        </div>
-                    </label>
-                    <hr class="border-slate-100" />
-                    <label class="flex items-center justify-between cursor-pointer">
-                        <div>
-                            <h3 class="font-semibold text-gray-900">Show Activity Status</h3>
-                            <p class="text-sm text-gray-500">Let friends see when you're online</p>
-                        </div>
-                        <div class="relative">
-                             <input type="checkbox" asp-for="ShowActivityStatus" class="peer sr-only" />
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
-                        </div>
-                    </label>
-                </div>
-            </div>
+    <form asp-action="Settings" asp-controller="Profile" method="post" class="space-y-6">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="Name" />
+        <input type="hidden" asp-for="Bio" />
+        <input type="hidden" asp-for="ProfilePictureUrl" />
 
-            <!-- Notifications Settings -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
-                <div class="p-6 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="font-bold text-gray-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        Notifications
-                    </h2>
-                </div>
-                <div class="p-6 space-y-4">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input asp-for="EmailNotifications" class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
-                        <span class="text-gray-700">Email notifications for new followers</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input asp-for="PushNotifications" class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
-                        <span class="text-gray-700">Push notifications for messages</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input asp-for="WeeklyDigest" class="w-5 h-5 rounded border-gray-300 text-[#345e69] focus:ring-[#345e69]" />
-                        <span class="text-gray-700">Weekly digest email</span>
-                    </label>
-                </div>
-            </div>
-                <div class="flex justify-end">
-                        <button type="submit" class="px-8 py-3 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg shadow-[#345e69]/20">
-                                 Save Changes
-                
-                        </button>
-                </div>
-        
-        </form>
-
-        <!-- Danger Zone -->
-        <div class="bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
-            <div class="p-6 border-b border-red-100">
-                <h2 class="font-bold text-red-600 flex items-center gap-2">
+        <!-- Privacy Card -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    Danger Zone
-                </h2>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 text-base">Privacy Preferences</h2>
+                    <p class="text-xs text-slate-500">Control who can view your posts and activity status</p>
+                </div>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Deactivate Account</h3>
-                        <p class="text-sm text-gray-500">Temporarily disable your account</p>
+            <div class="p-6 space-y-5">
+                <label class="flex items-center justify-between cursor-pointer group">
+                    <div class="pr-4">
+                        <span class="font-semibold text-slate-900 block text-sm group-hover:text-[#345e69] transition-colors">Private Account</span>
+                        <span class="text-xs text-slate-500 block mt-0.5">When your account is private, only accepted friends can see your posts and friends list.</span>
                     </div>
-                    <button onclick="deactivateAccount()" class="px-4 py-2 border border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors">
-                        Deactivate
-                    </button>
-
-                </div>
-                <hr class="border-red-100" />
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-red-600">Delete Account</h3>
-                        <p class="text-sm text-gray-500">Permanently delete all your data</p>
+                    <div class="relative shrink-0">
+                        <input type="checkbox" asp-for="IsPrivateAccount" class="peer sr-only" />
+                        <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
                     </div>
-                    <button onclick="deleteAccount()" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors">
-                        Delete
-                    </button>
-                </div>
+                </label>
+                <hr class="border-slate-100" />
+                <label class="flex items-center justify-between cursor-pointer group">
+                    <div class="pr-4">
+                        <span class="font-semibold text-slate-900 block text-sm group-hover:text-[#345e69] transition-colors">Show Activity Status</span>
+                        <span class="text-xs text-slate-500 block mt-0.5">Allow friends to see when you are currently active on Sohba.</span>
+                    </div>
+                    <div class="relative shrink-0">
+                        <input type="checkbox" asp-for="ShowActivityStatus" class="peer sr-only" />
+                        <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#345e69]"></div>
+                    </div>
+                </label>
             </div>
         </div>
 
+        <!-- Notifications Card -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 text-base">Notification Settings</h2>
+                    <p class="text-xs text-slate-500">Choose how and when you want to receive updates</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <label class="flex items-center gap-3.5 cursor-pointer group">
+                    <input type="checkbox" asp-for="EmailNotifications" class="w-5 h-5 rounded-lg border-slate-300 text-[#345e69] focus:ring-[#345e69]/20" />
+                    <div>
+                        <span class="text-sm font-semibold text-slate-800 group-hover:text-[#345e69] transition-colors block">Email notifications</span>
+                        <span class="text-xs text-slate-500 block">Receive emails when someone interacts with your profile or posts</span>
+                    </div>
+                </label>
+                <hr class="border-slate-100" />
+                <label class="flex items-center gap-3.5 cursor-pointer group">
+                    <input type="checkbox" asp-for="PushNotifications" class="w-5 h-5 rounded-lg border-slate-300 text-[#345e69] focus:ring-[#345e69]/20" />
+                    <div>
+                        <span class="text-sm font-semibold text-slate-800 group-hover:text-[#345e69] transition-colors block">Push notifications</span>
+                        <span class="text-xs text-slate-500 block">Get instant browser alerts for direct messages and friend requests</span>
+                    </div>
+                </label>
+                <hr class="border-slate-100" />
+                <label class="flex items-center gap-3.5 cursor-pointer group">
+                    <input type="checkbox" asp-for="WeeklyDigest" class="w-5 h-5 rounded-lg border-slate-300 text-[#345e69] focus:ring-[#345e69]/20" />
+                    <div>
+                        <span class="text-sm font-semibold text-slate-800 group-hover:text-[#345e69] transition-colors block">Weekly digest email</span>
+                        <span class="text-xs text-slate-500 block">A weekly summary of popular posts and activity from your communities</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <button type="submit" id="saveSettingsBtn" class="w-full sm:w-auto px-8 py-3 bg-[#345e69] text-white font-bold rounded-2xl hover:bg-[#2a4b55] transition-all shadow-md shadow-[#345e69]/20 active:scale-95">
+                Save Preferences
+            </button>
+        </div>
+    </form>
+
+    <!-- Danger Zone Card -->
+    <div class="bg-rose-50/60 rounded-3xl border border-rose-200/80 overflow-hidden">
+        <div class="p-6 border-b border-rose-100 flex items-center gap-3 bg-rose-100/40">
+            <div class="w-8 h-8 rounded-xl bg-rose-200 flex items-center justify-center text-rose-700">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div>
+                <h2 class="font-bold text-rose-900 text-base">Danger Zone</h2>
+                <p class="text-xs text-rose-700">Irreversible actions for your account</p>
+            </div>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Deactivate Account</h3>
+                    <p class="text-xs text-slate-500">Temporarily hide your profile and posts. You can reactivate anytime by signing back in.</p>
+                </div>
+                <button type="button" onclick="deactivateAccount()" id="deactivateBtn" class="px-4 py-2 border border-rose-300 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-sm transition shrink-0">
+                    Deactivate
+                </button>
+            </div>
+            <hr class="border-rose-200/60" />
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-bold text-rose-900 text-sm">Delete Account</h3>
+                    <p class="text-xs text-slate-500">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                </div>
+                <button type="button" onclick="deleteAccount()" id="deleteBtn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl text-sm transition shadow-sm shrink-0">
+                    Delete Account
+                </button>
+            </div>
+        </div>
     </div>
 </div>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-2xl mb-6">
-        @TempData["SuccessMessage"]
-    </div>
-}
 
 @section Scripts {
     <script>
         window.deactivateAccount = function () {
+            const btn = document.getElementById('deactivateBtn');
             showConfirmModal({
                 title: 'Deactivate Account',
-                message: 'Are you sure you want to temporarily disable your account? You can reactivate by logging in again.',
+                message: 'Are you sure you want to temporarily disable your account? You can reactivate anytime by logging in again.',
                 type: 'warning',
                 confirmText: 'Deactivate',
                 onConfirm: async function () {
+                    if (btn) SohbaApp.setButtonLoading(btn, 'Deactivating...');
                     const result = await SohbaApp.post('/Profile/Deactivate', {});
                     if (result.success) {
                         SohbaApp.toast('Account deactivated.', 'success');
-                        setTimeout(() => window.location.href = '/Auth/Logout', 800);
+                        setTimeout(() => window.location.href = '/Auth/Logout', 600);
                     } else {
                         SohbaApp.toast(result.error || 'Failed to deactivate account', 'error');
+                        if (btn) SohbaApp.resetButton(btn);
                     }
                 }
             });
         };
 
         window.deleteAccount = function () {
+            const btn = document.getElementById('deleteBtn');
             showConfirmModal({
                 title: 'Delete Account',
                 message: 'This will permanently delete all your data. This cannot be undone. Are you absolutely sure?',
                 type: 'delete',
                 confirmText: 'Delete Forever',
                 onConfirm: async function () {
+                    if (btn) SohbaApp.setButtonLoading(btn, 'Deleting...');
                     const result = await SohbaApp.post('/Profile/DeleteAccount', {});
                     if (result.success) {
                         SohbaApp.toast('Account deleted.', 'success');
-                        setTimeout(() => window.location.href = '/Auth/Logout', 800);
+                        setTimeout(() => window.location.href = '/Auth/Logout', 600);
                     } else {
                         SohbaApp.toast(result.error || 'Failed to delete account', 'error');
+                        if (btn) SohbaApp.resetButton(btn);
                     }
                 }
             });

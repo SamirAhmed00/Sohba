@@ -43,16 +43,16 @@ namespace Sohba.Application.Services
 
             //  PRIVACY CHECK: Verify user can view this profile
             var isFriend = await _friendshipRepository.AreFriendsAsync(currentUserId, userId);
-            var isBlocked = await _friendshipRepository.IsBlockedEitherDirectionAsync(currentUserId, userId);
+            var isBlockedByOwner = await _friendshipRepository.IsUserBlockedAsync(userId, currentUserId);
 
-            var isPrivateAccount = user.IsPrivateAccount; 
+            var isPrivateAccount = user.IsPrivateAccount;
 
             var canView = _profileDomainService.CanViewProfile(
                 currentUserId,
                 userId,
                 isPrivateAccount,
                 isFriend,
-                isBlocked
+                isBlockedByOwner
             );
 
             if (!canView.IsSuccess)
@@ -74,14 +74,23 @@ namespace Sohba.Application.Services
 
             user.Name = updateDto.Name;
             user.Bio = updateDto.Bio;
-            user.ProfilePictureUrl = updateDto.ProfilePictureUrl;
-            user.BackgroundImageUrl = updateDto.BackgroundImageUrl;
+
+            if (updateDto.ProfilePictureUrl != null)
+            {
+                user.ProfilePictureUrl = updateDto.ProfilePictureUrl;
+            }
+
+            if (updateDto.BackgroundImageUrl != null)
+            {
+                user.BackgroundImageUrl = updateDto.BackgroundImageUrl;
+            }
 
             _unitOfWork.Users.Update(user);
             var affectedRows = await _unitOfWork.CompleteAsync();
 
-            return Result<bool>.Success(affectedRows > 0);
+            return Result<bool>.Success(affectedRows >= 0);
         }
+
 
         public async Task<Result<IEnumerable<UserResponseDto>>> GetAllUsersAsync()
         {
@@ -113,7 +122,11 @@ namespace Sohba.Application.Services
             switch (status.ToLower())
             {
                 case "active":
-                    filteredUsers = allUsers.Where(u => !u.IsDeleted && !u.IsBlocked);
+                    filteredUsers = allUsers.Where(u => !u.IsDeleted && !u.IsBlocked && u.IsActive);
+                    break;
+
+                case "deactivated":
+                    filteredUsers = allUsers.Where(u => !u.IsDeleted && !u.IsBlocked && !u.IsActive);
                     break;
 
                 case "blocked":
@@ -128,6 +141,7 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(filteredUsers);
             return Result<IEnumerable<UserResponseDto>>.Success(dtos);
         }
+
 
         public async Task<Result<int>> GetUsersCountAsync()
         {
@@ -147,12 +161,23 @@ namespace Sohba.Application.Services
             var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null) return Result.Failure("User not found.");
 
-            // Domain rule: mark the account as deactivated (soft disable)
-            user.IsActive = false;      
+            user.IsActive = false;
             _unitOfWork.Users.Update(user);
             await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
+
+        public async Task<Result> ReactivateAccountAsync(Guid userId)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("User not found.");
+
+            user.IsActive = true;
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+            return Result.Success();
+        }
+
 
         public async Task<Result> DeleteMyAccountAsync(Guid userId)
         {
@@ -166,6 +191,7 @@ namespace Sohba.Application.Services
 
             return Result.Success();
         }
+
 
         public async Task<Result> BlockUserAccountAsync(Guid userId)
         {

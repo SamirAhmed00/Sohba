@@ -1,22 +1,139 @@
-﻿@model dynamic
+﻿@model Sohba.ViewModels.Profile.ProfileViewModel
 @{
-    ViewData["Title"] = "Private Profile";
+    ViewData["Title"] = Model.Profile.Name;
     Layout = "_AppLayout";
 }
 
-<div class="max-w-4xl mx-auto py-12">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
-        <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+<div class="max-w-7xl mx-auto page-transition">
+    <!-- Cover & Profile Header -->
+    <div class="relative mb-20">
+        <div class="h-64 bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#345e69] rounded-2xl overflow-hidden">
+            @if (!string.IsNullOrEmpty(Model.Profile.BackgroundImageUrl))
+            {
+                <img src="@Model.Profile.BackgroundImageUrl" class="w-full h-full object-cover" alt="Profile background" />
+            }
         </div>
-        <h1 class="text-2xl font-black text-gray-900">This Profile is Private</h1>
-        <p class="text-gray-500 mt-2">You need to be friends to view this profile.</p>
-        <a asp-controller="Home" asp-action="Index"
-           class="inline-block mt-6 px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
-            Back to Feed
-        </a>
+
+        <!-- Profile Picture -->
+        <div class="absolute -bottom-12 left-8">
+            <div class="relative">
+                <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Model.Profile.Name}&background=345e69&color=fff")"
+                     class="w-36 h-36 rounded-2xl object-cover border-4 border-white shadow-xl" />
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="absolute bottom-4 right-8 flex gap-3">
+            @if (!Model.IsBlocked)
+            {
+                @if (Model.FriendshipStatus == "pending")
+                {
+                    <button class="px-6 py-2.5 bg-yellow-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 cursor-not-allowed" disabled>
+                        <span>Pending</span>
+                    </button>
+                }
+                else
+                {
+                    <button onclick="sendFriendRequestFromProfile('@Model.Profile.Id')"
+                            class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] transition-colors shadow-lg flex items-center gap-2"
+                            id="addFriendBtn">
+                        <span>Add Friend</span>
+                    </button>
+                }
+
+                <button onclick="blockUserFromProfile('@Model.Profile.Id')"
+                        class="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors shadow-sm flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    <span>Block</span>
+                </button>
+            }
+            else
+            {
+                <button onclick="unblockUserFromProfile('@Model.Profile.Id')"
+                        class="px-6 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors shadow-sm flex items-center gap-2">
+                    <span>Unblock</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="px-8 mb-8">
+        <h1 class="text-3xl font-black text-gray-900">@Model.Profile.Name</h1>
+        <p class="text-gray-600 mt-3 max-w-2xl">@(Model.Profile.Bio ?? "No bio yet.")</p>
+    </div>
+
+    <!-- Private Lock Banner -->
+    <div class="px-8 pb-12">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-12 text-center">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">This Account is Private</h2>
+            <p class="text-gray-500 mt-1">Follow this account to see their photos and posts.</p>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        window.sendFriendRequestFromProfile = async function (userId) {
+            const btn = document.getElementById('addFriendBtn');
+            if (btn) SohbaApp.setButtonLoading(btn, 'Sending...');
+
+            const result = await SohbaApp.post('/Friends/SendRequest', { receiverId: userId });
+            if (result.success) {
+                SohbaApp.toast('Friend request sent!', 'success');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.className = 'px-6 py-2.5 bg-yellow-600 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 cursor-not-allowed';
+                    btn.innerHTML = '<span>Pending</span>';
+                }
+            } else {
+                SohbaApp.toast(result.error || 'Failed to send friend request', 'error');
+                if (btn) SohbaApp.resetButton(btn);
+            }
+        };
+
+        window.blockUserFromProfile = function (userId) {
+            showConfirmModal({
+                title: 'Block User',
+                message: 'Are you sure you want to block this user?',
+                type: 'delete',
+                confirmText: 'Block',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/BlockUser', { targetId: userId });
+                    if (result.success) {
+                        SohbaApp.toast('User blocked successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 600);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to block user', 'error');
+                    }
+                }
+            });
+        };
+
+        window.unblockUserFromProfile = function (userId) {
+            showConfirmModal({
+                title: 'Unblock User',
+                message: 'Are you sure you want to unblock this user?',
+                type: 'warning',
+                confirmText: 'Unblock',
+                onConfirm: async function () {
+                    const result = await SohbaApp.post('/Friends/UnblockUser', { targetId: userId });
+                    if (result.success) {
+                        SohbaApp.toast('User unblocked successfully.', 'success');
+                        setTimeout(() => window.location.reload(), 600);
+                    } else {
+                        SohbaApp.toast(result.error || 'Failed to unblock user', 'error');
+                    }
+                }
+            });
+        };
+    </script>
+}

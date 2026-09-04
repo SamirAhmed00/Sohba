@@ -14,6 +14,7 @@ namespace Sohba.Application.DTOs.UserAggregate
         public string? BackgroundImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsBlocked { get; set; }
+        public bool IsPrivateAccount { get; set; }
         public bool IsActive { get; set; }
     }
 }

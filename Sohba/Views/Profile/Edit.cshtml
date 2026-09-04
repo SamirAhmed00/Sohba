@@ -20,6 +20,7 @@
                 <input asp-for="Name"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all"
                        placeholder="Your name..." />
+                <span asp-validation-for="Name" class="text-red-500 text-xs mt-1 block"></span>
             </div>
 
             <div>
@@ -27,6 +28,7 @@
                 <textarea asp-for="Bio" rows="4"
                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all resize-none"
                           placeholder="Tell people about yourself..."></textarea>
+                <span asp-validation-for="Bio" class="text-red-500 text-xs mt-1 block"></span>
             </div>
 
             <div>
@@ -43,6 +45,7 @@
                 <input asp-for="ProfileImageFile" type="file" accept="image/*"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#345e69]/10 file:text-[#345e69] hover:file:bg-[#345e69]/20 cursor-pointer" />
                 <p class="text-xs text-gray-500 mt-2">Optional. PNG, JPG up to 5MB.</p>
+                <input type="hidden" asp-for="ProfilePictureUrl" />
             </div>
 
 

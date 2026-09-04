@@ -1,0 +1,76 @@
+﻿@model Sohba.ViewModels.Profile.ProfileFriendsViewModel
+@{
+    ViewData["Title"] = $"{Model.Profile.Name}'s Friends";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-5xl mx-auto page-transition space-y-6 pb-12">
+    <!-- Header Card -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a asp-action="Index" asp-route-id="@Model.Profile.Id" class="relative group shrink-0">
+                <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(Model.Profile.Name)}&background=345e69&color=fff")"
+                     class="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform" alt="@Model.Profile.Name" />
+            </a>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">@Model.Profile.Name's Friends</h1>
+                </div>
+                <p class="text-slate-500 text-sm mt-0.5">@Model.Friends.Count() @(Model.Friends.Count() == 1 ? "friend" : "friends") in total</p>
+            </div>
+        </div>
+        <a asp-action="Index" asp-route-id="@Model.Profile.Id" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold transition self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Profile
+        </a>
+    </div>
+
+    <!-- Friends Grid -->
+    @if (!Model.CanViewFriends)
+    {
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center">
+            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900">Friends list is private</h2>
+            <p class="text-slate-500 text-sm mt-1">You must be friends with @Model.Profile.Name to view their friends list.</p>
+        </div>
+    }
+    else if (Model.Friends == null || !Model.Friends.Any())
+    {
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center">
+            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-bold text-slate-900">No friends yet</h2>
+            <p class="text-slate-500 text-sm mt-1">@Model.Profile.Name has not added any friends yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            @foreach (var friend in Model.Friends)
+            {
+                var friendAvatar = friend.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(friend.FriendName ?? "User")}&background=345e69&color=fff";
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between gap-3 hover-lift">
+                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.FriendUserId" class="flex items-center gap-3 min-w-0">
+                        <img src="@friendAvatar" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100" alt="@friend.FriendName" />
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-slate-900 text-sm truncate hover:text-[#345e69] transition-colors">@friend.FriendName</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Friend</p>
+                        </div>
+                    </a>
+                    <a asp-controller="Profile" asp-action="Index" asp-route-id="@friend.FriendUserId" class="px-3 py-1.5 bg-slate-100 hover:bg-[#345e69] hover:text-white text-slate-700 text-xs font-bold rounded-xl transition shrink-0">
+                        View
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</div>
