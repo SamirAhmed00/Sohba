@@ -37,7 +37,8 @@ namespace Sohba.Infrastructure.Data
 
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryReaction> StoryReactions { get; set; }
-
+        public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; } = null!;
+        public DbSet<PageFollowRequest> PageFollowRequests { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

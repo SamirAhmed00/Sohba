@@ -8,7 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Groups\Partials\" />
+    <Compile Remove="Views\Groups\Partials\**" />
+    <Content Remove="Views\Groups\Partials\**" />
+    <EmbeddedResource Remove="Views\Groups\Partials\**" />
+    <None Remove="Views\Groups\Partials\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 

@@ -1,25 +1,81 @@
 ﻿@model ErrorViewModel
 @{
-    ViewData["Title"] = Model.Title;
+    var statusCode = Model.StatusCode ?? 500;
+    ViewData["Title"] = statusCode switch
+    {
+        404 => "Page Not Found",
+        429 => "Too Many Requests",
+        _ => "Something Went Wrong"
+    };
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1 class="text-danger">@Model.Title</h1>
-<h2 class="text-danger">@Model.FriendlyMessage</h2>
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg w-full text-center space-y-8">
+        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sm:p-12">
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+            @if (statusCode == 404)
+            {
+                <!-- 404 Icon -->
+                <div class="w-24 h-24 bg-sky-50 rounded-3xl flex items-center justify-center mx-auto mb-6 ring-8 ring-sky-50/50">
+                    <svg class="w-12 h-12 text-[#345e69]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <span class="inline-block px-3.5 py-1 bg-sky-100/80 text-[#345e69] text-xs font-bold rounded-full mb-3 tracking-wider">ERROR 404</span>
+                <h1 class="text-3xl font-black text-slate-900 mb-3 tracking-tight">Page Not Found</h1>
+                <p class="text-slate-500 text-base leading-relaxed mb-8">We couldn't find the page you're looking for. It might have been moved or removed.</p>
+            }
+            else if (statusCode == 429)
+            {
+                <!-- 429 Icon -->
+                <div class="w-24 h-24 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6 ring-8 ring-amber-50/50">
+                    <svg class="w-12 h-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <span class="inline-block px-3.5 py-1 bg-amber-100/80 text-amber-800 text-xs font-bold rounded-full mb-3 tracking-wider">RATE LIMITED</span>
+                <h1 class="text-3xl font-black text-slate-900 mb-3 tracking-tight">Too Many Requests</h1>
+                <p class="text-slate-500 text-base leading-relaxed mb-8">You're sending requests too quickly. Please wait a moment and try again.</p>
+            }
+            else
+            {
+                <!-- 500 Icon -->
+                <div class="w-24 h-24 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto mb-6 ring-8 ring-rose-50/50">
+                    <svg class="w-12 h-12 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <span class="inline-block px-3.5 py-1 bg-rose-100/80 text-rose-700 text-xs font-bold rounded-full mb-3 tracking-wider">ERROR 500</span>
+                <h1 class="text-3xl font-black text-slate-900 mb-3 tracking-tight">Something Went Wrong</h1>
+                <p class="text-slate-500 text-base leading-relaxed mb-8">Something went wrong while processing your request. Please try again.</p>
+            }
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+            <!-- CTA Actions -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5">
+                @if (statusCode == 429 || statusCode == 500)
+                {
+                    <button onclick="window.location.reload()"
+                            class="w-full sm:w-auto px-6 py-3 bg-[#345e69] hover:bg-[#2a4b55] text-white font-bold rounded-xl shadow-lg shadow-[#345e69]/20 transform active:scale-95 transition-all">
+                        Try Again
+                    </button>
+                }
+                <a asp-controller="Home" asp-action="Index"
+                   class="w-full sm:w-auto px-6 py-3 @(statusCode == 404 ? "bg-[#345e69] hover:bg-[#2a4b55] text-white shadow-lg shadow-[#345e69]/20" : "bg-slate-100 hover:bg-slate-200 text-slate-700") font-bold rounded-xl transform active:scale-95 transition-all">
+                    Back to Home
+                </a>
+                <button onclick="window.history.back()"
+                        class="w-full sm:w-auto px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all">
+                    Go Back
+                </button>
+            </div>
+
+            @if (Model.ShowRequestId)
+            {
+                <div class="mt-8 pt-6 border-t border-slate-100 text-xs text-slate-400">
+                    <span>Support reference: <code class="font-mono text-slate-500">@Model.RequestId</code></span>
+                </div>
+            }
+        </div>
+    </div>
+</div>

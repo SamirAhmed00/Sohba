@@ -4,10 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
+using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
 using Sohba.Infrastructure.Data;
-using Sohba.Domain.Entities.StoryAggregate;
+using System.Data;
 namespace Sohba.Infrastructure.DBInitializer
 {
     public class DBInitializer : IDBInitializer
@@ -67,6 +68,7 @@ namespace Sohba.Infrastructure.DBInitializer
                     Name = "Admin User",
                     Bio = "System Administrator",
                     CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
                     EmailConfirmed = true,
                     ProfilePictureUrl = "https://ui-avatars.com/api/?name=Admin&background=345e69&color=fff&size=128"
                 };
@@ -220,6 +222,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 Name = name,
                 Bio = bio,
                 CreatedAt = DateTime.UtcNow,
+                IsActive = true,
                 EmailConfirmed = true,
                 ProfilePictureUrl = profilePictureUrl,
                 IsPrivateAccount = false,
@@ -528,7 +531,7 @@ namespace Sohba.Infrastructure.DBInitializer
             var existing = await _context.Pages.FirstOrDefaultAsync(p => p.Name == name);
             if (existing != null)
             {
-                await AddPageFollowerAsync(existing.Id, adminId);
+                await AddPageFollowerAsync(existing.Id, adminId, PageRole.PageOwner);
                 return existing;
             }
 
@@ -560,11 +563,12 @@ namespace Sohba.Infrastructure.DBInitializer
             }
 
             // ✅ Admin automatically follows their page
-            await AddPageFollowerAsync(page.Id, adminId);
+            await AddPageFollowerAsync(page.Id, adminId, PageRole.PageOwner);
+
 
             return page;
         }
-        private async Task AddPageFollowerAsync(Guid pageId, Guid userId)
+        private async Task AddPageFollowerAsync(Guid pageId, Guid userId , PageRole role = PageRole.Member)
         {
             //  Check if already following
             var exists = await _context.PageFollowers
@@ -584,7 +588,8 @@ namespace Sohba.Infrastructure.DBInitializer
                     Id = Guid.NewGuid(), //  Add explicit Id
                     PageId = pageId,
                     UserId = userId,
-                    FollowedAt = DateTime.UtcNow
+                    FollowedAt = DateTime.UtcNow,
+                    Role = role
                 });
 
                 await _context.SaveChangesAsync();

@@ -1,6 +1,8 @@
 ﻿@using System.Security.Claims
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     var jwtToken = ViewBag.JwtToken ?? Context.Items["JwtToken"] as string;
+    var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
 }
 @{
     var recommendedGroups = ViewBag.RecommendedGroups as IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupResponseDto>;
@@ -16,6 +18,7 @@
         <meta name="jwt-token" content="@ViewBag.JwtToken" />
     }
     <meta name="current-user-id" content="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" />
+    <meta name="csrf-token" content="@antiforgeryToken" />
     <script type="importmap"></script>
     <link href="~/Icon.png" sizes="32x32" rel="icon" type="image/png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -28,7 +31,7 @@
     <!-- Header -->
     <partial name="Partials/_Header" />
 
-    <div class="w-full px-0 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
+    <div class="w-full px-3 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
         <div class="flex flex-row gap-6 items-start">
 
             <!-- Left Sidebar -->
@@ -45,8 +48,9 @@
     <!-- Confirm Modal -->
     <partial name="Partials/_ConfirmModal" />
 
-    <!-- Post Modal (single global instance) -->
+    
 
+    <!-- Post Modal (single global instance) -->
     <partial name="Partials/_PostModal" />
 
     <!-- Report Modal (single global instance) -->
@@ -58,7 +62,7 @@
     <!-- Save Post Modal -->
     <partial name="Partials/_SavePostModal" />
 
-     <!-- Image Lightbox (global, reused by Profile/Group/Page images) -->
+    <!-- Image Lightbox (global, reused by Profile/Group/Page images) -->
     <partial name="Partials/_ImageLightbox" />
 
 
@@ -78,9 +82,11 @@
     <script src="~/js/features/modal.js" asp-append-version="true"></script>
     <script src="~/js/features/search.js" asp-append-version="true"></script>
     <script src="~/js/features/friends.js" asp-append-version="true"></script>
+    <script src="~/js/features/pages.js" asp-append-version="true"></script>
+
 
     @await RenderSectionAsync("Scripts", required: false)
 
-    @* @await RenderSectionAsync("Scripts", required: false) *@
+  
 </body>
 </html>

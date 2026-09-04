@@ -19,10 +19,22 @@
         const title = document.getElementById('confirmModalTitle');
         const message = document.getElementById('confirmModalMessage');
         const actionBtn = document.getElementById('confirmModalAction');
+        const inputContainer = document.getElementById('confirmModalInputContainer');
+        const reasonInput = document.getElementById('confirmModalReasonInput');
 
         title.textContent = options.title || 'Confirm Action';
         message.textContent = options.message || 'Are you sure?';
         actionBtn.textContent = options.confirmText || 'Confirm';
+
+        if (inputContainer && reasonInput) {
+            if (options.showReasonInput) {
+                inputContainer.classList.remove('hidden');
+                reasonInput.value = '';
+            } else {
+                inputContainer.classList.add('hidden');
+                reasonInput.value = '';
+            }
+        }
 
         // Icon styling based on type
         if (options.type === 'delete') {
@@ -47,11 +59,14 @@
     };
 
     function onConfirmClicked() {
+        const reasonInput = document.getElementById('confirmModalReasonInput');
+        const reason = reasonInput ? reasonInput.value.trim() : null;
         if (typeof confirmCallback === 'function') {
-            confirmCallback();
+            confirmCallback(reason);
         }
         closeConfirmModal();
     }
+
 
     window.closeConfirmModal = function () {
         const modal = document.getElementById('confirmModal');

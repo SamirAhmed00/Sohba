@@ -114,65 +114,89 @@ namespace Sohba
                     };
                 });
 
-                
+
 
                 // ============================================================
                 //  RATE LIMITING
                 // ============================================================
                 builder.Services.AddRateLimiter(options =>
                 {
-                    // Auth endpoints (Login, Register, ForgotPassword)
-                    options.AddFixedWindowLimiter("Auth", opt =>
+                    // Auth endpoints (Login, Register, ForgotPassword) - Partitioned by IP address
+                    options.AddPolicy("Auth", httpContext =>
                     {
-                        opt.PermitLimit = 5;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 0;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 15,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
                     });
 
-                    // API endpoints (Posts, Comments, Reactions, etc.)
-                    options.AddFixedWindowLimiter("Api", opt =>
+                    // API endpoints (Posts, Comments, Reactions, etc.) - Partitioned by IP address
+                    options.AddPolicy("Api", httpContext =>
                     {
-                        opt.PermitLimit = 60;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 0;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 60,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
                     });
 
-                    // Feed endpoints (Home, LoadMore)
-                    options.AddFixedWindowLimiter("Feed", opt =>
+                    // Feed endpoints (Home, LoadMore) - Partitioned by IP address
+                    options.AddPolicy("Feed", httpContext =>
                     {
-                        opt.PermitLimit = 30;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 0;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 60,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
                     });
 
-                    // Friend requests
-                    options.AddFixedWindowLimiter("FriendRequest", opt =>
+                    // Friend requests - Partitioned by IP address
+                    options.AddPolicy("FriendRequest", httpContext =>
                     {
-                        opt.PermitLimit = 30;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 2;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 30,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 2
+                        });
                     });
 
-                    // Dashboard (Admin only)
-                    options.AddFixedWindowLimiter("Dashboard", opt =>
+                    // Dashboard (Admin only) - Partitioned by IP address
+                    options.AddPolicy("Dashboard", httpContext =>
                     {
-                        opt.PermitLimit = 20;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 0;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 30,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
                     });
 
-                    // Default
-                    options.AddFixedWindowLimiter("Default", opt =>
+                    // Default - Partitioned by IP address
+                    options.AddPolicy("Default", httpContext =>
                     {
-                        opt.PermitLimit = 100;
-                        opt.Window = TimeSpan.FromMinutes(1);
-                        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                        opt.QueueLimit = 0;
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 100,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
                     });
 
                     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -233,7 +257,7 @@ namespace Sohba
                 builder.Services.AddScoped<INotificationEventHandler, NotificationEventHandler>();
 
                 // ============================================================
-                // 5. MVC & VALIDATION 
+                // 5. MVC & VALIDATION
                 // ============================================================
                 builder.Services.AddControllersWithViews(options =>
                 {
@@ -242,6 +266,15 @@ namespace Sohba
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+                });
+
+                // Allow the antiforgery token to be supplied via the
+                // `X-CSRF-TOKEN` header (read by SohbaApp.post) so JSON AJAX
+                // endpoints without a form body can still satisfy
+                // [ValidateAntiForgeryToken].
+                builder.Services.AddAntiforgery(options =>
+                {
+                    options.HeaderName = "X-CSRF-TOKEN";
                 });
 
                 builder.Services.AddFluentValidationAutoValidation();
@@ -261,7 +294,31 @@ namespace Sohba
                 // ============================================================
                 // 8. MIDDLEWARE PIPELINE 
                 // ============================================================
-                // Configure the HTTP request pipeline.
+                // Global Exception Handler must execute at the start of the pipeline
+                app.UseExceptionHandler(appError =>
+                {
+                    appError.Run(async context =>
+                    {
+                        var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+                        var exception = exceptionFeature?.Error;
+
+                        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogError(exception, "Unhandled exception processing {Path}", context.Request.Path);
+
+                        if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(context.Request))
+                        {
+                            await HttpErrorResponseHelper.WriteJsonErrorAsync(
+                                context.Response,
+                                500,
+                                "An unexpected error occurred.");
+                        }
+                        else
+                        {
+                            context.Response.Redirect("/Home/Error?code=500");
+                        }
+                    });
+                });
+
                 if (!app.Environment.IsDevelopment())
                 {
                     app.UseHsts();
@@ -269,6 +326,8 @@ namespace Sohba
                 app.UseHttpsRedirection();
                 app.UseStaticFiles();
                 app.UseRouting();
+
+                app.UseRateLimiter();
 
                 app.UseStatusCodePages(async statusCodeContext =>
                 {
@@ -290,38 +349,6 @@ namespace Sohba
 
                 app.UseAuthentication();
                 app.UseAuthorization();
-
-                app.UseRateLimiter();
-                // ============================================================
-                //  Global Exception Handler 
-                // ============================================================
-                app.UseExceptionHandler(appError =>
-                {
-                    appError.Run(async context =>
-                    {
-                        var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
-                        var exception = exceptionFeature?.Error;
-
-                        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-                        logger.LogError(exception, "Unhandled exception processing {Path}", context.Request.Path);
-
-                        if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(context.Request))
-                        {
-                            await HttpErrorResponseHelper.WriteJsonErrorAsync(
-                                context.Response,
-                                500,
-                                "An unexpected error occurred.");
-                            // correlationId still available to the client via the response body key "error";
-                            // to keep the field name unchanged for existing consumers, WriteJsonErrorAsync's
-                            // shape is {success:false, error:"..."} — add correlationId explicitly if any
-                            // caller depends on it:
-                        }
-                        else
-                        {
-                            context.Response.Redirect("/Home/Error?code=500");
-                        }
-                    });
-                });
 
                 app.MapHub<NotificationHub>("/notificationHub");
                 app.MapHealthChecks("/healthz");

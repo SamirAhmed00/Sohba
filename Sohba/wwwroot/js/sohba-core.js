@@ -1,6 +1,15 @@
 // sohba-core.js - Shared core utility functions
 window.SohbaApp = window.SohbaApp || {};
 
+// Reads the antiforgery token from the meta tag (preferred, set by _AppLayout)
+// or falls back to a hidden form input if the meta is missing.
+window.SohbaApp.getAntiForgeryToken = function () {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
+    const input = document.querySelector('input[name="__RequestVerificationToken"]');
+    return input ? input.value : null;
+};
+
 // Toast Notification
 function createToastContainer() {
     const div = document.createElement('div');
@@ -31,14 +40,13 @@ window.SohbaApp.toast = function (message, type = 'info') {
 // Returns a standardised { success, error } object — never throws, never returns HTML.
 window.SohbaApp.post = async function (url, data) {
     try {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const token = SohbaApp.getAntiForgeryToken();
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['X-CSRF-TOKEN'] = token;
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token
-            },
+            headers: headers,
             body: JSON.stringify(data)
         });
 
@@ -72,14 +80,13 @@ window.SohbaApp.post = async function (url, data) {
 
 window.SohbaApp.postForm = async function (url, formData) {
     try {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const token = SohbaApp.getAntiForgeryToken();
+        const headers = {};
+        if (token) headers['X-CSRF-TOKEN'] = token;
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'RequestVerificationToken': token
-                
-            },
+            headers: headers,
             body: formData
         });
 

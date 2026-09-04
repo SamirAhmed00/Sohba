@@ -48,23 +48,50 @@ namespace Sohba.Application.Mappings
 
             // --- Group Mapping ---
             CreateMap<GroupCreateDto, Group>();
+
             CreateMap<GroupUpdateDto, Group>();
+
             CreateMap<Group, GroupResponseDto>()
-                .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin.Name));
+                .ForMember(
+                    dest => dest.AdminName,
+                    opt => opt.MapFrom(src =>
+                        src.Admin != null
+                            ? src.Admin.Name
+                            : "Group Owner"));
 
             CreateMap<GroupMember, GroupMemberDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
-                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString())); // Enum to String
+                .ForMember(
+                    dest => dest.UserName,
+                    opt => opt.MapFrom(src =>
+                        src.User != null
+                            ? src.User.Name
+                            : "Community Member"))
+                .ForMember(
+                    dest => dest.UserAvatarUrl,
+                    opt => opt.MapFrom(src =>
+                        src.User != null
+                            ? src.User.ProfilePictureUrl
+                            : null))
+                .ForMember(
+                    dest => dest.Role,
+                    opt => opt.MapFrom(src => src.Role));
+
 
             // --- Page Mapping ---
             CreateMap<PageCreateDto, Page>();
             CreateMap<Page, PageResponseDto>()
-                .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin.Name))
-                .ForMember(dest => dest.AdminId, opt => opt.MapFrom(src => src.AdminId))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+               .ForMember(dest => dest.AdminName, opt => opt.MapFrom(src => src.Admin != null ? src.Admin.Name : "Page Administrator"))
+               .ForMember(dest => dest.AdminId, opt => opt.MapFrom(src => src.AdminId))
+               .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
+               .ForMember(dest => dest.Rules, opt => opt.MapFrom(src => src.Rules))
+               .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+
 
             CreateMap<PageFollower, PageFollowerDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name));
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.User.ProfilePictureUrl))
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));
+
 
             // --- Reaction Mapping (Handling Enums) ---
             CreateMap<ReactionRequestDto, Reaction>();

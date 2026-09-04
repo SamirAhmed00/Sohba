@@ -38,14 +38,16 @@ namespace Sohba.Controllers
                 // FindByIdAsync respects the global !IsDeleted filter, so null here for an
                 // otherwise-authenticated request means the account was deleted after the
                 // session cookie was issued.
-                if (currentUser == null || currentUser.IsBlocked)
+                if (currentUser == null || currentUser.IsBlocked || !currentUser.IsActive)
                 {
                     var signInManager = HttpContext.RequestServices.GetRequiredService<SignInManager<User>>();
                     await signInManager.SignOutAsync();
 
                     var message = currentUser == null
                         ? "This account has been deleted and is no longer available."
-                        : "Your account has been blocked. Please contact support.";
+                        : currentUser.IsBlocked
+                            ? "Your account has been blocked. Please contact support."
+                            : "Your account has been deactivated. Please log in again to reactivate.";
 
                     bool isAjaxOrJson = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
                         || context.HttpContext.Request.Headers["Accept"].ToString().Contains("application/json");

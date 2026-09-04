@@ -7,43 +7,60 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
     modal.dataset.postId = postId;
     document.body.style.overflow = 'hidden';
 
-    document.getElementById('modalPostImage').src = '';
-    document.getElementById('modalAuthorName').innerText = '';
-    document.getElementById('modalPostDate').innerText = '';
-    document.getElementById('modalPostContent').innerText = '';
-    document.getElementById('modalComments').innerHTML = '<p class="text-slate-400 text-sm italic">Loading comments...</p>';
-    document.getElementById('modalAuthorAvatar').src = '';
+    // Show Skeleton Loading State
+    const modalPostImage = document.getElementById('modalPostImage');
+    if (modalPostImage) modalPostImage.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="%231e293b"/>';
 
-    // Post context icon (Group / Page) + Privacy indicator
-    const sourceEl = document.getElementById('modalSourceContext');
-    const privacyEl = document.getElementById('modalPrivacyIndicator');
-    
-    if (data.post.sourceType === 'Group' || data.post.sourceType === 'Page') {
-            const icon = data.post.sourceType === 'Group' ? '👪' : '📄';
-            sourceEl.innerHTML = `<span>•</span><span>${icon} ${data.post.sourceName || data.post.sourceType}</span>`;
-            sourceEl.classList.remove('hidden'); sourceEl.classList.add('flex');
-    } else {
-        sourceEl.classList.add('hidden'); sourceEl.classList.remove('flex'); sourceEl.innerHTML = '';
-    }
-    
-    const privacyLabels = { 0: '🌐 Public', 1: '👥 Friends Only', 2: '🔒 Only Me' };
-    privacyEl.innerHTML = `<span>•</span><span>${privacyLabels[data.post.privacy] ?? privacyLabels[0]}</span>`;
-    privacyEl.classList.remove('hidden'); privacyEl.classList.add('flex');
-    
-    // Multiple images: thumbnail strip; falls back to the single legacy image.
-    const images = (data.post.imageUrls && data.post.imageUrls.length > 0)
-                ? data.post.imageUrls
-                : (data.post.imageUrl ? [data.post.imageUrl] : []);
-    const thumbStrip = document.getElementById('modalImageThumbnails');
+    document.getElementById('modalAuthorName').innerHTML = '<div class="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>';
+    document.getElementById('modalPostDate').innerHTML = '<div class="h-3 w-20 bg-slate-100 rounded animate-pulse mt-1"></div>';
+    document.getElementById('modalAuthorAvatar').src = 'https://ui-avatars.com/api/?name=..&background=e2e8f0&color=94a3b8';
+    document.getElementById('modalPostContent').innerHTML = '<div class="space-y-2 py-2"><div class="h-4 bg-slate-100 rounded animate-pulse w-full"></div><div class="h-4 bg-slate-100 rounded animate-pulse w-4/5"></div></div>';
+
+    document.getElementById('modalComments').innerHTML = `
+        <div class="space-y-4 animate-pulse">
+            <div class="flex gap-3 items-start"><div class="w-8 h-8 rounded-full bg-slate-200 shrink-0"></div><div class="flex-1 space-y-1.5"><div class="h-3.5 bg-slate-200 rounded w-28"></div><div class="h-3 bg-slate-100 rounded w-full"></div></div></div>
+            <div class="flex gap-3 items-start"><div class="w-8 h-8 rounded-full bg-slate-200 shrink-0"></div><div class="flex-1 space-y-1.5"><div class="h-3.5 bg-slate-200 rounded w-24"></div><div class="h-3 bg-slate-100 rounded w-3/4"></div></div></div>
+        </div>`;
 
     try {
         const response = await fetch(`/Posts/GetPostDetails?postId=${postId}`);
         if (!response.ok) throw new Error('Failed to load');
         const data = await response.json();
 
+        // Post context icon (Group / Page) + Privacy indicator
+        const sourceEl = document.getElementById('modalSourceContext');
+        const privacyEl = document.getElementById('modalPrivacyIndicator');
+
+        if (sourceEl) {
+            if (data.post.sourceType === 'Group' || data.post.sourceType === 'Page') {
+                const icon = data.post.sourceType === 'Group' ? '👪' : '📄';
+                sourceEl.innerHTML = `<span>•</span><span>${icon} ${data.post.sourceName || data.post.sourceType}</span>`;
+                sourceEl.classList.remove('hidden');
+                sourceEl.classList.add('flex');
+            } else {
+                sourceEl.classList.add('hidden');
+                sourceEl.classList.remove('flex');
+                sourceEl.innerHTML = '';
+            }
+        }
+
+        if (privacyEl) {
+            const privacyLabels = { 0: '🌐 Public', 1: '👥 Friends Only', 2: '🔒 Only Me' };
+            privacyEl.innerHTML = `<span>•</span><span>${privacyLabels[data.post.privacy] ?? privacyLabels[0]}</span>`;
+            privacyEl.classList.remove('hidden');
+            privacyEl.classList.add('flex');
+        }
+
+        // Multiple images: thumbnail strip; falls back to the single legacy image.
+        const images = (data.post.imageUrls && data.post.imageUrls.length > 0)
+            ? data.post.imageUrls
+            : (data.post.imageUrl ? [data.post.imageUrl] : []);
+        const thumbStrip = document.getElementById('modalImageThumbnails');
+
         const modalContainer = document.querySelector('#postModal .flex-col.md\\:flex-row');
         const leftSide = document.getElementById('modalLeft');
         const rightSide = document.getElementById('modalRight');
+
 
         if (leftSide) leftSide.style.display = '';
         if (rightSide) {

@@ -19,7 +19,7 @@ namespace Sohba.Domain.Entities.UserAggregate
         public string? BackgroundImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        public bool IsActive { get; set; } 
+        public bool IsActive { get; set; } = true;
 
         //Privacy Settings
         public bool IsPrivateAccount { get; set; } = false;
