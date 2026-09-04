@@ -23,6 +23,9 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany(u => u.Reactions)
                    .HasForeignKey(r => r.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // Ensure one reaction per user per post
+            builder.HasIndex(r => new { r.PostId, r.UserId }).IsUnique();
         }
     }
 }

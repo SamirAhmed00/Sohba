@@ -120,6 +120,7 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<SavedPost>()
                 .Include(sp => sp.Post)
                     .ThenInclude(p => p.User)
+                .Include(sp => sp.Collection)
                 .Where(sp => sp.UserId == userId)
                 .OrderByDescending(sp => sp.SavedAt)
                 .ToListAsync();
@@ -130,10 +131,12 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<SavedPost>()
                 .Include(sp => sp.Post)
                     .ThenInclude(p => p.User)
+                .Include(sp => sp.Collection)
                 .Where(sp => sp.UserId == userId && sp.Tag == tag)
                 .OrderByDescending(sp => sp.SavedAt)
                 .ToListAsync();
         }
+
 
         public void UpdateSavedPost(SavedPost savedPost)
         {

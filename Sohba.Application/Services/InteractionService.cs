@@ -108,6 +108,14 @@ namespace Sohba.Application.Services
                 return Result<Guid>.Failure("Post not found.");
             }
 
+            // Enforce post visibility/privacy
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, post.UserId);
+            var canView = _postDomainService.CanViewPost(userId, post.UserId, post.Privacy, isFriend);
+            if (!canView.IsSuccess)
+            {
+                return Result<Guid>.Failure(canView.Error);
+            }
+
             int parentDepth = 0;
             if (parentCommentId.HasValue)
             {
@@ -135,6 +143,7 @@ namespace Sohba.Application.Services
                 _logger.LogWarning("Comment rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, canComment.Error);
                 return Result<Guid>.Failure(canComment.Error);
             }
+
 
             var comment = new Comment
             {
@@ -236,10 +245,17 @@ namespace Sohba.Application.Services
             if (post == null)
                 return Result.Failure("Post not found.");
 
+            // Enforce post visibility/privacy
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, post.UserId);
+            var canView = _postDomainService.CanViewPost(userId, post.UserId, post.Privacy, isFriend);
+            if (!canView.IsSuccess)
+                return canView;
+
             var isBlocked = await _unitOfWork.Friendships.IsUserBlockedAsync(post.UserId, userId);
             var canReact = _interactionDomainService.CanAddReaction(userId, post.IsDeleted, isBlocked);
             if (!canReact.IsSuccess)
                 return canReact;
+
 
 
             var existingReaction = await _unitOfWork.Interactions.GetReactionAsync(userId, postId);
@@ -324,6 +340,11 @@ namespace Sohba.Application.Services
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null) return Result<SavedPostDto>.Failure("Post not found.");
 
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, post.UserId);
+            var canView = _postDomainService.CanViewPost(userId, post.UserId, post.Privacy, isFriend);
+            if (!canView.IsSuccess) return Result<SavedPostDto>.Failure(canView.Error);
+
+
             var existingSave = await _unitOfWork.Interactions.GetSavedPostAsync(userId, postId);
 
             if (existingSave != null)
@@ -361,13 +382,22 @@ namespace Sohba.Application.Services
 
         public async Task<Result> RemoveSavedPostAsync(Guid userId, Guid postId)
         {
-            var existingSave = await _unitOfWork.Interactions.GetSavedPostAsync(userId, postId);
-            if (existingSave == null) return Result.Failure("Post is not saved.");
+            var savedPosts = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId))
+                .Where(s => s.PostId == postId && s.Tag != SavedTag.Favorite)
+                .ToList();
 
-            _unitOfWork.Interactions.RemoveSavedPost(existingSave);
+            if (!savedPosts.Any())
+                return Result.Failure("Post is not saved.");
+
+            foreach (var save in savedPosts)
+            {
+                _unitOfWork.Interactions.RemoveSavedPost(save);
+            }
+
             await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
+
 
 
         // Removes the post from ALL the user's collections but KEEPS the Favorites membership.
@@ -539,9 +569,14 @@ namespace Sohba.Application.Services
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null) return Result.Failure("Post not found.");
 
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, post.UserId);
+            var canView = _postDomainService.CanViewPost(userId, post.UserId, post.Privacy, isFriend);
+            if (!canView.IsSuccess) return canView;
+
             var collection = await _unitOfWork.Interactions.GetCollectionByIdAsync(collectionId);
             if (collection == null) return Result.Failure("Collection not found.");
             if (collection.UserId != userId) return Result.Failure("You do not own this collection.");
+
 
             var existing = await _unitOfWork.Interactions.GetSavedPostByCollectionAsync(userId, postId, collectionId);
             if (existing != null)
@@ -567,6 +602,11 @@ namespace Sohba.Application.Services
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null) return Result.Failure("Post not found.");
+
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, post.UserId);
+            var canView = _postDomainService.CanViewPost(userId, post.UserId, post.Privacy, isFriend);
+            if (!canView.IsSuccess) return canView;
+
 
             // Find or create the special Favorites collection.
             var favorites = (await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId))
@@ -621,9 +661,9 @@ namespace Sohba.Application.Services
                 .Where(c => !c.IsFavorites)
                 .ToList();
 
-            // Exclude standalone Favorites rows from Saved Posts
+            // Exclude standalone Favorites rows and filter out null post references from soft-deletions
             var allSaved = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(userId))
-                .Where(s => s.Tag != SavedTag.Favorite && (s.CollectionId == null || !s.Collection.IsFavorites))
+                .Where(s => s.Tag != SavedTag.Favorite && s.Post != null && (s.CollectionId == null || s.Collection == null || !s.Collection.IsFavorites))
                 .OrderByDescending(s => s.SavedAt)
                 .ToList();
 
@@ -631,11 +671,11 @@ namespace Sohba.Application.Services
 
             var allSavedPostsList = allSaved
                 .Select(s => s.Post)
+                .Where(p => p != null)
                 .DistinctBy(p => p.Id)
                 .ToList();
 
             var totalUniquePosts = allSavedPostsList.Count;
-
             var totalPages = Math.Max(1, (int)Math.Ceiling((double)totalUniquePosts / pageSize));
 
             var pagedAllPosts = allSavedPostsList
@@ -652,20 +692,23 @@ namespace Sohba.Application.Services
                 IsFavorites = false,
                 Posts = allMapped.ToList()
             });
-            
+
+            // Populate specific collections (showing items up to pageSize for each collection on page 1)
             foreach (var collection in collections)
             {
                 var collectionSaves = allSaved
-                    .Where(s => s.CollectionId == collection.Id)
+                    .Where(s => s.CollectionId == collection.Id && s.Post != null)
                     .OrderByDescending(s => s.SavedAt)
                     .ToList();
+
                 if (collectionSaves.Count == 0 && !collection.IsDefault)
                     continue;
-                var pagedSaves = collectionSaves
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
-                var mapped = await MapPostsToResponse(pagedSaves.Select(s => s.Post).ToList(), userId);
+
+                var postsToRender = (page == 1)
+                    ? collectionSaves.Take(pageSize).Select(s => s.Post).ToList()
+                    : collectionSaves.Select(s => s.Post).ToList();
+
+                var mapped = await MapPostsToResponse(postsToRender, userId);
                 result.Add(new SavedPostsGroupedDto
                 {
                     CollectionId = collection.Id,
@@ -684,5 +727,6 @@ namespace Sohba.Application.Services
                 TotalPages = totalPages
             });
         }
+
     }
 }

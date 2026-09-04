@@ -48,7 +48,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             if (userId == postOwnerId)
                 return Result.Success();
 
-            // 3. System Admin or Moderator can delete it
+            // 3. System Admin or Group Administrator can delete it
             if (isAdmin)
                 return Result.Success();
 

@@ -1,10 +1,57 @@
 // wwwroot/js/features/comments.js
-// Handles client-side actions for comments: Delete
-// Extracted to maintain Zero Inline JS guidelines under RULES.md §2.
+// Handles client-side actions for comments: Create, Reply, Delete, Toggle
+
+window.SohbaApp = window.SohbaApp || {};
 
 /**
- * Sends an AJAX request to delete a comment and removes it from the DOM.
- * @param {string} commentId - The GUID string of the comment to delete.
+ * Displays the reply input form for a comment.
+ */
+window.SohbaApp.showReplyForm = function (commentId, userName) {
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) {
+        form.classList.remove('hidden');
+        const input = document.getElementById(`replyInput-${commentId}`);
+        if (input) input.focus();
+    }
+};
+
+/**
+ * Hides the reply input form for a comment.
+ */
+window.SohbaApp.hideReplyForm = function (commentId) {
+    const form = document.getElementById(`replyForm-${commentId}`);
+    if (form) form.classList.add('hidden');
+};
+
+/**
+ * Toggles visibility of nested replies container.
+ */
+window.SohbaApp.toggleReplies = function (commentId) {
+    const replies = document.getElementById(`replies-${commentId}`);
+    if (replies) {
+        replies.classList.toggle('hidden');
+    }
+};
+
+/**
+ * Expands or truncates long comment text.
+ */
+window.SohbaApp.toggleComment = function (commentId, fullContent, shortContent) {
+    const container = document.getElementById(commentId);
+    if (!container) return;
+
+    const btn = container.parentElement.querySelector('.toggle-comment-btn');
+    if (container.innerText.length > shortContent.length) {
+        container.innerText = shortContent;
+        if (btn) btn.innerText = 'See more';
+    } else {
+        container.innerText = fullContent;
+        if (btn) btn.innerText = 'See less';
+    }
+};
+
+/**
+ * Deletes a comment and updates client DOM.
  */
 async function deleteComment(commentId, postId = null) {
     if (!commentId) return;
@@ -16,24 +63,18 @@ async function deleteComment(commentId, postId = null) {
         confirmText: 'Delete',
         onConfirm: async () => {
             try {
-                const result = await SohbaApp.post('/Comments/Delete', { id: commentId });
+                const result = await window.SohbaApp.post('/Comments/Delete', { id: commentId });
 
                 if (result.success) {
-                    SohbaApp.toast('Comment deleted successfully!', 'success');
-                    
-                    // Remove from the DOM smoothly
-                    const commentElement = document.getElementById(`comment-${commentId}`) || 
-                                           document.querySelector(`[data-comment-id="${commentId}"]`);
-                    
+                    window.SohbaApp.toast('Comment deleted successfully!', 'success');
+
+                    const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
                     if (commentElement) {
-                        // Traverse up to find the closest wrapping container if the id was on text instead of the wrapper
-                        const wrapperElement = commentElement.closest('.flex.items-start') || commentElement;
-                        wrapperElement.style.transition = 'opacity 0.3s ease';
-                        wrapperElement.style.opacity = 0;
-                        setTimeout(() => wrapperElement.remove(), 300);
+                        commentElement.style.transition = 'opacity 0.3s ease';
+                        commentElement.style.opacity = '0';
+                        setTimeout(() => commentElement.remove(), 300);
                     }
 
-                    // Dynamically decrement comment count if postId is provided or found
                     if (postId) {
                         const countEl = document.getElementById(`comments-count-${postId}`);
                         if (countEl) {
@@ -44,11 +85,11 @@ async function deleteComment(commentId, postId = null) {
                         }
                     }
                 } else {
-                    SohbaApp.toast(result.error || 'Failed to delete comment.', 'error');
+                    window.SohbaApp.toast(result.error || 'Failed to delete comment.', 'error');
                 }
             } catch (err) {
-                console.error("Comment deletion failed dynamically:", err);
-                SohbaApp.toast('An unexpected error occurred deleting the comment.', 'error');
+                console.error("Comment deletion failed:", err);
+                window.SohbaApp.toast('An unexpected error occurred.', 'error');
             }
         }
     });
