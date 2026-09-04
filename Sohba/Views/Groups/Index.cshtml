@@ -1,120 +1,333 @@
-﻿@model IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupResponseDto>
+﻿@model Sohba.ViewModels.Group.GroupIndexViewModel
 @{
     ViewData["Title"] = "Groups";
     Layout = "_AppLayout";
 }
 
+@Html.AntiForgeryToken()
+
 <div class="max-w-7xl mx-auto page-transition">
-    <!-- Header -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 ">
-        <div class="flex items-center justify-between">
+  
+    <!-- Header & Server-Side Search -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-black text-gray-900">Groups</h1>
-                <p class="text-gray-500 mt-1">Discover communities</p>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900">
+                    Discover Groups
+                </h1>
+
+                <p class="text-gray-500 text-sm mt-1">
+                    Find and join communities of interest
+                </p>
             </div>
-            <a asp-action="Create" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+
+            <a asp-action="Create"
+               class="px-5 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] shadow-md shadow-[#345e69]/20 transition-all active:scale-95 flex items-center gap-2 self-start sm:self-auto">
+
+                <svg class="w-5 h-5"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 4v16m8-8H4" />
                 </svg>
+
                 Create Group
             </a>
         </div>
+
+        <!-- Server-Side Search -->
+        <form method="get"
+              asp-action="Index"
+              class="mt-6 flex items-center gap-3">
+
+            <div class="relative flex-1">
+
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-5 h-5"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <input type="text"
+                       name="search"
+                       value="@Model.SearchTerm"
+                       placeholder="Search groups by name or description..."
+                       class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] focus:bg-white transition-all" />
+
+                @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                {
+                    <a asp-action="Index"
+                       class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
+                       title="Clear Search">
+
+                        <svg class="w-4 h-4"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke="currentColor">
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+
+                    </a>
+                }
+            </div>
+
+            <button type="submit"
+                    class="px-6 py-2.5 bg-[#345e69] hover:bg-[#2a4b55] text-white font-bold rounded-2xl text-sm transition-colors shrink-0">
+                Search
+            </button>
+        </form>
     </div>
 
     <!-- Groups List -->
     <div class="space-y-4">
-        @foreach (var group in Model)
+
+        @if (Model.Groups.Items != null && Model.Groups.Items.Any())
         {
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift flex items-center gap-5 transition-all duration-300">
-                <a asp-action="Details" asp-route-id="@group.Id" class="relative group/icon">
-                        @*TODO : ADD Image To Group Entity*@
-                        @if (!string.IsNullOrEmpty(group.ImageUrl))
-                        {
-                            <img src="@group.ImageUrl" class="w-16 h-16 rounded-2xl object-cover shadow-md border border-slate-100 transform transition-transform group-hover/icon:scale-105" alt="@group.Name" />
-                        }
-                        else
-                        { 
-                            <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-sm border border-slate-200 transform transition-transform group-hover/icon:scale-105">
-                                <span class="relative z-10 text-[#345e69] text-2xl font-black tracking-tighter">
-                                    @group.Name[0].ToString().ToUpper()
+            @foreach (var group in Model.Groups.Items)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-all duration-300">
+
+                    <!-- Group Identity -->
+                    <div class="flex items-center gap-4 min-w-0">
+
+                        <a asp-action="Details"
+                           asp-route-id="@group.Id"
+                           class="relative group/icon shrink-0">
+
+                            @if (!string.IsNullOrEmpty(group.ImageUrl))
+                            {
+                                <img src="@group.ImageUrl"
+                                     class="w-16 h-16 rounded-2xl object-cover shadow-sm border border-slate-100 transform transition-transform group-hover/icon:scale-105"
+                                     alt="@group.Name" />
+                            }
+                            else
+                            {
+                                <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center relative overflow-hidden shadow-sm border border-slate-200 transform transition-transform group-hover/icon:scale-105">
+
+                                    <span class="relative z-10 text-[#345e69] text-2xl font-black">
+                                        @(string.IsNullOrWhiteSpace(group.Name)
+                                            ? "G"
+                                            : group.Name[0].ToString().ToUpper())
+                                    </span>
+
+                                </div>
+                            }
+
+                            @if (group.IsCurrentUserMember)
+                            {
+                                <div class="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm z-20"
+                                     title="Member">
+                                </div>
+                            }
+                        </a>
+
+                        <div class="min-w-0 flex-1">
+
+                            <div class="flex items-center gap-2 flex-wrap">
+
+                                <a asp-action="Details"
+                                   asp-route-id="@group.Id"
+                                   class="font-black text-gray-900 text-lg leading-tight hover:text-[#345e69] transition-colors truncate">
+
+                                    @group.Name
+                                </a>
+
+                                @if (group.IsPrivate)
+                                {
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                        🔒 Private
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                        🌐 Public
+                                    </span>
+                                }
+                            </div>
+
+                            <p class="text-gray-500 text-sm line-clamp-1 mt-1">
+                                @group.Description
+                            </p>
+
+                            <div class="flex items-center gap-3 mt-2.5 text-xs text-slate-500">
+
+                                <span class="font-bold text-[#345e69]">
+                                    @group.MembersCount Members
                                 </span>
 
-                                <div class="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none"></div>
+                                <span>•</span>
+
+                                <span>
+                                    Admin:
+                                    <span class="font-semibold text-slate-700">
+                                        @group.AdminName
+                                    </span>
+                                </span>
+
                             </div>
-                         } 
-
-                        @if (group.IsCurrentUserMember)
-                        {
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm z-20"></div>
-                        }
-                </a>
-                
-
-                <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                        <a asp-action="Details" asp-route-id="@group.Id" class="font-black text-gray-800 text-lg leading-tight hover:underline">@group.Name</a>
-                        @if (group.IsCurrentUserMember)
-                        {
-                            <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                            </svg>
-                        }
-                    </div>
-                    <p class="text-gray-500 text-sm line-clamp-1 mt-0.5">@group.Description</p>
-
-                    <div class="flex items-center gap-3 mt-3">
-                        <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                            <span class="text-xs font-bold text-slate-600">@group.MembersCount</span>
                         </div>
-                        <span class="text-slate-300">•</span>
-                        <span class="text-xs font-medium text-slate-400">Admin: <span class="text-[#345e69] font-bold">@group.AdminName</span></span>
+                    </div>
+
+                    <!-- Group Action -->
+                    <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+
+                        @if (group.IsCurrentUserMember)
+                        {
+                            <a asp-action="Details"
+                               asp-route-id="@group.Id"
+                               class="px-5 py-2.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 transition-all border border-emerald-200 text-sm">
+
+                                View Group
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    onclick="joinGroupFromList('@group.Id', this)"
+                                    class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] shadow-md shadow-[#345e69]/20 transition-all active:scale-95 text-sm">
+
+                                Join
+                            </button>
+                        }
+
                     </div>
                 </div>
+            }
 
-                <div class="flex items-center">
-                    @if (group.IsCurrentUserMember)
-                    {
-                        <a asp-action="Details" asp-route-id="@group.Id" class="px-6 py-2.5 bg-green-50 text-green-700 font-bold rounded-xl hover:bg-green-100 transition-all border border-green-100">
-                            View Group
-                        </a>
-                    }
-                    else
-                    {
-                        <button onclick="joinGroup('@group.Id', this)" class="px-6 py-2.5 bg-[#345e69] text-white font-bold rounded-xl hover:bg-[#2a4b55] shadow-md shadow-[#345e69]/20 transition-all active:scale-95">
-                            Join
-                        </button>
-                    }
+            <!-- Server-Side Pagination -->
+            @if (Model.Groups.TotalPages > 1)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center justify-between mt-6">
+
+                    <span class="text-xs text-slate-500">
+                        Page @Model.Groups.Page of @Model.Groups.TotalPages
+                        (@Model.Groups.TotalCount groups)
+                    </span>
+
+                    <div class="flex gap-2">
+
+                        @if (Model.Groups.HasPreviousPage)
+                        {
+                            <a asp-action="Index"
+                               asp-route-search="@Model.SearchTerm"
+                               asp-route-page="@(Model.Groups.Page - 1)"
+                               class="px-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100">
+
+                                Previous
+                            </a>
+                        }
+
+                        @if (Model.Groups.HasNextPage)
+                        {
+                            <a asp-action="Index"
+                               asp-route-search="@Model.SearchTerm"
+                               asp-route-page="@(Model.Groups.Page + 1)"
+                               class="px-3.5 py-1.5 bg-[#345e69] text-white rounded-xl text-xs font-bold hover:bg-[#2a4b55]">
+
+                                Next
+                            </a>
+                        }
+
+                    </div>
                 </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+
+                <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+
+                    <svg class="w-10 h-10"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900">
+                    No groups found
+                </h3>
+
+                <p class="text-gray-500 text-sm mt-1">
+                    Try another search keyword or create a new community.
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                {
+                    <a asp-action="Index"
+                       class="inline-block mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+
+                        Clear Filter
+                    </a>
+                }
+
             </div>
         }
-    </div>
 
-    @if (!Model.Any())
-    {
-        <div class="text-center py-20">
-            <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-gray-900">No groups yet</h3>
-            <p class="text-gray-500 mt-2">Create or join a group!</p>
-        </div>
-    }
+    </div>
+    
+
 </div>
 
 @section Scripts {
     <script>
-        async function joinGroup(groupId, button) {
-            const result = await SohbaApp.post('/Groups/Join', { id: groupId });
-            if (result.success) {
-                SohbaApp.toast('Joined group successfully!', 'success');
-                // Update button UI
-                button.outerHTML = '<span class="px-6 py-2 bg-green-100 text-green-700 font-semibold rounded-xl">Member</span>';
-            } else {
-                SohbaApp.toast(result.error || 'Failed to join', 'error');
+        async function joinGroupFromList(groupId, button) {
+        try {
+        const result = await SohbaApp.post(
+        '/Groups/Join',
+        { id: groupId }
+        );
+                    if (result.success) {
+                        SohbaApp.toast(
+                            'Joined group successfully!',
+                            'success'
+                        );
+
+                        button.outerHTML = `
+                            <a href="/Groups/Details/${groupId}"
+                                class="px-5 py-2.5 bg-emerald-50 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 transition-all border border-emerald-200 text-sm">
+                                View Group
+                            </a>`;
+                    }
+                    else {
+                        SohbaApp.toast(
+                            result.error || 'Failed to join group',
+                            'error'
+                        );
+                    }
+                }
+                catch (error) {
+                    console.error('Join group error:', error);
+
+                    SohbaApp.toast(
+                        'Network error',
+                        'error'
+                    );
+                }
             }
-        }
     </script>
+
 }

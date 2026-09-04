@@ -4,10 +4,11 @@ using System.Text;
 
 namespace Sohba.Domain.Enums
 {
-    public enum GroupRole
+    public enum GroupJoinRequestStatus
     {
-        Member = 1,
-        CoAdmin = 2,
-        Admin = 3
+        Pending = 1,
+        Accepted = 2,
+        Rejected = 3
     }
+
 }

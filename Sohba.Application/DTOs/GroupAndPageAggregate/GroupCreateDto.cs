@@ -6,11 +6,12 @@ namespace Sohba.Application.DTOs.GroupAndPageAggregate
 {
     public class GroupCreateDto
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string? Rules { get; set; }
         public string? ImageUrl { get; set; }
+        public string? BackgroundImageUrl { get; set; }
         public bool IsPrivate { get; set; }
-
         public Guid AdminId { get; set; }
     }
 }

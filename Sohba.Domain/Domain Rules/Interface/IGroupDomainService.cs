@@ -1,19 +1,93 @@
 ﻿using Sohba.Domain.Common;
+using Sohba.Domain.Enums;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sohba.Domain.Domain_Rules.Interface
 {
     public interface IGroupDomainService
     {
-        Result CanJoinGroup(Guid userId, bool isGroupPrivate, bool isUserBanned);
-        Result CanPostInGroup(Guid userId, Guid groupId, bool isMember, bool isGroupLocked);
-        Result CanPromoteMember(Guid actionUserId, string actionUserRole, string targetUserRole);
-        Result CanKickMember(Guid actionUserId, string actionUserRole, Guid targetUserId, string targetUserRole);
-        Result CanInviteToGroup(Guid inviterId, bool isMember, bool groupAllowsMemberInvites);
-        Result CanDeleteGroup(Guid userId, Guid ownerId);
-        Result CanUpdateGroup(Guid userId, Guid groupId, Guid groupAdminId);
-        Result CanLeaveGroup(Guid userId, Guid groupId, bool isAdmin, int adminCount);
+        // ==================== Joining ====================
+
+        Result CanJoinGroup(
+            Guid userId,
+            bool isGroupPrivate,
+            bool isUserBanned);
+
+        Result CanJoinGroupDirectly(
+            Guid userId,
+            bool isGroupPrivate,
+            bool isUserBanned);
+
+        Result CanSubmitJoinRequest(
+            Guid userId,
+            bool isGroupPrivate,
+            bool isMember,
+            bool isUserBanned,
+            bool hasExistingPendingRequest);
+
+        // ==================== Group Content ====================
+
+        Result CanPostInGroup(
+            Guid userId,
+            Guid groupId,
+            bool isMember,
+            bool isUserBanned,
+            bool isGroupLocked);
+
+        // ==================== Member Management ====================
+
+        Result CanPromoteMember(
+            Guid actionUserId,
+            GroupRole? actionUserRole,
+            Guid targetUserId,
+            GroupRole? targetUserRole,
+            Guid groupOwnerId);
+
+        Result CanDemoteMember(
+            Guid actionUserId,
+            GroupRole? actionUserRole,
+            Guid targetUserId,
+            GroupRole? targetUserRole,
+            Guid groupOwnerId);
+
+        Result CanKickMember(
+            Guid actionUserId,
+            GroupRole? actionUserRole,
+            Guid targetUserId,
+            GroupRole? targetUserRole,
+            Guid groupOwnerId);
+
+        // ==================== Invitations ====================
+
+        Result CanInviteToGroup(
+            Guid inviterId,
+            bool isMember,
+            bool groupAllowsMemberInvites);
+
+        // ==================== Group Management ====================
+
+        Result CanDeleteGroup(
+            Guid userId,
+            Guid ownerId,
+            bool isAdmin = false);
+
+        Result CanUpdateGroup(
+            Guid userId,
+            Guid groupId,
+            Guid groupAdminId);
+
+        Result CanLeaveGroup(
+            Guid userId,
+            Guid groupId,
+            bool isOwner,
+            int eligibleReplacementsCount);
+
+        // ==================== Join Request Management ====================
+
+        Result CanReviewJoinRequest(
+            Guid actionUserId,
+            GroupRole? actionUserRole,
+            bool isOwner);
     }
 }
+

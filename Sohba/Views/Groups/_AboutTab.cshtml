@@ -1,58 +1,66 @@
 ﻿@model dynamic
+@using Sohba.Domain.Enums
 @{
     var group = Model.Group as Sohba.Application.DTOs.GroupAndPageAggregate.GroupResponseDto;
-    var members = Model.Members as IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupMemberDto>;
+    var members = Model.Members as IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.GroupMemberDto> ?? new List<Sohba.Application.DTOs.GroupAndPageAggregate.GroupMemberDto>();
     var postsCount = Model.PostsCount as int? ?? 0;
-    var groupId = ViewBag.GroupId;
 }
 
-<div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-    <h2 class="text-2xl font-black text-gray-900 mb-6">About @group.Name</h2>
+<div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
+    <h2 class="text-xl sm:text-2xl font-black text-gray-900 mb-4">About @group.Name</h2>
 
     <div class="prose max-w-none mb-8">
-        <p class="text-gray-600 leading-relaxed whitespace-pre-line">
+        <p class="text-gray-600 leading-relaxed whitespace-pre-line text-sm sm:text-base">
             @group.Description
         </p>
     </div>
 
-    <div class="grid grid-cols-3 gap-4 mb-8">
-        <div class="bg-slate-50 p-4 rounded-xl text-center">
-            <span class="text-2xl font-black text-[#345e69]">@members.Count()</span>
-            <span class="text-sm text-gray-600 block">Members</span>
+    <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+        <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+            <span class="text-xl sm:text-2xl font-black text-[#345e69]">@members.Count()</span>
+            <span class="text-xs text-gray-500 block mt-0.5">Members</span>
         </div>
-        <div class="bg-slate-50 p-4 rounded-xl text-center">
-            <span class="text-2xl font-black text-[#345e69]">@postsCount</span>
-            <span class="text-sm text-gray-600 block">Posts</span>
+        <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+            <span class="text-xl sm:text-2xl font-black text-[#345e69]">@postsCount</span>
+            <span class="text-xs text-gray-500 block mt-0.5">Posts</span>
         </div>
-        <div class="bg-slate-50 p-4 rounded-xl text-center">
-            <span class="text-2xl font-black text-[#345e69]">@(group.CreatedAt.ToString("MMM yyyy"))</span>
-            <span class="text-sm text-gray-600 block">Created</span>
+        <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+            <span class="text-xl sm:text-2xl font-black text-[#345e69]">@(group.CreatedAt.ToString("MMM yyyy"))</span>
+            <span class="text-xs text-gray-500 block mt-0.5">Created</span>
         </div>
     </div>
 
     <div class="border-t border-slate-100 pt-6">
-        <h3 class="font-bold text-gray-900 mb-4">Admins & Moderators</h3>
-        <div class="flex flex-wrap gap-4">
-            @foreach (var member in members.Where(m => m.Role == "Admin" || m.Role == "Moderator").Take(5))
+        <h3 class="font-bold text-gray-900 mb-4 text-base">Community Leadership</h3>
+        <div class="flex flex-wrap gap-3">
+            @foreach (var member in members.Where(m => m.UserId == group.AdminId || m.Role == GroupRole.Admin || m.Role == GroupRole.CoAdmin).Take(8))
             {
-                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                    <img src="https://ui-avatars.com/api/?name=@member.UserName&background=345e69&color=fff"
-                         class="w-10 h-10 rounded-full object-cover" />
+                var isOwner = member.UserId == group.AdminId;
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(member.UserName)&background=345e69&color=fff"
+                         class="w-10 h-10 rounded-full object-cover shadow-sm" alt="@member.UserName" />
                     <div>
-                        <p class="font-semibold text-gray-900">@member.UserName</p>
-                        <p class="text-xs text-gray-500">@member.Role</p>
+                        <a href="/Profile/Index/@member.UserId" class="font-bold text-gray-900 text-sm hover:text-[#345e69] transition-colors block">
+                            @member.UserName
+                        </a>
+                        <span class="text-xs font-semibold @(isOwner ? "text-amber-600" : member.Role == GroupRole.Admin ? "text-[#345e69]" : "text-teal-600")">
+                            @(isOwner ? "Owner" : (member.Role == GroupRole.Admin ? "Admin" : member.Role == GroupRole.CoAdmin ? "Co-Admin" : "Member"))
+                        </span>
                     </div>
                 </div>
             }
         </div>
     </div>
 
-    <div class="mt-8 pt-6 border-t border-slate-100">
-        <div class="flex items-center gap-2 text-sm text-gray-600">
-            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-gray-500 flex-wrap gap-2">
+        <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span>Created by <span class="font-bold text-[#345e69]">@group.AdminName</span></span>
-        </div>
+            Created by <span class="font-bold text-gray-800">@group.AdminName</span>
+        </span>
+        <span class="font-medium">
+            Privacy: <span class="font-bold text-gray-800">@(group.IsPrivate ? "Private" : "Public")</span>
+        </span>
     </div>
 </div>

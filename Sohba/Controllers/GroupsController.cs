@@ -4,126 +4,239 @@ using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.Interfaces;
-using Sohba.Domain.Common;
+using Sohba.Domain.Enums;
 using Sohba.ViewModels.Group;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Sohba.Controllers
 {
     [Authorize]
     [EnableRateLimiting("Api")]
-
     public class GroupsController : BaseController
     {
         private readonly IGroupService _groupService;
         private readonly IPostService _postService;
         private readonly IFileStorageService _fileStorage;
 
-        public GroupsController(
-            IGroupService groupService,
-            IPostService postService,
-            IFileStorageService fileStorage)
+    public GroupsController(
+        IGroupService groupService,
+        IPostService postService,
+        IFileStorageService fileStorage)
         {
             _groupService = groupService;
             _postService = postService;
             _fileStorage = fileStorage;
         }
 
-
         [HttpGet]
         public async Task<IActionResult> Discover()
         {
             var userId = GetCurrentUserId();
-            var result = await _groupService.GetAllGroupsAsync(userId);
 
-            if (result.IsSuccess)
-            {
-                var groupsToJoin = result.Value
-                    .Where(g => !g.IsCurrentUserMember)
-                    .OrderByDescending(g => g.MembersCount)
-                    .Take(5)
-                    .ToList();
+            var result = await _groupService.GetGroupsPagedAsync(
+                null,
+                1,
+                5,
+                userId != Guid.Empty ? userId : null);
 
-                return Json(groupsToJoin);
-            }
-            return Json(new List<GroupResponseDto>());
+            if (!result.IsSuccess || result.Value == null)
+                return Json(Array.Empty<object>());
+
+            var groupsToJoin = result.Value.Items
+                .Where(g => !g.IsCurrentUserMember)
+                .OrderByDescending(g => g.MembersCount)
+                .Take(5)
+                .ToList();
+
+            return Json(groupsToJoin);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+            string search = "",
+            int page = 1,
+            int pageSize = 12)
         {
             var userId = GetCurrentUserId();
-            var result = await _groupService.GetAllGroupsAsync(userId != Guid.Empty ? userId : null);
-            return View(result.Value ?? new List<GroupResponseDto>());
+
+            var result = await _groupService.GetGroupsPagedAsync(
+                search,
+                page,
+                pageSize,
+                userId != Guid.Empty ? userId : null);
+
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    result.Error ?? "Unable to load groups.");
+
+                return View(new GroupIndexViewModel
+                {
+                    Groups = new PagedResult<GroupResponseDto>(),
+                    SearchTerm = search ?? string.Empty
+                });
+            }
+
+            var viewModel = new GroupIndexViewModel
+            {
+                Groups = result.Value ?? new PagedResult<GroupResponseDto>(),
+                SearchTerm = search ?? string.Empty
+            };
+
+            return View(viewModel);
         }
+
         [HttpGet]
-        public IActionResult Create() => View();
+        public IActionResult Create()
+        {
+            return View();
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(GroupCreateViewModel model)
+        public async Task<IActionResult> Create(
+            GroupCreateViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
             var userId = GetCurrentUserId();
-            if (userId == Guid.Empty) return RedirectToAction("Login", "Auth");
 
-            // Delegate all file I/O to IFileStorageService — no raw FileStream here.
-            string imageUrl = null;
-            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
-            if (!uploadResult.IsSuccess)
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            string? imageUrl = null;
+
+            if (model.ImageFile != null)
             {
-                ModelState.AddModelError("ImageFile", uploadResult.Error);
-                return View(model);
+                var uploadResult =
+                    await _fileStorage.SaveFileAsync(
+                        model.ImageFile,
+                        "groups");
+
+                if (!uploadResult.IsSuccess)
+                {
+                    ModelState.AddModelError(
+                        "ImageFile",
+                        uploadResult.Error);
+
+                    return View(model);
+                }
+
+                imageUrl = uploadResult.Value;
             }
-            imageUrl = uploadResult.Value;
+
+            string? backgroundImageUrl = null;
+
+            if (model.BackgroundImageFile != null)
+            {
+                var bgUploadResult =
+                    await _fileStorage.SaveFileAsync(
+                        model.BackgroundImageFile,
+                        "groups");
+
+                if (!bgUploadResult.IsSuccess)
+                {
+                    ModelState.AddModelError(
+                        "BackgroundImageFile",
+                        bgUploadResult.Error);
+
+                    return View(model);
+                }
+
+                backgroundImageUrl = bgUploadResult.Value;
+            }
 
             var dto = new GroupCreateDto
             {
                 Name = model.Name,
                 Description = model.Description,
+                Rules = model.Rules,
                 ImageUrl = imageUrl,
+                BackgroundImageUrl = backgroundImageUrl,
                 IsPrivate = model.IsPrivate
-
             };
 
-            var result = await _groupService.CreateGroupAsync(dto, userId);
+            var result =
+                await _groupService.CreateGroupAsync(
+                    dto,
+                    userId);
 
-            if (result.IsSuccess)
-                return RedirectToAction("Details", new { id = result.Value.Id });
+            if (result.IsSuccess && result.Value != null)
+            {
+                return RedirectToAction(
+                    "Details",
+                    new { id = result.Value.Id });
+            }
 
-            ModelState.AddModelError("", result.Error);
+            ModelState.AddModelError(
+                string.Empty,
+                result.Error ?? "Unable to create group.");
+
             return View(model);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Join([FromBody] IdRequestDto request)
-        {
-            var userId = GetCurrentUserId();
-            if (request == null || request.Id == Guid.Empty)
-                return Json(new { success = false, error = "Invalid group ID." });
-            var result = await _groupService.JoinGroupAsync(request.Id, userId);
-            return Json(new { success = result.IsSuccess });
         }
 
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
             var currentUserId = GetCurrentUserId();
-            var groupResult = await _groupService.GetGroupByIdAsync(id, currentUserId);
-            if (groupResult.IsFailure)
+
+            var groupResult =
+                await _groupService.GetGroupByIdAsync(
+                    id,
+                    currentUserId);
+
+            if (groupResult.IsFailure ||
+                groupResult.Value == null)
+            {
                 return NotFound();
+            }
 
-            if (groupResult.Value.IsPrivate && !groupResult.Value.IsCurrentUserMember)
-                return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+            var userRole =
+                await _groupService.GetUserRoleInGroupAsync(
+                    id,
+                    currentUserId);
 
+            var isOwner =
+                groupResult.Value.AdminId == currentUserId;
 
-            var membersResult = await _groupService.GetGroupMembersAsync(id);
+            var canManage =
+                isOwner ||
+                userRole == GroupRole.Admin ||
+                User.IsInRole("Admin");
+
+            var pendingCount = 0;
+
+            if (canManage &&
+                groupResult.Value.IsPrivate)
+            {
+                var countResult =
+                    await _groupService
+                        .GetPendingJoinRequestsCountAsync(
+                            id,
+                            currentUserId);
+
+                if (countResult.IsSuccess)
+                    pendingCount = countResult.Value;
+            }
+
             var viewModel = new GroupDetailsViewModel
             {
                 Group = groupResult.Value,
-                Members = membersResult.Value ?? new List<GroupMemberDto>()
+                UserJoinRequestStatus =
+                    groupResult.Value.UserJoinRequestStatus,
+                CanManageRequests = canManage,
+                PendingRequestsCount = pendingCount
             };
+
             ViewBag.CurrentUserId = currentUserId;
+            ViewBag.GroupAdminId =
+                groupResult.Value.AdminId;
+            ViewBag.CurrentUserRole = userRole;
 
             return View(viewModel);
         }
@@ -132,143 +245,361 @@ namespace Sohba.Controllers
         public async Task<IActionResult> Edit(Guid id)
         {
             var userId = GetCurrentUserId();
-            var groupResult = await _groupService.GetGroupByIdAsync(id);
-            if (groupResult.IsFailure)
-                return NotFound();
 
-            if (groupResult.Value.AdminId != userId)
+            var groupResult =
+                await _groupService.GetGroupByIdAsync(
+                    id,
+                    userId);
+
+            if (groupResult.IsFailure ||
+                groupResult.Value == null)
+            {
+                return NotFound();
+            }
+
+            if (groupResult.Value.AdminId != userId &&
+                !User.IsInRole("Admin"))
+            {
                 return Forbid();
+            }
 
             var viewModel = new GroupEditViewModel
             {
                 Id = groupResult.Value.Id,
                 Name = groupResult.Value.Name,
                 Description = groupResult.Value.Description,
+                Rules = groupResult.Value.Rules,
                 ImageUrl = groupResult.Value.ImageUrl,
+                BackgroundImageUrl =
+                    groupResult.Value.BackgroundImageUrl,
                 IsPrivate = groupResult.Value.IsPrivate
             };
+
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(GroupEditViewModel model)
+        public async Task<IActionResult> Edit(
+            GroupEditViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             var userId = GetCurrentUserId();
 
-            // Delegate file I/O to IFileStorageService.
-            // If no new file is uploaded, imageUrl stays as the existing URL.
-            string imageUrl = model.ImageUrl;
-            var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "groups");
-            if (!uploadResult.IsSuccess)
+            if (userId == Guid.Empty)
+                return RedirectToAction("Login", "Auth");
+
+            string? imageUrl = model.ImageUrl;
+
+            if (model.ImageFile != null)
             {
-                ModelState.AddModelError("ImageFile", uploadResult.Error);
-                return View(model);
+                var uploadResult =
+                    await _fileStorage.SaveFileAsync(
+                        model.ImageFile,
+                        "groups");
+
+                if (!uploadResult.IsSuccess)
+                {
+                    ModelState.AddModelError(
+                        "ImageFile",
+                        uploadResult.Error);
+
+                    return View(model);
+                }
+
+                imageUrl = uploadResult.Value;
             }
-            if (uploadResult.Value != null) imageUrl = uploadResult.Value;
 
+            string? backgroundImageUrl =
+                model.BackgroundImageUrl;
 
-            string backgroundImageUrl = model.BackgroundImageUrl;
-            var backgroundUploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "groups");
-            if (!backgroundUploadResult.IsSuccess)
+            if (model.BackgroundImageFile != null)
             {
-                ModelState.AddModelError("BackgroundImageFile", backgroundUploadResult.Error);
-                return View(model);
+                var bgUploadResult =
+                    await _fileStorage.SaveFileAsync(
+                        model.BackgroundImageFile,
+                        "groups");
+
+                if (!bgUploadResult.IsSuccess)
+                {
+                    ModelState.AddModelError(
+                        "BackgroundImageFile",
+                        bgUploadResult.Error);
+
+                    return View(model);
+                }
+
+                backgroundImageUrl =
+                    bgUploadResult.Value;
             }
-            if (backgroundUploadResult.Value != null) backgroundImageUrl = backgroundUploadResult.Value;
-
-
 
             var updateDto = new GroupUpdateDto
             {
                 Id = model.Id,
                 Name = model.Name,
                 Description = model.Description,
+                Rules = model.Rules,
                 ImageUrl = imageUrl,
                 BackgroundImageUrl = backgroundImageUrl,
                 IsPrivate = model.IsPrivate
-
             };
 
-            var result = await _groupService.UpdateGroupAsync(updateDto, userId);
-            if (result.IsSuccess)
-                return RedirectToAction("Details", new { id = model.Id });
+            var result =
+                await _groupService.UpdateGroupAsync(
+                    updateDto,
+                    userId);
 
-            ModelState.AddModelError("", result.Error);
+            if (result.IsSuccess)
+            {
+                return RedirectToAction(
+                    "Details",
+                    new { id = model.Id });
+            }
+
+            ModelState.AddModelError(
+                string.Empty,
+                result.Error ?? "Unable to update group.");
+
             return View(model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetGroupPosts(Guid groupId)
+        public async Task<IActionResult> GetGroupPosts(
+            Guid groupId)
         {
             var userId = GetCurrentUserId();
 
-            var groupCheck = await _groupService.GetGroupByIdAsync(groupId, userId);
-            if (groupCheck.IsFailure)
-                return NotFound();
-            if (groupCheck.Value.IsPrivate && !groupCheck.Value.IsCurrentUserMember)
-                return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+            var groupCheck =
+                await _groupService.GetGroupByIdAsync(
+                    groupId,
+                    userId);
 
-
-            var postsResult = await _postService.GetGroupPostsAsync(groupId, userId);
-
-            if (postsResult.IsSuccess && postsResult.Value != null && postsResult.Value.Any())
+            if (groupCheck.IsFailure ||
+                groupCheck.Value == null)
             {
-                return PartialView("Partials/_PostCard", postsResult.Value);
+                return NotFound();
             }
 
-            return Content("<div class='text-center py-10 text-gray-500'>No posts yet in this group</div>");
+            // Privacy barrier:
+            // non-members cannot view private group posts.
+            if (groupCheck.Value.IsPrivate &&
+                !groupCheck.Value.IsCurrentUserMember)
+            {
+                return Content(@"
+                <div class='bg-white rounded-2xl p-8 sm:p-12 text-center border border-slate-100 shadow-sm'>
+                    <div class='w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-100'>
+                        <svg class='w-8 h-8' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2'
+                                  d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
+                        </svg>
+                    </div>
+                    <h3 class='text-xl font-bold text-gray-900 mb-2'>This Group is Private</h3>
+                    <p class='text-gray-500 text-sm max-w-md mx-auto mb-6'>
+                        Join this community to see posts, discussions, and participate in conversations.
+                    </p>
+                </div>",
+                    "text/html");
+            }
+
+            var postsResult =
+                await _postService.GetGroupPostsAsync(
+                    groupId,
+                    userId);
+
+            if (postsResult.IsSuccess &&
+                postsResult.Value != null &&
+                postsResult.Value.Any())
+            {
+                return PartialView(
+                    "Partials/_PostCard",
+                    postsResult.Value);
+            }
+
+            return Content(@"
+            <div class='bg-white rounded-2xl p-10 text-center border border-slate-100 shadow-sm'>
+                <div class='w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-3'>
+                    <svg class='w-7 h-7' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2'
+                              d='M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' />
+                    </svg>
+                </div>
+                <h3 class='font-bold text-gray-800 text-base'>No posts yet</h3>
+                <p class='text-xs text-gray-400 mt-1'>
+                    Be the first to share something with this group!
+                </p>
+            </div>",
+                "text/html");
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTabContent(Guid groupId, string tab)
+        public async Task<IActionResult> GetMembersPaged(
+            Guid groupId,
+            string search = "",
+            int page = 1,
+            int pageSize = 12)
         {
             var userId = GetCurrentUserId();
 
-            var groupCheck = await _groupService.GetGroupByIdAsync(groupId, userId);
-            if (groupCheck.IsFailure)
-                return Content("<div class='text-center py-10 text-red-500'>Group not found</div>");
-            if (groupCheck.Value.IsPrivate && !groupCheck.Value.IsCurrentUserMember)
-                return Content("<div class='text-center py-10 text-red-500'>You do not have access to this group.</div>");
+            var groupCheck =
+                await _groupService.GetGroupByIdAsync(
+                    groupId,
+                    userId);
 
-
-            if (tab == "members")
+            if (groupCheck.IsFailure ||
+                groupCheck.Value == null)
             {
-                var membersResult = await _groupService.GetGroupMembersAsync(groupId);
-                ViewBag.GroupId = groupId;
-                ViewBag.CurrentUserId = userId;
-                ViewBag.CurrentUserRole = await _groupService.GetUserRoleInGroupAsync(groupId, userId);
-
-                return PartialView("_MembersTab", membersResult.Value);
-            }
-            else if (tab == "about")
-            {
-                var groupResult = await _groupService.GetGroupByIdAsync(groupId);
-                var membersResult = await _groupService.GetGroupMembersAsync(groupId);
-                var postsResult = await _postService.GetGroupPostsAsync(groupId, userId);
-                var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
-                ViewBag.GroupId = groupId;
-                return PartialView("_AboutTab", new { Group = groupResult.Value, Members = membersResult.Value, PostsCount = postsCount });
+                return Content(
+                    "<div class='text-center py-10 text-red-500'>Group not found</div>",
+                    "text/html");
             }
 
-            return Content("");
+            // Privacy barrier for private groups.
+            if (groupCheck.Value.IsPrivate &&
+                !groupCheck.Value.IsCurrentUserMember)
+            {
+                return Content(@"
+                <div class='bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm'>
+                    <div class='w-14 h-14 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center mx-auto mb-3'>
+                        <svg class='w-7 h-7' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2'
+                                  d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
+                        </svg>
+                    </div>
+                    <h3 class='text-lg font-bold text-gray-900 mb-1'>Members List is Private</h3>
+                    <p class='text-gray-500 text-sm'>
+                        Join this group to see the full list of members.
+                    </p>
+                </div>",
+                    "text/html");
+            }
+
+            var pagedResult =
+                await _groupService.GetMembersPagedAsync(
+                    groupId,
+                    search,
+                    page,
+                    pageSize,
+                    groupCheck.Value.AdminId);
+
+            if (pagedResult.IsFailure ||
+                pagedResult.Value == null)
+            {
+                return Content(
+                    $"<div class='text-center py-10 text-red-500'>{pagedResult.Error ?? "Unable to load members."}</div>",
+                    "text/html");
+            }
+
+            ViewBag.GroupId = groupId;
+            ViewBag.CurrentUserId = userId;
+            ViewBag.GroupAdminId =
+                groupCheck.Value.AdminId;
+
+            ViewBag.CurrentUserRole =
+                await _groupService.GetUserRoleInGroupAsync(
+                    groupId,
+                    userId);
+
+            ViewBag.SearchTerm =
+                search ?? string.Empty;
+
+            return PartialView(
+                "_MembersTab",
+                pagedResult.Value);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAboutTab(
+            Guid groupId)
+        {
+            var userId = GetCurrentUserId();
 
-        
+            var groupResult =
+                await _groupService.GetGroupByIdAsync(
+                    groupId,
+                    userId);
+
+            if (groupResult.IsFailure ||
+                groupResult.Value == null)
+            {
+                return Content(
+                    "<div class='text-center py-10 text-red-500'>Group not found</div>",
+                    "text/html");
+            }
+
+            var isMember =
+                groupResult.Value.IsCurrentUserMember;
+
+            IEnumerable<GroupMemberDto> membersResult =
+                Array.Empty<GroupMemberDto>();
+
+            if (!groupResult.Value.IsPrivate || isMember)
+            {
+                var membersResponse =
+                    await _groupService
+                        .GetGroupMembersAsync(groupId);
+
+                if (membersResponse.IsSuccess &&
+                    membersResponse.Value != null)
+                {
+                    membersResult =
+                        membersResponse.Value;
+                }
+            }
+
+            var postsCount = 0;
+
+            if (!groupResult.Value.IsPrivate || isMember)
+            {
+                var postsResult =
+                    await _postService.GetGroupPostsAsync(
+                        groupId,
+                        userId);
+
+                if (postsResult.IsSuccess &&
+                    postsResult.Value != null)
+                {
+                    postsCount =
+                        postsResult.Value.Count();
+                }
+            }
+
+            ViewBag.GroupId = groupId;
+
+            return PartialView(
+                "_AboutTab",
+                new
+                {
+                    Group = groupResult.Value,
+                    Members = membersResult,
+                    PostsCount = postsCount
+                });
+        }
+
+        // ==================== Membership & Roles ====================
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Leave([FromBody] LeaveGroupRequest request)
+        public async Task<IActionResult> Join(
+            [FromBody] IdRequestDto request)
         {
             var userId = GetCurrentUserId();
-            if (userId == Guid.Empty)
-                return Json(new { success = false, error = "User not authenticated" });
 
-            var result = await _groupService.LeaveGroupAsync(request.GroupId, userId);
+            if (request == null ||
+                request.Id == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid group ID."
+                });
+            }
+
+            var result =
+                await _groupService.JoinGroupAsync(
+                    request.Id,
+                    userId);
 
             return Json(new
             {
@@ -279,65 +610,290 @@ namespace Sohba.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> KickMember([FromBody] GroupMemberActionRequest request)
-        {
-            var adminId = GetCurrentUserId();
-            if (request == null || request.GroupId == Guid.Empty || request.TargetUserId == Guid.Empty)
-                return Json(new { success = false, error = "Invalid request." });
-
-            var result = await _groupService.KickMemberAsync(request.GroupId, request.TargetUserId, adminId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PromoteMember([FromBody] GroupMemberActionRequest request)
-        {
-            var adminId = GetCurrentUserId();
-            if (request == null || request.GroupId == Guid.Empty || request.TargetUserId == Guid.Empty)
-                return Json(new { success = false, error = "Invalid request." });
-
-            var result = await _groupService.PromoteMemberAsync(request.GroupId, request.TargetUserId, adminId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddMember([FromBody] GroupMemberActionRequest request)
-        {
-            var adminId = GetCurrentUserId();
-            if (request == null || request.GroupId == Guid.Empty || request.TargetUserId == Guid.Empty)
-                return Json(new { success = false, error = "Invalid request." });
-
-            var result = await _groupService.AddMemberAsync(request.GroupId, request.TargetUserId, adminId);
-            return Json(new { success = result.IsSuccess, error = result.Error });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromBody] DeleteGroupRequest request)
+        public async Task<IActionResult> Leave(
+            [FromBody] LeaveGroupRequest request)
         {
             var userId = GetCurrentUserId();
-            if (request == null || request.GroupId == Guid.Empty)
-                return Json(new { success = false, error = "Invalid group ID." });
-            if (string.IsNullOrWhiteSpace(request.Reason))
-                return Json(new { success = false, error = "A deletion reason is required." });
 
-            var result = await _groupService.DeleteGroupAsync(request.GroupId, userId, request.Reason);
-            return Json(new { success = result.IsSuccess, error = result.Error });
+            if (userId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "User not authenticated."
+                });
+            }
+
+            if (request == null ||
+                request.GroupId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid group ID."
+                });
+            }
+
+            var result =
+                await _groupService.LeaveGroupAsync(
+                    request.GroupId,
+                    userId);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
         }
 
-        public class DeleteGroupRequest { public Guid GroupId { get; set; } public string Reason { get; set; } }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PromoteMember(
+            [FromBody] GroupMemberActionRequest request)
+        {
+            var adminId = GetCurrentUserId();
 
+            if (request == null ||
+                request.GroupId == Guid.Empty ||
+                request.TargetUserId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid request."
+                });
+            }
 
-        public class GroupMemberActionRequest { public Guid GroupId { get; set; } public Guid TargetUserId { get; set; } }
+            var result =
+                await _groupService.PromoteMemberAsync(
+                    request.GroupId,
+                    request.TargetUserId,
+                    adminId);
 
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DemoteMember(
+            [FromBody] GroupMemberActionRequest request)
+        {
+            var adminId = GetCurrentUserId();
+
+            if (request == null ||
+                request.GroupId == Guid.Empty ||
+                request.TargetUserId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid request."
+                });
+            }
+
+            var result =
+                await _groupService.DemoteMemberAsync(
+                    request.GroupId,
+                    request.TargetUserId,
+                    adminId);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> KickMember(
+            [FromBody] GroupMemberActionRequest request)
+        {
+            var adminId = GetCurrentUserId();
+
+            if (request == null ||
+                request.GroupId == Guid.Empty ||
+                request.TargetUserId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid request."
+                });
+            }
+
+            var result =
+                await _groupService.KickMemberAsync(
+                    request.GroupId,
+                    request.TargetUserId,
+                    adminId);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(
+            [FromBody] DeleteGroupRequest request)
+        {
+            var userId = GetCurrentUserId();
+
+            if (request == null ||
+                request.GroupId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid group ID."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Reason))
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "A deletion reason is required."
+                });
+            }
+
+            var isAdmin =
+                User.IsInRole("Admin");
+
+            var result =
+                await _groupService.DeleteGroupAsync(
+                    request.GroupId,
+                    userId,
+                    request.Reason,
+                    isAdmin);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
+
+        // ==================== Join Requests ====================
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitJoinRequest(
+            [FromBody] SubmitJoinRequestDto dto)
+        {
+            var userId = GetCurrentUserId();
+
+            if (dto == null ||
+                dto.GroupId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid request parameters."
+                });
+            }
+
+            var result =
+                await _groupService
+                    .SubmitJoinRequestAsync(
+                        userId,
+                        dto);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetJoinRequests(
+            Guid groupId,
+            int page = 1,
+            int pageSize = 10)
+        {
+            var userId = GetCurrentUserId();
+
+            var result =
+                await _groupService
+                    .GetPendingJoinRequestsAsync(
+                        groupId,
+                        userId,
+                        page,
+                        pageSize);
+
+            if (!result.IsSuccess ||
+                result.Value == null)
+            {
+                return Content(
+                    $"<div class='text-center py-10 text-red-500'>{result.Error ?? "Unable to load join requests."}</div>",
+                    "text/html");
+            }
+
+            ViewBag.GroupId = groupId;
+
+            return PartialView(
+                "_JoinRequestsTab",
+                result.Value);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReviewJoinRequest(
+            [FromBody] ReviewJoinRequestDto dto)
+        {
+            var userId = GetCurrentUserId();
+
+            if (dto == null ||
+                dto.RequestId == Guid.Empty)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Invalid request."
+                });
+            }
+
+            var result =
+                await _groupService
+                    .ReviewJoinRequestAsync(
+                        userId,
+                        dto);
+
+            return Json(new
+            {
+                success = result.IsSuccess,
+                error = result.Error
+            });
+        }
+
+        public class DeleteGroupRequest
+        {
+            public Guid GroupId { get; set; }
+
+            public string Reason { get; set; } =
+                string.Empty;
+        }
+
+        public class GroupMemberActionRequest
+        {
+            public Guid GroupId { get; set; }
+
+            public Guid TargetUserId { get; set; }
+        }
 
         public class LeaveGroupRequest
         {
             public Guid GroupId { get; set; }
         }
-
     }
+
 }
