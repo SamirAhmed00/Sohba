@@ -6,21 +6,17 @@
 
 <div class="max-w-7xl mx-auto page-transition">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover-lift">
-        <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-8 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-0 left-10 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
-
-            <div class="relative z-10">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-white rounded-2xl shadow-xl shadow-black/10 transition-transform hover:scale-105 duration-300">
-                        <svg class="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-black text-white tracking-tight">Edit Page</h1>
-                        <p class="text-white/80 mt-1 font-medium italic opacity-90">Update your page information.</p>
-                    </div>
+        <!-- Header: Clean high-contrast dark text consistent with Sohba -->
+        <div class="bg-white border-b border-slate-100 p-8">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shadow-sm border border-emerald-100">
+                    <svg class="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900 tracking-tight">Edit Page</h1>
+                    <p class="text-gray-500 mt-1 font-medium text-sm">Update your page information.</p>
                 </div>
             </div>
         </div>
@@ -28,47 +24,74 @@
         <form asp-action="Edit" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImageUrl" />
+            <input type="hidden" asp-for="BackgroundImageUrl" />
 
             <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm"></div>
 
+            <!-- Page Name -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">Page Name</label>
                 <input asp-for="Name"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                        placeholder="Enter page name..." />
-                <span asp-validation-for="Name" class="text-red-500 text-xs"></span>
+                <span asp-validation-for="Name" class="text-red-500 text-xs mt-1 block"></span>
             </div>
 
+            <!-- Description -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">Description</label>
                 <textarea asp-for="Description" rows="4"
                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
                           placeholder="What's this page about?"></textarea>
-                <span asp-validation-for="Description" class="text-red-500 text-xs"></span>
+                <span asp-validation-for="Description" class="text-red-500 text-xs mt-1 block"></span>
             </div>
 
-            <!-- Current Image Preview -->
-            @if (!string.IsNullOrEmpty(Model.ImageUrl))
-            {
-                @* <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Current Image</label>
-                    <img id="currentImagePreview" src="@Model.ImageUrl" class="w-32 h-32 rounded-xl object-cover border border-slate-200" />
-                </div> *@
+            <!-- 1. Page Image (Avatar): Preview first, then input -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <label class="block text-sm font-bold text-gray-700">Page Avatar (Optional)</label>
 
-                <div id="currentImagePreviewContainer" class="@(string.IsNullOrEmpty(Model.ImageUrl) ? "hidden" : "")">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Current Image</label>
-                    <img id="currentImagePreview" src="@Model.ImageUrl" class="w-32 h-32 rounded-xl object-cover border border-slate-200" />
+                <div id="currentImagePreviewContainer" class="@(string.IsNullOrEmpty(Model.ImageUrl) ? "hidden" : "") mb-2">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5">Current Avatar</label>
+                    <img id="currentImagePreview"
+                         src="@Model.ImageUrl"
+                         class="w-32 h-32 rounded-2xl object-cover border border-slate-200 shadow-sm"
+                         alt="Avatar preview" />
                 </div>
-            }
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Page Image (Optional)</label>
                 <input asp-for="ImageFile" type="file" accept="image/*"
                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer" />
-                <p class="text-xs text-gray-500 mt-2">Leave empty to keep current image. PNG, JPG up to 5MB.</p>
+                <p class="text-xs text-gray-500">Leave empty to keep current avatar. PNG, JPG, WebP up to 5MB.</p>
                 <span asp-validation-for="ImageFile" class="text-red-500 text-xs"></span>
             </div>
 
+            <!-- 2. Background Image (Cover): Preview first, then input -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <label class="block text-sm font-bold text-gray-700">Page Cover Image (Optional)</label>
+
+                <div id="currentBackgroundPreviewContainer" class="@(string.IsNullOrEmpty(Model.BackgroundImageUrl) ? "hidden" : "") mb-2">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5">Current Cover</label>
+                    <img id="currentBackgroundPreview"
+                         src="@Model.BackgroundImageUrl"
+                         class="w-full h-40 rounded-xl object-cover border border-slate-200 shadow-sm"
+                         alt="Cover preview" />
+                </div>
+
+                <input asp-for="BackgroundImageFile"
+                       type="file"
+                       accept="image/*"
+                       class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl
+                focus:outline-none focus:ring-2 focus:ring-emerald-500/20
+                focus:border-emerald-500 transition-all
+                file:mr-4 file:py-2 file:px-4 file:rounded-full
+                file:border-0 file:text-sm file:font-semibold
+                file:bg-emerald-50 file:text-emerald-700
+                hover:file:bg-emerald-100 cursor-pointer" />
+                <p class="text-xs text-gray-500">Leave empty to keep current cover. PNG, JPG, WebP up to 5MB.</p>
+                <span asp-validation-for="BackgroundImageFile" class="text-red-500 text-xs"></span>
+            </div>
+
+            <!-- Actions -->
             <div class="flex gap-3 pt-4 border-t border-slate-100">
                 <a asp-action="Details" asp-route-id="@Model.Id" class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center">
                     Cancel
@@ -83,17 +106,8 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
     <script>
-       document.getElementById('ImageFile')?.addEventListener('change', function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (ev) {
-                document.getElementById('currentImagePreview').src = ev.target.result;
-                document.getElementById('currentImagePreviewContainer').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-       });
+        setupLiveImagePreview('ImageFile', 'currentImagePreview', 'currentImagePreviewContainer', 5);
+        setupLiveImagePreview('BackgroundImageFile', 'currentBackgroundPreview', 'currentBackgroundPreviewContainer', 5);
     </script>
 }

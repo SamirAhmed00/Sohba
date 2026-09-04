@@ -16,7 +16,7 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.HasOne(pf => pf.Page)
                    .WithMany()
                    .HasForeignKey(pf => pf.PageId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(pf => pf.User)
                    .WithMany(u => u.FollowedPages)

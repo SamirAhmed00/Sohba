@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.PageFollowRequestDto>
+@{
+    ViewData["Title"] = "Page Requests";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-5xl mx-auto page-transition py-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Page Follow Requests</h1>
+                <p class="text-sm text-gray-500 mt-1">Review pending applications from users seeking access to private pages.</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-sm hover:bg-slate-200">
+                Back to Pages
+            </a>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-bold text-gray-700 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4">Applicant</th>
+                            <th class="px-6 py-4">Target Page</th>
+                            <th class="px-6 py-4">Message</th>
+                            <th class="px-6 py-4">Date</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody" class="divide-y divide-slate-100">
+                        @foreach (var request in Model)
+                        {
+                            <tr id="request-row-@request.Id" class="hover:bg-slate-50">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <img src="@(string.IsNullOrEmpty(request.UserAvatarUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(request.UserName)}&background=345e69&color=fff" : request.UserAvatarUrl)"
+                                             class="w-10 h-10 rounded-xl object-cover border border-slate-200" alt="@request.UserName" />
+                                        <div>
+                                            <a href="/Profile/Index/@request.UserId" class="font-semibold text-gray-900 hover:underline">@request.UserName</a>
+                                            <span class="block text-xs text-gray-400">User</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <a href="/Pages/Details/@request.PageId" class="font-medium text-emerald-700 hover:underline">
+                                        @request.PageName
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4 max-w-xs truncate text-gray-800" title="@request.Message">
+                                    @request.Message
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-400">
+                                    @request.CreatedAt.ToString("MMM dd, yyyy")
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="inline-flex items-center gap-2">
+                                        <button onclick="acceptPageRequest('@request.Id')"
+                                                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg">
+                                            Approve
+                                        </button>
+                                        <button onclick="rejectPageRequest('@request.Id')"
+                                                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-gray-700 text-xs font-semibold rounded-lg">
+                                            Decline
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div id="emptyRequestsCard" class="bg-white rounded-2xl border border-slate-200 p-12 text-center @(Model != null && Model.Any() ? "hidden" : "")">
+        <h3 class="text-base font-bold text-gray-900">No pending follow requests</h3>
+        <p class="text-sm text-gray-500 mt-1">All applications for your private pages have been processed.</p>
+    </div>
+</div>

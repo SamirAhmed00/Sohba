@@ -9,5 +9,7 @@
         public string? BackgroundImageUrl { get; set; }
         public IFormFile? ImageFile { get; set; }
         public IFormFile? BackgroundImageFile { get; set; }
+        public bool IsPrivate { get; set; }
+        public string? Rules { get; set; }
     }
 }

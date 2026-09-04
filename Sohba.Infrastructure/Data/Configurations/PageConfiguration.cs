@@ -18,6 +18,19 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany(u => u.AdministeredPages)
                    .HasForeignKey(p => p.AdminId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(p => p.Rules).HasMaxLength(2000);
+            builder.Property(p => p.IsPrivate).HasDefaultValue(false);
+
+            builder.HasMany(p => p.Followers)
+                   .WithOne(pf => pf.Page)
+                   .HasForeignKey(pf => pf.PageId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(p => p.FollowRequests)
+                   .WithOne(r => r.Page)
+                   .HasForeignKey(r => r.PageId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

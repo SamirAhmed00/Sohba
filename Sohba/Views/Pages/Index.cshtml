@@ -1,131 +1,133 @@
 ﻿@model IEnumerable<Sohba.Application.DTOs.GroupAndPageAggregate.PageResponseDto>
 @{
-    ViewData["Title"] = "Pages";
-    Layout = "_AppLayout";
+ViewData["Title"] = "Pages";
+Layout = "_AppLayout";
 }
 
-<div class="max-w-7xl mx-auto page-transition">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Pages</h1>
-                <p class="text-gray-500 mt-1">Discover and follow pages</p>
-            </div>
-            <a asp-action="Create" class="px-4 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
+<div class="max-w-7xl mx-auto page-transition py-4">
+<!-- Header banner -->
+<div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Pages</h1>
+            <p class="text-sm text-gray-500 mt-1">Discover public organizations and request access to private communities.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a asp-action="PageRequests" class="px-4 py-2 bg-slate-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-slate-200">
+                Requests
+            </a>
+            <a asp-action="Create" class="px-4 py-2 bg-[#345e69] text-white text-sm font-semibold rounded-xl hover:bg-[#2a4b55]">
                 Create Page
             </a>
         </div>
     </div>
+</div>
 
-    <div id="pagesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @if (Model != null && Model.Any())
+<!-- Pages Grid -->
+<div id="pagesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var item in Model)
         {
-
-            @foreach (var item in Model)
-            {
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift">
-                    <div class="flex items-start gap-4">
-                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col justify-between">
+                <div>
+                    <!-- Cover Thumbnail -->
+                    <div class="h-24 w-full bg-slate-100 relative"
+                        @if (!string.IsNullOrEmpty(item.BackgroundImageUrl))
                         {
-                            <img src="@item.ImageUrl" class="w-14 h-14 rounded-2xl object-cover shadow-sm border border-slate-100" alt="@item.Name" />
+                            <text>style="background-image: url('@item.BackgroundImageUrl'); background-size: cover; background-position: center;"</text>
                         }
-                        else
-                        {
-                            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
-                                @item.Name[0]
+                        >
+                            <div class="absolute top-3 right-3">
+                                @if (item.IsPrivate)
+                                {
+                                    <span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-semibold rounded">
+                                        Private
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded">
+                                        Public
+                                    </span>
+                                }
                             </div>
-                        }
+                        </div>
 
-                        <div class="flex-1">
-                            <a href="/Pages/Details/@item.Id" class="font-bold text-gray-900 hover:text-emerald-600 transition">@item.Name</a>
-                            <p class="text-gray-500 text-sm mt-1 line-clamp-2">@item.Description</p>
-                            <p class="text-xs text-gray-400 mt-2">By @item.AdminName</p>
+                        <!-- Card Body -->
+                        <div class="p-5 pt-0 relative">
+                            <!-- Avatar Overlap -->
+                            <div class="-mt-10 mb-3">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm" alt="@item.Name" />
+                                }
+                                else
+                                {
+                                    <div class="w-16 h-16 bg-slate-200 text-gray-700 font-bold text-xl rounded-xl flex items-center justify-center border-2 border-white shadow-sm">
+                                        @item.Name[0]
+                                    </div>
+                                }
+                            </div>
+
+                            <a href="/Pages/Details/@item.Id" class="font-bold text-gray-900 hover:text-emerald-700 text-base line-clamp-1">
+                                @item.Name
+                            </a>
+                            <p class="text-xs text-gray-400 mt-0.5">Administrator: @item.AdminName</p>
+                            <p class="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">
+                                @item.Description
+                            </p>
                         </div>
                     </div>
 
-                    @if (item.AdminId == (Guid)ViewBag.CurrentUserId)
-                    {
-                        <a href="/Pages/Details/@item.Id" class="block text-center w-full mt-4 py-2 bg-emerald-50 text-emerald-600 font-bold rounded-xl outline-dashed outline-emerald-200 hover:bg-emerald-100 transition-colors">
-                            ⚙️ Manage Your Page
-                        </a>
-                    }
-                    else
-                    {
-                        @if (item.IsFollowing)
+                    <!-- Card Actions -->
+                    <div class="p-5 pt-0">
+                        @if (item.AdminId == (Guid)ViewBag.CurrentUserId)
                         {
-                            <button onclick="toggleFollow('@item.Id', this)" class="w-full mt-4 py-2 bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors">
-                                Following
-                            </button>
+                            <a href="/Pages/Details/@item.Id" class="block text-center w-full py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-sm hover:bg-slate-200">
+                                Manage Page
+                            </a>
+                        }
+                        else if (item.IsPrivate)
+                        {
+                            @if (item.IsFollowing)
+                            {
+                                <a href="/Pages/Details/@item.Id" class="block text-center w-full py-2 bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm">
+                                    Following
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/Pages/Details/@item.Id" class="block text-center w-full py-2 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-semibold rounded-xl text-sm">
+                                    Request Access
+                                </a>
+                            }
                         }
                         else
                         {
-                            <button onclick="toggleFollow('@item.Id', this)" class="w-full mt-4 py-2 bg-[#345e69]/10 text-[#345e69] font-semibold rounded-xl hover:bg-[#345e69] hover:text-white transition-colors">
-                                Follow
-                            </button>
+                            @if (item.IsFollowing)
+                            {
+                                <button onclick="toggleFollow('@item.Id', this)" class="w-full py-2 bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm">
+                                    Following
+                                </button>
+                            }
+                            else
+                            {
+                                <button onclick="toggleFollow('@item.Id', this)" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm">
+                                    Follow
+                                </button>
+                            }
                         }
-                    }
+                    </div>
                 </div>
             }
-
         }
-        else
+    else
         {
-            <div class="col-span-full text-center py-20">
-                <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900">No pages yet</h3>
-                <p class="text-gray-500 mt-2">Create or follow a page!</p>
+            <div class="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-200">
+                <h3 class="text-base font-bold text-gray-900">No pages found</h3>
+                <p class="text-sm text-gray-500 mt-1">Create an organization page or explore public communities.</p>
             </div>
         }
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Handle Follow Action with JS for smooth UI experience
-        async function followPage(pageId, btnElement) {
-            try {
-                const result = await SohbaApp.post('/Pages/Follow', { pageId });
-                if (result.success) {
-                    SohbaApp.toast('Page followed!', 'success');
-
-                    btnElement.innerText = 'Following';
-                    btnElement.classList.replace('bg-[#345e69]/10', 'bg-[#345e69]');
-                    btnElement.classList.replace('text-[#345e69]', 'text-white');
-                    btnElement.disabled = true;
-                } else {
-                    SohbaApp.toast(result.error || 'Failed to follow', 'error');
-                }
-            } catch (e) {
-                SohbaApp.toast('Network error', 'error');
-            }
-        }
-        // Handle Unfollow Action with JS for smooth UI experience
-        async function toggleFollow(pageId, buttonElement) {
-            const result = await SohbaApp.post('/Pages/ToggleFollow', { pageId });
-
-            if (result.success) {
-                if (result.isFollowing) {
-                    buttonElement.innerText = "Following";
-                    buttonElement.classList.replace('bg-[#345e69]/10', 'bg-slate-200');
-                    buttonElement.classList.replace('text-[#345e69]', 'text-slate-600');
-                    SohbaApp.toast('Page followed!', 'success');
-                } else {
-                    buttonElement.innerText = "Follow";
-                    buttonElement.classList.replace('bg-slate-200', 'bg-[#345e69]/10');
-                    buttonElement.classList.replace('text-slate-600', 'text-[#345e69]');
-                    SohbaApp.toast('Unfollowed page', 'info');
-                }
-            } else {
-                SohbaApp.toast(result.error || 'Failed action', 'error');
-            }
-        }
-
-    </script>
-}

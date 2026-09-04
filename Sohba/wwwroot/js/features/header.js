@@ -9,7 +9,8 @@ function getNotificationIcon(type) {
         'FriendRequest': '👥',
         'GroupInvitation': '👪',
         'SystemAlert': '🔔',
-        'StoryLike': '⭐'
+        'StoryLike': '⭐',
+        'PageFollow': '📄'
     };
     return icons[type] || '📢';
 }
@@ -21,8 +22,12 @@ function getNotificationUrl(notif) {
     if (type === 'PostLike' || type === 'PostComment') return `/Posts/Details/${targetId}`;
     if (type === 'GroupInvitation') return `/Groups/Details/${targetId}`;
     if (type === 'FriendRequest') return '/Friends/Requests';
+    if (type === 'PageFollow' && targetId) return `/Pages/Details/${targetId}`;
+    if (type === 'PageFollowRequest' && targetId) return `/Pages/PageRequests?pageId=${targetId}`;
+    if (type === 'PageRequestAccepted' && targetId) return `/Pages/Details/${targetId}`;
+    if (type === 'PageRequestRejected' && targetId) return `/Pages/Details/${targetId}`;
     if (type === 'SystemAlert' && targetId) return `/Groups/Details/${targetId}`;
-    return '/Notifications/Index'; 
+    return '/Notifications/Index';
 }
 
 async function updateNotificationCount() {

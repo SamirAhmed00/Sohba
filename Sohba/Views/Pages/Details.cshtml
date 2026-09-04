@@ -1,402 +1,332 @@
 ﻿@model Sohba.Application.DTOs.GroupAndPageAggregate.PageResponseDto
+@using Sohba.Domain.Enums
 @{
     ViewData["Title"] = Model.Name;
     Layout = "_AppLayout";
+
+    var currentUserRole = ViewBag.CurrentUserRole as PageRole?;
+    var isPageOwner = currentUserRole == PageRole.PageOwner || (ViewBag.CurrentUserId != null && Model.AdminId == (Guid)ViewBag.CurrentUserId);
+    var canEditPage = isPageOwner || (currentUserRole.HasValue && currentUserRole.Value >= PageRole.Admin);
+    var canPostAsPage = isPageOwner || (currentUserRole.HasValue && currentUserRole.Value >= PageRole.CoAdmin);
+    var isAuthorizedMember = isPageOwner || (currentUserRole.HasValue);
+    var isUnauthorizedPrivateViewer = Model.IsPrivate && !isAuthorizedMember;
 }
 
-<div class="max-w-7xl mx-auto page-transition px-4">
-    <!-- Page Header -->
-    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-        <!-- Cover Image -->
-        <div class="h-48 bg-gradient-to-r from-emerald-600 to-teal-600 relative">
-            <div class="absolute -bottom-12 left-8">
-                <div class="w-32 h-32 bg-white p-2 rounded-3xl shadow-lg">
-                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+<div class="max-w-7xl mx-auto page-transition py-4 px-4">
+    <!-- Header Card -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+        <!-- Cover Banner (Click to open fullscreen lightbox) -->
+        <div class="h-52 relative @(string.IsNullOrEmpty(Model.BackgroundImageUrl) ? "bg-slate-700" : "cursor-pointer")"
+             onclick="openPageImageFullscreen('@Model.BackgroundImageUrl')"
+            @if (!string.IsNullOrEmpty(Model.BackgroundImageUrl))
+            {
+                <text>style="background-image: url('@Model.BackgroundImageUrl'); background-size: cover; background-position: center;"</text>
+            }
+            >
+                <!-- Avatar positioned overlapping the bottom edge -->
+                <div class="absolute -bottom-12 left-8 z-10" onclick="event.stopPropagation()">
+                    <div class="w-32 h-32 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center cursor-pointer"
+                         onclick="openPageImageFullscreen('@Model.ImageUrl')">
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" class="w-full h-full rounded-xl object-cover" alt="@Model.Name" />
+                        }
+                        else
+                        {
+                            <div class="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center text-slate-700 text-3xl font-bold">
+                                @Model.Name[0]
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Privacy indicator badge in top right -->
+                <div class="absolute top-4 right-4 z-10" onclick="event.stopPropagation()">
+                    @if (Model.IsPrivate)
                     {
-                        <img src="@Model.ImageUrl" class="w-full h-full rounded-2xl object-cover" />
+                        <span class="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg shadow-sm">
+                            Private Page
+                        </span>
                     }
                     else
                     {
-                        <div class="w-full h-full bg-slate-100 rounded-2xl flex items-center justify-center text-emerald-600 text-4xl font-black">
-                            @Model.Name[0]
-                        </div>
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-900 text-xs font-semibold rounded-lg shadow-sm">
+                            Public Page
+                        </span>
                     }
                 </div>
             </div>
-        </div>
 
-        <!-- Page Info & Actions -->
-        <div class="pt-16 pb-6 px-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-black text-gray-900">@Model.Name</h1>
-                <p class="text-gray-500 mt-1 flex items-center gap-2">
-                    <span>Created by @Model.AdminName</span>
-                </p>
+            <!-- Header Info & Controls -->
+            <div class="pt-16 pb-6 px-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">@Model.Name</h1>
+                    <p class="text-xs text-gray-500 mt-1">Administrator: @Model.AdminName</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    @if (canEditPage)
+                    {
+                        <a asp-action="PageRequests" asp-route-pageId="@Model.Id"
+                           class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200">
+                            Review Requests
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@Model.Id"
+                           class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200">
+                            Edit Page
+                        </a>
+                    }
+
+                    @if (isPageOwner)
+                    {
+                        <button onclick="leavePage()" id="leavePageBtn" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200">
+                            Leave Page
+                        </button>
+                        <button onclick="openPageDeleteReasonModal()" class="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded-xl text-xs hover:bg-red-100">
+                            Delete Page
+                        </button>
+                    }
+                    else if (Model.IsPrivate && !isAuthorizedMember)
+                    {
+                        @if (Model.HasPendingRequest)
+                        {
+                            <button id="followRequestBtn" disabled class="px-5 py-2.5 bg-slate-100 text-gray-500 font-bold rounded-xl text-xs cursor-not-allowed">
+                                Request Pending
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="openFollowRequestModal()" id="followRequestBtn" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs">
+                                Follow Request
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button onclick="leavePage()" id="leavePageBtn" class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200 @(!Model.IsFollowing ? "hidden" : "")">
+                            Leave Page
+                        </button>
+
+                        <button onclick="toggleFollow()" id="followBtn"
+                                class="px-5 py-2.5 font-bold rounded-xl text-xs flex items-center gap-2 @(Model.IsFollowing ? "bg-slate-200 hover:bg-slate-300 text-gray-700" : "bg-emerald-600 hover:bg-emerald-700 text-white")">
+                            <span>@(Model.IsFollowing ? "Following" : "Follow Page")</span>
+                        </button>
+                    }
+                </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <span id="pageAdminActions" class="hidden">
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200 transition-all">Edit Page</a>
-                    <button onclick="openPageDeleteReasonModal()" class="px-5 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100">Delete Page</button>
-                </span>
-                <button onclick="leavePage()" class="px-5 py-2.5 bg-slate-100 text-gray-700 font-bold rounded-xl hover:bg-slate-200">Leave Page</button>
-                
-
-                <button onclick="toggleFollow()" id="followBtn"
-                        class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>Follow Page</span>
+            <!-- Navigation Tabs -->
+            <div class="px-8 border-t border-slate-100 flex gap-8">
+                <button type="button" data-tab="posts" onclick="Page_SwitchTab('posts')"
+                        class="tab-btn active py-3 border-b-2 border-emerald-600 text-emerald-600 font-bold text-xs">
+                    Posts
                 </button>
+                <button type="button" data-tab="about" onclick="Page_SwitchTab('about')"
+                        class="tab-btn py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-bold text-xs">
+                    About & Rules
+                </button>
+                @if (!isUnauthorizedPrivateViewer)
+                {
+                    <button type="button" data-tab="followers" onclick="Page_SwitchTab('followers')"
+                            class="tab-btn py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-bold text-xs">
+                        Followers
+                    </button>
+                }
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="px-8 border-t border-slate-50 flex gap-8">
-            <button onclick="switchTab('posts')"
-                    class="tab-btn active py-4 border-b-2 border-emerald-600 text-emerald-600 font-bold text-sm">
-                Posts
-            </button>
-            <button onclick="switchTab('about')"
-                    class="tab-btn py-4 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm">
-                About
-            </button>
-            <button onclick="switchTab('followers')"
-                    class="tab-btn py-4 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm">
-                Followers
-            </button>
-        </div>
-    </div>
-
-    <!-- Tab Content -->
-    <div id="tab-content">
-        <!-- Posts Tab (default) -->
-        <div id="posts-tab" class="tab-pane">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Create Post Box -->
-                    @* @if (User.Identity?.Name == Model.AdminName)
-                    { *@
-                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </div>
-                            <a asp-controller="Posts" asp-action="Create" asp-route-pageId="@Model.Id"
-                               class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-5 py-2.5 rounded-xl text-gray-500 transition-all border border-slate-100">
-                                Share something with your page followers...
-                            </a>
-                        </div>
-                    @* } *@
-
-                    <!-- Posts Container -->
-                    <div id="page-posts">
-                        <div class="text-center py-10 text-gray-500">Loading posts...</div>
-                    </div>
-                </div>
-
-                <!-- Right Sidebar -->
-                <div class="space-y-6">
-                    <!-- About Preview -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                        <h3 class="font-black text-gray-900 mb-4">About</h3>
-                        <p class="text-gray-600 text-sm leading-relaxed">
-                            @Model.Description
+        <!-- Tab Contents -->
+        <div id="tab-content">
+            <!-- 1. Posts Tab -->
+            <div id="posts-tab" class="tab-pane">
+                @if (isUnauthorizedPrivateViewer)
+                {
+                    <!-- Private page protection placeholder -->
+                    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-2xl mx-auto my-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">This Page is Private</h2>
+                        <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                            Access to posts, updates, and members is restricted to approved followers. Submit a follow request to view this page's content.
                         </p>
-                        <div class="mt-6 pt-6 border-t border-slate-50">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-400">Created</span>
-                                <span class="font-bold text-gray-700">@Model.CreatedAt.ToString("MMMM dd, yyyy")</span> 
+                        @if (Model.HasPendingRequest)
+                        {
+                            <button disabled class="px-6 py-2.5 bg-slate-100 text-gray-500 font-semibold rounded-xl text-sm cursor-not-allowed">
+                                Request Pending Approval
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="openFollowRequestModal()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-sm">
+                                Follow Request
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-6">
+                            @if (canPostAsPage)
+                            {
+                                <div class="bg-white rounded-2xl p-4 border border-slate-200 flex items-center gap-3">
+                                    <button type="button"
+                                            onclick="openPageCreatePostModal('@Model.Id', '@System.Web.HttpUtility.JavaScriptStringEncode(Model.Name)')"
+                                            class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-4 py-2.5 rounded-xl text-gray-500 text-xs font-medium border border-slate-200">
+                                        Publish an announcement or update for your followers...
+                                    </button>
+                                </div>
+                            }
+
+                            <div id="page-posts">
+                                <div class="text-center py-10 text-gray-500">Loading posts...</div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column Preview -->
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl p-6 border border-slate-200">
+                                <h3 class="font-bold text-gray-900 text-sm mb-3">About</h3>
+                                <p class="text-gray-600 text-xs leading-relaxed">@Model.Description</p>
+                                @if (!string.IsNullOrEmpty(Model.Rules))
+                                {
+                                    <div class="mt-4 pt-4 border-t border-slate-100">
+                                        <h4 class="text-xs font-bold text-gray-700 uppercase mb-1">Rules</h4>
+                                        <p class="text-xs text-gray-500 whitespace-pre-line leading-relaxed">@Model.Rules</p>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="bg-white rounded-2xl p-6 border border-slate-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-bold text-gray-900 text-sm">Followers</h3>
+                                    <a href="#followers" onclick="Page_SwitchTab('followers'); return false;" class="text-emerald-700 text-xs font-semibold hover:underline">
+                                        View All
+                                    </a>
+                                </div>
+                                <div id="followersPreview" class="grid grid-cols-5 gap-2">
+                                    <div class="text-xs text-center text-slate-400 py-4 col-span-5">Loading...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                }
+            </div>
 
-                    <!-- Followers Preview -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-black text-gray-900">Followers</h3>
-                            <a href="#" onclick="switchTab('followers'); return false;" class="text-emerald-600 text-xs font-bold uppercase">View All</a>
-                        </div>
-                        <div id="followersPreview" class="grid grid-cols-5 gap-2">
-                            
-                            <div class="text-xs text-center text-slate-400 py-4 col-span-5">Loading...</div>
-                        </div>
+            <!-- 2. About & Rules Tab -->
+            <div id="about-tab" class="tab-pane hidden">
+                <div class="bg-white rounded-2xl p-8 border border-slate-200 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 mb-3">About @Model.Name</h2>
+                        <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-line">@Model.Description</p>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Rules))
+                    {
+                        <div class="pt-6 border-t border-slate-200">
+                            <h3 class="text-base font-bold text-gray-900 mb-2">Community Guidelines & Rules</h3>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                                @Model.Rules
+                            </div>
+                        </div>
+                    }
+
+                    @if (!isUnauthorizedPrivateViewer)
+                    {
+                        <div class="pt-6 border-t border-slate-200 grid grid-cols-2 gap-4 max-w-sm">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <span class="text-2xl font-bold text-emerald-800" id="followersCount">0</span>
+                                <span class="text-xs text-gray-600 block mt-0.5">Followers</span>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <span class="text-2xl font-bold text-emerald-800" id="postsCount">0</span>
+                                <span class="text-xs text-gray-600 block mt-0.5">Posts</span>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
+
+            <!-- 3. Followers Tab -->
+            @if (!isUnauthorizedPrivateViewer)
+            {
+                <div id="followers-tab" class="tab-pane hidden">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200">
+                        <h2 class="text-base font-bold text-gray-900 mb-4">Followers</h2>
+                        <div id="followersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>
+                        </div>
+                        <div id="followersLoadMoreContainer" class="text-center mt-6 hidden">
+                            <button type="button" onclick="loadMoreFollowers()" id="loadMoreFollowersBtn"
+                                    class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-gray-700 font-semibold rounded-xl text-xs">
+                                Load More Followers
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
+    </div>
 
-        <!-- About Tab -->
-        <div id="about-tab" class="tab-pane hidden">
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h2 class="text-2xl font-black text-gray-900 mb-6">About @Model.Name</h2>
-
-                <div class="prose max-w-none">
-                    <p class="text-gray-600 leading-relaxed whitespace-pre-line">
-                        @Model.Description
-                    </p>
+    <!-- Private Page Follow Request Modal -->
+    <div id="pageFollowRequestModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/60" onclick="closeFollowRequestModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-gray-900">Request Access to @Model.Name</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">This page is private. Please review the rules and introduce yourself.</p>
                 </div>
 
-                <div class="mt-8 grid grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-xl">
-                        <span class="text-2xl font-black text-emerald-600" id="followersCount">0</span>
-                        <span class="text-sm text-gray-600 block">Followers</span>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl">
-                        <span class="text-2xl font-black text-emerald-600" id="postsCount">0</span>
-                        <span class="text-sm text-gray-600 block">Posts</span>
+                <div class="p-6 space-y-4">
+                    <!-- Rules display at top -->
+                    @if (!string.IsNullOrEmpty(Model.Rules))
+                    {
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Page Rules</label>
+                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-gray-600 max-h-36 overflow-y-auto whitespace-pre-line leading-relaxed">
+                                @Model.Rules
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Request Message -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                            Request Message <span class="text-red-600">*</span>
+                        </label>
+                        <textarea id="pageFollowRequestMessage" rows="3"
+                                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#345e69] focus:border-[#345e69]"
+                                  placeholder="Explain why you would like to follow this page..."></textarea>
                     </div>
                 </div>
 
-                <div class="mt-6 pt-6 border-t border-slate-50">
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span>Admin: @Model.AdminName</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Followers Tab -->
-        <div id="followers-tab" class="tab-pane hidden">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <h2 class="text-lg font-black text-gray-900 mb-4">Followers</h2>
-                <div id="followersList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-
-                    <div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>
+                <div class="p-6 border-t border-slate-200 bg-slate-50 flex items-center gap-3">
+                    <button type="button" onclick="closeFollowRequestModal()" class="flex-1 py-2 border border-slate-300 text-gray-700 font-semibold rounded-xl text-xs hover:bg-white">
+                        Cancel
+                    </button>
+                    <button type="button" id="submitFollowRequestBtn" onclick="submitFollowRequest()" class="flex-1 py-2 bg-[#345e69] hover:bg-[#2a4b55] text-white font-semibold rounded-xl text-xs">
+                        Submit Request
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <script>
+    <partial name="Partials/_CreatePost" />
 
-        let currentUserId = '@ViewBag.CurrentUserId';
-        let isFollowing = false;
-        let isCurrentUserAdmin = false;
+    @section Scripts {
+        <script>
+            window.__pagesCurrentPageId = '@Model.Id';
+            window.__pagesCurrentUserId = '@ViewBag.CurrentUserId';
+            window.__pagesCurrentUserRole = '@(ViewBag.CurrentUserRole?.ToString() ?? "None")';
+            window.__pagesIsOwner = @(isPageOwner ? "true" : "false");
+            window.__pagesIsFollowing = @(Model.IsFollowing ? "true" : "false");
+            window.__pagesIsPrivate = @(Model.IsPrivate ? "true" : "false");
+            window.__pagesIsAuthorized = @(isAuthorizedMember ? "true" : "false");
 
-        async function checkPageRole() {
-            const response = await fetch(`/Pages/CheckFollowStatus?pageId=${currentPageId}`);
-            // Reuses the same authorized, current-user-only data already fetched for
-            // follow status; role is derived server-side via the new endpoint below.
-        }
-
-        window.kickPageMember = async function (targetUserId) {
-            window.showConfirmModal({
-                title: 'Remove Member', message: 'Remove this member from the page?', type: 'warning', confirmText: 'Remove',
-                onConfirm: async function () {
-                    const result = await SohbaApp.post('/Pages/KickMember', { pageId: currentPageId, targetUserId });
-                    if (result.success) { SohbaApp.toast('Member removed', 'success'); loadAllFollowers(); }
-                    else SohbaApp.toast(result.error || 'Failed to remove member', 'error');
-                }
-            });
-        };
-
-        window.promotePageMember = async function (targetUserId) {
-            window.showConfirmModal({
-                title: 'Promote to Admin', message: 'Promote this member to Page Admin?', type: 'info', confirmText: 'Promote',
-                onConfirm: async function () {
-                    const result = await SohbaApp.post('/Pages/PromoteMember', { pageId: currentPageId, targetUserId });
-                    if (result.success) { SohbaApp.toast('Member promoted', 'success'); loadAllFollowers(); }
-                    else SohbaApp.toast(result.error || 'Failed to promote member', 'error');
-                }
-            });
-        };
-
-        window.leavePage = async function () {
-            showConfirmModal({
-                title: 'Leave Page', message: 'Are you sure you want to leave this page?', type: 'warning', confirmText: 'Leave',
-                onConfirm: async function () {
-                    const result = await SohbaApp.post('/Pages/Leave', { pageId: currentPageId });
-                    if (result.success) {
-                        SohbaApp.toast(result.outcome === 'deleted' ? 'Page deleted (no members remaining)' : 'You left the page', 'success');
-                        setTimeout(() => window.location.href = '/Pages', 1000);
-                    } else {
-                        SohbaApp.toast(result.error || 'Failed to leave page', 'error');
-                    }
-                }
-            });
-        };
-
-
-        // Load page data
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPagePosts();
-            loadFollowersPreview();
-            loadPageStats(); 
-            checkFollowStatus();
-        });
-
-        async function loadPageStats() {
-            try {
-                const response = await fetch(`/Pages/GetPageStats?pageId=${currentPageId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('postsCount').textContent = data.postsCount;
-                    document.getElementById('followersCount').textContent = data.followersCount;
-                }
-            } catch (error) {
-                console.error('Error loading page stats:', error);
-            }
-        }
-
-        // Switch tabs
-        function switchTab(tab) {
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active', 'border-emerald-600', 'text-emerald-600');
-                btn.classList.add('border-transparent', 'text-gray-400');
-            });
-            event.target.classList.add('active', 'border-emerald-600', 'text-emerald-600');
-            event.target.classList.remove('border-transparent', 'text-gray-400');
-
-            // Show selected tab
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.add('hidden');
-            });
-            document.getElementById(`${tab}-tab`).classList.remove('hidden');
-
-            // Load tab content if needed
-            if (tab === 'followers') {
-                loadAllFollowers();
-            } else if (tab === 'about') {
-                loadPageStats();
-            }
-        }
-
-        // Load page posts
-        async function loadPagePosts() {
-            try {
-                const response = await fetch(`/Pages/GetPagePosts?pageId=${currentPageId}`);
-                const html = await response.text();
-                document.getElementById('page-posts').innerHTML = html;
-                
-                const postsCount = document.querySelectorAll('#page-posts article').length;
-                document.getElementById('postsCount').textContent = postsCount;
-            } catch (error) {
-                console.error('Error loading posts:', error);
-                document.getElementById('page-posts').innerHTML = '<div class="text-center py-10 text-red-500">Failed to load posts</div>';
-            }
-        }
-
-        // Load followers preview
-        async function loadFollowersPreview() {
-            try {
-                const response = await fetch(`/Pages/GetFollowersPreview?pageId=${currentPageId}&count=10`);
-                const followers = await response.json();
-
-                const container = document.getElementById('followersPreview');
-                if (followers && followers.length > 0) {
-                    container.innerHTML = followers.map(f => `
-                        <div class="group cursor-pointer" title="${f.userName}">
-                            <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
-                                 class="w-10 h-10 rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
-                        </div>
-                    `).join('');
-
-                    document.getElementById('followersCount').textContent = followers.length;
-                } else {
-                    container.innerHTML = '<div class="text-xs text-center text-slate-400 py-4 col-span-5">No followers yet</div>';
-                }
-            } catch (error) {
-                console.error('Error loading followers:', error);
-            }
-        }
-
-        // Load all followers
-        async function loadAllFollowers() {
-            try {
-                const container = document.getElementById('followersList');
-                container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">Loading followers...</div>';
-                
-                const response = await fetch(`/Pages/GetAllFollowers?pageId=${currentPageId}`);
-                const data = await response.json();
-
-                if (data.success && data.followers && data.followers.length > 0) {
-                    container.innerHTML = data.followers.map(f => `
-                        <div class="text-center group">
-                            <a href="/Profile/Index/${f.userId}" class="cursor-pointer block">
-                                <img src="${f.profilePictureUrl || `https://ui-avatars.com/api/?name=${f.userName}&background=345e69&color=fff`}"
-                                        class="w-full aspect-square rounded-xl object-cover group-hover:scale-105 transition-transform border-2 border-white shadow-sm" />
-                                <p class="text-xs font-semibold text-gray-700 mt-2 truncate hover:text-emerald-600">${f.userName}</p>
-                                <p class="text-xs text-gray-400">Joined ${new Date(f.followedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
-                            </a>
-                            ${isCurrentUserAdmin && f.userId !== currentUserId ? `
-                                <div class="flex gap-1 mt-2 justify-center">
-                                    <button onclick="promotePageMember('${f.userId}')" class="text-[10px] px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-semibold">Promote</button>
-                                    <button onclick="kickPageMember('${f.userId}')" class="text-[10px] px-2 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-semibold">Remove</button>
-                                </div>` : ''}
-                        </div>`).join('');
-
-                } else {
-                    container.innerHTML = '<div class="text-center text-gray-500 py-8 col-span-full">No followers yet</div>';
-                }
-            } catch (error) {
-                console.error('Error loading followers:', error);
-                document.getElementById('followersList').innerHTML = '<div class="text-center text-red-500 py-8 col-span-full">Failed to load followers</div>';
-            }
-        }
-
-        // Check if current user follows this page
-        async function checkFollowStatus() {
-            try {
-                const response = await fetch(`/Pages/CheckFollowStatus?pageId=${currentPageId}`);
-                const data = await response.json();
-                isFollowing = data.isFollowing;
-                updateFollowButton();
-            } catch (error) {
-                console.error('Error checking follow status:', error);
-            }
-        }
-
-        // Toggle follow
-        async function toggleFollow() {
-            try {
-                const result = await SohbaApp.post('/Pages/ToggleFollow', { pageId: currentPageId });
-
-                if (result.success) {
-                    isFollowing = result.isFollowing;
-                    updateFollowButton();
-                    
-                    SohbaApp.toast(isFollowing ? 'Page followed!' : 'Page unfollowed', 'success');
-                    
-                    await loadFollowersPreview();
-                    await loadPageStats();
-                    
-                    if (!document.getElementById('followers-tab').classList.contains('hidden')) {
-                        await loadAllFollowers();
-                    }
-                }
-            } catch (error) {
-                console.error('Error toggling follow:', error);
-                SohbaApp.toast('Failed to update follow status', 'error');
-            }
-        }
-
-        // Update follow button UI
-        function updateFollowButton() {
-            const btn = document.getElementById('followBtn');
-            const icon = btn.querySelector('svg');
-            const text = btn.querySelector('span');
-
-            if (isFollowing) {
-                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-                btn.classList.add('bg-slate-200', 'hover:bg-slate-300', 'text-gray-700');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
-                text.textContent = 'Following';
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializePageDetails);
             } else {
-                btn.classList.remove('bg-slate-200', 'hover:bg-slate-300', 'text-gray-700');
-                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'text-white');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />';
-                text.textContent = 'Follow Page';
+                initializePageDetails();
             }
-        }
-    </script>
-}
+        </script>
+    }

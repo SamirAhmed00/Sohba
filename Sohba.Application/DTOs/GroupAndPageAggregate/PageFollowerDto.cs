@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sohba.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,5 +11,7 @@ namespace Sohba.Application.DTOs.GroupAndPageAggregate
         public string UserName { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public DateTime FollowedAt { get; set; }
+        public PageRole Role { get; set; }
+        public string RoleName => Role.ToString();
     }
 }

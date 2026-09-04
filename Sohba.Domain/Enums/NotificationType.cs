@@ -12,6 +12,9 @@ namespace Sohba.Domain.Enums
         GroupInvitation = 4,
         SystemAlert = 5,
         PageFollow = 6,
-        StoryLike = 7
+        StoryLike = 7,
+        PageFollowRequest = 8,
+        PageRequestAccepted = 9,
+        PageRequestRejected = 10
     }
 }

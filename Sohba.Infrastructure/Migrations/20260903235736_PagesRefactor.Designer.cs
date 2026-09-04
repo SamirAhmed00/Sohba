@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sohba.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using Sohba.Infrastructure.Data;
 namespace Sohba.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260903235736_PagesRefactor")]
+    partial class PagesRefactor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -305,68 +308,15 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsPrivate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Rules")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AdminId");
 
                     b.ToTable("Pages");
-                });
-
-            modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.PageFollowRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWSEQUENTIALID()");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid>("PageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("ReviewedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReviewedByUserId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("PageId", "Status");
-
-                    b.HasIndex("PageId", "UserId")
-                        .HasFilter("[Status] = 1");
-
-                    b.ToTable("PageFollowRequests");
                 });
 
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.PageFollower", b =>
@@ -1082,32 +1032,6 @@ namespace Sohba.Infrastructure.Migrations
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.PageFollowRequest", b =>
-                {
-                    b.HasOne("Sohba.Domain.Entities.GroupAndPage.Page", "Page")
-                        .WithMany("FollowRequests")
-                        .HasForeignKey("PageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "ReviewedByUser")
-                        .WithMany()
-                        .HasForeignKey("ReviewedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Page");
-
-                    b.Navigation("ReviewedByUser");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.PageFollower", b =>
                 {
                     b.HasOne("Sohba.Domain.Entities.GroupAndPage.Page", "Page")
@@ -1373,8 +1297,6 @@ namespace Sohba.Infrastructure.Migrations
 
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.Page", b =>
                 {
-                    b.Navigation("FollowRequests");
-
                     b.Navigation("Followers");
                 });
 
