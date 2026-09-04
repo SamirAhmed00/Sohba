@@ -14,11 +14,12 @@ namespace Sohba.Domain.Interfaces
 
         // Queries
         Task<Friend?> GetByUsersAsync(Guid userId, Guid friendId);
+        Task<Friend?> GetDirectAsync(Guid userId, Guid friendUserId);
         Task<IEnumerable<Friend>> GetListByUserAsync(Guid userId);
 
         Task<IEnumerable<Friend>> GetPendingRequestsAsync(Guid userId);
         Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId);
-        Task<int> GetPendingRequestsCountAsync(Guid userId);    
+        Task<int> GetPendingRequestsCountAsync(Guid userId);
         Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId);
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
 
@@ -33,5 +34,6 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Guid>> GetBlockedByAsync(Guid userId);
         Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
     }
+
 
 }

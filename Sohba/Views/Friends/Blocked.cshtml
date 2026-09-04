@@ -25,17 +25,19 @@
             @foreach (var user in Model)
             {
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4" data-user-id="@user.FriendUserId">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.FriendName}&background=345e69&color=fff")"
-                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100" />
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <!-- Clickable Profile Link -->
+                        <a href="/Profile/Index/@user.FriendUserId" class="flex items-center gap-4 group/profile">
+                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.FriendName)}&background=345e69&color=fff")"
+                                 class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100 group-hover/profile:border-[#345e69] transition-colors shrink-0"
+                                 alt="@user.FriendName" />
                             <div>
-                                <h3 class="font-bold text-gray-900">@user.FriendName</h3>
+                                <h3 class="font-bold text-gray-900 group-hover/profile:text-[#345e69] transition-colors">@user.FriendName</h3>
                                 <p class="text-sm text-gray-500">Blocked user</p>
                             </div>
-                        </div>
+                        </a>
                         <button onclick="unblockUser('@user.FriendUserId')"
-                                class="px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                class="w-full sm:w-auto px-5 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors text-sm">
                             Unblock
                         </button>
                     </div>
@@ -43,6 +45,7 @@
             }
         </div>
     }
+
     else
     {
         <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">

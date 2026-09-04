@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -44,7 +45,6 @@ namespace Sohba.Application.Services
         // Friend Requests
         public async Task<Result> SendFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            // Domain pre-checks: self-request, duplicate, blocked, already friends
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
             var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
             var isBlocked = await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(senderId, receiverId);
@@ -63,8 +63,6 @@ namespace Sohba.Application.Services
                 return decision;
             }
 
-            // Friend entity only stores two FK GUIDs; no navigation properties needed for insert.
-            // DB FK constraint enforces referential integrity — no need to fetch User entities.
             var friendRequest = new Friend
             {
                 UserId = senderId,
@@ -76,10 +74,8 @@ namespace Sohba.Application.Services
             _unitOfWork.Friendships.Add(friendRequest);
             await _unitOfWork.CompleteAsync();
 
-
             _logger.LogInformation("Friend request sent from {SenderId} to {ReceiverId}", senderId, receiverId);
 
-            // Send notification to receiver
             var user = await _userService.GetProfileAsync(senderId);
             var userName = user.Value?.Name ?? "Someone";
 
@@ -95,36 +91,26 @@ namespace Sohba.Application.Services
 
         public async Task<Result> AcceptFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
-
+            // Strict directional lookup: receiverId MUST be the recipient of the pending request
+            var pendingRequest = await _unitOfWork.Friendships.GetDirectAsync(senderId, receiverId);
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(senderId, receiverId);
 
-            var decision = _domainService.CanAcceptFriendRequest(hasPending, alreadyFriends);
+            var decision = _domainService.CanAcceptFriendRequest(
+                pendingRequest != null && pendingRequest.Status == FriendshipStatus.Pending,
+                alreadyFriends);
 
-
-            if (!decision.IsSuccess)
+            if (!decision.IsSuccess || pendingRequest == null || pendingRequest.Status != FriendshipStatus.Pending)
             {
-                _logger.LogWarning("Friend request accept rejected from {SenderId} to {ReceiverId}: {Reason}", senderId, receiverId, decision.Error);
-                return decision;
+                _logger.LogWarning("Friend request accept rejected: user {ReceiverId} cannot accept request from {SenderId}", receiverId, senderId);
+                return Result.Failure("Pending friend request not found.");
             }
 
-            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
-
-            if (friendship == null)
-            {
-                _logger.LogWarning("Friend request accept failed: no pending request from {SenderId} to {ReceiverId}", senderId, receiverId);
-                return Result.Failure("Friend request not found.");
-            }
-
-            friendship.Status = FriendshipStatus.Accepted;
-            _unitOfWork.Friendships.Update(friendship);
-
+            pendingRequest.Status = FriendshipStatus.Accepted;
+            _unitOfWork.Friendships.Update(pendingRequest);
 
             await _unitOfWork.CompleteAsync();
             _logger.LogInformation("Friend request accepted: {SenderId} and {ReceiverId} are now friends", senderId, receiverId);
 
-
-            // Send notification to sender
             var user = await _userService.GetProfileAsync(receiverId);
             var userName = user.Value?.Name ?? "Someone";
 
@@ -138,39 +124,40 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-
         public async Task<Result> RejectFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            var hasPending = await _unitOfWork.Friendships.HasPendingRequestAsync(senderId, receiverId);
+            // Strict directional lookup: receiverId MUST be the recipient
+            var pendingRequest = await _unitOfWork.Friendships.GetDirectAsync(senderId, receiverId);
 
-            var decision = _domainService.CanDeclineFriendRequest(hasPending);
-            if (!decision.IsSuccess)
-                return decision;
+            var decision = _domainService.CanDeclineFriendRequest(
+                pendingRequest != null && pendingRequest.Status == FriendshipStatus.Pending);
 
-            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
-
-            if (friendship != null)
+            if (!decision.IsSuccess || pendingRequest == null || pendingRequest.Status != FriendshipStatus.Pending)
             {
-                _unitOfWork.Friendships.Delete(friendship);
-                await _unitOfWork.CompleteAsync();
+                return Result.Failure("Pending friend request not found.");
             }
+
+            _unitOfWork.Friendships.Delete(pendingRequest);
+            await _unitOfWork.CompleteAsync();
 
             return Result.Success();
         }
 
         public async Task<Result> CancelFriendRequestAsync(Guid senderId, Guid receiverId)
         {
-            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(senderId, receiverId);
+            // Strict directional lookup: senderId MUST be the creator of the pending request
+            var pendingRequest = await _unitOfWork.Friendships.GetDirectAsync(senderId, receiverId);
 
-            var decision = _domainService.CanCancelFriendRequest(friendship != null);
-            if (!decision.IsSuccess)
-                return decision;
+            var decision = _domainService.CanCancelFriendRequest(
+                pendingRequest != null && pendingRequest.Status == FriendshipStatus.Pending);
 
-            if (friendship != null)
+            if (!decision.IsSuccess || pendingRequest == null || pendingRequest.Status != FriendshipStatus.Pending)
             {
-                _unitOfWork.Friendships.Delete(friendship);
-                await _unitOfWork.CompleteAsync();
+                return Result.Failure("No pending sent request found to cancel.");
             }
+
+            _unitOfWork.Friendships.Delete(pendingRequest);
+            await _unitOfWork.CompleteAsync();
 
             return Result.Success();
         }
@@ -181,20 +168,16 @@ namespace Sohba.Application.Services
             var alreadyFriends = await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
 
             var decision = _domainService.CanRemoveFriend(alreadyFriends);
-
             if (!decision.IsSuccess)
                 return decision;
 
             var friendship = await _unitOfWork.Friendships.GetByUsersAsync(userId, friendId);
-            var reverseFriendship = await _unitOfWork.Friendships.GetByUsersAsync(friendId, userId);
 
-            if (friendship != null)
+            if (friendship != null && friendship.Status == FriendshipStatus.Accepted)
+            {
                 _unitOfWork.Friendships.Delete(friendship);
-
-            if (reverseFriendship != null)
-                _unitOfWork.Friendships.Delete(reverseFriendship);
-
-            await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CompleteAsync();
+            }
 
             return Result.Success();
         }
@@ -202,24 +185,67 @@ namespace Sohba.Application.Services
         public async Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId)
         {
             var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
-            //var dto = _mapper.Map<IEnumerable<FriendDto>>(friends);
-            //return Result<IEnumerable<FriendDto>>.Success(dto);
 
             var dtos = friends.Select(f => new FriendDto
             {
                 UserId = userId,
                 FriendUserId = f.UserId == userId ? f.FriendUserId : f.UserId,
-                FriendName = f.UserId == userId ? f.FriendUser.Name : f.User.Name,
-                ProfilePictureUrl = f.UserId == userId ? f.FriendUser.ProfilePictureUrl : f.User.ProfilePictureUrl,
+                FriendName = f.UserId == userId ? (f.FriendUser != null ? f.FriendUser.Name : "Unknown") : (f.User != null ? f.User.Name : "Unknown"),
+                ProfilePictureUrl = f.UserId == userId ? f.FriendUser?.ProfilePictureUrl : f.User?.ProfilePictureUrl,
                 Status = f.Status.ToString()
             }).ToList();
+
             return Result<IEnumerable<FriendDto>>.Success(dtos);
+        }
+
+        public async Task<Result<PagedResult<FriendDto>>> GetFriendsListPagedAsync(Guid userId, string? search = null, int page = 1, int pageSize = 12)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 12;
+
+            var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
+
+            var dtosQuery = friends.Select(f => new FriendDto
+            {
+                UserId = userId,
+                FriendUserId = f.UserId == userId ? f.FriendUserId : f.UserId,
+                FriendName = f.UserId == userId ? (f.FriendUser != null ? f.FriendUser.Name : "Unknown") : (f.User != null ? f.User.Name : "Unknown"),
+                ProfilePictureUrl = f.UserId == userId ? f.FriendUser?.ProfilePictureUrl : f.User?.ProfilePictureUrl,
+                Status = f.Status.ToString()
+            });
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var cleanSearch = search.Trim();
+                dtosQuery = dtosQuery.Where(f => f.FriendName != null && f.FriendName.Contains(cleanSearch, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var dtosList = dtosQuery.ToList();
+            var totalCount = dtosList.Count;
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var pagedItems = dtosList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var result = new PagedResult<FriendDto>
+            {
+                Items = pagedItems,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages
+            };
+
+            return Result<PagedResult<FriendDto>>.Success(result);
         }
 
         public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
         {
             return await _unitOfWork.Friendships.AreFriendsAsync(userId, friendId);
         }
+
 
         public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
         {
@@ -233,11 +259,12 @@ namespace Sohba.Application.Services
             {
                 UserId = userId,
                 FriendUserId = f.UserId,
-                FriendName = f.User.Name,
-                ProfilePictureUrl = f.User.ProfilePictureUrl,
+                FriendName = f.User != null ? f.User.Name : "Unknown",
+                ProfilePictureUrl = f.User?.ProfilePictureUrl,
                 Status = f.Status.ToString()
             }).ToList();
-             return Result<IEnumerable<FriendDto>>.Success(dtos);
+
+            return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
         public async Task<Result<IEnumerable<FriendDto>>> GetSentRequestsAsync(Guid userId)
@@ -247,10 +274,12 @@ namespace Sohba.Application.Services
             {
                 UserId = userId,
                 FriendUserId = f.FriendUserId,
-                FriendName = f.FriendUser.Name,
-                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                FriendName = f.FriendUser != null ? f.FriendUser.Name : "Unknown",
+                ReceiverName = f.FriendUser != null ? f.FriendUser.Name : "Unknown",
+                ProfilePictureUrl = f.FriendUser?.ProfilePictureUrl,
                 Status = f.Status.ToString()
             }).ToList();
+
             return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
@@ -272,24 +301,41 @@ namespace Sohba.Application.Services
                 return validation;
             }
 
-            var friendship = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
-            var reverseFriendship = await _unitOfWork.Friendships.GetByUsersAsync(targetId, userId);
+            var existingRelationship = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
 
-            if (friendship != null)
-                _unitOfWork.Friendships.Delete(friendship);
-
-            if (reverseFriendship != null)
-                _unitOfWork.Friendships.Delete(reverseFriendship);
-
-            var block = new Friend
+            if (existingRelationship != null)
             {
-                UserId = userId,
-                FriendUserId = targetId,
-                Status = FriendshipStatus.Blocked,
-                CreatedAt = DateTime.UtcNow
-            };
+                if (existingRelationship.UserId == userId && existingRelationship.FriendUserId == targetId)
+                {
+                    existingRelationship.Status = FriendshipStatus.Blocked;
+                    existingRelationship.CreatedAt = DateTime.UtcNow;
+                    _unitOfWork.Friendships.Update(existingRelationship);
+                }
+                else
+                {
+                    _unitOfWork.Friendships.Delete(existingRelationship);
+                    var blockRecord = new Friend
+                    {
+                        UserId = userId,
+                        FriendUserId = targetId,
+                        Status = FriendshipStatus.Blocked,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _unitOfWork.Friendships.Add(blockRecord);
+                }
+            }
+            else
+            {
+                var blockRecord = new Friend
+                {
+                    UserId = userId,
+                    FriendUserId = targetId,
+                    Status = FriendshipStatus.Blocked,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _unitOfWork.Friendships.Add(blockRecord);
+            }
 
-            _unitOfWork.Friendships.Add(block);
             await _unitOfWork.CompleteAsync();
 
             _logger.LogInformation("User {UserId} blocked user {TargetId}", userId, targetId);
@@ -298,13 +344,16 @@ namespace Sohba.Application.Services
 
         public async Task<Result> UnblockUserAsync(Guid userId, Guid targetId)
         {
-            var block = await _unitOfWork.Friendships.GetByUsersAsync(userId, targetId);
-            var validation = _domainService.CanUnblockUser(block != null && block.Status == FriendshipStatus.Blocked);
+            // Strict directional lookup: userId MUST be the blocker
+            var directBlock = await _unitOfWork.Friendships.GetDirectAsync(userId, targetId);
+            var validation = _domainService.CanUnblockUser(directBlock != null && directBlock.Status == FriendshipStatus.Blocked);
 
-            if (!validation.IsSuccess)
-                return validation;
+            if (!validation.IsSuccess || directBlock == null || directBlock.Status != FriendshipStatus.Blocked)
+            {
+                return Result.Failure("User is not blocked.");
+            }
 
-            _unitOfWork.Friendships.Delete(block);
+            _unitOfWork.Friendships.Delete(directBlock);
             await _unitOfWork.CompleteAsync();
 
             return Result.Success();
@@ -317,10 +366,11 @@ namespace Sohba.Application.Services
             {
                 UserId = userId,
                 FriendUserId = f.FriendUserId,
-                FriendName = f.FriendUser.Name,
-                ProfilePictureUrl = f.FriendUser.ProfilePictureUrl,
+                FriendName = f.FriendUser != null ? f.FriendUser.Name : "Unknown",
+                ProfilePictureUrl = f.FriendUser?.ProfilePictureUrl,
                 Status = f.Status.ToString()
             }).ToList();
+
             return Result<IEnumerable<FriendDto>>.Success(dtos);
         }
 
@@ -338,14 +388,17 @@ namespace Sohba.Application.Services
             var sentRequests = await _unitOfWork.Friendships.GetSentRequestsAsync(userId);
             var sentIds = sentRequests.Select(r => r.FriendUserId).ToList();
 
+            var pendingIncoming = await _unitOfWork.Friendships.GetPendingRequestsAsync(userId);
+            var pendingIncomingIds = pendingIncoming.Select(r => r.UserId).ToList();
+
             var blocked = await _unitOfWork.Friendships.GetBlockedUsersAsync(userId);
             var blockedIds = blocked.Select(b => b.FriendUserId).ToList();
             var blockedByIds = await _unitOfWork.Friendships.GetBlockedByAsync(userId);
 
-
             var excludeIds = new List<Guid> { userId };
             excludeIds.AddRange(friendIds);
             excludeIds.AddRange(sentIds);
+            excludeIds.AddRange(pendingIncomingIds);
             excludeIds.AddRange(blockedIds);
             excludeIds.AddRange(blockedByIds);
 
@@ -355,4 +408,5 @@ namespace Sohba.Application.Services
             return Result<IEnumerable<UserResponseDto>>.Success(dtos);
         }
     }
+
 }

@@ -26,27 +26,32 @@
             {
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover-lift group" data-user-id="@user.Id">
                     <div class="flex flex-col items-center text-center">
-                        <div class="relative mb-3">
-                            <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={user.Name}&background=345e69&color=fff")"
-                                 class="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 group-hover:border-[#345e69] transition-colors" />
-                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
-                        </div>
+                        <!-- Clickable Profile Link -->
+                        <a href="/Profile/Index/@user.Id" class="group/avatar block">
+                            <div class="relative mb-3">
+                                <img src="@(user.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(user.Name)}&background=345e69&color=fff")"
+                                     class="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 group-hover/avatar:border-[#345e69] transition-colors"
+                                     alt="@user.Name" />
+                                <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                            </div>
 
-                        <h3 class="font-bold text-gray-900 text-lg">@user.Name</h3>
-                        <p class="text-sm text-gray-500 mt-1">@user.Bio</p>
+                            <h3 class="font-bold text-gray-900 text-lg group-hover/avatar:text-[#345e69] transition-colors">@user.Name</h3>
+                        </a>
+                        <p class="text-sm text-gray-500 mt-1 line-clamp-2">@user.Bio</p>
 
                         <div class="flex gap-2 mt-4 w-full">
                             <button onclick="sendFriendRequest('@user.Id')"
-                                    class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                                    class="flex-1 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors text-sm">
                                 Add Friend
                             </button>
-                            <button onclick="viewProfile('@user.Id')"
-                                    class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors">
+                            <a href="/Profile/Index/@user.Id"
+                               class="p-2 text-gray-400 hover:text-[#345e69] hover:bg-slate-50 rounded-xl transition-colors flex items-center justify-center"
+                               title="View Profile">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

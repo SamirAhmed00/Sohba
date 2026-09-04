@@ -34,32 +34,35 @@ namespace Sohba.Infrastructure.Repositories
             _context.Friends.Remove(friendship);
         }
 
+        public async Task<Friend?> GetDirectAsync(Guid userId, Guid friendUserId)
+        {
+            return await _context.Friends
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.FriendUserId == friendUserId);
+        }
 
         public async Task<IEnumerable<Friend>> GetPendingRequestsAsync(Guid userId)
         {
             return await _context.Friends
                 .Include(f => f.User)
                 .Include(f => f.FriendUser)
-                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending)
+                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending && f.User != null)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Friend>> GetSentRequestsAsync(Guid userId)
         {
-            // Include both User (sender) and FriendUser (recipient) so AutoMapper
-            // can resolve FriendName = src.User.Name without NullReferenceException.
             return await _context.Friends
                 .AsNoTracking()
                 .Include(f => f.User)
                 .Include(f => f.FriendUser)
-                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Pending)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Pending && f.FriendUser != null)
                 .ToListAsync();
         }
 
         public async Task<int> GetPendingRequestsCountAsync(Guid userId)
         {
             return await _context.Friends
-                .CountAsync(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending);
+                .CountAsync(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Pending && f.User != null);
         }
 
         public async Task<IEnumerable<Friend>> GetBlockedUsersAsync(Guid userId)
@@ -67,7 +70,7 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Friends
                 .Include(f => f.User)
                 .Include(f => f.FriendUser)
-                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Blocked)
+                .Where(f => f.UserId == userId && f.Status == FriendshipStatus.Blocked && f.FriendUser != null)
                 .ToListAsync();
         }
 
@@ -92,7 +95,8 @@ namespace Sohba.Infrastructure.Repositories
                 .Include(f => f.FriendUser)
                 .Where(f =>
                     (f.UserId == userId || f.FriendUserId == userId) &&
-                    f.Status == FriendshipStatus.Accepted)
+                    f.Status == FriendshipStatus.Accepted &&
+                    f.User != null && f.FriendUser != null)
                 .ToListAsync();
         }
 
@@ -100,9 +104,10 @@ namespace Sohba.Infrastructure.Repositories
         {
             return await _context.Friends
                 .Include(f => f.FriendUser)
-                .Where(f => f.Status == FriendshipStatus.Blocked)
+                .Where(f => f.Status == FriendshipStatus.Blocked && f.FriendUser != null)
                 .ToListAsync();
         }
+
         public async Task<bool> AreFriendsAsync(Guid userId, Guid friendId)
         {
             return await _context.Friends
@@ -120,7 +125,6 @@ namespace Sohba.Infrastructure.Repositories
                     f.FriendUserId == targetId &&
                     f.Status == FriendshipStatus.Blocked);
         }
-
 
         public async Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId)
         {
@@ -144,7 +148,8 @@ namespace Sohba.Infrastructure.Repositories
         {
             var friendships = await _context.Friends
                 .Where(f => (f.UserId == userId || f.FriendUserId == userId)
-                            && f.Status == FriendshipStatus.Accepted)
+                            && f.Status == FriendshipStatus.Accepted
+                            && f.User != null && f.FriendUser != null)
                 .ToListAsync();
 
             return friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId);
@@ -154,7 +159,8 @@ namespace Sohba.Infrastructure.Repositories
         {
             var friendIds = await _context.Friends
                 .Where(f => (f.UserId == userId || f.FriendUserId == userId)
-                            && f.Status == FriendshipStatus.Accepted)
+                            && f.Status == FriendshipStatus.Accepted
+                            && f.User != null && f.FriendUser != null)
                 .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
                 .ToListAsync();
 
@@ -173,11 +179,10 @@ namespace Sohba.Infrastructure.Repositories
         public async Task<IEnumerable<Guid>> GetBlockedByAsync(Guid userId)
         {
             return await _context.Friends
-                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Blocked)
+                .Where(f => f.FriendUserId == userId && f.Status == FriendshipStatus.Blocked && f.User != null)
                 .Select(f => f.UserId)
                 .ToListAsync();
         }
-
     }
 
 }

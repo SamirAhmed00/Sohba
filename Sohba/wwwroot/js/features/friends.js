@@ -73,7 +73,7 @@ async function sendFriendRequest(userId) {
     }
 }
 
-function switchTab(tab, btnEl) {
+function Friends_SwitchTab(tab, btnEl) {
     
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -230,7 +230,7 @@ window.checkFriendshipStatus = async function (targetUserId) {
         const btn = document.getElementById('addFriendBtn');
         if (!btn) return;
 
-        if (data === 'pending') {
+        if (data === 'pending' || data === 'pending_sent') {
             btn.innerHTML = `
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -240,6 +240,17 @@ window.checkFriendshipStatus = async function (targetUserId) {
             btn.disabled = true;
             btn.classList.remove('bg-[#345e69]', 'hover:bg-[#2a4b55]');
             btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+        } else if (data === 'pending_received') {
+            btn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span>Respond to Request</span>
+            `;
+            btn.disabled = false;
+            btn.onclick = function () { window.location.href = '/Friends/Requests'; };
+            btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700', 'cursor-not-allowed');
+            btn.classList.add('bg-[#345e69]', 'hover:bg-[#2a4b55]');
         } else if (data === 'accepted') {
             btn.innerHTML = `
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -257,7 +268,33 @@ window.checkFriendshipStatus = async function (targetUserId) {
 };
 
 
+
+function resolveTargetUserId(userId) {
+    if (typeof userId === 'string' && userId.trim().length > 0) {
+        return userId.trim();
+    }
+    // Fallback: Check for user ID in URL /Profile/Index/{id}
+    const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+    if (pathParts.length >= 2) {
+        const lastPart = pathParts[pathParts.length - 1];
+        // GUID verification regex
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (guidRegex.test(lastPart)) {
+            return lastPart;
+        }
+    }
+    return null;
+}
+
 async function blockUserFromProfile(userId) {
+    const targetId = resolveTargetUserId(userId);
+    if (!targetId) {
+        if (window.SohbaApp && SohbaApp.toast) {
+            SohbaApp.toast('Could not resolve user ID to block.', 'error');
+        }
+        return;
+    }
+
     window.showConfirmModal({
         title: 'Block User',
         message: 'Are you sure you want to block this user? They will no longer be able to interact with you.',
@@ -265,7 +302,7 @@ async function blockUserFromProfile(userId) {
         confirmText: 'Block',
         onConfirm: async () => {
             try {
-                const result = await SohbaApp.post('/Friends/BlockUser', { userId });
+                const result = await SohbaApp.post('/Friends/BlockUser', { userId: targetId });
                 if (result.success) {
                     SohbaApp.toast('User blocked', 'success');
                     setTimeout(() => window.location.reload(), 800);
@@ -281,8 +318,16 @@ async function blockUserFromProfile(userId) {
 }
 
 async function unblockUserFromProfile(userId) {
+    const targetId = resolveTargetUserId(userId);
+    if (!targetId) {
+        if (window.SohbaApp && SohbaApp.toast) {
+            SohbaApp.toast('Could not resolve user ID to unblock.', 'error');
+        }
+        return;
+    }
+
     try {
-        const result = await SohbaApp.post('/Friends/UnblockUser', { userId });
+        const result = await SohbaApp.post('/Friends/UnblockUser', { userId: targetId });
         if (result.success) {
             SohbaApp.toast('User unblocked', 'success');
             setTimeout(() => window.location.reload(), 800);
@@ -294,6 +339,7 @@ async function unblockUserFromProfile(userId) {
         SohbaApp.toast('Network error', 'error');
     }
 }
+
 
 window.blockUserFromProfile = blockUserFromProfile;
 window.unblockUserFromProfile = unblockUserFromProfile;

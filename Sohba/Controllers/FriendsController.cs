@@ -12,11 +12,8 @@ using static Sohba.Controllers.FriendsController;
 namespace Sohba.Controllers
 {
     [Authorize]
-    [EnableRateLimiting("FriendRequest")]
-
     public class FriendsController : BaseController
     {
-        //private readonly ISocialService _socialService; // removed because it's The same As FriendshipService
         private readonly IFriendshipService _friendshipService;
 
         public FriendsController(IFriendshipService friendshipService)
@@ -24,11 +21,13 @@ namespace Sohba.Controllers
             _friendshipService = friendshipService;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index(string? q = null, int page = 1)
         {
             var userId = GetCurrentUserId();
-            var result = await _friendshipService.GetFriendsListAsync(userId);
-            return View(result.Value);
+            var result = await _friendshipService.GetFriendsListPagedAsync(userId, q, page, 12);
+            ViewBag.SearchQuery = q;
+            return View(result.Value ?? new PagedResult<FriendDto>());
         }
 
         [HttpGet]
@@ -56,71 +55,58 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _friendshipService.GetBlockedUsersAsync(userId);
-            return View(result.Value);
+            return View(result.Value ?? Enumerable.Empty<FriendDto>());
         }
 
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> SendRequest([FromBody] SendRequestModel model)
         {
-            // Guard: model binding can produce a null object or Guid.Empty if the
-            // JSON payload is missing / malformed — catch it before hitting the service.
             if (model == null || model.receiverId == Guid.Empty)
-                return Json(BaseResponseDto.FailureResponse(
-                    "Invalid request: receiver ID is missing or invalid."));
+                return Json(BaseResponseDto.FailureResponse("Invalid request: receiver ID is missing or invalid."));
 
             var currentUserId = GetCurrentUserId();
             if (currentUserId == Guid.Empty)
-                return Json(BaseResponseDto.FailureResponse(
-                    "User not authenticated."));
+                return Json(BaseResponseDto.FailureResponse("User not authenticated."));
 
             var result = await _friendshipService.SendFriendRequestAsync(currentUserId, model.receiverId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
 
-        public class SendRequestModel
-        {
-            public Guid receiverId { get; set; }
-        }
-
-
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> Unfriend([FromBody] UnfriendModel model)
         {
             var currentUserId = GetCurrentUserId();
             if (model == null || model.friendId == Guid.Empty)
-                    return Json(BaseResponseDto.FailureResponse("Invalid request: friend ID is missing."));
+                return Json(BaseResponseDto.FailureResponse("Invalid request: friend ID is missing."));
+
             var result = await _friendshipService.UnfriendAsync(currentUserId, model.friendId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
-        public class UnfriendModel
-         {
-             public Guid friendId { get; set; }
-         }
 
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserModel model)
         {
+            if (model == null || model.userId == Guid.Empty)
+                return Json(BaseResponseDto.FailureResponse("Invalid request: user ID is missing."));
+
             var currentUserId = GetCurrentUserId();
             var result = await _friendshipService.BlockUserAsync(currentUserId, model.userId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
-        public class BlockUserModel
-        {
-            public Guid userId { get; set; }
-        }
+
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> UnblockUser([FromBody] UnblockUserModel model)
         {
             var currentUserId = GetCurrentUserId();
             if (model == null || model.userId == Guid.Empty)
-                    return Json(BaseResponseDto.FailureResponse("Invalid request: user ID is missing."));
+                return Json(BaseResponseDto.FailureResponse("Invalid request: user ID is missing."));
+
             var result = await _friendshipService.UnblockUserAsync(currentUserId, model.userId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
-        }
-
-        public class UnblockUserModel
-        {  
-             public Guid userId { get; set; }
         }
 
         [HttpGet]
@@ -128,7 +114,7 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
-            return View(result.Value);
+            return View(result.Value ?? Enumerable.Empty<UserResponseDto>());
         }
 
         [HttpGet]
@@ -136,7 +122,7 @@ namespace Sohba.Controllers
         {
             var userId = GetCurrentUserId();
             var result = await _friendshipService.GetFriendSuggestionsAsync(userId, count);
-            return Json(BaseResponseDto<IEnumerable<UserResponseDto>>.SuccessResponse(result.Value));
+            return Json(BaseResponseDto<IEnumerable<UserResponseDto>>.SuccessResponse(result.Value ?? Enumerable.Empty<UserResponseDto>()));
         }
 
         [HttpGet]
@@ -147,31 +133,30 @@ namespace Sohba.Controllers
             return Json(BaseResponseDto<int>.SuccessResponse(result.Value));
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> Find()
-        //{
-        //    var userId = GetCurrentUserId();
-        //    var suggestions = await _friendshipService.GetFriendSuggestionsAsync(userId, 20);
-        //    return View(suggestions.Value);
-        //}
-
         [HttpGet]
         public async Task<IActionResult> CheckStatus(Guid userId)
         {
             var currentUserId = GetCurrentUserId();
+            if (currentUserId == Guid.Empty || userId == Guid.Empty)
+                return Json(BaseResponseDto<string>.SuccessResponse("none"));
 
             var areFriends = await _friendshipService.AreFriendsAsync(currentUserId, userId);
             if (areFriends)
                 return Json(BaseResponseDto<string>.SuccessResponse("accepted"));
 
-            var hasPending = await _friendshipService.HasPendingRequestAsync(currentUserId, userId);
-            if (hasPending)
-                return Json(BaseResponseDto<string>.SuccessResponse("pending"));
+            var sentRequests = await _friendshipService.GetSentRequestsAsync(currentUserId);
+            if (sentRequests.Value != null && sentRequests.Value.Any(r => r.FriendUserId == userId))
+                return Json(BaseResponseDto<string>.SuccessResponse("pending_sent"));
+
+            var receivedRequests = await _friendshipService.GetPendingRequestsAsync(currentUserId);
+            if (receivedRequests.Value != null && receivedRequests.Value.Any(r => r.FriendUserId == userId))
+                return Json(BaseResponseDto<string>.SuccessResponse("pending_received"));
 
             return Json(BaseResponseDto<string>.SuccessResponse("none"));
         }
 
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> AcceptRequest([FromBody] AcceptRequestModel model)
         {
             if (model == null || model.senderId == Guid.Empty)
@@ -180,10 +165,10 @@ namespace Sohba.Controllers
             var currentUserId = GetCurrentUserId();
             var result = await _friendshipService.AcceptFriendRequestAsync(model.senderId, currentUserId);
             return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
-            
         }
 
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> RejectRequest([FromBody] RejectRequestModel model)
         {
             if (model == null || model.requesterId == Guid.Empty)
@@ -195,6 +180,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> CancelRequest([FromBody] CancelRequestModel model)
         {
             if (model == null || model.receiverId == Guid.Empty)
@@ -206,6 +192,26 @@ namespace Sohba.Controllers
         }
 
         // Models for binding
+        public class SendRequestModel
+        {
+            public Guid receiverId { get; set; }
+        }
+
+        public class UnfriendModel
+        {
+            public Guid friendId { get; set; }
+        }
+
+        public class BlockUserModel
+        {
+            public Guid userId { get; set; }
+        }
+
+        public class UnblockUserModel
+        {
+            public Guid userId { get; set; }
+        }
+
         public class AcceptRequestModel
         {
             public Guid senderId { get; set; }

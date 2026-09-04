@@ -1,4 +1,5 @@
-﻿using Sohba.Application.DTOs.UserAggregate;
+﻿using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Domain.Common;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace Sohba.Application.Interfaces
         // Friends Management
         Task<Result> UnfriendAsync(Guid userId, Guid friendId);
         Task<Result<IEnumerable<FriendDto>>> GetFriendsListAsync(Guid userId);
+        Task<Result<PagedResult<FriendDto>>> GetFriendsListPagedAsync(Guid userId, string? search = null, int page = 1, int pageSize = 12);
         Task<bool> AreFriendsAsync(Guid userId, Guid friendId);
         Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
 
