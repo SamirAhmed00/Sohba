@@ -75,8 +75,6 @@ namespace Sohba.Application.Services
         }
 
 
-
-
         public async Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId)
         {
             var validation = _postDomainService.CanCreatePost(userId, postDto.Content, !string.IsNullOrEmpty(postDto.ImageUrl));
@@ -93,11 +91,21 @@ namespace Sohba.Application.Services
             {
                 if (postDto.SourceType == PostSourceType.Group)
                 {
-                    // Rule: Only active, non-banned group members can post in a group
+                    // Backend Authorization: Validate the destination group exists, is not soft-deleted,
+                    // and that the poster is an active, non-banned member (prevents IDOR / unauthorized posting).
+                    var group = await _unitOfWork.Groups.GetByIdAsync(postDto.SourceId.Value);
+                    if (group == null || group.IsDeleted)
+                        return Result<PostResponseDto>.Failure("The destination group does not exist or has been deleted.");
+
                     var isMember = await _unitOfWork.Groups.IsMemberAsync(userId, postDto.SourceId.Value);
                     if (!isMember)
                         return Result<PostResponseDto>.Failure(
                             "Access denied: You must be an active member of this group to post in it.");
+
+                    var isBanned = _unitOfWork.Groups.IsUserBannedFromGroup(userId, postDto.SourceId.Value);
+                    if (isBanned)
+                        return Result<PostResponseDto>.Failure("You are banned from posting in this group.");
+
                     groupId = postDto.SourceId;
                 }
                 else if (postDto.SourceType == PostSourceType.Page)
@@ -123,7 +131,7 @@ namespace Sohba.Application.Services
             {
                 post.ImageUrls = JsonSerializer.Serialize(postDto.ImageUrls);
                 if (string.IsNullOrEmpty(post.ImageUrl))
-                   post.ImageUrl = postDto.ImageUrls.First();
+                    post.ImageUrl = postDto.ImageUrls.First();
             }
 
             if (postDto.SourceId.HasValue)
@@ -145,14 +153,14 @@ namespace Sohba.Application.Services
             {
                 _unitOfWork.Posts.Add(post);
                 await _unitOfWork.CompleteAsync();
-                
+
                 if (extractedTags.Any())
                 {
                     string userLocation = "Egypt";
                     await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
                     await _unitOfWork.CompleteAsync();
                 }
-                
+
                 await _unitOfWork.CommitTransactionAsync();
             }
             catch
@@ -161,14 +169,105 @@ namespace Sohba.Application.Services
                 throw;
             }
 
-            //  Send notifications based on post type
+            // Send notifications based on post type
             await SendPostNotifications(post, userId, groupId, pageId);
 
             _logger.LogInformation("Post created: {PostId} by user {UserId}, source type {SourceType}", post.Id, userId, postDto.SourceType);
             return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
-        
-        
+
+        //public async Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId)
+        //{
+        //    var validation = _postDomainService.CanCreatePost(userId, postDto.Content, !string.IsNullOrEmpty(postDto.ImageUrl));
+        //    if (!validation.IsSuccess)
+        //    {
+        //        _logger.LogWarning("Post creation rejected for user {UserId}: {Reason}", userId, validation.Error);
+        //        return Result<PostResponseDto>.Failure(validation.Error);
+        //    }
+
+        //    // --- Access Control for Group/Page Posts ---
+        //    Guid? groupId = null;
+        //    Guid? pageId = null;
+        //    if (postDto.SourceId.HasValue)
+        //    {
+        //        if (postDto.SourceType == PostSourceType.Group)
+        //        {
+        //            // Rule: Only active, non-banned group members can post in a group
+        //            var isMember = await _unitOfWork.Groups.IsMemberAsync(userId, postDto.SourceId.Value);
+        //            if (!isMember)
+        //                return Result<PostResponseDto>.Failure(
+        //                    "Access denied: You must be an active member of this group to post in it.");
+        //            groupId = postDto.SourceId;
+        //        }
+        //        else if (postDto.SourceType == PostSourceType.Page)
+        //        {
+        //            // Rule: Only the page admin can post on a page
+        //            var page = await _unitOfWork.Pages.GetByIdAsync(postDto.SourceId.Value);
+        //            if (page == null)
+        //                return Result<PostResponseDto>.Failure("Page not found.");
+
+        //            if (page.AdminId != userId)
+        //                return Result<PostResponseDto>.Failure(
+        //                    "Access denied: Only the page administrator can post on this page.");
+        //            pageId = postDto.SourceId;
+        //        }
+        //    }
+        //    // --- End Access Control ---
+
+        //    var post = _mapper.Map<Post>(postDto);
+        //    post.UserId = userId;
+        //    post.CreatedAt = DateTime.UtcNow;
+
+        //    if (postDto.ImageUrls != null && postDto.ImageUrls.Any())
+        //    {
+        //        post.ImageUrls = JsonSerializer.Serialize(postDto.ImageUrls);
+        //        if (string.IsNullOrEmpty(post.ImageUrl))
+        //           post.ImageUrl = postDto.ImageUrls.First();
+        //    }
+
+        //    if (postDto.SourceId.HasValue)
+        //    {
+        //        post.SourceType = postDto.SourceType;
+        //        post.SourceId = postDto.SourceId;
+
+        //        if (postDto.SourceType == PostSourceType.Group)
+        //            post.GroupId = postDto.SourceId;
+        //        else if (postDto.SourceType == PostSourceType.Page)
+        //            post.PageId = postDto.SourceId;
+        //    }
+
+        //    // Extract hashtags from content
+        //    var extractedTags = ExtractHashtags(postDto.Content).ToList();
+
+        //    await _unitOfWork.BeginTransactionAsync();
+        //    try
+        //    {
+        //        _unitOfWork.Posts.Add(post);
+        //        await _unitOfWork.CompleteAsync();
+
+        //        if (extractedTags.Any())
+        //        {
+        //            string userLocation = "Egypt";
+        //            await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
+        //            await _unitOfWork.CompleteAsync();
+        //        }
+
+        //        await _unitOfWork.CommitTransactionAsync();
+        //    }
+        //    catch
+        //    {
+        //        await _unitOfWork.RollbackTransactionAsync();
+        //        throw;
+        //    }
+
+        //    //  Send notifications based on post type
+        //    await SendPostNotifications(post, userId, groupId, pageId);
+
+        //    _logger.LogInformation("Post created: {PostId} by user {UserId}, source type {SourceType}", post.Id, userId, postDto.SourceType);
+        //    return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
+        //}
+
+
         public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
@@ -227,7 +326,7 @@ namespace Sohba.Application.Services
                 return Result.Failure("Post not found.");
 
             // 1. Delegate permission check to Domain Service
-            var canUpdate = _postDomainService.CanUpdatePost(userId, post.UserId, post.UserId, post.IsDeleted);
+            var canUpdate = _postDomainService.CanUpdatePost(userId, postId, post.UserId, post.IsDeleted);
             if (!canUpdate.IsSuccess)
                 return canUpdate;
 
@@ -235,13 +334,24 @@ namespace Sohba.Application.Services
             _mapper.Map(postDto, post);
             post.UpdatedAt = DateTime.UtcNow;
 
+            if (postDto.ImageUrls != null && postDto.ImageUrls.Any())
+            {
+                post.ImageUrls = JsonSerializer.Serialize(postDto.ImageUrls);
+                post.ImageUrl = postDto.ImageUrls.FirstOrDefault();
+            }
+            else
+            {
+                post.ImageUrls = null;
+                post.ImageUrl = null;
+            }
+
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.CompleteAsync();
 
             return Result.Success();
         }
 
-        public async Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false)
+        public async Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false, string? reason = null)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
             if (post == null)
@@ -265,7 +375,27 @@ namespace Sohba.Application.Services
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.CompleteAsync();
 
-            _logger.LogInformation("Post {PostId} soft-deleted by user {UserId} (isAdmin={IsAdmin})", postId, userId, isAdmin);
+            // 3. Send real-time notification to post owner if deleted by an Administrator
+            if (isAdmin && post.UserId != userId)
+            {
+                var adminProfile = await _userService.GetProfileAsync(userId);
+                var adminName = adminProfile.Value?.Name ?? "An Administrator";
+                var deletionReason = !string.IsNullOrWhiteSpace(reason) ? reason.Trim() : "Violation of community guidelines";
+                var notificationMessage = $"Your post '{post.Title}' was deleted by {adminName}. Reason: {deletionReason}";
+
+                await _notificationService.CreateNotificationAsync(
+                    receiverId: post.UserId,
+                    message: notificationMessage,
+                    type: NotificationType.SystemAlert,
+                    senderId: userId,
+                    targetId: null
+                );
+
+                _logger.LogInformation("Admin delete notification dispatched to user {UserId} for post {PostId}", post.UserId, postId);
+
+                // TODO: [Soon Feature] Real-Time Chat
+            }
+
             return Result.Success();
         }
 
@@ -376,13 +506,23 @@ namespace Sohba.Application.Services
                 var dto = _mapper.Map<PostResponseDto>(p);
                 dto.CommentsCount = countData.comments;
                 dto.ReactionsCount = countData.reactions;
-                dto.IsSaved = savedDict.ContainsKey(p.Id);
 
                 if (savedDict.TryGetValue(p.Id, out var tags))
                 {
+                    dto.IsSaved = tags.Any(t => t != SavedTag.Favorite);
                     dto.IsFavorite = tags.Contains(SavedTag.Favorite);
-                    dto.SavedTag = dto.IsFavorite ? SavedTag.Favorite.ToString() : tags.First().ToString();
+                    var nonFavTag = tags.FirstOrDefault(t => t != SavedTag.Favorite);
+                    dto.SavedTag = dto.IsSaved
+                        ? nonFavTag.ToString()
+                        : (dto.IsFavorite ? SavedTag.Favorite.ToString() : null);
                 }
+                else
+                {
+                    dto.IsSaved = false;
+                    dto.IsFavorite = false;
+                    dto.SavedTag = null;
+                }
+
                 dto.IsAuthor = p.UserId == currentUserId;
                 if (reactionDict.TryGetValue(p.Id, out var reaction))
                     dto.CurrentUserReaction = reaction;
@@ -395,8 +535,8 @@ namespace Sohba.Application.Services
         private IEnumerable<string> ExtractHashtags(string content)
         {
             if (string.IsNullOrEmpty(content)) return new List<string>();
-            var regex = new Regex(@"#\w+");
-            return regex.Matches(content).Select(m => m.Value.Replace("#", "").ToLower()).Distinct();
+            var regex = new Regex(@"#([\p{L}\p{N}_]+)");
+            return regex.Matches(content).Select(m => m.Groups[1].Value.ToLower()).Distinct();
         }
 
 

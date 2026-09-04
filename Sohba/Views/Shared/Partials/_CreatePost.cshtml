@@ -1,127 +1,99 @@
-﻿@* // Create Post Section *@
+﻿@using System.Security.Claims
+@{
+    var currentUserName = User.Identity?.Name ?? "User";
+    var currentUserAvatar = User.FindFirst("ProfilePictureUrl")?.Value
+        ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(currentUserName)}&background=345e69&color=fff";
+}
 
-<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 px-6">
-    <div class="flex items-center gap-4 mb-4">
-        <img src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff" class="w-11 h-11 rounded-full object-cover border-2 border-slate-100 shadow-sm" alt="Profile">
-        
-        <div class="flex-1">
-            <input type="text"
-                   placeholder="What's on your mind, User?"
-                   class="w-full bg-slate-50 rounded-full px-5 py-3 text-sm text-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:bg-white transition-all border border-transparent hover:border-slate-200 cursor-pointer"
-                   onclick="SohbaApp.openCreatePostModal()"
-                   readonly>
-        </div>
-    </div>
-    <hr class="border-slate-100 mb-3" />
-    <div class="flex justify-between items-center">
-        <div class="flex gap-1 sm:gap-4">
-            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors group" onclick="SohbaApp.openCreatePostModal()">
-                <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                <span class="text-sm font-semibold text-slate-600 group-hover:text-red-600">Live Video</span>
-            </button>
-            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-green-50 transition-colors group" onclick="SohbaApp.openCreatePostModal()">
-                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                <span class="text-sm font-semibold text-slate-600 group-hover:text-green-600">Photo/Video</span>
-            </button>
-            <button class="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-yellow-50 transition-colors group hidden sm:flex" onclick="SohbaApp.openCreatePostModal()">
-                <svg class="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span class="text-sm font-semibold text-slate-600 group-hover:text-yellow-600">Feeling</span>
-            </button>
-        </div>
-        <button class="bg-[#345e69] hover:bg-[#2a4b55] text-white px-6 py-2 rounded-xl font-bold shadow-md shadow-[#345e69]/20 transform active:scale-95 transition-all" onclick="SohbaApp.openCreatePostModal()">Post</button>
-    </div>
-</div>
-
-
-<!-- Create Post Modal (LinkedIn/Facebook Style) -->
+<!-- Create Post Modal -->
 <div id="createPostModal" class="fixed inset-0 z-[100] hidden">
     <!-- Overlay -->
-    <div class="absolute inset-0 bg-black/60" onclick="SohbaApp.closeCreatePostModal()"></div>
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="SohbaApp.closeCreatePostModal()"></div>
 
     <!-- Modal Container -->
     <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="text-xl font-bold text-gray-900">Create Post</h3>
-                <button onclick="SohbaApp.closeCreatePostModal()" class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between p-4 border-b border-slate-100 shrink-0">
+                <h3 class="text-lg font-bold text-gray-900">Create Post</h3>
+                <button type="button" onclick="SohbaApp.closeCreatePostModal()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <!-- User Info -->
-            <div class="p-4 flex items-center gap-3">
-                <img src="https://ui-avatars.com/api/?name=User&background=345e69&color=fff" class="w-12 h-12 rounded-full object-cover">
-                <div>
-                    <h4 class="font-bold text-gray-900">User Name</h4>
-                    <select class="text-xs bg-slate-100 border-0 rounded-lg px-2 py-1 text-gray-600">
-                        <option>Public</option>
-                        <option>Friends</option>
-                        <option>Only me</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Post Title -->
-            <div class="px-4 pb-2">
-                <input type="text"
-                       id="createPostTitle"
-                       placeholder="Post title..."
-                       class="w-full px-0 py-2 text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] text-xl placeholder:text-gray-400"
-                       maxlength="200">
-            </div>
-            <!-- Post Content -->
-            <div class="px-4">
-                <textarea id="createPostContent" rows="4"
-                          class="w-full px-0 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#345e69]/20 focus:border-[#345e69] text-lg resize-none placeholder:text-gray-400"
-                          placeholder="What's on your mind, User?"></textarea>
-            </div>
-
-            <!-- Image Preview (Hidden by default) -->
-            <div id="imagePreviewContainer" class="px-4 pb-4 hidden">
-                <div class="relative inline-block">
-                    <img id="imagePreview" src="" class="max-h-64 rounded-xl object-cover" alt="Preview">
-                    <button onclick="SohbaApp.removeSelectedImage()"
-                            class="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1 hover:bg-gray-900">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+            <!-- Scrollable Content Area -->
+            <div class="flex-1 overflow-y-auto">
+                <!-- User Info & Scoped Destination Badge -->
+                <div class="p-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <img src="@currentUserAvatar" class="w-11 h-11 rounded-full object-cover shadow-sm border border-slate-100" alt="@currentUserName">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-gray-900 text-sm">@currentUserName</h4>
+                                <span id="createPostDestinationBadge" class="hidden text-xs px-2.5 py-0.5 bg-[#345e69]/10 text-[#345e69] font-bold rounded-lg truncate max-w-[200px]"></span>
+                            </div>
+                            <select id="createPostPrivacy" class="mt-0.5 text-xs bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-gray-700 font-semibold focus:outline-none focus:ring-1 focus:ring-[#345e69]">
+                                <option value="0">🌐 Public</option>
+                                <option value="1">👥 Friends Only</option>
+                                <option value="2">🔒 Only Me</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" onclick="SohbaApp.clearAllCreateImages()" id="clearAllImagesBtn" class="hidden text-xs text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg font-medium transition">
+                        Remove All Images
                     </button>
                 </div>
+
+                <!-- Post Title -->
+                <div class="px-4 pb-2">
+                    <input type="text"
+                           id="createPostTitle"
+                           placeholder="Post title..."
+                           class="w-full px-0 py-2 text-gray-900 font-semibold focus:outline-none border-b border-slate-100 focus:border-[#345e69] text-lg placeholder:text-gray-400"
+                           maxlength="200">
+                </div>
+
+                <!-- Post Content -->
+                <div class="px-4">
+                    <textarea id="createPostContent" rows="4"
+                              class="w-full px-0 py-2 text-gray-700 focus:outline-none text-base resize-none placeholder:text-gray-400"
+                              placeholder="What's on your mind?"></textarea>
+                </div>
+
+                <!-- Multi-Image Preview Container -->
+                <div id="imagePreviewContainer" class="px-4 pb-4 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Images Selected (<span id="imageCountBadge">0</span>)</span>
+                        <span class="text-[11px] text-slate-400">Use arrows to reorder</span>
+                    </div>
+                    <div id="multiImageGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-1 bg-slate-50 rounded-2xl border border-slate-200"></div>
+                </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="p-4 border-t border-gray-100">
+            <!-- Action Buttons Footer -->
+            <div class="p-4 border-t border-slate-100 bg-white shrink-0">
                 <div class="flex items-center justify-between mb-4">
                     <span class="text-sm font-medium text-gray-700">Add to your post</span>
-                    <div class="flex gap-2">
-                        <button onclick="document.getElementById('imageUpload').click()"
-                                class="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors" title="Photo">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="document.getElementById('imageUpload').click()"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition text-xs font-semibold" title="Attach photos">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                        </button>
-                        <button class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Video">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                        </button>
-                        <button class="p-2 text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors" title="Feeling">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <span>Photos</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Hidden file input -->
-                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="SohbaApp.handleImageSelect(event)">
+                <!-- Hidden file inputs -->
+                <input type="file" id="imageUpload" accept="image/*" multiple class="hidden" onchange="SohbaApp.handleImageSelect(event)">
+                <input type="file" id="singleImageReplaceInput" accept="image/*" class="hidden" onchange="SohbaApp.handleImageReplace(event)">
 
                 <!-- Post Button -->
-                <button onclick="SohbaApp.submitCreatePost()"
-                        class="w-full py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                <button type="button" id="modalPostSubmitBtn" onclick="SohbaApp.submitCreatePost()"
+                        class="w-full py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-all shadow-md active:scale-95">
                     Post
                 </button>
             </div>
@@ -129,106 +101,227 @@
     </div>
 </div>
 
-
-
 <script>
     window.SohbaApp = window.SohbaApp || {};
-    // ------------ Create Post Modal Functions -------------
-           window.SohbaApp.openCreatePostModal = function() {
-               const modal = document.getElementById('createPostModal');
-               if (!modal) return;
+    let createPostSelectedFiles = [];
+    let replacingImageIndex = -1;
+    let currentPostModalContext = null;
 
-               // Reset form
-               document.getElementById('createPostTitle').value = '';
-               document.getElementById('createPostContent').value = '';
-               document.getElementById('imagePreviewContainer').classList.add('hidden');
-               document.getElementById('imagePreview').src = '';
-               document.getElementById('imageUpload').value = '';
+    window.SohbaApp.openCreatePostModal = function(context = null) {
+        const modal = document.getElementById('createPostModal');
+        if (!modal) return;
 
-               modal.classList.remove('hidden');
-               document.body.style.overflow = 'hidden';
+        currentPostModalContext = context;
+        document.getElementById('createPostTitle').value = '';
+        document.getElementById('createPostContent').value = '';
+        document.getElementById('createPostPrivacy').value = '0';
+        window.SohbaApp.clearAllCreateImages();
 
-               // Focus on textarea
-               setTimeout(() => document.getElementById('createPostContent')?.focus(), 100);
-           };
+        const badge = document.getElementById('createPostDestinationBadge');
+        if (badge) {
+            if (context && context.sourceType === 'Group') {
+                badge.textContent = 'Posting in ' + (context.sourceName || 'Group');
+                badge.classList.remove('hidden');
+            } else if (context && context.sourceType === 'Page') {
+                badge.textContent = 'Posting in ' + (context.sourceName || 'Page');
+                badge.classList.remove('hidden');
+            } else {
+                badge.textContent = '';
+                badge.classList.add('hidden');
+            }
+        }
 
-           window.SohbaApp.closeCreatePostModal = function() {
-               const modal = document.getElementById('createPostModal');
-               if (!modal) return;
-               modal.classList.add('hidden');
-               document.body.style.overflow = '';
-           };
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => document.getElementById('createPostContent')?.focus(), 100);
+    };
 
-           window.SohbaApp.handleImageSelect = function(event) {
-               const file = event.target.files[0];
-               if (!file) return;
-               if (file.size > 5 * 1024 * 1024) {
-                     window.SohbaApp.toast('Image must be smaller than 5MB', 'error');
-                     event.target.value = '';
-                     return;
-                }
-               const reader = new FileReader();
-               reader.onload = function(e) {
-                   document.getElementById('imagePreview').src = e.target.result;
-                   document.getElementById('imagePreviewContainer').classList.remove('hidden');
-               };
-               reader.readAsDataURL(file);
-           };
+    window.SohbaApp.closeCreatePostModal = function() {
+        const modal = document.getElementById('createPostModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        currentPostModalContext = null;
+    };
 
-           window.SohbaApp.removeSelectedImage = function() {
-               document.getElementById('imagePreviewContainer').classList.add('hidden');
-               document.getElementById('imagePreview').src = '';
-               document.getElementById('imageUpload').value = '';
-           };
+    window.SohbaApp.handleImageSelect = function(event) {
+        const files = Array.from(event.target.files || []);
+        if (files.length === 0) return;
 
-             window.SohbaApp.submitCreatePost = async function() {
-                console.log('submitCreatePost called');
-                const title = document.getElementById('createPostTitle').value.trim();
-                const content = document.getElementById('createPostContent').value.trim();
-                const imageFile = document.getElementById('imageUpload').files[0];
+        const maxSize = 5 * 1024 * 1024;
+        for (const file of files) {
+            if (file.size > maxSize) {
+                window.SohbaApp.toast(`Image "${file.name}" exceeds 5MB limit`, 'error');
+                continue;
+            }
+            createPostSelectedFiles.push(file);
+        }
+        event.target.value = '';
+        window.SohbaApp.renderCreateImagesPreview();
+    };
 
-                if (!title && !content && !imageFile) {
-                    window.SohbaApp.toast('Please add a title, content, or an image', 'error');
-                    return;
-                }
-                if (!title) {
-                    window.SohbaApp.toast('Title is required', 'error');
-                    return;
-                }
+    window.SohbaApp.renderCreateImagesPreview = function() {
+        const container = document.getElementById('imagePreviewContainer');
+        const grid = document.getElementById('multiImageGrid');
+        const countBadge = document.getElementById('imageCountBadge');
+        const clearBtn = document.getElementById('clearAllImagesBtn');
 
-                if (!content) {
-                    window.SohbaApp.toast('Content is required', 'error');
-                    return;
-                }
+        if (!container || !grid) return;
 
-                try {
-                    const formData = new FormData();
-                    formData.append('Title', title || 'Untitled Post');
-                    formData.append('Content', content);
-                    formData.append('IsPrivate', 'false');
+        if (createPostSelectedFiles.length === 0) {
+            container.classList.add('hidden');
+            clearBtn?.classList.add('hidden');
+            grid.innerHTML = '';
+            return;
+        }
 
-                    if (imageFile) {
-                        formData.append('ImageFile', imageFile);
-                    }
+        container.classList.remove('hidden');
+        clearBtn?.classList.remove('hidden');
+        if (countBadge) countBadge.textContent = createPostSelectedFiles.length;
 
-                    const response = await fetch('/Posts/Create', {
-                        method: 'POST',
-                        headers: {
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                        },
-                        body: formData
-                    });
-
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    } else {
-                        const text = await response.text();
-                        console.error('Error response:', text);
-                        window.SohbaApp.toast('Failed to create post', 'error');
-                    }
-                } catch (error) {
-                    console.error('Create post error:', error);
-                    window.SohbaApp.toast('Network error', 'error');
-                }
+        grid.innerHTML = '';
+        createPostSelectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const item = document.createElement('div');
+                item.className = 'relative group/img bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 flex flex-col';
+                item.innerHTML = `
+                    <div class="h-28 w-full overflow-hidden bg-slate-900">
+                        <img src="${e.target.result}" class="w-full h-full object-cover" alt="Selected image">
+                    </div>
+                    <div class="p-1.5 bg-white flex items-center justify-between text-xs text-slate-600">
+                        <span class="font-bold text-[11px] px-1.5 py-0.5 bg-slate-100 rounded">#${index + 1}</span>
+                        <div class="flex items-center gap-1">
+                            ${index > 0 ? `<button type="button" onclick="SohbaApp.moveCreateImage(${index}, -1)" class="p-1 hover:bg-slate-100 rounded" title="Move Left">◀</button>` : ''}
+                            ${index < createPostSelectedFiles.length - 1 ? `<button type="button" onclick="SohbaApp.moveCreateImage(${index}, 1)" class="p-1 hover:bg-slate-100 rounded" title="Move Right">▶</button>` : ''}
+                            <button type="button" onclick="SohbaApp.promptReplaceImage(${index})" class="p-1 hover:bg-slate-100 text-sky-600 rounded" title="Replace">🔄</button>
+                            <button type="button" onclick="SohbaApp.removeCreateImageAt(${index})" class="p-1 hover:bg-red-50 text-red-600 rounded font-bold" title="Delete">✕</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(item);
             };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    window.SohbaApp.moveCreateImage = function(index, direction) {
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= createPostSelectedFiles.length) return;
+        const temp = createPostSelectedFiles[index];
+        createPostSelectedFiles[index] = createPostSelectedFiles[targetIndex];
+        createPostSelectedFiles[targetIndex] = temp;
+        window.SohbaApp.renderCreateImagesPreview();
+    };
+
+    window.SohbaApp.removeCreateImageAt = function(index) {
+        createPostSelectedFiles.splice(index, 1);
+        window.SohbaApp.renderCreateImagesPreview();
+    };
+
+    window.SohbaApp.clearAllCreateImages = function() {
+        createPostSelectedFiles = [];
+        window.SohbaApp.renderCreateImagesPreview();
+    };
+
+    window.SohbaApp.promptReplaceImage = function(index) {
+        replacingImageIndex = index;
+        document.getElementById('singleImageReplaceInput').click();
+    };
+
+    window.SohbaApp.handleImageReplace = function(event) {
+        const file = event.target.files[0];
+        if (!file || replacingImageIndex < 0) return;
+        if (file.size > 5 * 1024 * 1024) {
+            window.SohbaApp.toast('Replacement image exceeds 5MB limit', 'error');
+            event.target.value = '';
+            return;
+        }
+        createPostSelectedFiles[replacingImageIndex] = file;
+        replacingImageIndex = -1;
+        event.target.value = '';
+        window.SohbaApp.renderCreateImagesPreview();
+    };
+
+    window.SohbaApp.submitCreatePost = async function() {
+        const title = document.getElementById('createPostTitle').value.trim();
+        const content = document.getElementById('createPostContent').value.trim();
+        const privacy = document.getElementById('createPostPrivacy').value;
+
+        if (!title && !content && createPostSelectedFiles.length === 0) {
+            window.SohbaApp.toast('Please add a title, content, or at least one image', 'error');
+            return;
+        }
+        if (!title) {
+            window.SohbaApp.toast('Title is required', 'error');
+            return;
+        }
+        if (!content) {
+            window.SohbaApp.toast('Content is required', 'error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('modalPostSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publishing...';
+
+        try {
+            const formData = new FormData();
+            formData.append('Title', title);
+            formData.append('Content', content);
+            formData.append('Privacy', privacy);
+            formData.append('IsPrivate', privacy === '2' ? 'true' : 'false');
+
+            if (currentPostModalContext && currentPostModalContext.groupId) {
+                formData.append('GroupId', currentPostModalContext.groupId);
+                formData.append('SourceId', currentPostModalContext.groupId);
+                formData.append('SourceType', 'Group');
+            } else if (currentPostModalContext && currentPostModalContext.pageId) {
+                formData.append('PageId', currentPostModalContext.pageId);
+                formData.append('SourceId', currentPostModalContext.pageId);
+                formData.append('SourceType', 'Page');
+            }
+
+            createPostSelectedFiles.forEach(file => {
+                formData.append('ImageFiles', file);
+            });
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const response = await fetch('/Posts/Create', {
+                method: 'POST',
+                headers: {
+                    // 'RequestVerificationToken': token,
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.SohbaApp.toast('Post created successfully!', 'success');
+                window.SohbaApp.closeCreatePostModal();
+                if (typeof loadGroupPosts === 'function' && currentPostModalContext?.groupId) {
+                    loadGroupPosts(currentPostModalContext.groupId);
+                } else if (typeof loadPagePosts === 'function' && currentPostModalContext?.pageId) {
+                    loadPagePosts();
+                    if (typeof loadPageStats === 'function') loadPageStats();
+                } else if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                window.SohbaApp.toast(result.error || 'Failed to create post', 'error');
+            }
+        } catch (error) {
+            console.error('Create post error:', error);
+            window.SohbaApp.toast('Network error while creating post', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Post';
+        }
+    };
 </script>

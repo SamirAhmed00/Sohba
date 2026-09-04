@@ -21,7 +21,7 @@ namespace Sohba.Application.Interfaces
        
         Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
         Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
-        Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false);
+        Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false, string? reason = null);
         Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
         
 

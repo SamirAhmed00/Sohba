@@ -43,13 +43,13 @@ window.SohbaApp.reactToPost = async function (postId, reactionType) {
             const r = map[result.reactionType];
             icon.innerText = r.icon;
             text.innerText = result.reactionType;
-            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-bold ${r.classes}`;
+            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-semibold ${r.classes}`;
         } else if (result.action === 'removed') {
             window.SohbaApp.toast('Reaction removed!', 'success');
             button.dataset.currentReaction = '';
             icon.innerText = 'React';
             text.innerText = '';
-            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-bold text-slate-600 hover:bg-slate-50`;
+            button.className = `w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 font-semibold text-slate-600 hover:bg-slate-50`;
         }
 
         const countSpan = document.querySelector(`.reaction-count-${postId}`);
@@ -330,22 +330,24 @@ window.submitReply = async function (commentId, postId) {
 
 // ------------ Delete / Edit Post -------------
 window.SohbaApp.deletePost = function (postId) {
+    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+
     window.showConfirmModal({
         title: 'Delete Post',
-        message: 'Are you sure you want to delete this post? This cannot be undone.',
+        message: 'Are you sure you want to delete this post? This action cannot be undone.',
         type: 'delete',
         confirmText: 'Delete',
-        onConfirm: async () => {
+        showReasonInput: true,
+        onConfirm: async (reason) => {
             try {
-                const result = await window.SohbaApp.post('/Posts/Delete', { id: postId });
+                const result = await window.SohbaApp.post('/Posts/Delete', { id: postId, reason: reason });
 
                 if (result.success) {
                     window.SohbaApp.toast('Post deleted successfully.', 'success');
-                    const card = document.querySelector(`[data-post-id="${postId}"]`);
-                    if (card) {
-                        card.style.transition = 'opacity 0.3s ease';
-                        card.style.opacity = '0';
-                        setTimeout(() => card.remove(), 300);
+                    if (postCard) {
+                        postCard.style.transition = 'opacity 0.3s ease';
+                        postCard.style.opacity = '0';
+                        setTimeout(() => postCard.remove(), 300);
                     }
                 } else {
                     window.SohbaApp.toast(result.error || 'Failed to delete post.', 'error');
@@ -357,6 +359,7 @@ window.SohbaApp.deletePost = function (postId) {
         }
     });
 };
+
 
 window.SohbaApp.editPostModal = function (postId) {
     

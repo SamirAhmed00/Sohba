@@ -11,6 +11,8 @@ using Sohba.Domain.Common;
 using Sohba.Domain.Enums;
 using Sohba.ViewModels.Post;
 
+using Sohba.Extensions;
+
 namespace Sohba.Controllers
 {
     [Authorize]
@@ -24,6 +26,7 @@ namespace Sohba.Controllers
         private readonly IHashtagService _hashtagService;
         private readonly IFileStorageService _fileStorage;
         private readonly IGroupService _groupService;
+        private readonly IPageService _pageService;
 
         public PostsController(
             IPostService postService,
@@ -31,7 +34,8 @@ namespace Sohba.Controllers
             IReportingService reportingService,
             IHashtagService hashtagService,
             IFileStorageService fileStorage,
-            IGroupService groupService)
+            IGroupService groupService,
+            IPageService pageService)
         {
             _postService = postService;
             _interactionService = interactionService;
@@ -39,21 +43,33 @@ namespace Sohba.Controllers
             _hashtagService = hashtagService;
             _fileStorage = fileStorage;
             _groupService = groupService;
+            _pageService = pageService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Create(Guid? groupId = null, Guid? pageId = null)
         {
+            var userId = GetCurrentUserId();
+
             if (groupId.HasValue)
             {
-                
-                var isMemberResult = await _groupService.IsMemberAsync(groupId.Value, GetCurrentUserId());
+                var isMemberResult = await _groupService.IsMemberAsync(groupId.Value, userId);
+
                 if (!isMemberResult.IsSuccess || !isMemberResult.Value)
+                    return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+            }
+
+            if (pageId.HasValue)
+            {
+                var role = await _pageService.GetUserRoleInPageAsync(userId, pageId.Value);
+
+                if (!role.HasValue || role.Value < PageRole.CoAdmin)
                     return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
             }
 
             ViewBag.GroupId = groupId;
             ViewBag.PageId = pageId;
+
             return View();
         }
 
@@ -61,17 +77,45 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PostCreateViewModel model, Guid? groupId = null, Guid? pageId = null)
         {
+            bool isAjax = HttpErrorResponseHelper.IsAjaxOrJsonRequest(Request);
+
             if (!ModelState.IsValid)
             {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                if (isAjax)
                 {
-                    return Json(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+                    return Json(new { success = false, error = string.Join("; ", errors), errors });
                 }
                 return View(model);
             }
 
             var userId = GetCurrentUserId();
-            if (userId == Guid.Empty) return RedirectToAction("Login", "Auth");
+            if (userId == Guid.Empty)
+            {
+                if (isAjax)
+                    return Json(new { success = false, error = "User not authenticated." });
+                return RedirectToAction("Login", "Auth");
+            }
+
+
+            if (pageId.HasValue)
+            {
+                var role = await _pageService.GetUserRoleInPageAsync(userId, pageId.Value);
+
+                if (!role.HasValue || role.Value < PageRole.CoAdmin)
+                {
+                    if (isAjax)
+                    {
+                        return Json(new
+                        {
+                            success = false,
+                            error = "You are not authorized to post on this page."
+                        });
+                    }
+
+                    return Forbid(Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme);
+                }
+            }
 
             string imageUrl = null;
             var imageUrls = new List<string>();
@@ -83,11 +127,13 @@ namespace Sohba.Controllers
                     var uploadResult = await _fileStorage.SaveFileAsync(file, "posts");
                     if (!uploadResult.IsSuccess)
                     {
+                        if (isAjax)
+                            return Json(new { success = false, error = uploadResult.Error });
                         ModelState.AddModelError("ImageFiles", uploadResult.Error);
                         return View(model);
                     }
                     if (uploadResult.Value != null)
-                    imageUrls.Add(uploadResult.Value);
+                        imageUrls.Add(uploadResult.Value);
                 }
             }
             else if (model.ImageFile != null && model.ImageFile.Length > 0)
@@ -95,6 +141,8 @@ namespace Sohba.Controllers
                 var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
                 if (!uploadResult.IsSuccess)
                 {
+                    if (isAjax)
+                        return Json(new { success = false, error = uploadResult.Error });
                     ModelState.AddModelError("ImageFile", uploadResult.Error);
                     return View(model);
                 }
@@ -130,12 +178,28 @@ namespace Sohba.Controllers
 
             if (result.IsSuccess)
             {
+                if (isAjax)
+                {
+                    string redirectUrl = groupId.HasValue
+                        ? Url.Action("Details", "Groups", new { id = groupId.Value })
+                        : pageId.HasValue
+                            ? Url.Action("Details", "Pages", new { id = pageId.Value })
+                            : Url.Action("Index", "Home");
+
+                    return Json(new { success = true, redirectUrl });
+                }
+
                 if (groupId.HasValue)
                     return RedirectToAction("Details", "Groups", new { id = groupId.Value });
                 else if (pageId.HasValue)
                     return RedirectToAction("Details", "Pages", new { id = pageId.Value });
                 else
                     return RedirectToAction("Index", "Home");
+            }
+
+            if (isAjax)
+            {
+                return Json(new { success = false, error = result.Error });
             }
 
             ModelState.AddModelError("", result.Error);
@@ -194,14 +258,18 @@ namespace Sohba.Controllers
             if (!post.IsAuthor)
                 return Forbid();
 
-            //return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(PostUpdateDto));
-            // In an ideal scenario, AutoMapper should map PostResponseDto to PostEditViewModel
+            var existingImages = (post.ImageUrls != null && post.ImageUrls.Any())
+                ? post.ImageUrls
+                : (!string.IsNullOrEmpty(post.ImageUrl) ? new List<string> { post.ImageUrl } : new List<string>());
+
             var vm = new PostEditViewModel
             {
                 Id = post.Id,
                 Title = post.Title,
                 Content = post.Content,
                 ImageUrl = post.ImageUrl,
+                ExistingImageUrls = existingImages,
+                RetainedImageUrls = new List<string>(existingImages),
                 Privacy = post.Privacy
             };
 
@@ -219,17 +287,29 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty)
                 return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
 
-            string imageUrl = model.ImageUrl;
-            string previousImageUrl = model.ImageUrl;
+            var finalImageUrls = new List<string>(model.RetainedImageUrls ?? new List<string>());
 
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            // Upload any new images
+            if (model.NewImageFiles != null && model.NewImageFiles.Any())
+            {
+                foreach (var file in model.NewImageFiles.Where(f => f != null && f.Length > 0))
+                {
+                    var uploadResult = await _fileStorage.SaveFileAsync(file, "posts");
+                    if (!uploadResult.IsSuccess)
+                        return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
+
+                    if (uploadResult.Value != null)
+                        finalImageUrls.Add(uploadResult.Value);
+                }
+            }
+            else if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
                 var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
                 if (!uploadResult.IsSuccess)
                     return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
 
                 if (uploadResult.Value != null)
-                    imageUrl = uploadResult.Value;
+                    finalImageUrls.Add(uploadResult.Value);
             }
 
             var updateDto = new PostUpdateDto
@@ -237,7 +317,8 @@ namespace Sohba.Controllers
                 Id = model.Id,
                 Title = model.Title,
                 Content = model.Content,
-                ImageUrl = imageUrl,
+                ImageUrl = finalImageUrls.FirstOrDefault(),
+                ImageUrls = finalImageUrls,
                 Privacy = model.Privacy
             };
 
@@ -245,12 +326,6 @@ namespace Sohba.Controllers
 
             if (result.IsSuccess)
             {
-                if (!string.IsNullOrEmpty(previousImageUrl) &&
-                    !string.Equals(previousImageUrl, imageUrl, StringComparison.OrdinalIgnoreCase))
-                {
-                    await _fileStorage.DeleteFileAsync(previousImageUrl);
-                }
-
                 var updatedPost = await _postService.GetPostByIdAsync(model.Id, userId);
                 return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(updatedPost.Value));
             }
@@ -267,7 +342,7 @@ namespace Sohba.Controllers
 
             var userId = GetCurrentUserId();
             bool isAdmin = User.IsInRole("Admin");
-            var result = await _postService.DeletePostAsync(model.id, userId, isAdmin);
+            var result = await _postService.DeletePostAsync(model.id, userId, isAdmin, model.Reason);
             if (result.IsSuccess)
                 return Json(BaseResponseDto<object>.SuccessResponse(null));
 
@@ -276,6 +351,7 @@ namespace Sohba.Controllers
         public class DeletePostModel
         {
             public Guid id { get; set; }
+            public string? Reason { get; set; }
         }
 
         [HttpPost]

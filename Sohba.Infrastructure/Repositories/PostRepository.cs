@@ -36,26 +36,40 @@ namespace Sohba.Infrastructure.Repositories
                             && f.Status == FriendshipStatus.Accepted)
                 .Select(f => f.UserId == userId ? f.FriendUserId : f.UserId)
                 .ToListAsync();
+            
+            var followedPageIds = await _context.Set<Sohba.Domain.Entities.GroupAndPage.PageFollower>()
+                .Where(pf => pf.UserId == userId)
+                .Select(pf => pf.PageId)
+                .ToListAsync();
 
-            var visibleUserIds = new List<Guid> { userId };
-            visibleUserIds.AddRange(friendIds);
-
-            // Build the query (don't execute yet)
             var query = _context.Set<Post>()
                 .Include(p => p.User)
+                .Include(p => p.Page)
                 .Where(p => !p.IsDeleted && !p.IsHidden
-                            && (p.SourceType == PostSourceType.User || p.SourceId == null)
                             && (
-                                p.UserId == userId ||
-                                (p.Privacy == PostPrivacy.Public && visibleUserIds.Contains(p.UserId)) ||
-                                (p.Privacy == PostPrivacy.Friends && friendIds.Contains(p.UserId))
+                                // User Posts: author's own posts or friends' posts
+                                (
+                                    (p.SourceType == PostSourceType.User || p.SourceId == null)
+                                    && (
+                                        p.UserId == userId ||
+                                        (
+                                            (p.Privacy == PostPrivacy.Public || p.Privacy == PostPrivacy.Friends)
+                                            && friendIds.Contains(p.UserId)
+                                        )
+                                    )
+                                )
+                                ||
+                                // Page Posts: published on pages the user follows
+                                (
+                                    p.SourceType == PostSourceType.Page
+                                    && p.SourceId != null
+                                    && followedPageIds.Contains(p.SourceId.Value)
+                                )
                             ))
                 .OrderByDescending(p => p.CreatedAt);
 
-            // Get total count before pagination
             var totalCount = await query.CountAsync();
 
-            // Apply pagination
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -64,8 +78,18 @@ namespace Sohba.Infrastructure.Repositories
             return (items, totalCount);
         }
 
+        public async Task<IEnumerable<Post>> GetUserPostsAsync(Guid userId)
+        {
+            return await _context.Set<Post>()
+                .Include(p => p.User)
+                .Where(p => p.UserId == userId && p.SourceType == PostSourceType.User && !p.IsDeleted)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
 
-        
+
+
+
 
 
         public async Task AddHashtagsToPostAsync(Guid postId, IEnumerable<string> hashtags, string location)
@@ -145,19 +169,13 @@ namespace Sohba.Infrastructure.Repositories
         {
             return await _context.Set<Post>()
                 .Include(p => p.User)
+                .Include(p => p.Page)
                 .Where(p => p.SourceType == PostSourceType.Page && p.SourceId == pageId && !p.IsDeleted)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Post>> GetUserPostsAsync(Guid userId)
-        {
-            return await _context.Set<Post>()
-                .Include(p => p.User)
-                .Where(p => p.UserId == userId && p.SourceType == PostSourceType.User && !p.IsDeleted)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-        }
+       
 
 
         
