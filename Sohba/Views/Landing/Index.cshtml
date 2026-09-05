@@ -487,7 +487,7 @@
     </div>
 </footer>
 
-<script>
+@* <script>
     // Language Management
     let currentLang = 'en';
 
@@ -532,14 +532,17 @@
     // GSAP Animations (Optimized)
     gsap.registerPlugin(ScrollTrigger);
 
-    // Hero entrance only
-    gsap.from(".hero-anim", {
-    y: 30,
-    opacity: 0,
-    duration: 1,
-    stagger: 0.1,
-    ease: "power2.out"
+   const heroElements = document.querySelectorAll(".hero-anim");
+
+if (heroElements.length > 0) {
+    gsap.from(heroElements, {
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: "power2.out"
     });
+}
 
     // Stats counter only
     const stats = document.querySelectorAll(".stat-num");
@@ -561,13 +564,94 @@
     });
 
     // Three.js Background (Optimized)
-    const canvasContainer = document.getElementById('canvas-container');
+const canvasContainer = document.getElementById('canvas-container');
+
+if (canvasContainer && typeof THREE !== 'undefined') {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: "low-power" });
+
+    const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+
+    const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: false,
+        powerPreference: "low-power"
+    });
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
     canvasContainer.appendChild(renderer.domElement);
+
+    // Minimal particles
+    const geometry = new THREE.BufferGeometry();
+    const count = 50;
+    const posArr = new Float32Array(count * 3);
+
+    for (let i = 0; i < count * 3; i++) {
+        posArr[i] = (Math.random() - 0.5) * 10;
+    }
+
+    geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(posArr, 3)
+    );
+
+    const material = new THREE.PointsMaterial({
+        color: 0x345e69,
+        size: 0.08,
+        transparent: true,
+        opacity: 0.3
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    camera.position.z = 4;
+
+    // Animation loop with frame skipping
+    let frameCount = 0;
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        frameCount++;
+
+        if (frameCount % 2 === 0) {
+            points.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+    }
+
+    animate();
+
+    // Resize handler
+    let resizeTimeout;
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+
+        resizeTimeout = setTimeout(() => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(
+                window.innerWidth,
+                window.innerHeight
+            );
+        }, 200);
+    });
+
+    // Cleanup on page hide
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            renderer.dispose();
+        }
+    });
+}
 
     // Minimal particles
     const geometry = new THREE.BufferGeometry();
@@ -626,7 +710,7 @@
     entries.forEach(entry => {
     
     if (entry.isIntersecting) {
-    ]
+    
     const statNumbers = entry.target.querySelectorAll('.stat-number');
     statNumbers.forEach(stat => {
     
@@ -686,4 +770,4 @@
     lucide.createIcons();
 </script>
 
-
+ *@
