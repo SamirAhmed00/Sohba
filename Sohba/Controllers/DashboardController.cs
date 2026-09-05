@@ -266,6 +266,40 @@ namespace Sohba.Controllers
             var result = await _postService.HidePostAsync(model.postId, GetCurrentUserId());
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
+        // ==================== Deleted Groups Moderation ====================
+
+        [HttpGet]
+        public async Task<IActionResult> DeletedGroups(string search = "", int page = 1)
+        {
+            var viewModel = new DashboardDeletedGroupsViewModel
+            {
+                SearchTerm = search,
+                CurrentPage = page,
+                PageSize = 20
+            };
+
+            var deletedGroupsResult = await _groupService.GetDeletedGroupsAsync();
+            if (deletedGroupsResult.IsSuccess)
+            {
+                var query = deletedGroupsResult.Value.AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    query = query.Where(g =>
+                        g.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        g.DeletionReason.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                        g.OwnerName.Contains(search, StringComparison.OrdinalIgnoreCase));
+                }
+
+                viewModel.TotalCount = query.Count();
+                viewModel.DeletedGroups = query
+                    .Skip((page - 1) * viewModel.PageSize)
+                    .Take(viewModel.PageSize)
+                    .ToList();
+            }
+
+            return View(viewModel);
+        }
 
         // ==================== Reports Management ====================
 
