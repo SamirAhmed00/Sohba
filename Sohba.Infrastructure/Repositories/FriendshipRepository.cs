@@ -183,6 +183,42 @@ namespace Sohba.Infrastructure.Repositories
                 .Select(f => f.UserId)
                 .ToListAsync();
         }
+
+        public async Task<(IReadOnlyList<Friend> Items, int TotalCount)> GetFriendsPagedAsync(
+            Guid userId,
+            string? search,
+            int page,
+            int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            var query = _context.Friends
+                .Include(f => f.User)
+                .Include(f => f.FriendUser)
+                .Where(f =>
+                    (f.UserId == userId || f.FriendUserId == userId) &&
+                    f.Status == FriendshipStatus.Accepted &&
+                    f.User != null && f.FriendUser != null);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(f =>
+                    (f.UserId == userId && f.FriendUser != null && f.FriendUser.Name.Contains(term)) ||
+                    (f.FriendUserId == userId && f.User != null && f.User.Name.Contains(term)));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(f => f.UserId == userId ? f.FriendUser!.Name : f.User!.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 
 }

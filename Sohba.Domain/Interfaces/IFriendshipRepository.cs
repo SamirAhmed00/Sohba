@@ -33,6 +33,12 @@ namespace Sohba.Domain.Interfaces
         Task<bool> IsBlockedEitherDirectionAsync(Guid userId, Guid otherUserId);
         Task<IEnumerable<Guid>> GetBlockedByAsync(Guid userId);
         Task<bool> HasPendingRequestAsync(Guid senderId, Guid receiverId);
+
+        Task<(IReadOnlyList<Friend> Items, int TotalCount)> GetFriendsPagedAsync(
+            Guid userId,
+            string? search,
+            int page,
+            int pageSize);
     }
 
 

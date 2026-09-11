@@ -203,35 +203,22 @@ namespace Sohba.Application.Services
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 12;
 
-            var friends = await _unitOfWork.Friendships.GetListByUserAsync(userId);
+            var (friends, totalCount) = await _unitOfWork.Friendships.GetFriendsPagedAsync(userId, search, page, pageSize);
 
-            var dtosQuery = friends.Select(f => new FriendDto
+            var dtos = friends.Select(f => new FriendDto
             {
                 UserId = userId,
                 FriendUserId = f.UserId == userId ? f.FriendUserId : f.UserId,
                 FriendName = f.UserId == userId ? (f.FriendUser != null ? f.FriendUser.Name : "Unknown") : (f.User != null ? f.User.Name : "Unknown"),
                 ProfilePictureUrl = f.UserId == userId ? f.FriendUser?.ProfilePictureUrl : f.User?.ProfilePictureUrl,
                 Status = f.Status.ToString()
-            });
+            }).ToList();
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var cleanSearch = search.Trim();
-                dtosQuery = dtosQuery.Where(f => f.FriendName != null && f.FriendName.Contains(cleanSearch, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var dtosList = dtosQuery.ToList();
-            var totalCount = dtosList.Count;
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-            var pagedItems = dtosList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
 
             var result = new PagedResult<FriendDto>
             {
-                Items = pagedItems,
+                Items = dtos,
                 TotalCount = totalCount,
                 Page = page,
                 PageSize = pageSize,
