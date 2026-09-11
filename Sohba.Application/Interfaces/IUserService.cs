@@ -1,4 +1,5 @@
-﻿using Sohba.Application.DTOs.UserAggregate;
+﻿using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Domain.Common;
 using System;
 using System.Collections.Generic;
@@ -33,5 +34,10 @@ namespace Sohba.Application.Interfaces
 
         Task<Result> BlockUserAccountAsync(Guid userId);
         Task<Result> UnblockUserAccountAsync(Guid userId);
+        Task<Result<PagedResult<UserResponseDto>>> GetUsersAdminPagedAsync(string? search, string? status, int page, int pageSize);
+
+        Task<Result> PromoteUserToAdminAsync(Guid targetUserId, Guid actorAdminId);
+        Task<Result> DemoteAdminToUserAsync(Guid targetUserId, Guid actorAdminId);
+        Task<Result> CanManageTargetRoleAsync(Guid targetUserId, Guid actorAdminId);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Sohba.Domain.Entities.AdminAggregate;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
@@ -39,6 +40,7 @@ namespace Sohba.Infrastructure.Data
         public DbSet<StoryReaction> StoryReactions { get; set; }
         public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; } = null!;
         public DbSet<PageFollowRequest> PageFollowRequests { get; set; } = null!;
+        public DbSet<AdminAuditLog> AdminAuditLogs { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

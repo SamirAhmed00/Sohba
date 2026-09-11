@@ -178,5 +178,32 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<SavedPost>()
                 .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.PostId == postId && sp.CollectionId == collectionId);
         }
+
+        public async Task<(IReadOnlyList<Comment> Items, int TotalCount)> GetCommentsAdminPagedAsync(string? search, int page, int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+
+            var query = _context.Comments
+                .Include(c => c.User)
+                .Include(c => c.Post)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(c => c.Content.Contains(term) || c.User.Name.Contains(term));
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
     }
 }

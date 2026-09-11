@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Identity; // -- The Only Packacge In Domain Layer --
+﻿using Microsoft.AspNetCore.Identity; // -- The Only Packacge In Domain Layer --
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
+using Sohba.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Sohba.Domain.Entities.UserAggregate
 {
@@ -20,6 +21,12 @@ namespace Sohba.Domain.Entities.UserAggregate
         public DateTime CreatedAt { get; set; }
 
         public bool IsActive { get; set; } = true;
+        // Strongly Typed Role State
+        public UserRole Role { get; set; } = UserRole.User;
+
+        // Administrator Hierarchy & Lineage Tracking
+        public Guid? PromotedByAdminUserId { get; set; }
+        public virtual User? PromotedByAdminUser { get; set; }
 
         //Privacy Settings
         public bool IsPrivateAccount { get; set; } = false;

@@ -18,5 +18,15 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<User>> GetRecentAsync(int count);
         Task<User?> GetByEmailIncludingDeletedAsync(string email);
 
+        Task<(IReadOnlyList<User> Items, int TotalCount)> GetUsersAdminPagedAsync(
+            string? search,
+            string? status,
+            int page,
+            int pageSize);
+
+        Task<Dictionary<DateTime, int>> GetUserRegistrationsByDayAsync(int days);
+        Task<int> GetNewUsersCountSinceAsync(DateTime sinceUtc);
+
+
     }
 }

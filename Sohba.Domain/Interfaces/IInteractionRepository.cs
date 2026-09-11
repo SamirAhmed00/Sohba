@@ -40,5 +40,7 @@ namespace Sohba.Domain.Interfaces
         void RemoveCollection(SavedCollection collection);
 
         Task<SavedPost?> GetSavedPostByCollectionAsync(Guid userId, Guid postId, Guid collectionId);
+        Task<(IReadOnlyList<Comment> Items, int TotalCount)> GetCommentsAdminPagedAsync(string? search, int page, int pageSize);
+
     }
 }

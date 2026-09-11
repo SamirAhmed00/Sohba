@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Entities.UserAggregate;
+using Sohba.Domain.Enums;
 using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -17,13 +20,17 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly IProfileDomainService _profileDomainService;
         private readonly IFriendshipRepository _friendshipRepository;
+        private readonly Microsoft.AspNetCore.Identity.UserManager<User> _userManager;
+        private readonly ILogger<UserService> _logger;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IProfileDomainService profileDomainService, IFriendshipRepository friendshipRepository)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IProfileDomainService profileDomainService, IFriendshipRepository friendshipRepository, Microsoft.AspNetCore.Identity.UserManager<User> userManager, ILogger<UserService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _profileDomainService = profileDomainService;
             _friendshipRepository = friendshipRepository;
+            _userManager = userManager;
+            _logger = logger;
         }
 
         // Original method (kept for backward compatibility)
@@ -214,6 +221,120 @@ namespace Sohba.Application.Services
             await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
+
+        public async Task<Result<PagedResult<UserResponseDto>>> GetUsersAdminPagedAsync(string? search, string? status, int page, int pageSize)
+        {
+            var (users, totalCount) = await _unitOfWork.Users.GetUsersAdminPagedAsync(search, status, page, pageSize);
+            var dtos = _mapper.Map<IEnumerable<UserResponseDto>>(users).ToList();
+
+            var pagedResult = new PagedResult<UserResponseDto>
+            {
+                Items = dtos,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+
+            return Result<PagedResult<UserResponseDto>>.Success(pagedResult);
+        }
+
+        public async Task<Result> PromoteUserToAdminAsync(Guid targetUserId, Guid actorAdminId)
+        {
+            var targetUser = await _userManager.FindByIdAsync(targetUserId.ToString());
+            if (targetUser == null) return Result.Failure("Target user not found.");
+
+            var actorUser = await _userManager.FindByIdAsync(actorAdminId.ToString());
+            if (actorUser == null) return Result.Failure("Acting administrator not found.");
+
+            if (actorUser.Role != UserRole.Owner && actorUser.Role != UserRole.Admin)
+                return Result.Failure("Unauthorized: Only administrators can promote users.");
+
+            if (targetUser.Role == UserRole.Owner)
+                return Result.Failure("The Owner account cannot be modified.");
+
+            if (targetUser.Role == UserRole.Admin)
+                return Result.Failure("User is already an administrator.");
+
+            targetUser.Role = UserRole.Admin;
+            targetUser.PromotedByAdminUserId = actorAdminId;
+
+            var result = await _userManager.AddToRoleAsync(targetUser, "Admin");
+            if (!result.Succeeded)
+                return Result.Failure("Failed to assign Admin role in Identity store.");
+
+            _unitOfWork.Users.Update(targetUser);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("User {TargetUserId} promoted to Admin by Admin {ActorAdminId}", targetUserId, actorAdminId);
+            return Result.Success();
+        }
+
+        public async Task<Result> DemoteAdminToUserAsync(Guid targetUserId, Guid actorAdminId)
+        {
+            if (targetUserId == actorAdminId)
+                return Result.Failure("Self-demotion is prohibited. You cannot remove your own administrative privileges.");
+
+            var targetUser = await _userManager.FindByIdAsync(targetUserId.ToString());
+            if (targetUser == null) return Result.Failure("Target user not found.");
+
+            var actorUser = await _userManager.FindByIdAsync(actorAdminId.ToString());
+            if (actorUser == null) return Result.Failure("Acting administrator not found.");
+
+            if (actorUser.Role != UserRole.Owner && actorUser.Role != UserRole.Admin)
+                return Result.Failure("Unauthorized.");
+
+            // Strict Owner protection
+            if (targetUser.Role == UserRole.Owner)
+                return Result.Failure("OWNER ACCOUNT PROTECTED: Normal administrators cannot remove, demote, block, or delete the platform Owner.");
+
+            // Hierarchy rule: A promoted Admin cannot demote the admin who promoted them (unless actor is Owner)
+            if (actorUser.Role != UserRole.Owner && actorUser.PromotedByAdminUserId.HasValue && actorUser.PromotedByAdminUserId.Value == targetUserId)
+            {
+                return Result.Failure("ACTION BLOCKED: You cannot remove or demote the administrator who granted your administrative privileges. A higher-level administrator or the Sohba Owner must perform this action.");
+            }
+
+            // Ensure at least one admin remains
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            if (admins.Count <= 1)
+                return Result.Failure("Action blocked: At least one administrator must remain active on the platform.");
+
+            targetUser.Role = UserRole.User;
+            targetUser.PromotedByAdminUserId = null;
+
+            var result = await _userManager.RemoveFromRoleAsync(targetUser, "Admin");
+            if (!result.Succeeded)
+                return Result.Failure("Failed to remove Admin role in Identity store.");
+
+            _unitOfWork.Users.Update(targetUser);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Admin {TargetUserId} demoted to User by {ActorAdminId}", targetUserId, actorAdminId);
+            return Result.Success();
+        }
+
+        public async Task<Result> CanManageTargetRoleAsync(Guid targetUserId, Guid actorAdminId)
+        {
+            if (targetUserId == actorAdminId) return Result.Failure("Self-modification is blocked.");
+
+            var targetUser = await _userManager.FindByIdAsync(targetUserId.ToString());
+            if (targetUser == null) return Result.Failure("User not found.");
+
+            var actorUser = await _userManager.FindByIdAsync(actorAdminId.ToString());
+            if (actorUser == null) return Result.Failure("Admin not found.");
+
+            var actorIsOwner = await _userManager.IsInRoleAsync(actorUser, "Owner");
+            if (actorIsOwner) return Result.Success();
+
+            var targetIsOwner = await _userManager.IsInRoleAsync(targetUser, "Owner");
+            if (targetIsOwner) return Result.Failure("Owner is protected.");
+
+            if (actorUser.PromotedByAdminUserId.HasValue && actorUser.PromotedByAdminUserId.Value == targetUserId)
+                return Result.Failure("Cannot modify your promoter.");
+
+            return Result.Success();
+        }
+
     }
 }
 

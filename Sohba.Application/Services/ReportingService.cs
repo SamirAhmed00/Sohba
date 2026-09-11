@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -35,78 +36,7 @@ namespace Sohba.Application.Services
             _reportingDomainService = reportingDomainService;
             _notificationService = notificationService;
             _userService = userService;
-        }
-
-        //public async Task<Result> ReportPostAsync(PostReportRequestDto reportDto, Guid reporterId)
-        //{
-        //    var post = await _unitOfWork.Posts.GetByIdAsync(reportDto.PostId);
-        //    if (post == null)
-        //    {
-        //        _logger.LogWarning("Report failed: post {PostId} not found", reportDto.PostId);
-        //        return Result.Failure("Post not found.");
-        //    }
-
-        //    bool alreadyReported = await _unitOfWork.Reports
-        //        .HasUserReportedEntityAsync(reporterId, reportDto.PostId);
-
-        //    var validation = _reportingDomainService.CanReportEntity(reporterId, reportDto.PostId, alreadyReported);
-        //    if (!validation.IsSuccess)
-        //    {
-        //        _logger.LogWarning("Report rejected for user {ReporterId} on post {PostId}: {Reason}", reporterId, reportDto.PostId, validation.Error);
-        //        return Result.Failure(validation.Error);
-        //    }
-
-        //    var report = _mapper.Map<PostReport>(reportDto);
-        //    report.UserId = reporterId;
-        //    report.ReportedAt = DateTime.UtcNow;
-
-        //    _unitOfWork.Reports.Add(report);
-
-        //    int currentReportCount = await _unitOfWork.Reports.GetReportCountForEntityAsync(reportDto.PostId);
-        //    int threshold = 5; 
-
-        //    if (_reportingDomainService.ShouldAutoHideContent(currentReportCount + 1, threshold))
-        //    {
-        //        post.IsDeleted = true; 
-        //        _unitOfWork.Posts.Update(post);
-        //    }
-
-        //    await _unitOfWork.CompleteAsync();
-        //    _logger.LogInformation("Post {PostId} reported by user {ReporterId}, reason: {Reason}", reportDto.PostId, reporterId, reportDto.Reason);
-
-        //    //  Send notification to post owner
-        //    if (post.UserId != reporterId)
-        //    {
-        //        var reporter = await _userService.GetProfileAsync(reporterId);
-        //        var reporterName = reporter.Value?.Name ?? "Someone";
-
-        //        await _notificationService.CreateNotificationAsync(
-        //            receiverId: post.UserId,
-        //            message: $"{reporterName} reported your post",
-        //            type: NotificationType.SystemAlert,
-        //            senderId: reporterId,
-        //            targetId: post.Id
-        //        );
-        //    }
-
-        //    //  Send notification to admin
-        //    var admins = await _userService.GetUsersByStatusAsync("active");
-        //    if (admins.IsSuccess && admins.Value.Any())
-        //    {
-        //        foreach (var admin in admins.Value.Where(u => u.Email == "admin@sohba.com"))
-        //        {
-        //            await _notificationService.CreateNotificationAsync(
-        //                receiverId: admin.Id,
-        //                message: $"New report submitted for post: {post.Title}",
-        //                type: NotificationType.SystemAlert,
-        //                senderId: reporterId,
-        //                targetId: post.Id
-        //            );
-        //        }
-        //    }
-
-        //    return Result.Success();
-        //}
+        }        
 
         public async Task<Result<PostReportResponseDto>> ReportPostWithDetailsAsync(PostReportRequestDto reportDto, Guid reporterId)
         {
@@ -160,7 +90,7 @@ namespace Sohba.Application.Services
                 );
             }
 
-            // ✅ Send notification to admin
+            // Send notification to admin
             var admins = await _userService.GetUsersByStatusAsync("active");
             if (admins.IsSuccess && admins.Value.Any())
             {
@@ -247,5 +177,41 @@ namespace Sohba.Application.Services
             var dtos = _mapper.Map<IEnumerable<PostReportResponseDto>>(reports);
             return Result<IEnumerable<PostReportResponseDto>>.Success(dtos);
         }
+
+        public async Task<Result> DismissReportAsync(Guid reportId)
+        {
+            var report = await _unitOfWork.Reports.GetByIdAsync(reportId);
+            if (report == null)
+            {
+                _logger.LogWarning("Report dismissal failed: report {ReportId} not found", reportId);
+                return Result.Failure("Report not found");
+            }
+
+            report.IsResolved = true;
+            _unitOfWork.Reports.Update(report);
+            await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("Report {ReportId} dismissed by administrator (post {PostId})", reportId, report.PostId);
+            return Result.Success();
+        }
+
+        public async Task<Result<PagedResult<PostReportResponseDto>>> GetReportsPagedAsync(string? status, int page, int pageSize)
+        {
+            var (reports, totalCount) = await _unitOfWork.Reports.GetReportsPagedAsync(status, page, pageSize);
+            var dtos = _mapper.Map<IEnumerable<PostReportResponseDto>>(reports).ToList();
+
+            var pagedResult = new PagedResult<PostReportResponseDto>
+            {
+                Items = dtos,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+
+            return Result<PagedResult<PostReportResponseDto>>.Success(pagedResult);
+        }
+
+
     }
 }

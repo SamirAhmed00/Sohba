@@ -11,5 +11,7 @@ namespace Sohba.Domain.Interfaces
         Task<int> GetReportCountForEntityAsync(Guid entityId);
         Task<int> CountPendingAsync();
         Task<IEnumerable<PostReport>> GetRecentPendingAsync(int count);
+        Task<(IReadOnlyList<PostReport> Items, int TotalCount)> GetReportsPagedAsync(string? status, int page, int pageSize);
+
     }
 }

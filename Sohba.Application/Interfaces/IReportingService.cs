@@ -1,4 +1,5 @@
-﻿using Sohba.Application.DTOs.PostAggregate;
+﻿using Sohba.Application.DTOs.Common;
+using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Domain.Common;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,11 @@ namespace Sohba.Application.Interfaces
         // Admin
         Task<Result<IEnumerable<PostReportResponseDto>>> GetAllReportsAsync();
         Task<Result> ResolveReportAsync(Guid reportId);
+        Task<Result> DismissReportAsync(Guid reportId);
 
         Task<Result<int>> GetPendingReportsCountAsync();
         Task<Result<IEnumerable<PostReportResponseDto>>> GetRecentPendingReportsAsync(int count);
+        Task<Result<PagedResult<PostReportResponseDto>>> GetReportsPagedAsync(string? status, int page, int pageSize);
+
     }
 }

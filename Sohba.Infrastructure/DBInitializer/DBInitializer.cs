@@ -27,11 +27,11 @@ namespace Sohba.Infrastructure.DBInitializer
             // Apply migrations
             await _context.Database.MigrateAsync();
 
-            // Seed roles and admin user
+            // Seed roles, bootstrap Owner, seed admin and test users
             await SeedRolesAsync();
+            await BootstrapOwnerUserAsync();
             await SeedAdminUserAsync();
-            await SeedTestUsersAsync(); 
-            //await SeedSampleDataAsync();
+            await SeedTestUsersAsync();
             await SeedExtraTestDataAsync();
         }
 
@@ -39,7 +39,7 @@ namespace Sohba.Infrastructure.DBInitializer
         {
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-            string[] roleNames = { "Admin", "User" };
+            string[] roleNames = { "Owner", "Admin", "User" };
 
             foreach (var roleName in roleNames)
             {
@@ -48,6 +48,61 @@ namespace Sohba.Infrastructure.DBInitializer
                 {
                     await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName });
                 }
+            }
+        }
+
+        private async Task BootstrapOwnerUserAsync()
+        {
+            var configuration = _serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+            var userManager = _serviceProvider.GetRequiredService<UserManager<User>>();
+
+            // Read strictly from ASP.NET Core configuration (reads launchSettings, environment variables, or user secrets)
+            var ownerEmail = configuration["Sohba:Owner:Email"] ?? configuration["Sohba__Owner__Email"] ?? "owner@sohba.com";
+            var initialPassword = configuration["Sohba:Owner:InitialPassword"] ?? configuration["Sohba__Owner__InitialPassword"];
+
+            var ownerUser = await userManager.FindByEmailAsync(ownerEmail);
+            if (ownerUser == null)
+            {
+                if (string.IsNullOrWhiteSpace(initialPassword))
+                {
+                    initialPassword = "Owner@Secure123!";
+                }
+
+                ownerUser = new User
+                {
+                    Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                    UserName = ownerEmail,
+                    Email = ownerEmail,
+                    Name = "Sohba Platform Owner",
+                    Bio = "Supreme Platform Administrator and Owner",
+                    Role = UserRole.Owner,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                    EmailConfirmed = true,
+                    ProfilePictureUrl = "https://ui-avatars.com/api/?name=Owner&background=f59e0b&color=fff&size=128"
+                };
+
+                var createResult = await userManager.CreateAsync(ownerUser, initialPassword);
+                if (createResult.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(ownerUser, "Owner");
+                    await userManager.AddToRoleAsync(ownerUser, "Admin");
+                }
+            }
+            else
+            {
+                // Ensure strongly-typed Role is Owner and roles exist without resetting password
+                if (ownerUser.Role != UserRole.Owner)
+                {
+                    ownerUser.Role = UserRole.Owner;
+                    _context.Users.Update(ownerUser);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (!await userManager.IsInRoleAsync(ownerUser, "Owner"))
+                    await userManager.AddToRoleAsync(ownerUser, "Owner");
+                if (!await userManager.IsInRoleAsync(ownerUser, "Admin"))
+                    await userManager.AddToRoleAsync(ownerUser, "Admin");
             }
         }
 
