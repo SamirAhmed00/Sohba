@@ -61,15 +61,8 @@ namespace Sohba.Infrastructure.Repositories
             string query,
             int limit = 10)
         {
-            return await _context.Groups
-                .AsNoTracking()
-                .Include(g => g.Admin)
-                .Include(g => g.GroupMembers)
-                .Where(g =>
-                    g.Name.Contains(query) ||
-                    g.Description.Contains(query))
-                .Take(limit)
-                .ToListAsync();
+            var (items, _) = await GetGroupsPagedAsync(query, 1, limit);
+            return items;
         }
 
         public async Task<(IReadOnlyList<Group> Items, int TotalCount)>
