@@ -12,10 +12,32 @@ namespace Sohba.Application.DTOs.UserAggregate
         public string NotificationType { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid? TargetId { get; set; }
+        public Guid? SenderId { get; set; }
         public string SenderName { get; set; }
         public string SenderProfilePicture { get; set; }
 
         public string TimeAgo => GetTimeAgo(CreatedAt);
+
+        public string TargetUrl => GetTargetUrl();
+
+        private string GetTargetUrl()
+        {
+            if (string.IsNullOrEmpty(NotificationType))
+                return "/Notifications/Index";
+
+            return NotificationType switch
+            {
+                "PostLike" or "PostComment" when TargetId.HasValue => $"/Posts/Details/{TargetId.Value}",
+                "GroupInvitation" when TargetId.HasValue => $"/Groups/Details/{TargetId.Value}",
+                "FriendRequest" => "/Friends/Requests",
+                "PageFollow" when TargetId.HasValue => $"/Pages/Details/{TargetId.Value}",
+                "PageFollowRequest" when TargetId.HasValue => $"/Pages/PageRequests?pageId={TargetId.Value}",
+                "PageRequestAccepted" when TargetId.HasValue => $"/Pages/Details/{TargetId.Value}",
+                "PageRequestRejected" when TargetId.HasValue => $"/Pages/Details/{TargetId.Value}",
+                "StoryLike" => "/Stories",
+                _ => "/Notifications/Index"
+            };
+        }
 
         private string GetTimeAgo(DateTime dateTime)
         {

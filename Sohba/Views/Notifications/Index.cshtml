@@ -15,45 +15,38 @@
             "GroupInvitation" => "👪",
             "SystemAlert" => "🔔",
             "StoryLike" => "⭐",
+            "PageFollow" or "PageFollowRequest" or "PageRequestAccepted" or "PageRequestRejected" => "📄",
             _ => "📢"
-        };
-    }
-
-    private string GetNotificationUrl(Sohba.Application.DTOs.UserAggregate.NotificationResponseDto n)
-    {
-        return n.NotificationType switch
-        {
-            "PostLike" or "PostComment" => $"/Posts/Details/{n.TargetId}",
-            "GroupInvitation" => $"/Groups/Details/{n.TargetId}",
-            "FriendRequest" => "/Friends/Requests",
-            "SystemAlert" when n.TargetId.HasValue => $"/Groups/Details/{n.TargetId}",
-            _ => "/Notifications/Index"
         };
     }
 }
 
+
 <div class="max-w-7xl mx-auto page-transition">
-        <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-black text-gray-900">Notifications</h1>
-                    <p class="text-gray-500 mt-1">Stay updated with your activity</p>
-                </div>
-                <button onclick="markAllRead()" class="text-sm text-[#345e69] font-semibold hover:underline">
-                    Mark all as read
-                </button>
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 hover-lift">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900">Notifications</h1>
+                <p class="text-gray-500 mt-1">Stay updated with your activity</p>
             </div>
+            <button type="button" onclick="markAllNotificationsAsRead()" class="text-sm text-[#345e69] font-semibold hover:underline">
+                Mark all as read
+            </button>
         </div>
+    </div>
 
         <!-- Notifications List -->
         @if (Model != null && Model.Any())
         {
-            <div class="space-y-3">
+            <div id="notificationsContainer" class="space-y-3">
                 @foreach (var notification in Model)
                 {
-                    <a href="@GetNotificationUrl(notification)"
-                       class="flex items-start gap-4 bg-white rounded-2xl shadow-sm border border-slate-100 p-4 hover:shadow-md transition-shadow @(notification.IsRead ? "opacity-60" : "border-l-4 border-l-[#345e69]")">
+                <div class="flex items-center gap-2 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow @(notification.IsRead ? "opacity-60" : "border-l-4 border-l-[#345e69]")"
+                     data-notification-id="@notification.Id">
+                    <a href="@notification.TargetUrl"
+                       onclick="handleNotificationNavigation(event, '@notification.Id', '@notification.TargetUrl', @(notification.IsRead ? "true" : "false"))"
+                       class="flex-1 flex items-start gap-4 p-4 min-w-0">
                         <div class="w-12 h-12 rounded-full bg-[#345e69]/10 flex items-center justify-center flex-shrink-0">
                             <span class="text-xl">@GetNotificationIcon(notification.NotificationType)</span>
                         </div>
@@ -63,9 +56,53 @@
                         </div>
                         @if (!notification.IsRead)
                         {
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#345e69] flex-shrink-0 mt-2"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#345e69] flex-shrink-0 mt-2" aria-hidden="true"></span>
+                            <span class="sr-only">Unread notification</span>
                         }
                     </a>
+                    <button type="button"
+                            onclick="deleteNotification('@notification.Id')"
+                            class="p-3 mr-2 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                            title="Delete notification"
+                            aria-label="Delete notification">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+                }
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex items-center justify-between mt-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                @if (ViewBag.HasPreviousPage == true)
+                {
+                    <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)"
+                       class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors">
+                        &larr; Previous
+                    </a>
+                }
+                else
+                {
+                    <span class="px-4 py-2 bg-slate-50 text-slate-300 text-sm font-semibold rounded-xl cursor-not-allowed">
+                        &larr; Previous
+                    </span>
+                }
+
+                <span class="text-sm text-slate-500 font-medium">Page @(ViewBag.CurrentPage ?? 1)</span>
+
+                @if (ViewBag.HasNextPage == true)
+                {
+                    <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)"
+                       class="px-4 py-2 bg-[#345e69] hover:bg-[#2a4b55] text-white text-sm font-semibold rounded-xl transition-colors">
+                        Next &rarr;
+                    </a>
+                }
+                else
+                {
+                    <span class="px-4 py-2 bg-slate-50 text-slate-300 text-sm font-semibold rounded-xl cursor-not-allowed">
+                        Next &rarr;
+                    </span>
                 }
             </div>
         }
@@ -83,24 +120,3 @@
         }
 </div>
 
-@section Scripts {
-    <script>
-        async function markAllRead() {
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            const response = await fetch('/Notifications/MarkAllAsRead', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': token
-                }
-            });
-            const result = await response.json();
-            if (result.success) {
-                SohbaApp.toast('All notifications marked as read', 'success');
-                window.location.reload();
-            } else {
-                SohbaApp.toast(result.error || 'Failed to mark all as read', 'error');
-            }
-        }
-    </script>
-}

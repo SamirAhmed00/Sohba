@@ -29,12 +29,19 @@ namespace Sohba.Controllers
             if (userId == Guid.Empty)
                 return RedirectToAction("Login", "Auth");
 
+            page = Math.Max(1, page);
+
             var result = await _notificationService.GetUserNotificationsAsync(userId, page, 20);
 
             if (result.IsFailure)
                 return View(new List<NotificationResponseDto>());
 
-            var dtos = _mapper.Map<IEnumerable<NotificationResponseDto>>(result.Value);
+            var dtos = _mapper.Map<IEnumerable<NotificationResponseDto>>(result.Value).ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.HasPreviousPage = page > 1;
+            ViewBag.HasNextPage = dtos.Count == 20;
+
             return View(dtos);
         }
 

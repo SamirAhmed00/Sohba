@@ -29,17 +29,27 @@ namespace Sohba.Handlers
             try
             {
                 // Build the notification DTO for the client
+                var responseDto = new Sohba.Application.DTOs.UserAggregate.NotificationResponseDto
+                {
+                    Id = @event.Notification.Id,
+                    Message = @event.Message,
+                    NotificationType = @event.Type.ToString(),
+                    SenderId = @event.SenderId,
+                    TargetId = @event.TargetId,
+                    CreatedAt = @event.Notification.CreatedAt,
+                    IsRead = @event.Notification.IsRead
+                };
+
                 var notificationDto = new
                 {
-                    id = @event.Notification.Id,
-                    message = @event.Message,
-                    notificationType = @event.Type.ToString(),
-                    senderId = @event.SenderId,
-                    targetId = @event.TargetId,
-                    createdAt = @event.Notification.CreatedAt,
-                    isRead = @event.Notification.IsRead,
-                    // Add sender name if available (we'll enrich it on the client side)
-                    // Or we can fetch it here from a service
+                    id = responseDto.Id,
+                    message = responseDto.Message,
+                    notificationType = responseDto.NotificationType,
+                    senderId = responseDto.SenderId,
+                    targetId = responseDto.TargetId,
+                    targetUrl = responseDto.TargetUrl,
+                    createdAt = responseDto.CreatedAt,
+                    isRead = responseDto.IsRead
                 };
 
                 // Send to the specific user

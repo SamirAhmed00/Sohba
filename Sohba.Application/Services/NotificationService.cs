@@ -61,17 +61,17 @@ namespace Sohba.Application.Services
                     _logger.LogWarning("Notification not sent: sender {SenderId} not found", senderId.Value);
                     return Result.Failure("Sender not found");
                 }
+
+                // Suppress notifications if blocked in either direction
+                if (await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(senderId.Value, receiverId))
+                {
+                    _logger.LogInformation("Notification suppressed due to block relationship between sender {SenderId} and receiver {ReceiverId}", senderId.Value, receiverId);
+                    return Result.Success();
+                }
             }
 
-            // Check user preferences before sending
-            if (!await ShouldSendBasedOnPreferences(receiverId, type))
-            {
-                _logger.LogInformation("Notification suppressed by user preferences: receiver {ReceiverId}, type {Type}", receiverId, type);
-                return Result.Success();
-            }
 
-
-            // Create notification
+            // In-app notification is always created and persisted
             var notification = new Notification
             {
                 Id = Guid.NewGuid(),
@@ -87,6 +87,13 @@ namespace Sohba.Application.Services
             _unitOfWork.Notifications.Add(notification);
             await _unitOfWork.CompleteAsync();
             _logger.LogInformation("Notification created: {NotificationId}, receiver {ReceiverId}, type {Type}", notification.Id, receiverId, type);
+
+            // Check push preferences only for real-time delivery using the already-loaded receiver entity
+            if (!ShouldSendBasedOnPreferences(receiver, type))
+            {
+                _logger.LogInformation("Real-time notification suppressed by user preferences: receiver {ReceiverId}, type {Type}", receiverId, type);
+                return Result.Success();
+            }
 
             // Send real-time notification via SignalR
             try
@@ -117,9 +124,8 @@ namespace Sohba.Application.Services
 
 
         // Check user preferences
-        private async Task<bool> ShouldSendBasedOnPreferences(Guid userId, NotificationType type)
+        private bool ShouldSendBasedOnPreferences(User user, NotificationType type)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
             if (user == null)
                 return false;
 
@@ -130,14 +136,13 @@ namespace Sohba.Application.Services
             // Check notification type-specific preferences
             var notificationType = type switch
             {
-                NotificationType.PostLike or NotificationType.PostComment => "social",
-                NotificationType.FriendRequest or NotificationType.GroupInvitation => "social",
+                NotificationType.PostLike or NotificationType.PostComment or NotificationType.StoryLike or NotificationType.PageFollow => "social",
+                NotificationType.FriendRequest or NotificationType.GroupInvitation or NotificationType.PageFollowRequest => "social",
                 NotificationType.SystemAlert => "system",
-                _ => "system"
+                _ => "social"
             };
 
-            // If it's a social notification and user has disabled email notifications
-            // but push is enabled, we still send via SignalR
+            // If it's a social notification and user has disabled push notifications, suppress real-time delivery
             if (notificationType == "social" && !user.PushNotifications)
                 return false;
 
@@ -164,7 +169,7 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result<IEnumerable<Notification>>.Failure("User not found");
 
-            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
+            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId, 15);
             return Result<IEnumerable<Notification>>.Success(notifications);
         }
 
@@ -174,8 +179,8 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result<int>.Failure("User not found");
 
-            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
-            return Result<int>.Success(notifications.Count());
+            var count = await _unitOfWork.Notifications.CountUnreadAsync(userId);
+            return Result<int>.Success(count);
         }
 
         public async Task<Result> MarkAsReadAsync(Guid notificationId, Guid userId)
@@ -202,15 +207,7 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result.Failure("User not found");
 
-            var notifications = await _unitOfWork.Notifications.GetUnreadNotificationsAsync(userId);
-
-            foreach (var notification in notifications)
-            {
-                notification.IsRead = true;
-                _unitOfWork.Notifications.Update(notification);
-            }
-
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.Notifications.MarkAllAsReadAsync(userId);
             return Result.Success();
         }
 
@@ -231,16 +228,12 @@ namespace Sohba.Application.Services
 
         public async Task<Result> DeleteOldNotificationsAsync(int daysOld = 30)
         {
-            var cutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+            var readCutoffDate = DateTime.UtcNow.AddDays(-daysOld);
+            // Inactive unread notifications are retained for up to 90 days (3x the read retention)
+            var unreadCutoffDate = DateTime.UtcNow.AddDays(-daysOld * 3);
 
-            var oldNotifications = await _unitOfWork.Notifications.GetOldReadNotificationsAsync(cutoffDate);
+            await _unitOfWork.Notifications.DeleteOldNotificationsWithRetentionAsync(readCutoffDate, unreadCutoffDate);
 
-            foreach (var notification in oldNotifications)
-            {
-                _unitOfWork.Notifications.Delete(notification);
-            }
-
-            await _unitOfWork.CompleteAsync();
             return Result.Success();
         }
 
