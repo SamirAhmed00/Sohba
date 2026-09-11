@@ -1,5 +1,7 @@
 ﻿@using System.Security.Claims
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-solid border-slate-200 transition-all duration-300">
+    @Html.AntiForgeryToken()
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
 
@@ -99,23 +101,31 @@
 
                     <!-- Notifications -->
                     <div class="relative">
-                        <button id="notifBtn" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69] active:scale-90">
-                            <span class="absolute top-2 right-2.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
+                        <button id="notifBtn"
+                                type="button"
+                                aria-label="Notifications"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                aria-controls="notifDropdown"
+                                class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:text-[#345e69] active:scale-90">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                         </button>
-                        <div id="notifDropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[60] overflow-hidden">
+                        <div id="notifDropdown"
+                             role="region"
+                             aria-label="Notifications Panel"
+                             class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[60] overflow-hidden">
                             <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                                <span class="font-bold text-gray-800">Notifications</span>
+                                <h3 class="font-bold text-gray-800 text-sm">Notifications</h3>
                                 <div class="flex items-center gap-2">
-                                    <span id="notifCountBadge" class="text-xs bg-[#345e69] text-white px-2 py-0.5 rounded-full">0</span>
-                                    <button onclick="markAllNotificationsAsRead()" class="text-xs text-[#345e69] cursor-pointer hover:underline">
+                                    <span id="notifCountBadge" class="text-xs bg-[#345e69] text-white px-2 py-0.5 rounded-full" aria-label="Unread count">0</span>
+                                    <button type="button" onclick="markAllNotificationsAsRead()" class="text-xs text-[#345e69] cursor-pointer hover:underline font-medium">
                                         Mark all as read
                                     </button>
                                 </div>
                             </div>
-                            <div id="notifList" class="max-h-[400px] overflow-y-auto">
+                            <div id="notifList" role="list" aria-label="Notifications list" class="max-h-[400px] overflow-y-auto">
                                 <div class="text-center py-8 text-gray-500 text-sm">Loading...</div>
                             </div>
                             <a asp-controller="Notifications" asp-action="Index"
@@ -210,17 +220,24 @@
             <div id="mobileSearchContainer"
                  class="max-h-0 opacity-0 overflow-hidden transition-all duration-300 ease-in-out sm:hidden bg-white/50 backdrop-blur-sm border-t border-transparent">
                 <div class="px-4 pb-4 pt-2">
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input type="text"
+                                   id="mobileSearchInput"
+                                   class="block w-full pl-10 pr-3 py-2 border border-solid border-gray-200 rounded-xl bg-gray-50
+                            focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#345e69] focus:border-transparent transition-all duration-300"
+                                   placeholder="Search...">
                         </div>
-                        <input type="text"
-                               id="mobileSearchInput"
-                               class="block w-full pl-10 pr-3 py-2 border border-solid border-gray-200 rounded-xl bg-gray-50
-                                  focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#345e69] focus:border-transparent transition-all duration-300"
-                               placeholder="ابحث...">
+                        <button id="mobileSearchSubmitBtn"
+                                type="button"
+                                class="px-3.5 py-2 bg-[#345e69] text-white text-sm font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors whitespace-nowrap flex-shrink-0">
+                            Search
+                        </button>
                     </div>
                 </div>
             </div>

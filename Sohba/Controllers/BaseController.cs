@@ -15,8 +15,7 @@ namespace Sohba.Controllers
 
         protected IGroupService GroupService =>
             _groupService ??= HttpContext.RequestServices.GetRequiredService<IGroupService>();
-
-        // ----- TODO: i Will Make it Injected In Constructor And Make All Controlles That Inherit From BaseController To Use Constructor Injection Instead Of Using RequestServices -----
+        
         protected ILogger<BaseController> Logger =>
      HttpContext.RequestServices.GetRequiredService<ILogger<BaseController>>();
 
@@ -24,20 +23,13 @@ namespace Sohba.Controllers
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var userId = GetCurrentUserId();
+            User? currentUser = null;
 
             if (userId != Guid.Empty)
             {
-                // Enforce account lifecycle state on every authenticated request — the closest
-                // available equivalent to "real-time logout" since no SignalR forced-disconnect
-                // hook exists anywhere in the app (NotificationHub only tracks connections).
-                // A blocked or deleted account is signed out on its very next request instead
-                // of only being rejected at the next login attempt.
                 var userManager = HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
-                var currentUser = await userManager.FindByIdAsync(userId.ToString());
+                currentUser = await userManager.FindByIdAsync(userId.ToString());
 
-                // FindByIdAsync respects the global !IsDeleted filter, so null here for an
-                // otherwise-authenticated request means the account was deleted after the
-                // session cookie was issued.
                 if (currentUser == null || currentUser.IsBlocked || !currentUser.IsActive)
                 {
                     var signInManager = HttpContext.RequestServices.GetRequiredService<SignInManager<User>>();
@@ -67,9 +59,6 @@ namespace Sohba.Controllers
                 }
             }
 
-
-
-
             // Skip heavy work for unauthenticated requests and JSON/AJAX endpoints
             var isJsonRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
                 || context.HttpContext.Request.Path.Value?.Contains("/Get", StringComparison.OrdinalIgnoreCase) == true
@@ -79,7 +68,7 @@ namespace Sohba.Controllers
             {
                 var recommendedGroups = await GroupService.GetRecommendedGroupsAsync(userId, 5);
                 ViewBag.RecommendedGroups = recommendedGroups.Value ?? new List<GroupResponseDto>();
-                await SetJwtTokenInViewBag();
+                await SetJwtTokenInViewBag(currentUser);
             }
 
             await next();
@@ -91,7 +80,7 @@ namespace Sohba.Controllers
             return Guid.TryParse(userId, out var parsed) ? parsed : Guid.Empty;
         }
 
-        protected async Task SetJwtTokenInViewBag()
+        protected async Task SetJwtTokenInViewBag(User? preloadedUser = null)
         {
             var userId = GetCurrentUserId();
             try
@@ -108,7 +97,7 @@ namespace Sohba.Controllers
                 {
                     var jwtService = HttpContext.RequestServices.GetRequiredService<JwtService>();
                     var userManager = HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
-                    var user = await userManager.FindByIdAsync(userId.ToString());
+                    var user = preloadedUser ?? await userManager.FindByIdAsync(userId.ToString());
                     if (user != null)
                     {
                         var roles = await userManager.GetRolesAsync(user);
@@ -122,7 +111,6 @@ namespace Sohba.Controllers
                 Logger.LogError(ex, "Failed to set JWT token in ViewBag for user {UserId}", userId);
             }
         }
-
         protected string GetCurrentUserName()
         {
             return User.Identity?.Name ?? string.Empty;

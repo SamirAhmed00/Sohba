@@ -1,21 +1,44 @@
 ﻿// ------------ Post Modal -------------
+// ============================================================
+// SOHBA MODAL & POST DETAILS MANAGER
+// ============================================================
+window.SohbaApp = window.SohbaApp || {};
+
+// HTML Escaper for stored XSS protection
+function escapeModalHtml(text) {
+    if (!text) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
 window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
     const modal = document.getElementById('postModal');
+    const dialog = document.getElementById('postModalDialog');
+    const leftSide = document.getElementById('modalLeft');
+    const rightSide = document.getElementById('modalRight');
     if (!modal) return;
 
     modal.classList.remove('hidden');
     modal.dataset.postId = postId;
     document.body.style.overflow = 'hidden';
 
-    // Show Skeleton Loading State
+    // Skeleton state
     const modalPostImage = document.getElementById('modalPostImage');
-    if (modalPostImage) modalPostImage.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="%231e293b"/>';
+    if (modalPostImage) {
+        modalPostImage.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="%231e293b"/>';
+        modalPostImage.style.display = 'block';
+    }
+    const modalPostVideo = document.getElementById('modalPostVideo');
+    if (modalPostVideo) {
+        modalPostVideo.pause();
+        modalPostVideo.style.display = 'none';
+        modalPostVideo.removeAttribute('src');
+    }
 
     document.getElementById('modalAuthorName').innerHTML = '<div class="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>';
     document.getElementById('modalPostDate').innerHTML = '<div class="h-3 w-20 bg-slate-100 rounded animate-pulse mt-1"></div>';
     document.getElementById('modalAuthorAvatar').src = 'https://ui-avatars.com/api/?name=..&background=e2e8f0&color=94a3b8';
     document.getElementById('modalPostContent').innerHTML = '<div class="space-y-2 py-2"><div class="h-4 bg-slate-100 rounded animate-pulse w-full"></div><div class="h-4 bg-slate-100 rounded animate-pulse w-4/5"></div></div>';
-
     document.getElementById('modalComments').innerHTML = `
         <div class="space-y-4 animate-pulse">
             <div class="flex gap-3 items-start"><div class="w-8 h-8 rounded-full bg-slate-200 shrink-0"></div><div class="flex-1 space-y-1.5"><div class="h-3.5 bg-slate-200 rounded w-28"></div><div class="h-3 bg-slate-100 rounded w-full"></div></div></div>
@@ -23,18 +46,18 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
         </div>`;
 
     try {
-        const response = await fetch(`/Posts/GetPostDetails?postId=${postId}`);
-        if (!response.ok) throw new Error('Failed to load');
+        const response = await fetch(`/Posts/GetPostDetails?postId=${encodeURIComponent(postId)}`);
+        if (!response.ok) throw new Error('Failed to load post details');
         const data = await response.json();
 
-        // Post context icon (Group / Page) + Privacy indicator
+        // 1. Context and Privacy Indicators
         const sourceEl = document.getElementById('modalSourceContext');
         const privacyEl = document.getElementById('modalPrivacyIndicator');
 
         if (sourceEl) {
             if (data.post.sourceType === 'Group' || data.post.sourceType === 'Page') {
                 const icon = data.post.sourceType === 'Group' ? '👪' : '📄';
-                sourceEl.innerHTML = `<span>•</span><span>${icon} ${data.post.sourceName || data.post.sourceType}</span>`;
+                sourceEl.innerHTML = `<span>•</span><span>${icon} ${escapeModalHtml(data.post.sourceName || data.post.sourceType)}</span>`;
                 sourceEl.classList.remove('hidden');
                 sourceEl.classList.add('flex');
             } else {
@@ -51,104 +74,143 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
             privacyEl.classList.add('flex');
         }
 
-        // Multiple images: thumbnail strip; falls back to the single legacy image.
+        // 2. Adaptive Layout: State A (Media) vs State B (Imageless)
         const images = (data.post.imageUrls && data.post.imageUrls.length > 0)
             ? data.post.imageUrls
             : (data.post.imageUrl ? [data.post.imageUrl] : []);
+        const hasVideo = !!data.post.videoUrl;
+        const hasMedia = images.length > 0 || hasVideo;
+
         const thumbStrip = document.getElementById('modalImageThumbnails');
 
-        const modalContainer = document.querySelector('#postModal .flex-col.md\\:flex-row');
-        const leftSide = document.getElementById('modalLeft');
-        const rightSide = document.getElementById('modalRight');
+        if (hasMedia) {
+            // STATE A: Media Layout (Two-Column Wide Split)
+            dialog.classList.remove('max-w-2xl');
+            dialog.classList.add('max-w-6xl');
 
+            leftSide.style.display = 'flex';
+            leftSide.classList.remove('hidden');
 
-        if (leftSide) leftSide.style.display = '';
-        if (rightSide) {
             rightSide.classList.remove('w-full');
-            rightSide.classList.add('w-96');
-        }
-        modalContainer.style.justifyContent = 'flex-start';
+            rightSide.classList.add('md:w-[440px]');
 
-        if (images.length > 0) {
-            document.getElementById('modalPostImage').src = images[0];
-            if (images.length > 1) {
+            if (hasVideo) {
+                modalPostImage.style.display = 'none';
+                modalPostVideo.src = data.post.videoUrl;
+                modalPostVideo.classList.remove('hidden');
+                modalPostVideo.style.display = 'block';
+                thumbStrip.classList.add('hidden');
+            } else {
+                modalPostVideo.pause();
+                modalPostVideo.style.display = 'none';
+                modalPostVideo.removeAttribute('src');
+
+                modalPostImage.style.display = 'block';
+                modalPostImage.src = images[0];
+
+                if (images.length > 1) {
                     thumbStrip.innerHTML = images.map((url, idx) => `
                         <button type="button" class="w-12 h-12 rounded-lg overflow-hidden border-2 ${idx === 0 ? 'border-white' : 'border-transparent'} flex-shrink-0"
-                                    onclick="document.getElementById('modalPostImage').src='${url}'; document.querySelectorAll('#modalImageThumbnails button').forEach(b=>b.classList.remove('border-white')); this.classList.add('border-white');">
-                                <img src="${url}" class="w-full h-full object-cover">
-                            </button>`).join('');
-                    thumbStrip.classList.remove('hidden'); thumbStrip.classList.add('flex');
-            } else {
-                    thumbStrip.classList.add('hidden'); thumbStrip.innerHTML = '';
+                                onclick="document.getElementById('modalPostImage').src='${url}'; document.querySelectorAll('#modalImageThumbnails button').forEach(b=>b.classList.remove('border-white')); this.classList.add('border-white');">
+                            <img src="${url}" class="w-full h-full object-cover">
+                        </button>`).join('');
+                    thumbStrip.classList.remove('hidden');
+                    thumbStrip.classList.add('flex');
+                } else {
+                    thumbStrip.classList.add('hidden');
+                    thumbStrip.innerHTML = '';
+                }
             }
         } else {
-            if (leftSide) leftSide.style.display = 'none';
-            if (rightSide) {
-                rightSide.classList.remove('w-96');
-                rightSide.classList.add('w-full');
-            }
-            modalContainer.style.justifyContent = 'center';
+            // STATE B: Imageless Layout (Deliberate Text + Comments Centerpiece)
+            dialog.classList.remove('max-w-6xl');
+            dialog.classList.add('max-w-2xl');
+
+            leftSide.style.display = 'none';
+            leftSide.classList.add('hidden');
+
+            rightSide.classList.remove('md:w-[440px]');
+            rightSide.classList.add('w-full');
+
+            modalPostVideo.pause();
+            modalPostVideo.removeAttribute('src');
+            modalPostVideo.style.display = 'none';
+            modalPostImage.style.display = 'none';
             thumbStrip.classList.add('hidden');
         }
 
-        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.post.authorName)}&background=345e69&color=fff`;
+        // 3. Populate Author Info and Post Content
+        const avatarUrl = data.post.authorAvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.post.authorName || 'User')}&background=345e69&color=fff`;
         document.getElementById('modalAuthorAvatar').src = avatarUrl;
-        document.getElementById('modalAuthorName').innerText = data.post.authorName;
+        document.getElementById('modalAuthorName').innerText = data.post.authorName || 'User';
         document.getElementById('modalPostDate').innerText = new Date(data.post.createdAt).toLocaleString();
-        document.getElementById('modalPostContent').innerText = data.post.content;
 
-        // ============================================================
-        // BUILD COMMENTS WITH NESTED REPLIES (max depth 4)
-        // ============================================================
+        const titleEl = document.getElementById('modalPostTitle');
+        if (titleEl) {
+            if (data.post.title) {
+                titleEl.innerText = data.post.title;
+                titleEl.classList.remove('hidden');
+            } else {
+                titleEl.innerText = '';
+                titleEl.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('modalPostContent').innerText = data.post.content || '';
+
+        // 4. Render Comments Tree with XSS Protection
+        const badge = document.getElementById('modalCommentsCountBadge');
+        if (badge) badge.innerText = (data.comments ? data.comments.length : 0);
+
         if (data.comments && data.comments.length > 0) {
             function renderComment(c, depth) {
                 const commentId = `comment-${c.id}`;
-                const fullContent = c.content;
-                const maxLength = 100;
-                const shouldTruncate = fullContent.length > maxLength;
-                const shortContent = shouldTruncate ? fullContent.substring(0, maxLength) + '...' : fullContent;
+                const rawContent = c.content || '';
+                const maxLength = 120;
+                const shouldTruncate = rawContent.length > maxLength;
+                const shortContent = shouldTruncate ? rawContent.substring(0, maxLength) + '...' : rawContent;
                 const canReply = depth < 4;
-                const indent = Math.min(depth - 1, 3); // max 3 levels of indent
+                const indent = Math.min(depth - 1, 3);
 
                 const replies = (c.replies || [])
                     .map(r => renderComment(r, depth + 1))
                     .join('');
 
                 return `
-                    <div class="flex items-start gap-3" data-comment-id="${c.id}">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName)}&background=random" 
-                             class="w-${depth === 1 ? 8 : 7} h-${depth === 1 ? 8 : 7} rounded-full flex-shrink-0">
+                    <div class="flex items-start gap-3 text-left" data-comment-id="${c.id}">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName || 'User')}&background=random" 
+                             class="w-${depth === 1 ? 8 : 7} h-${depth === 1 ? 8 : 7} rounded-full flex-shrink-0 mt-0.5" 
+                             alt="${escapeModalHtml(c.userName)}">
                         <div class="flex-1 min-w-0">
-                            <span class="font-semibold text-sm text-gray-900">${c.userName}</span>
-                            <div id="${commentId}" class="text-sm text-gray-700 break-words">
-                                ${shouldTruncate ? shortContent : fullContent}
+                            <div class="bg-slate-100/80 rounded-2xl px-3.5 py-2">
+                                <span class="font-bold text-xs text-slate-900 block">${escapeModalHtml(c.userName)}</span>
+                                <div id="${commentId}" class="text-xs sm:text-sm text-slate-800 break-words mt-0.5" data-full="${escapeModalHtml(rawContent)}" data-short="${escapeModalHtml(shortContent)}">
+                                    ${escapeModalHtml(shouldTruncate ? shortContent : rawContent)}
+                                </div>
                             </div>
                             ${shouldTruncate ? `
-                                <button class="text-blue-600 hover:underline text-xs mt-1 toggle-comment-btn"
-                                        onclick="SohbaApp.toggleComment('${commentId}', '${fullContent.replace(/'/g, "\\'")}', '${shortContent.replace(/'/g, "\\'")}')">
+                                <button class="text-blue-600 hover:underline text-xs mt-0.5 ml-2 font-medium"
+                                        onclick="SohbaApp.toggleComment('${commentId}')">
                                     See more
                                 </button>
                             ` : ''}
-                            <div class="flex items-center gap-3 mt-1">
-                                <span class="text-xs text-gray-400">${new Date(c.createdAt).toLocaleString()}</span>
-
+                            <div class="flex items-center gap-3 mt-1 ml-2 text-xs text-slate-400">
+                                <span>${new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 ${canReply ? `
-                                    <button onclick="SohbaApp.showReplyForm('${c.id}', '${c.userName}')" 
-                                            class="text-xs text-[#345e69] hover:underline font-medium">
+                                    <button onclick="SohbaApp.showReplyForm('${c.id}', '${escapeModalHtml(c.userName)}')" 
+                                            class="text-[#345e69] hover:underline font-semibold">
                                         Reply
                                     </button>
                                 ` : ''}
-
                                 ${c.replyCount > 0 ? `
                                     <button onclick="SohbaApp.toggleReplies('${c.id}')" 
-                                            class="text-xs text-gray-500 hover:text-[#345e69]">
+                                            class="text-slate-500 hover:text-[#345e69] font-medium">
                                         View ${c.replyCount} replies
                                     </button>
                                 ` : ''}
-
                                 ${c.canDelete ? `
                                     <button onclick="SohbaApp.deleteComment('${c.id}', '${c.postId}')"
-                                            class="text-xs text-red-500 hover:underline font-medium ml-2">
+                                            class="text-red-500 hover:underline font-medium">
                                         Delete
                                     </button>
                                 ` : ''}
@@ -156,31 +218,26 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
 
                             ${canReply ? `
                                 <div id="replyForm-${c.id}" class="mt-2 hidden">
-                                    <div class="flex items-start gap-3">
-                                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName)}&background=345e69&color=fff" 
-                                             class="w-7 h-7 rounded-full flex-shrink-0">
-                                        <div class="flex-1">
-                                            <input type="text" 
-                                                   id="replyInput-${c.id}" 
-                                                   placeholder="Reply to ${c.userName}..."
-                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
-                                            <div class="flex gap-2 mt-2">
-                                                <button onclick="SohbaApp.submitReply('${c.id}', '${c.postId}')" 
-                                                        class="px-4 py-1.5 bg-[#345e69] text-white text-sm font-semibold rounded-lg hover:bg-[#2a4b55]">
-                                                    Reply
-                                                </button>
-                                                <button onclick="SohbaApp.hideReplyForm('${c.id}')" 
-                                                        class="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700">
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="flex items-start gap-2">
+                                        <input type="text" 
+                                               id="replyInput-${c.id}" 
+                                               placeholder="Reply to ${escapeModalHtml(c.userName)}..."
+                                               class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#345e69]"
+                                               onkeydown="if(event.key==='Enter') SohbaApp.submitReply('${c.id}', '${c.postId}')">
+                                        <button onclick="SohbaApp.submitReply('${c.id}', '${c.postId}')" 
+                                                class="px-3 py-1.5 bg-[#345e69] text-white text-xs font-bold rounded-xl hover:bg-[#2a4b55]">
+                                            Reply
+                                        </button>
+                                        <button onclick="SohbaApp.hideReplyForm('${c.id}')" 
+                                                class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700">
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
                             ` : ''}
 
                             ${replies ? `
-                                <div id="replies-${c.id}" class="mt-3 ml-${indent + 2} border-l-2 border-slate-200 space-y-3 pl-3">
+                                <div id="replies-${c.id}" class="mt-2.5 ml-${indent + 2} border-l-2 border-slate-200 space-y-2.5 pl-2.5">
                                     ${replies}
                                 </div>
                             ` : ''}
@@ -189,28 +246,30 @@ window.SohbaApp.openPostModal = async function (postId, focusTab = null) {
                 `;
             }
 
-            const commentsHtml = data.comments
+            document.getElementById('modalComments').innerHTML = data.comments
                 .map(c => renderComment(c, c.depth || 1))
                 .join('');
-
-            document.getElementById('modalComments').innerHTML = commentsHtml;
         } else {
-            document.getElementById('modalComments').innerHTML = '<p class="text-slate-400 text-sm italic">No comments yet.</p>';
+            document.getElementById('modalComments').innerHTML = '<div class="text-center py-8 text-slate-400 text-sm italic">No comments yet. Start the conversation!</div>';
         }
 
         if (focusTab === 'comments') {
-            setTimeout(() => document.getElementById('commentInput')?.focus(), 300);
+            setTimeout(() => document.getElementById('commentInput')?.focus(), 250);
         }
     } catch (error) {
-        console.error('Error loading post:', error);
-        window.SohbaApp.toast('Failed to load post', 'error');
+        console.error('Error loading post details:', error);
+        window.SohbaApp.toast('Failed to load post details', 'error');
         window.SohbaApp.closePostModal();
     }
 };
 
-
 window.SohbaApp.closePostModal = function () {
     const modal = document.getElementById('postModal');
+    const videoEl = document.getElementById('modalPostVideo');
+    if (videoEl) {
+        videoEl.pause();
+        videoEl.removeAttribute('src');
+    }
     if (modal) modal.classList.add('hidden');
     document.body.style.overflow = '';
 };
@@ -236,6 +295,7 @@ window.SohbaApp.closeReportModal = function () {
 
 window.SohbaApp.submitReport = async function () {
     const modal = document.getElementById('reportModal');
+    if (!modal) return;
     const postId = modal.dataset.postId;
     const selectedReason = document.querySelector('input[name="reportReason"]:checked');
     if (!selectedReason) {
@@ -243,9 +303,14 @@ window.SohbaApp.submitReport = async function () {
         return;
     }
     const reason = selectedReason.value;
-    const otherText = document.getElementById('otherReasonText')?.value || null;
+    const otherText = document.getElementById('otherReasonText')?.value?.trim() || null;
 
-    const result = await window.SohbaApp.post('/Posts/ReportPost', { postId, reason, otherText });
+    const result = await window.SohbaApp.post('/Posts/ReportPost', {
+        postId: postId,
+        reason: reason,
+        additionalInfo: otherText
+    });
+
     if (result.success) {
         window.SohbaApp.toast('Post reported. Thank you.', 'success');
         window.SohbaApp.closeReportModal();

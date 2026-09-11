@@ -23,40 +23,41 @@ namespace Sohba.Infrastructure
     {
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<LocalFileStorageService> _logger;
+        private readonly Sohba.Domain.Domain_Rules.Interface.IMediaDomainService _mediaDomainService;
 
-        // First-pass, cheap extension whitelist. This is NOT the authoritative check —
-        // the actual file bytes are decoded and validated below regardless of what the
-        // extension/filename claims (rejects e.g. "image.jpg" that is not really a JPEG,
-        // and "image.jpg.exe" is already rejected here since its extension is ".exe").
-        private static readonly HashSet<string> _allowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> _allowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".jpg", ".jpeg", ".png", ".gif", ".webp"
         };
 
-        // Image formats accepted once the content is actually decoded. Kept in sync
-        // with _allowedExtensions so behavior doesn't silently change per format.
+        private static readonly HashSet<string> _allowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".mp4", ".mov"
+        };
+
         private static readonly HashSet<string> _allowedDetectedFormats = new(StringComparer.OrdinalIgnoreCase)
         {
             "JPEG", "PNG", "GIF", "WEBP"
         };
 
-        // The only subfolders any caller is allowed to request. All current controllers
-        // already pass hardcoded literals (never user input), but this whitelist is a
-        // defense-in-depth guard against any future caller introducing a user-controlled
-        // value that could otherwise influence the physical storage path.
         private static readonly HashSet<string> _allowedSubFolders = new(StringComparer.OrdinalIgnoreCase)
         {
             "posts", "groups", "pages", "profiles", "stories"
         };
 
-        private const long MaxFileSizeBytes = 5 * 1024 * 1024;   // 5 MB — unchanged from existing behavior
-        private const int MaxImageDimension = 4096;               // px, either side — new, reasonable ceiling
-        private const int WebPQuality = 82;                       // lossy WebP quality (0-100)
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024;       // 5 MB for images
+        private const long MaxVideoFileSizeBytes = 50 * 1024 * 1024; // 50 MB for videos
+        private const int MaxImageDimension = 4096;
+        private const int WebPQuality = 82;
 
-        public LocalFileStorageService(IWebHostEnvironment env, ILogger<LocalFileStorageService> logger)
+        public LocalFileStorageService(
+           IWebHostEnvironment env,
+           ILogger<LocalFileStorageService> logger,
+           Sohba.Domain.Domain_Rules.Interface.IMediaDomainService mediaDomainService)
         {
             _env = env;
             _logger = logger;
+            _mediaDomainService = mediaDomainService;
         }
 
         /// <inheritdoc />
@@ -72,14 +73,51 @@ namespace Sohba.Infrastructure
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!_allowedExtensions.Contains(extension))
-                return Result<string>.Failure($"File type '{extension}' is not allowed. Accepted types: {string.Join(", ", _allowedExtensions)}");
+            var domainCheck = _mediaDomainService.CanUploadMedia(extension, file.Length, file.ContentType);
+            if (!domainCheck.IsSuccess)
+                return Result<string>.Failure(domainCheck.Error);
+
+            bool isVideo = _allowedVideoExtensions.Contains(extension);
+            bool isImage = _allowedImageExtensions.Contains(extension);
+
+            // Route story uploads to ProtectedUploads outside wwwroot to prevent unrestricted static access
+            bool isProtectedStory = subFolder.Equals("stories", StringComparison.OrdinalIgnoreCase);
+            var baseDirectory = isProtectedStory
+                ? Path.Combine(_env.ContentRootPath, "ProtectedUploads")
+                : Path.Combine(_env.WebRootPath, "uploads");
+
+            var targetFolder = Path.Combine(baseDirectory, subFolder);
+            Directory.CreateDirectory(targetFolder);
+
+            if (isVideo)
+            {
+                if (file.Length > MaxVideoFileSizeBytes)
+                    return Result<string>.Failure($"Video size ({file.Length / 1024.0 / 1024.0:F1} MB) exceeds the 50 MB limit.");
+
+                var uniqueVideoName = $"{Guid.NewGuid()}{extension}";
+                var videoFilePath = Path.Combine(targetFolder, uniqueVideoName);
+
+                var resolvedVideoPath = Path.GetFullPath(videoFilePath);
+                var resolvedVideoRoot = Path.GetFullPath(baseDirectory) + Path.DirectorySeparatorChar;
+                if (!resolvedVideoPath.StartsWith(resolvedVideoRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Rejected video upload escaping root: {Path}", resolvedVideoPath);
+                    return Result<string>.Failure("Invalid file path.");
+                }
+
+                await using (var outStream = new FileStream(videoFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(outStream);
+                }
+
+                return isProtectedStory
+                    ? Result<string>.Success($"ProtectedUploads/{subFolder}/{uniqueVideoName}")
+                    : Result<string>.Success($"/uploads/{subFolder}/{uniqueVideoName}");
+            }
 
             if (file.Length > MaxFileSizeBytes)
                 return Result<string>.Failure($"File size ({file.Length / 1024.0 / 1024.0:F1} MB) exceeds the 5 MB limit.");
 
-            // Buffer the upload once into memory so it can be format-detected and then
-            // decoded without re-reading the underlying multipart stream.
             using var memoryStream = new MemoryStream();
             await using (var uploadStream = file.OpenReadStream())
             {
@@ -115,19 +153,11 @@ namespace Sohba.Infrastructure
                         $"Image dimensions ({image.Width}x{image.Height}) exceed the maximum allowed size of {MaxImageDimension}x{MaxImageDimension} pixels.");
                 }
 
-                var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
-                var targetFolder = Path.Combine(uploadsRoot, subFolder);
-                Directory.CreateDirectory(targetFolder);
-
-                // GUID filename; original user-provided filename is never used for storage.
-                // Files are normalized to .webp on disk (see conversion note below).
                 var uniqueFileName = $"{Guid.NewGuid()}.webp";
                 var filePath = Path.Combine(targetFolder, uniqueFileName);
 
-                // Defense-in-depth: confirm the resolved path actually stays inside the
-                // uploads root before writing anything to disk.
                 var resolvedPath = Path.GetFullPath(filePath);
-                var resolvedRoot = Path.GetFullPath(uploadsRoot) + Path.DirectorySeparatorChar;
+                var resolvedRoot = Path.GetFullPath(baseDirectory) + Path.DirectorySeparatorChar;
                 if (!resolvedPath.StartsWith(resolvedRoot, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogWarning("Rejected upload with path escaping uploads root: {Path}", resolvedPath);
@@ -137,17 +167,12 @@ namespace Sohba.Infrastructure
                 var isAlreadyWebP = detectedFormat.Name.Equals("WEBP", StringComparison.OrdinalIgnoreCase);
                 if (isAlreadyWebP)
                 {
-                    // Already in the correct format — persist the original bytes verbatim.
-                    // Avoids unnecessary re-encoding and the associated quality loss.
                     memoryStream.Position = 0;
                     await using var outStream = new FileStream(filePath, FileMode.Create);
                     await memoryStream.CopyToAsync(outStream);
                 }
                 else
                 {
-                    // Server-side conversion to WebP. Animated GIFs retain their frames
-                    // (ImageSharp's WebpEncoder encodes all loaded frames), preserving
-                    // animation instead of collapsing to a single static frame.
                     var encoder = new WebpEncoder
                     {
                         Quality = WebPQuality,
@@ -156,7 +181,9 @@ namespace Sohba.Infrastructure
                     await image.SaveAsync(filePath, encoder);
                 }
 
-                return Result<string>.Success($"/uploads/{subFolder}/{uniqueFileName}");
+                return isProtectedStory
+                    ? Result<string>.Success($"ProtectedUploads/{subFolder}/{uniqueFileName}")
+                    : Result<string>.Success($"/uploads/{subFolder}/{uniqueFileName}");
             }
         }
 
@@ -166,13 +193,19 @@ namespace Sohba.Infrastructure
             if (string.IsNullOrWhiteSpace(relativeUrl))
                 return Task.CompletedTask;
 
-            var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
-            var absolutePath = Path.GetFullPath(
-                Path.Combine(_env.WebRootPath, relativeUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)));
+            bool isProtectedStory = relativeUrl.Contains("ProtectedUploads", StringComparison.OrdinalIgnoreCase);
+            var baseDirectory = isProtectedStory
+                ? Path.Combine(_env.ContentRootPath, "ProtectedUploads")
+                : Path.Combine(_env.WebRootPath, "uploads");
 
-            // Defense-in-depth: never delete a path outside the uploads root, even if a
-            // malformed/malicious relativeUrl were ever passed in.
-            var resolvedRoot = Path.GetFullPath(uploadsRoot) + Path.DirectorySeparatorChar;
+            var sanitizedPath = relativeUrl.Replace("ProtectedUploads/", "", StringComparison.OrdinalIgnoreCase)
+                                           .Replace("/uploads/", "", StringComparison.OrdinalIgnoreCase)
+                                           .TrimStart('/');
+
+            var absolutePath = Path.GetFullPath(
+                Path.Combine(baseDirectory, sanitizedPath.Replace('/', Path.DirectorySeparatorChar)));
+
+            var resolvedRoot = Path.GetFullPath(baseDirectory) + Path.DirectorySeparatorChar;
             if (!absolutePath.StartsWith(resolvedRoot, StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("Ignored delete request with path escaping uploads root: {Path}", absolutePath);

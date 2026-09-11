@@ -3,11 +3,24 @@ window.SohbaApp = window.SohbaApp || {};
 
 // Reads the antiforgery token from the meta tag (preferred, set by _AppLayout)
 // or falls back to a hidden form input if the meta is missing.
+// window.SohbaApp.getAntiForgeryToken = function () {
+//     const meta = document.querySelector('meta[name="csrf-token"]');
+//     if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
+//     const input = document.querySelector('input[name="__RequestVerificationToken"]');
+//     return input ? input.value : null;
+// };
+
 window.SohbaApp.getAntiForgeryToken = function () {
     const meta = document.querySelector('meta[name="csrf-token"]');
-    if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
+    if (meta) {
+        const content = meta.getAttribute('content');
+        if (content && content.trim() !== '') return content.trim();
+    }
     const input = document.querySelector('input[name="__RequestVerificationToken"]');
-    return input ? input.value : null;
+    if (input && input.value && input.value.trim() !== '') {
+        return input.value.trim();
+    }
+    return null;
 };
 
 // Toast Notification

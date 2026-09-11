@@ -10,26 +10,24 @@ namespace Sohba.Domain.Domain_Rules.Logic
     {
         public Result CanUploadMedia(string fileExtension, long fileSizeInBytes, string mediaType)
         {
-            // 1. Validate Extension
-            var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var allowedImageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
             var allowedVideoExtensions = new[] { ".mp4", ".mov" };
 
-            var ext = fileExtension.ToLower();
+            var ext = (fileExtension ?? string.Empty).ToLowerInvariant();
             bool isImage = allowedImageExtensions.Contains(ext);
             bool isVideo = allowedVideoExtensions.Contains(ext);
 
             if (!isImage && !isVideo)
-                return Result.Failure("Unsupported file format.");
+                return Result.Failure($"File type '{fileExtension}' is not allowed.");
 
-            // 2. Validate Size (Example: 5MB for images, 50MB for videos)
             long maxImageSize = 5 * 1024 * 1024;
             long maxVideoSize = 50 * 1024 * 1024;
 
             if (isImage && fileSizeInBytes > maxImageSize)
-                return Result.Failure("Image size exceeds the 5MB limit.");
+                return Result.Failure($"Image size ({fileSizeInBytes / 1024.0 / 1024.0:F1} MB) exceeds the 5 MB limit.");
 
             if (isVideo && fileSizeInBytes > maxVideoSize)
-                return Result.Failure("Video size exceeds the 50MB limit.");
+                return Result.Failure($"Video size ({fileSizeInBytes / 1024.0 / 1024.0:F1} MB) exceeds the 50 MB limit.");
 
             return Result.Success();
         }
