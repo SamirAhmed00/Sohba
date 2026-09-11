@@ -10,6 +10,8 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string Title { get; set; }
         public string Content { get; set; }
         public string? ImageUrl { get; set; }
+        public string? VideoUrl { get; set; }
+
         public List<string> ImageUrls { get; set; } = new List<string>();
         public PostPrivacy Privacy { get; set; }
 

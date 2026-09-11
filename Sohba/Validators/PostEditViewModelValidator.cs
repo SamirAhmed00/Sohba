@@ -1,12 +1,15 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Sohba.ViewModels.Post;
 
 namespace Sohba.Validators
 {
-    public class PostCreateViewModelValidator : AbstractValidator<PostCreateViewModel>
+    public class PostEditViewModelValidator : AbstractValidator<PostEditViewModel>
     {
-        public PostCreateViewModelValidator()
+        public PostEditViewModelValidator()
         {
+            RuleFor(x => x.Id)
+                .NotEmpty().WithMessage("Post ID is required.");
+
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Title is required.")
                 .MaximumLength(150).WithMessage("Title cannot exceed 150 characters.");
@@ -17,13 +20,6 @@ namespace Sohba.Validators
 
             RuleFor(x => x.Privacy)
                 .IsInEnum().WithMessage("Invalid privacy setting.");
-
-
-            RuleFor(x => x.VideoFile)
-                .Must(f => f == null || f.Length <= 50 * 1024 * 1024)
-                .WithMessage("Video file size cannot exceed 50MB.")
-                .Must(f => f == null || new[] { ".mp4", ".mov" }.Contains(Path.GetExtension(f.FileName).ToLowerInvariant()))
-                .WithMessage("Only MP4 and MOV videos are supported.");
         }
     }
 }

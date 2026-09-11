@@ -230,20 +230,22 @@ window.SohbaApp.submitComment = async function () {
     }
 };
 
-window.SohbaApp.toggleComment = function (commentId, fullText, shortText) {
+window.SohbaApp.toggleComment = function (commentId) {
     const commentDiv = document.getElementById(commentId);
-    const button = commentDiv?.nextElementSibling;
+    if (!commentDiv) return;
+    const button = commentDiv.nextElementSibling;
+    if (!button || button.tagName !== 'BUTTON') return;
 
-    if (!commentDiv || !button || button.tagName !== 'BUTTON') return;
-
-    const isExpanded = commentDiv.innerText === fullText;
+    const fullText = commentDiv.dataset.full || '';
+    const shortText = commentDiv.dataset.short || '';
+    const isExpanded = commentDiv.textContent === fullText;
 
     if (isExpanded) {
-        commentDiv.innerText = shortText;
-        button.innerText = 'See more';
+        commentDiv.textContent = shortText;
+        button.textContent = 'See more';
     } else {
-        commentDiv.innerText = fullText;
-        button.innerText = 'See less';
+        commentDiv.textContent = fullText;
+        button.textContent = 'See less';
     }
 };
 

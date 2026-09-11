@@ -28,6 +28,8 @@ namespace Sohba.Domain.Entities.PostAggregate
 
         public string? ImageUrls { get; set; }
 
+        public string? VideoUrl { get; set; }
+
         // Navigation Properties
         public Guid? PageId { get; set; }
         public virtual Page Page { get; set; }

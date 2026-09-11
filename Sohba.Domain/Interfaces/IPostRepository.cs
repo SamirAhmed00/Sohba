@@ -12,13 +12,8 @@ namespace Sohba.Domain.Interfaces
            int page = 1,
            int pageSize = 10);
 
-        // I will Reove it Later -- Kept Now for backward compatibility
         Task<Dictionary<Guid, (int comments, int reactions)>> GetPostsCountsAsync(List<Guid> postIds);
-        Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag);
-
-
-        // Deleted Becuase we are not using 
-        //bool IsPostDeleted(Guid postId);
+        Task<IEnumerable<Post>> GetPostsByHashtagAsync(string tag, Guid currentUserId = default);
 
 
         // New method to add hashtags with location
@@ -31,5 +26,15 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<Post>> SearchPostsAsync(string query, Guid currentUserId, int limit = 10);
 
         Task<IEnumerable<Post>> GetRecentAsync(int count);
+
+        Task<(IReadOnlyList<Post> Items, int TotalCount, Dictionary<Guid, (int comments, int reactions)> Counts)> GetPostsAdminPagedAsync(
+            string? search,
+            string? source,
+            int page,
+            int pageSize);
+
+        Task<int> GetNewPostsCountSinceAsync(DateTime sinceUtc);
+
+
     }
 }

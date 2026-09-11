@@ -15,6 +15,8 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string? ImageUrl { get; set; }
 
         public List<string> ImageUrls { get; set; } = new();
+        public string? VideoUrl { get; set; }
+
 
         public Sohba.Domain.Enums.PostPrivacy Privacy { get; set; }
     }

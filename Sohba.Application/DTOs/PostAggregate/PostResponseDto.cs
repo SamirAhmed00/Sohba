@@ -11,6 +11,8 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string Title { get; set; }
         public string Content { get; set; }
         public string? ImageUrl { get; set; }
+        public string? VideoUrl { get; set; }
+
 
         public List<string> ImageUrls { get; set; } = new();
         public string AuthorName { get; set; }
@@ -33,5 +35,7 @@ namespace Sohba.Application.DTOs.PostAggregate
         public string SourceType { get; set; } 
         public string? SourceName { get; set; }
         public Guid? SourceId { get; set; }
+        public string? AuthorAvatarUrl { get; set; }
+        public string? AuthorProfileUrl { get; set; }
     }
 }

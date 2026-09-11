@@ -89,9 +89,15 @@
                     @* Header *@
                     <div class="p-4 sm:p-5 flex items-center justify-between">
                         <div class="flex items-center gap-3.5">
-                            <a href="/Profile/Index/@post.UserId" class="relative group/avatar block">
+                            @{
+                                var authorProfileLink = !string.IsNullOrEmpty(post.AuthorProfileUrl) ? post.AuthorProfileUrl : $"/Profile/Index/{post.UserId}";
+                                var authorAvatarSrc = !string.IsNullOrEmpty(post.AuthorAvatarUrl)
+                                    ? post.AuthorAvatarUrl
+                                    : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(post.AuthorName ?? "User")}&background=345e69&color=fff&size=128";
+                            }
+                            <a href="@authorProfileLink" class="relative group/avatar block">
                                 <div class="w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-slate-100 group-hover/avatar:ring-[#345e69] transition-all">
-                                    <img src="https://ui-avatars.com/api/?name=@(Uri.EscapeDataString(post.AuthorName ?? "User"))&background=345e69&color=fff&size=128"
+                                    <img src="@authorAvatarSrc"
                                          class="w-full h-full object-cover"
                                          alt="@post.AuthorName"
                                          onerror="this.src='https://ui-avatars.com/api/?name=User&background=345e69&color=fff'">
@@ -100,7 +106,7 @@
                             </a>
 
                             <div>
-                                <a href="/Profile/Index/@post.UserId" class="font-bold text-slate-800 text-sm sm:text-base hover:text-[#345e69] transition-colors block">
+                                <a href="@authorProfileLink" class="font-bold text-slate-800 text-sm sm:text-base hover:text-[#345e69] transition-colors block">
                                     @post.AuthorName
                                 </a>
                                 <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
@@ -123,11 +129,12 @@
                                                 </svg>
                                             }
                                             @{
-                                                var sourceController = post.SourceType == "Page" ? "Pages" : post.SourceType;
+                                                var sourceController = post.SourceType == "Page" ? "Pages" : (post.SourceType == "Group" ? "Groups" : post.SourceType);
+                                                var sourceLabel = string.IsNullOrWhiteSpace(post.SourceName) ? (post.SourceType == "Group" ? "Group" : "Page") : post.SourceName;
                                             }
                                             <a asp-controller="@sourceController" asp-action="Details" asp-route-id="@post.SourceId"
                                                class="hover:underline font-medium">
-                                                @(string.IsNullOrWhiteSpace(post.SourceName) ? "Page" : post.SourceName)
+                                                @sourceLabel
                                             </a>
                                         </span>
                                     }
@@ -225,9 +232,12 @@
                     </div>
 
                     @* Content Section *@
-                    <div class="px-4 sm:px-5 pb-3">
-                    <h3 class="post-title font-bold text-slate-800 text-lg mb-2">@post.Title</h3>
                     @{
+                        var hasMedia = images.Any() || !string.IsNullOrEmpty(post.VideoUrl);
+                    }
+                    <div class="px-4 sm:px-5 @(hasMedia ? "pb-3" : "py-4 bg-gradient-to-b from-white to-slate-50/50 rounded-2xl mx-3 sm:mx-4 border border-slate-100")">
+                        <h3 class="post-title font-bold text-slate-800 @(hasMedia ? "text-lg mb-2" : "text-xl mb-3 tracking-tight")">@post.Title</h3>
+                        @{
                             var rawContent = post.Content ?? "";
                             var safeEncoded = WebUtility.HtmlEncode(rawContent);
                             var contentWithLinks = Regex.Replace(
@@ -237,12 +247,20 @@
                             );
                         }
 
-                        <p class="post-content text-slate-600 leading-relaxed text-sm sm:text-base whitespace-pre-line">
+                        <p class="post-content text-slate-700 leading-relaxed @(hasMedia ? "text-sm sm:text-base" : "text-base sm:text-lg font-normal") whitespace-pre-line">
                             @Html.Raw(contentWithLinks)
                         </p>
                     </div>
 
-                    @* Media *@
+                    @* Video Media *@
+                    @if (!string.IsNullOrEmpty(post.VideoUrl))
+                    {
+                        <div class="mt-2 bg-black rounded-2xl overflow-hidden aspect-video relative">
+                            <video src="@post.VideoUrl" controls class="w-full h-full object-contain" preload="metadata"></video>
+                        </div>
+                    }
+
+                    @* Image Media *@
                     @if (images.Any())
                     {
                         <div class="mt-2 bg-slate-100 cursor-pointer" onclick="SohbaApp.openPostModal('@post.Id')">

@@ -20,7 +20,8 @@ namespace Sohba.Application.Interfaces
         // Keep old method for backward compatibility -- I will Remove It Later
        
         Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId);
-        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId);
+        Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId, bool isAdmin = false);
+
         Task<Result> DeletePostAsync(Guid postId, Guid userId, bool isAdmin = false, string? reason = null);
         Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId);
         
@@ -38,5 +39,7 @@ namespace Sohba.Application.Interfaces
 
         Task<Result<int>> GetPostsCountAsync();        
         Task<Result<IEnumerable<PostResponseDto>>> GetRecentPostsAsync(int count);
+        Task<Result<PagedResult<PostResponseDto>>> GetPostsAdminPagedAsync(string? search, string? source, int page, int pageSize);
+
     }
 }

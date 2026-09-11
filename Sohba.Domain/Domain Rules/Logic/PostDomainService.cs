@@ -30,12 +30,10 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        public Result CanDeletePost(Guid userId, Guid postId, Guid postOwnerId, bool isAdmin)
+        public Result CanDeletePost(Guid userId, Guid postId, Guid postOwnerId, bool isPlatformAdmin, bool isContainerAdmin = false)
         {
-            // Admin can delete anything
-            if (isAdmin) return Result.Success();
-
-            // Owner can delete their own post
+            if (isPlatformAdmin) return Result.Success();
+            if (isContainerAdmin) return Result.Success();
             if (userId == postOwnerId) return Result.Success();
 
             return Result.Failure("You are not authorized to delete this post.");

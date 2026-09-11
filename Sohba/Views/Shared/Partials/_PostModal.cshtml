@@ -1,54 +1,92 @@
-﻿@* Modern Post Modal (Instagram Style) *@
-<div id="postModal" class="fixed inset-0 z-50 hidden">
-    <!-- Overlay -->
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="SohbaApp.closePostModal()"></div>
+﻿@* Modern Post Modal (Adaptive: Media Layout vs Imageless Reading Layout) *@
+<div id="postModal"
+     class="fixed inset-0 z-50 hidden overflow-y-auto"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modalAuthorName">
 
-    <!-- Modal Container -->
-    <div class="absolute inset-0 flex items-center justify-center p-2 sm:p-4">
-        <div class="bg-white w-full max-w-6xl h-[92vh] max-h-[92vh] md:h-[88vh] rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden">
+    <!-- Backdrop with Blur -->
+    <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm transition-opacity"
+         onclick="SohbaApp.closePostModal()"
+         aria-hidden="true"></div>
 
-            <!-- Left: Image Section -->
-            <div id="modalLeft" class="w-full md:flex-1 bg-black flex items-center justify-center relative max-h-[40vh] md:max-h-full min-h-[220px]">
-                <img id="modalPostImage" class="w-full h-full object-contain" src="" alt="Post image">
-                <div id="modalImageThumbnails" class="hidden absolute bottom-3 left-0 right-0 justify-center gap-2 px-3 overflow-x-auto"></div>
+    <!-- Modal Centering Wrapper -->
+    <div class="min-h-full flex items-center justify-center p-2 sm:p-4 md:p-6">
+
+        <!-- Modal Dialog Container (Adaptive width via JS: max-w-6xl for media, max-w-2xl for text-only) -->
+        <div id="postModalDialog"
+             class="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row transition-all duration-300 transform max-h-[92vh] md:max-h-[88vh]">
+
+            <!-- Floating Top-Right Close Button (High Visibility, Accessible Touch Target) -->
+            <button type="button"
+                    onclick="SohbaApp.closePostModal()"
+                    aria-label="Close modal"
+                    class="absolute top-3.5 right-3.5 z-30 inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/70 active:scale-95 text-white backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-white/80 transition-all shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- Left: Media Section (Image or Video) -->
+            <div id="modalLeft" class="w-full md:flex-1 bg-black flex items-center justify-center relative max-h-[42vh] md:max-h-full min-h-[240px] overflow-hidden select-none">
+                <img id="modalPostImage" class="w-full h-full object-contain" src="" alt="Post image" />
+                <video id="modalPostVideo" class="hidden w-full h-full object-contain" controls playsinline></video>
+                <div id="modalImageThumbnails" class="hidden absolute bottom-3 left-0 right-0 justify-center gap-2 px-3 overflow-x-auto z-10"></div>
             </div>
 
-            <!-- Right: Details Section -->
-            <div id="modalRight" class="w-full md:w-[420px] flex-1 md:flex-initial flex flex-col bg-white min-h-0">
+            <!-- Right: Details Section (Adapts to full width in imageless state) -->
+            <div id="modalRight" class="w-full md:w-[440px] flex flex-col bg-white min-h-0 relative">
 
                 <!-- Header: User Info -->
-                <div class="flex items-center gap-3 p-3.5 sm:p-4 border-b border-slate-100 shrink-0">
-                    <img id="modalAuthorAvatar" class="w-10 h-10 rounded-full object-cover shadow-sm border border-slate-100" src="">
+                <div class="flex items-center gap-3 p-4 sm:p-5 border-b border-slate-100 shrink-0 pr-14">
+                    <img id="modalAuthorAvatar"
+                         class="w-11 h-11 rounded-full object-cover shadow-sm border border-slate-200"
+                         src=""
+                         alt="Author avatar" />
                     <div class="min-w-0 flex-1">
-                        <h3 id="modalAuthorName" class="font-bold text-gray-900 text-sm truncate"></h3>
-                        <div class="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                        <h3 id="modalAuthorName" class="font-bold text-slate-900 text-sm sm:text-base truncate"></h3>
+                        <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 mt-0.5">
                             <span id="modalPostDate"></span>
                             <span id="modalSourceContext" class="hidden items-center gap-1"></span>
                             <span id="modalPrivacyIndicator" class="hidden items-center gap-1"></span>
                         </div>
                     </div>
-                    <button aria-label="Close" onclick="SohbaApp.closePostModal()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-slate-100 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
                 </div>
 
-                <!-- Post Text Content -->
-                <div id="modalPostContent" class="px-4 py-2.5 text-gray-800 text-sm border-b border-slate-50 shrink-0 max-h-32 overflow-y-auto"></div>
+                <!-- Post Title -->
+                <h2 id="modalPostTitle" class="px-5 pt-3 pb-1 text-base sm:text-lg font-bold text-slate-900 shrink-0 hidden"></h2>
 
-                <!-- Comments Section (Scrollable on all screens) -->
-                <div id="modalComments" class="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 min-h-0 bg-slate-50/40">
-                    <!-- Comments will be injected here -->
+                <!-- Post Text Content (Scrollable if long) -->
+                <div id="modalPostContent" class="px-5 py-3 text-slate-700 text-sm sm:text-base border-b border-slate-100 shrink-0 max-h-48 overflow-y-auto leading-relaxed whitespace-pre-line"></div>
+
+                <!-- Comments Header Label -->
+                <div class="px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between shrink-0">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Comments</span>
+                    <span id="modalCommentsCountBadge" class="text-xs font-semibold px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600">0</span>
                 </div>
 
-                <!-- Comment Input -->
-                <div class="p-3 sm:p-4 border-t border-slate-100 bg-white flex gap-2 shrink-0">
-                    <input id="commentInput" type="text" placeholder="Write a comment..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:bg-white focus:border-[#345e69] transition">
-                    <button onclick="SohbaApp.submitComment()" class="bg-[#345e69] text-white px-4 py-2 rounded-2xl text-sm font-bold hover:bg-[#2a4b55] transition shadow-sm active:scale-95">Send</button>
+                <!-- Comments Section (Scrollable on all devices) -->
+                <div id="modalComments" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 min-h-[160px] bg-slate-50/30 custom-scrollbar">
+                    <!-- Comments injected here via JavaScript -->
                 </div>
+
+                <!-- Fixed Sticky Comment Input -->
+                <div class="p-3.5 sm:p-4 border-t border-slate-200/80 bg-white shrink-0">
+                    <div class="flex items-center gap-2">
+                        <input id="commentInput"
+                               type="text"
+                               placeholder="Write a comment..."
+                               class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-[#345e69] focus:ring-2 focus:ring-[#345e69]/15 transition"
+                               onkeydown="if(event.key==='Enter') SohbaApp.submitComment()" />
+                        <button type="button"
+                                onclick="SohbaApp.submitComment()"
+                                class="bg-[#345e69] hover:bg-[#2a4b55] text-white px-4 sm:px-5 py-2.5 rounded-2xl text-sm font-bold transition shadow-sm active:scale-95 shrink-0 flex items-center gap-1">
+                            <span>Send</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
-

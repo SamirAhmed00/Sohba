@@ -15,6 +15,7 @@ namespace Sohba.Infrastructure.Data.Configurations
             builder.Property(p => p.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
 
             builder.Property(p => p.Content).IsRequired();
+            builder.Property(p => p.VideoUrl).HasMaxLength(500);
 
             // One User has many Posts
             builder.HasOne(p => p.User)

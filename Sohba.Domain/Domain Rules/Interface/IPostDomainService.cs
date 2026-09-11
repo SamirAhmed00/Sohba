@@ -11,7 +11,8 @@ namespace Sohba.Domain.Domain_Rules.Interface
         // Creation & Basic Rules
         Result CanCreatePost(Guid userId, string content, bool hasAttachments);
         Result CanUpdatePost(Guid userId, Guid postId, Guid postOwnerId, bool isPostDeleted);
-        Result CanDeletePost(Guid userId, Guid postId, Guid postOwnerId, bool isAdmin);
+        Result CanDeletePost(Guid userId, Guid postId, Guid postOwnerId, bool isPlatformAdmin, bool isContainerAdmin = false);
+
 
         // Privacy & Audience -- It will internally depend on the FriendshipService.
         Result CanViewPost(Guid userId, Guid postOwnerId, PostPrivacy privacy, bool isFriend);
