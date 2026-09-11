@@ -18,10 +18,11 @@ function Search_SwitchTab(tab) {
         btn.classList.add('text-gray-400');
     });
 
-    // Activate the clicked button (event is available from the inline onclick attribute).
-    if (event && event.target) {
-        event.target.classList.add('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
-        event.target.classList.remove('text-gray-400');
+    // Activate the target tab button in the header tab bar.
+    const targetTabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+    if (targetTabBtn) {
+        targetTabBtn.classList.add('text-[#345e69]', 'border-b-2', 'border-[#345e69]');
+        targetTabBtn.classList.remove('text-gray-400');
     }
 
     // Hide all tab content panels, then show the selected one.
@@ -33,6 +34,7 @@ function Search_SwitchTab(tab) {
     if (panel) panel.classList.remove('hidden');
 }
 
+
 /**
  * Navigates to the search results page with the refined query.
  * Triggered when the user presses Enter in the refine-search input.
@@ -43,9 +45,14 @@ function refineSearch() {
 
     const query = input.value.trim();
     if (query.length >= 2) {
-        window.location.href = `/Search/Index?q=${encodeURIComponent(query)}`;
+        const url = new URL(window.location);
+        const currentTab = url.searchParams.get('tab') || 'all';
+        window.location.href = `/Search/Index?q=${encodeURIComponent(query)}&tab=${encodeURIComponent(currentTab)}`;
+    } else if (window.SohbaApp && SohbaApp.toast) {
+        window.SohbaApp.toast('Type at least 2 characters', 'info');
     }
 }
+
 
 
 
@@ -65,11 +72,28 @@ function initializeGlobalSearch() {
     if (!searchInput) return;
 
     let searchTimeout;
+    let quickSearchAbortController = null;
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
     async function runQuickSearch(query, resultsEl) {
         try {
-            const response = await fetch(`/Search/QuickSearch?q=${encodeURIComponent(query)}`);
+            if (quickSearchAbortController) {
+                quickSearchAbortController.abort();
+            }
+            quickSearchAbortController = new AbortController();
+
+            const response = await fetch(`/Search/QuickSearch?q=${encodeURIComponent(query)}`, {
+                signal: quickSearchAbortController.signal
+            });
             const data = await response.json();
 
             if (!resultsEl) return;
@@ -93,11 +117,11 @@ function initializeGlobalSearch() {
             if (users.length > 0) {
                 html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PEOPLE</div>';
                 html += users.map(user => `
-                    <a href="${user.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=345e69&color=fff`}" class="w-8 h-8 rounded-full object-cover">
+                    <a href="${escapeHtml(user.url)}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <img src="${user.profilePictureUrl ? escapeHtml(user.profilePictureUrl) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || '')}&background=345e69&color=fff`}" class="w-8 h-8 rounded-full object-cover">
                         <div>
-                            <div class="font-semibold text-gray-900">${user.name}</div>
-                            <div class="text-xs text-gray-500">${user.bio || 'User'}</div>
+                            <div class="font-semibold text-gray-900">${escapeHtml(user.name)}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(user.bio || 'User')}</div>
                         </div>
                     </a>`).join('');
             }
@@ -106,13 +130,13 @@ function initializeGlobalSearch() {
             if (posts.length > 0) {
                 html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">POSTS</div>';
                 html += posts.map(post => `
-                    <a href="${post.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                    <a href="${escapeHtml(post.url)}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
                         ${post.imageUrl
-                        ? `<img src="${post.imageUrl}" class="w-8 h-8 rounded object-cover">`
+                        ? `<img src="${escapeHtml(post.imageUrl)}" class="w-8 h-8 rounded object-cover">`
                         : '<div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-500">📝</div>'}
                         <div>
-                            <div class="font-semibold text-gray-900">${post.title}</div>
-                            <div class="text-xs text-gray-500">${post.authorName}</div>
+                            <div class="font-semibold text-gray-900">${escapeHtml(post.title)}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(post.authorName)}</div>
                         </div>
                     </a>`).join('');
             }
@@ -121,11 +145,11 @@ function initializeGlobalSearch() {
             if (groups.length > 0) {
                 html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">GROUPS</div>';
                 html += groups.map(group => `
-                    <a href="${group.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${group.name[0]}</div>
+                    <a href="${escapeHtml(group.url)}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${escapeHtml(group.name ? group.name[0] : '')}</div>
                         <div>
-                            <div class="font-semibold text-gray-900">${group.name}</div>
-                            <div class="text-xs text-gray-500">${group.membersCount} members</div>
+                            <div class="font-semibold text-gray-900">${escapeHtml(group.name)}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(group.membersCount)} members</div>
                         </div>
                     </a>`).join('');
             }
@@ -134,9 +158,9 @@ function initializeGlobalSearch() {
             if (pages.length > 0) {
                 html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PAGES</div>';
                 html += pages.map(page => `
-                    <a href="${page.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${page.name[0]}</div>
-                        <div class="font-semibold text-gray-900">${page.name}</div>
+                    <a href="${escapeHtml(page.url)}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${escapeHtml(page.name ? page.name[0] : '')}</div>
+                        <div class="font-semibold text-gray-900">${escapeHtml(page.name)}</div>
                     </a>`).join('');
             }
 
@@ -153,6 +177,7 @@ function initializeGlobalSearch() {
             resultsEl.innerHTML = html;
             resultsEl.classList.remove('hidden');
         } catch (error) {
+            if (error.name === 'AbortError') return;
             console.error('Search error:', error);
             if (window.SohbaApp && SohbaApp.toast) {
                 SohbaApp.toast('Search failed', 'error');
@@ -184,115 +209,9 @@ function initializeGlobalSearch() {
         });
     }
 
-
-
-
-
-
-    searchInput.addEventListener('input', function (e) {
-        const query = e.target.value.trim();
-        clearTimeout(searchTimeout);
-
-        if (query.length < 2) {
-            if (quickResults) quickResults.classList.add('hidden');
-            return;
-        }
-
-        searchTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch(`/Search/QuickSearch?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-
-                if (data.success === false || data.data === null) {
-                    if (quickResults) {
-                        quickResults.innerHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
-                        quickResults.classList.remove('hidden');
-                    }
-                    return;
-                }
-
-                const payload = data.data;
-                if (!payload || payload.totalCount === 0) {
-                    if (quickResults) {
-                        quickResults.innerHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
-                        quickResults.classList.remove('hidden');
-                    }
-                    return;
-                }
-
-                let html = '';
-
-                const users = payload.users || [];
-                if (users.length > 0) {
-                    html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PEOPLE</div>';
-                    html += users.map(user => `
-                        <a href="${user.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                            <img src="${user.profilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=345e69&color=fff`}" class="w-8 h-8 rounded-full object-cover">
-                            <div>
-                                <div class="font-semibold text-gray-900">${user.name}</div>
-                                <div class="text-xs text-gray-500">${user.bio || 'User'}</div>
-                            </div>
-                        </a>`).join('');
-                }
-
-                const posts = payload.posts || [];
-                if (posts.length > 0) {
-                    html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">POSTS</div>';
-                    html += posts.map(post => `
-                        <a href="${post.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                            ${post.imageUrl
-                            ? `<img src="${post.imageUrl}" class="w-8 h-8 rounded object-cover">`
-                            : '<div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-500">📝</div>'}
-                            <div>
-                                <div class="font-semibold text-gray-900">${post.title}</div>
-                                <div class="text-xs text-gray-500">${post.authorName}</div>
-                            </div>
-                        </a>`).join('');
-                }
-
-                const groups = payload.groups || [];
-                if (groups.length > 0) {
-                    html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">GROUPS</div>';
-                    html += groups.map(group => `
-                        <a href="${group.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                            <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${group.name[0]}</div>
-                            <div>
-                                <div class="font-semibold text-gray-900">${group.name}</div>
-                                <div class="text-xs text-gray-500">${group.membersCount} members</div>
-                            </div>
-                        </a>`).join('');
-                }
-
-                const pages = payload.pages || [];
-                if (pages.length > 0) {
-                    html += '<div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500">PAGES</div>';
-                    html += pages.map(page => `
-                        <a href="${page.url}" class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                            <div class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 font-bold">${page.name[0]}</div>
-                            <div class="font-semibold text-gray-900">${page.name}</div>
-                        </a>`).join('');
-                }
-
-                if (payload.totalCount > 3) {
-                    html += `
-                        <div class="p-3 border-t border-gray-100 text-center">
-                            <a href="/Search/Index?q=${encodeURIComponent(query)}"
-                               class="text-sm text-[#345e69] font-semibold hover:underline">
-                                See all ${payload.totalCount} results →
-                            </a>
-                        </div>`;
-                }
-
-                quickResults.innerHTML = html;
-                quickResults.classList.remove('hidden');
-            } catch (error) {
-                console.error('Search error:', error);
-            }
-        }, 300);
-    });
-
-    function submitSearch() {
-        const query = (sourceInput || searchInput || mobileSearchInput)?.value.trim();
+    function submitSearch(sourceInput) {
+        const inputEl = sourceInput || searchInput || mobileSearchInput;
+        const query = inputEl?.value.trim() || '';
         if (query.length >= 2 && searchForm) {
             if (searchQueryHidden) searchQueryHidden.value = query;
             searchForm.submit();
@@ -303,10 +222,19 @@ function initializeGlobalSearch() {
         }
     }
 
+    const mobileSearchSubmitBtn = document.getElementById('mobileSearchSubmitBtn');
+
     if (searchBtn) {
         searchBtn.addEventListener('click', function (e) {
             e.preventDefault();
             submitSearch(searchInput);
+        });
+    }
+
+    if (mobileSearchSubmitBtn) {
+        mobileSearchSubmitBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            submitSearch(mobileSearchInput);
         });
     }
 

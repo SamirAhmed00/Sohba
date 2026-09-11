@@ -10,6 +10,12 @@ namespace Sohba.Application.DTOs.SearchAggregate
         public List<UserSearchResultDto> Users { get; set; } = new();
         public List<GroupSearchResultDto> Groups { get; set; } = new();
         public List<PageSearchResultDto> Pages { get; set; } = new();
-        public int TotalCount => Posts.Count + Users.Count + Groups.Count + Pages.Count;
+
+        private int? _totalCount;
+        public int TotalCount
+        {
+            get => _totalCount ?? (Posts.Count + Users.Count + Groups.Count + Pages.Count);
+            set => _totalCount = value;
+        }
     }
 }

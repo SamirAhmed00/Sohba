@@ -8,7 +8,7 @@ namespace Sohba.Application.Interfaces
 {
     public interface ISearchService
     {
-        Task<Result<SearchResultDto>> GlobalSearchAsync(string query, Guid currentUserId);
+        Task<Result<SearchResultDto>> GlobalSearchAsync(string query, Guid currentUserId, string scope = "all", int limit = 20);
         Task<Result<List<PostSearchResultDto>>> SearchPostsAsync(string query, Guid currentUserId);
         Task<Result<List<UserSearchResultDto>>> SearchUsersAsync(string query, Guid currentUserId);
         Task<Result<List<GroupSearchResultDto>>> SearchGroupsAsync(string query);

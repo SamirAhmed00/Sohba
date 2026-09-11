@@ -11,11 +11,18 @@
             <div>
                 <h1 class="text-2xl font-black text-gray-900">Search Results</h1>
                 <p class="text-gray-500 mt-1">
-                    @Model.Results.TotalCount results for "@Model.Query"
+                    @if (string.IsNullOrWhiteSpace(Model.Query) || Model.Query.Length < 2)
+                    {
+                        <span>Please enter at least 2 characters to search.</span>
+                    }
+                    else
+                    {
+                        <span>@Model.Results.TotalCount results for "@Model.Query"</span>
+                    }
                 </p>
             </div>
             <div class="relative w-64">
-                <input type="text" 
+                <input type="text"
                        id="refineSearchInput"
                        value="@Model.Query"
                        class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20"
@@ -31,43 +38,51 @@
 
         <!-- Tabs -->
         <div class="flex gap-2 mt-6 border-b border-slate-100">
-            <button onclick="Search_SwitchTab('all')" 
+            <button onclick="Search_SwitchTab('all')" data-tab="all"
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "all" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 All (@Model.Results.TotalCount)
             </button>
-            <button onclick="Search_SwitchTab('posts')" 
+            <button onclick="Search_SwitchTab('posts')" data-tab="posts"
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "posts" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Posts (@Model.Results.Posts.Count)
             </button>
-            <button onclick="Search_SwitchTab('people')" 
+            <button onclick="Search_SwitchTab('people')" data-tab="people"
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "people" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 People (@Model.Results.Users.Count)
             </button>
-            <button onclick="Search_SwitchTab('groups')" 
+            <button onclick="Search_SwitchTab('groups')" data-tab="groups"
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "groups" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Groups (@Model.Results.Groups.Count)
             </button>
-            <button onclick="Search_SwitchTab('pages')" 
+            <button onclick="Search_SwitchTab('pages')" data-tab="pages"
                     class="tab-btn px-4 py-2 text-sm font-bold @(Model.ActiveTab == "pages" ? "text-[#345e69] border-b-2 border-[#345e69]" : "text-gray-400 hover:text-gray-600")">
                 Pages (@Model.Results.Pages.Count)
             </button>
         </div>
     </div>
 
-    <!-- All Results Tab -->
-    <div id="tab-all" class="tab-content @(Model.ActiveTab == "all" ? "" : "hidden")">
-        @if (Model.Results.TotalCount == 0)
-        {
-            <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
-                <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+        <!-- All Results Tab -->
+        <div id="tab-all" class="tab-content @(Model.ActiveTab == "all" ? "" : "hidden")">
+            @if (Model.Results.TotalCount == 0)
+            {
+                <div class="text-center py-20 bg-white rounded-2xl border border-slate-100">
+                    <div class="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-12 h-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    @if (string.IsNullOrWhiteSpace(Model.Query) || Model.Query.Length < 2)
+                    {
+                        <h3 class="text-lg font-bold text-gray-900">Start Searching</h3>
+                        <p class="text-gray-500 mt-2">Type at least 2 characters to search for posts, people, groups, and pages.</p>
+                    }
+                    else
+                    {
+                        <h3 class="text-lg font-bold text-gray-900">No results found</h3>
+                        <p class="text-gray-500 mt-2">Try searching with different keywords</p>
+                    }
                 </div>
-                <h3 class="text-lg font-bold text-gray-900">No results found</h3>
-                <p class="text-gray-500 mt-2">Try searching with different keywords</p>
-            </div>
-        }
+            }
         else
         {
             <div class="space-y-8">

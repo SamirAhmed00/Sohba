@@ -20,68 +20,101 @@ namespace Sohba.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<Result<SearchResultDto>> GlobalSearchAsync(string query, Guid currentUserId)
+        public async Task<Result<SearchResultDto>> GlobalSearchAsync(string query, Guid currentUserId, string scope = "all", int limit = 20)
         {
             if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
                 return Result<SearchResultDto>.Success(new SearchResultDto());
 
             var term = query.Trim();
-            List<PostSearchResultDto> postDtos;
+            var effectiveScope = (scope ?? "all").ToLowerInvariant();
+            var postDtos = new List<PostSearchResultDto>();
+            var userDtos = new List<UserSearchResultDto>();
+            var groupDtos = new List<GroupSearchResultDto>();
+            var pageDtos = new List<PageSearchResultDto>();
 
+            // Hashtag queries map strictly to Posts.
+            // When an incompatible scope is requested (users, groups, pages), 0 results are returned.
             if (term.StartsWith("#") && term.Length > 1)
             {
-                var tag = term.TrimStart('#').Trim();
-                var hashtagPosts = await _unitOfWork.Posts.GetPostsByHashtagAsync(tag);
-                postDtos = _mapper.Map<List<PostSearchResultDto>>(hashtagPosts.Take(5));
-                term = tag;
+                if (effectiveScope == "all" || effectiveScope == "posts")
+                {
+                    var tag = term.TrimStart('#').Trim();
+                    var hashtagPosts = await _unitOfWork.Posts.GetPostsByHashtagAsync(tag, currentUserId);
+                    postDtos = _mapper.Map<List<PostSearchResultDto>>(hashtagPosts.Take(limit));
+                }
+
+                return Result<SearchResultDto>.Success(new SearchResultDto
+                {
+                    Posts = postDtos
+                });
             }
-            else
+
+            if (effectiveScope == "all" || effectiveScope == "posts")
             {
-                var posts = await _unitOfWork.Posts.SearchPostsAsync(term, currentUserId, 5);
+                var posts = await _unitOfWork.Posts.SearchPostsAsync(term, currentUserId, limit);
                 postDtos = _mapper.Map<List<PostSearchResultDto>>(posts);
             }
 
-            var users = await _unitOfWork.Users.SearchUsersAsync(term, currentUserId, 5);
-            var groups = await _unitOfWork.Groups.SearchGroupsAsync(term, 5);
-            var pages = await _unitOfWork.Pages.SearchPagesAsync(term, 5);
+            if (effectiveScope == "all" || effectiveScope == "people" || effectiveScope == "users")
+            {
+                var users = await _unitOfWork.Users.SearchUsersAsync(term, currentUserId, limit);
+                userDtos = _mapper.Map<List<UserSearchResultDto>>(users);
+            }
+
+            if (effectiveScope == "all" || effectiveScope == "groups")
+            {
+                var groups = await _unitOfWork.Groups.SearchGroupsAsync(term, limit);
+                groupDtos = _mapper.Map<List<GroupSearchResultDto>>(groups);
+            }
+
+            if (effectiveScope == "all" || effectiveScope == "pages")
+            {
+                var pages = await _unitOfWork.Pages.SearchPagesAsync(term, limit);
+                pageDtos = _mapper.Map<List<PageSearchResultDto>>(pages);
+            }
 
             var result = new SearchResultDto
             {
                 Posts = postDtos,
-                Users = _mapper.Map<List<UserSearchResultDto>>(users),
-                Groups = _mapper.Map<List<GroupSearchResultDto>>(groups),
-                Pages = _mapper.Map<List<PageSearchResultDto>>(pages)
+                Users = userDtos,
+                Groups = groupDtos,
+                Pages = pageDtos
             };
 
             return Result<SearchResultDto>.Success(result);
         }
 
+
         public async Task<Result<List<PostSearchResultDto>>> SearchPostsAsync(string query, Guid currentUserId)
         {
-            var posts = await _unitOfWork.Posts.SearchPostsAsync(query, currentUserId);
-            var dtos = _mapper.Map<List<PostSearchResultDto>>(posts);
-            return Result<List<PostSearchResultDto>>.Success(dtos);
+            var result = await GlobalSearchAsync(query, currentUserId, scope: "posts", limit: 20);
+            return result.IsSuccess
+                ? Result<List<PostSearchResultDto>>.Success(result.Value.Posts)
+                : Result<List<PostSearchResultDto>>.Failure(result.Error);
         }
 
         public async Task<Result<List<UserSearchResultDto>>> SearchUsersAsync(string query, Guid currentUserId)
         {
-            var users = await _unitOfWork.Users.SearchUsersAsync(query, currentUserId);
-            var dtos = _mapper.Map<List<UserSearchResultDto>>(users);
-            return Result<List<UserSearchResultDto>>.Success(dtos);
+            var result = await GlobalSearchAsync(query, currentUserId, scope: "people", limit: 20);
+            return result.IsSuccess
+                ? Result<List<UserSearchResultDto>>.Success(result.Value.Users)
+                : Result<List<UserSearchResultDto>>.Failure(result.Error);
         }
 
         public async Task<Result<List<GroupSearchResultDto>>> SearchGroupsAsync(string query)
         {
-            var groups = await _unitOfWork.Groups.SearchGroupsAsync(query);
-            var dtos = _mapper.Map<List<GroupSearchResultDto>>(groups);
-            return Result<List<GroupSearchResultDto>>.Success(dtos);
+            var result = await GlobalSearchAsync(query, Guid.Empty, scope: "groups", limit: 20);
+            return result.IsSuccess
+                ? Result<List<GroupSearchResultDto>>.Success(result.Value.Groups)
+                : Result<List<GroupSearchResultDto>>.Failure(result.Error);
         }
 
         public async Task<Result<List<PageSearchResultDto>>> SearchPagesAsync(string query)
         {
-            var pages = await _unitOfWork.Pages.SearchPagesAsync(query);
-            var dtos = _mapper.Map<List<PageSearchResultDto>>(pages);
-            return Result<List<PageSearchResultDto>>.Success(dtos);
+            var result = await GlobalSearchAsync(query, Guid.Empty, scope: "pages", limit: 20);
+            return result.IsSuccess
+                ? Result<List<PageSearchResultDto>>.Success(result.Value.Pages)
+                : Result<List<PageSearchResultDto>>.Failure(result.Error);
         }
     }
 

@@ -10,7 +10,8 @@ using Sohba.ViewModels.Search;
 namespace Sohba.Controllers
 {
     [Authorize]
-    [EnableRateLimiting("Api")]
+    [EnableRateLimiting("Search")]
+
 
     public class SearchController : BaseController
     {
@@ -28,16 +29,17 @@ namespace Sohba.Controllers
             // Explicitly naming "Results" prevents the default Index.cshtml lookup which
             // caused a 404 because only Results.cshtml exists in Views/Search/.
             if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
-                return View("Results", new SearchViewModel { Query = q });
+                return View("Results", new SearchViewModel { Query = q, ActiveTab = tab });
 
             var userId = GetCurrentUserId();
-            var result = await _searchService.GlobalSearchAsync(q, userId);
+            // Full search results page loads all categories up to 20 items so client-side tabs function seamlessly.
+            var result = await _searchService.GlobalSearchAsync(q, userId, scope: "all", limit: 20);
 
             var viewModel = new SearchViewModel
             {
                 Query = q,
-                Results = result.Value,
-                ActiveTab = tab
+                Results = result.IsSuccess && result.Value != null ? result.Value : new SearchResultDto(),
+                ActiveTab = string.IsNullOrWhiteSpace(tab) ? "all" : tab.ToLowerInvariant()
             };
 
             return View("Results", viewModel);
@@ -52,17 +54,19 @@ namespace Sohba.Controllers
             }
 
             var userId = GetCurrentUserId();
-            var result = await _searchService.GlobalSearchAsync(q, userId);
+            var result = await _searchService.GlobalSearchAsync(q, userId, "all", 10);
 
             if (!result.IsSuccess)
                 return Json(BaseResponseDto<SearchResultDto>.FailureResponse(result.Error));
 
+            var originalTotal = result.Value.TotalCount;
             var data = new SearchResultDto
             {
                 Posts = result.Value.Posts.Take(3).ToList(),
                 Users = result.Value.Users.Take(3).ToList(),
                 Groups = result.Value.Groups.Take(3).ToList(),
-                Pages = result.Value.Pages.Take(3).ToList()
+                Pages = result.Value.Pages.Take(3).ToList(),
+                TotalCount = originalTotal
             };
 
             return Json(BaseResponseDto<SearchResultDto>.SuccessResponse(data));
