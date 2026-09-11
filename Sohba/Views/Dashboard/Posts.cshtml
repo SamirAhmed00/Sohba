@@ -218,6 +218,27 @@
     </div>
 </div>
 
+
+<!-- Admin Post Details Modal Container -->
+<div id="adminPostModal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/60" onclick="closeAdminPostModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Post Details</h3>
+                <button onclick="closeAdminPostModal()" class="p-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="adminPostModalContent" class="max-h-[75vh] overflow-y-auto">
+                <!-- Content injected via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/features/dashboard.js" asp-append-version="true"></script>
     <script>
@@ -256,9 +277,32 @@
             // =========================
             // View Post
             // =========================
-            window.viewPost = function (postId) {
-                if (!postId) return;
-                window.location.href = `/Posts/Details/${postId}`;
+            window.viewPost = async function (postId) {
+            if (!postId) return;
+            try {
+            const response = await fetch(`/Dashboard/GetPostDetails?postId=${encodeURIComponent(postId)}`);
+            if (!response.ok) throw new Error('Failed to load post details');
+            const html = await response.text();
+
+            const modal = document.getElementById('adminPostModal');
+            const content = document.getElementById('adminPostModalContent');
+            if (!modal || !content) return;
+
+            content.innerHTML = html;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            } catch (err) {
+            console.error(err);
+            if (window.SohbaApp && SohbaApp.toast) {
+            SohbaApp.toast('Failed to load post details', 'error');
+            }
+            }
+            };
+
+            window.closeAdminPostModal = function () {
+            const modal = document.getElementById('adminPostModal');
+            if (modal) modal.classList.add('hidden');
+            document.body.style.overflow = '';
             };
 
             // =========================

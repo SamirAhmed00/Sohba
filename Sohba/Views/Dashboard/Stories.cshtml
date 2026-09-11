@@ -1,0 +1,194 @@
+﻿@using System.Text.Encodings.Web
+@model Sohba.ViewModels.Dashboard.DashboardStoriesViewModel
+@{
+    ViewData["Title"] = "Manage Stories";
+    Layout = "_AppLayout";
+}
+
+<div class="max-w-7xl mx-auto page-transition">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">Active Stories</h1>
+                <p class="text-gray-500 mt-1">Moderation queue for active 24-hour stories</p>
+            </div>
+            <span class="text-sm text-gray-500">Active Stories: <strong class="text-gray-900">@Model.TotalCount</strong></span>
+        </div>
+    </div>
+
+    @if (Model.Stories.Any())
+    {
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            @foreach (var story in Model.Stories)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative group cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                     data-story-id="@story.Id"
+                     onclick="openAdminStoryInspection('@story.Id', '@story.UserName', '@(story.UserProfilePicture ?? "")', '@(story.MediaUrl ?? "")', '@(story.MediaType ?? "")', '@(Html.Raw(JavaScriptEncoder.Default.Encode(story.Content ?? "")))', '@story.CreatedAt.ToString("MMM dd, yyyy HH:mm")', '@story.ExpiresAt.ToString("MMM dd, yyyy HH:mm")', '@story.Privacy')">
+
+                    <div class="h-48 bg-slate-900 flex items-center justify-center relative overflow-hidden">
+                        @if (!string.IsNullOrEmpty(story.MediaUrl))
+                        {
+                            @if (story.MediaType == "video")
+                            {
+                                <video src="@story.MediaUrl" class="w-full h-full object-cover pointer-events-none" muted preload="metadata"></video>
+                                <div class="absolute inset-0 bg-black/25 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                                    <div class="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center text-slate-800 shadow-md group-hover:scale-110 transition-transform">
+                                        <svg class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="@story.MediaUrl" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-4 text-white text-xs text-center line-clamp-4 font-medium leading-relaxed">
+                                @story.Content
+                            </div>
+                        }
+
+                        <!-- Hover Overlay Affordance -->
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2.5 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <span class="text-[11px] font-bold text-white flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                View Story
+                            </span>
+                        </div>
+
+                        <!-- Quick Delete Button -->
+                        <button onclick="event.stopPropagation(); adminDeleteStory('@story.Id')" class="absolute top-2 right-2 p-1.5 bg-red-600/90 hover:bg-red-600 text-white rounded-full shadow-md transition-colors z-10" title="Delete Story">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="font-bold text-gray-900 text-xs truncate">@story.UserName</div>
+                        <div class="flex items-center justify-between text-[11px] text-gray-400 mt-1">
+                            <span class="px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">@story.Privacy</span>
+                            <span>Expires: @story.ExpiresAt.ToString("HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-2xl p-12 text-center text-gray-500 border border-slate-100">
+            No active stories at this time.
+        </div>
+    }
+</div>
+
+<!-- Admin Story Modal Container -->
+<div id="adminStoryModal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" onclick="closeAdminStoryModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl flex flex-col relative text-white border border-slate-800">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img id="adminStoryAuthorAvatar" src="" class="w-10 h-10 rounded-full object-cover border border-slate-700" />
+                    <div>
+                        <h4 id="adminStoryAuthorName" class="font-bold text-sm text-white leading-none"></h4>
+                        <span id="adminStoryPrivacyBadge" class="text-[10px] text-teal-400 font-semibold mt-1 inline-block"></span>
+                    </div>
+                </div>
+                <button onclick="closeAdminStoryModal()" class="p-1.5 text-slate-400 hover:text-white rounded-xl bg-slate-800 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <!-- Media Box -->
+            <div class="relative bg-black flex items-center justify-center min-h-[350px] max-h-[500px] overflow-hidden">
+                <img id="adminStoryImg" src="" class="hidden max-h-[500px] w-full object-contain" />
+                <video id="adminStoryVideo" src="" class="hidden max-h-[500px] w-full object-contain" controls playsinline></video>
+                <div id="adminStoryText" class="hidden p-8 text-center text-base font-semibold max-w-md text-white"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-4">
+                <div class="text-[11px] text-slate-400 space-y-0.5">
+                    <div>Posted: <span id="adminStoryPostedAt" class="text-slate-200"></span></div>
+                    <div>Expires: <span id="adminStoryExpiresAt" class="text-slate-200"></span></div>
+                </div>
+                <button id="adminStoryModalDeleteBtn" type="button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition">
+                    Delete Story
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/features/dashboard.js" asp-append-version="true"></script>
+    <script>
+        let currentInspectedStoryId = null;
+
+        function openAdminStoryInspection(storyId, authorName, avatarUrl, mediaUrl, mediaType, content, postedAt, expiresAt, privacy) {
+        document.getElementById('adminStoryAuthorName').textContent = authorName;
+        document.getElementById('adminStoryAuthorAvatar').src = avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=345e69&color=fff`;
+        document.getElementById('adminStoryPrivacyBadge').textContent = privacy + ' Story';
+        document.getElementById('adminStoryPostedAt').textContent = postedAt;
+        document.getElementById('adminStoryExpiresAt').textContent = expiresAt;
+
+        const imgEl = document.getElementById('adminStoryImg');
+        const videoEl = document.getElementById('adminStoryVideo');
+        const textEl = document.getElementById('adminStoryText');
+
+        imgEl.classList.add('hidden');
+        videoEl.classList.add('hidden');
+        videoEl.pause();
+        textEl.classList.add('hidden');
+
+        if (mediaUrl && mediaType === 'video') {
+        videoEl.src = mediaUrl;
+        videoEl.classList.remove('hidden');
+        } else if (mediaUrl) {
+        imgEl.src = mediaUrl;
+        imgEl.classList.remove('hidden');
+        } else {
+        textEl.textContent = content;
+        textEl.classList.remove('hidden');
+        }
+
+        document.getElementById('adminStoryModalDeleteBtn').onclick = function () {
+        closeAdminStoryModal();
+        adminDeleteStory(storyId);
+        };
+
+        document.getElementById('adminStoryModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        }
+
+        function closeAdminStoryModal() {
+        const modal = document.getElementById('adminStoryModal');
+        if (modal) modal.classList.add('hidden');
+        const videoEl = document.getElementById('adminStoryVideo');
+        if (videoEl) videoEl.pause();
+        document.body.style.overflow = '';
+        }
+
+
+        function adminDeleteStory(storyId) {
+        showConfirmModal({
+        title: 'Delete Story',
+        message: 'Are you sure you want to remove this story? This will permanently delete the content from Sohba.',
+        type: 'delete',
+        confirmText: 'Delete Story',
+        onConfirm: async function() {
+        const result = await SohbaApp.post('/Dashboard/DeleteStory', { storyId });
+        if (result.success) {
+        SohbaApp.toast('Story deleted successfully', 'success');
+        document.querySelector(`[data-story-id="${storyId}"]`)?.remove();
+        } else {
+        SohbaApp.toast(result.error || 'Failed to delete story', 'error');
+        }
+        }
+        });
+        }
+    </script>
+}

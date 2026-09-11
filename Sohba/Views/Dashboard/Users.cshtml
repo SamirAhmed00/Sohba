@@ -1,4 +1,5 @@
-﻿@model Sohba.ViewModels.Dashboard.DashboardUsersViewModel
+﻿@using Sohba.Domain.Enums
+@model Sohba.ViewModels.Dashboard.DashboardUsersViewModel
 @{
     ViewData["Title"] = "Manage Users";
     // Layout = "~/Views/Shared/_Layout.cshtml";
@@ -37,7 +38,9 @@
             <select id="statusFilter" class="px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20">
                 <option value="all" selected="@(Model.StatusFilter == "all")">All Users</option>
                 <option value="active" selected="@(Model.StatusFilter == "active")">Active</option>
+                <option value="deactivated" selected="@(Model.StatusFilter == "deactivated")">Deactivated</option>
                 <option value="blocked" selected="@(Model.StatusFilter == "blocked")">Blocked</option>
+                <option value="deleted" selected="@(Model.StatusFilter == "deleted")">Deleted</option>
             </select>
             <button onclick="applyFilters()" class="px-6 py-2 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
                 Apply Filters
@@ -88,32 +91,73 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
-                                        <button onclick="viewUser('@user.Id')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="View">
+                                        <!-- Role Indicator Badge -->
+                                        @if (user.Role == UserRole.Owner)
+                                        {
+                                            <span class="px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black rounded-lg inline-flex items-center gap-1 shadow-sm" title="Highest Platform Authority">
+                                                👑 Owner
+                                            </span>
+                                        }
+                                        else if (user.Role == UserRole.Admin)
+                                        {
+                                            <span class="px-2.5 py-1 bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold rounded-lg inline-flex items-center gap-1" title="@(string.IsNullOrEmpty(user.PromotedByAdminName) ? "Admin" : $"Promoted by {user.PromotedByAdminName}")">
+                                                🛡️ Admin
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg">
+                                                User
+                                            </span>
+                                        }
+
+                                        <!-- Profile View -->
+                                        <button onclick="viewUser('@user.Id')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="View Profile">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </button>
-                                       @if (user.IsBlocked) 
-                                        { 
-                                            <button onclick="unblockUser('@user.Id')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors" title="Unblock"> 
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> 
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /> 
-                                                </svg> 
-                                            </button> 
-                                        } 
-                                        else 
-                                        { 
-                                            <button onclick="blockUser('@user.Id')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Block"> 
-                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> 
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /> 
-                                                </svg> 
-                                            </button> 
+
+                                        @if (user.Role != UserRole.Owner)
+                                        {
+                                            @if (user.IsBlocked)
+                                            {
+                                                <button onclick="unblockUser('@user.Id')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors" title="Unblock User">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button onclick="blockUser('@user.Id')" class="p-2 text-orange-600 hover:bg-orange-50 rounded-xl transition-colors" title="Block User">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                </button>
+                                            }
+
+                                            @if (user.CanCurrentAdminManageRole)
+                                            {
+                                                <button onclick="promptRoleChange('@user.Id', '@user.Name', '@user.Role.ToString()')"
+                                                        class="p-2 text-purple-600 hover:bg-purple-50 rounded-xl transition-colors"
+                                                        title="@(user.Role == UserRole.Admin ? "Remove Admin Role" : "Promote to Admin")">
+                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                    </svg>
+                                                </button>
+                                            }
+
+                                            <button onclick="deleteUser('@user.Id')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete User">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
                                         }
-                                        <button onclick="deleteUser('@user.Id')" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        else
+                                        {
+                                            <span class="text-xs text-slate-400 font-medium italic px-2">Protected</span>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -207,6 +251,41 @@
                 }
 
             });
+ window.promptRoleChange = function (userId, userName, currentRoleStr) {
+                if (currentRoleStr === 'Owner') {
+                    showConfirmModal({
+                        title: 'OWNER ACCOUNT PROTECTED',
+                        message: 'This account is the Sohba platform owner and has the highest administrative authority. Normal administrators cannot remove, demote, block, or delete the Owner.',
+                        type: 'warning',
+                        confirmText: 'Acknowledge',
+                        onConfirm: function () {}
+                    });
+                    return;
+                }
+
+                const isPromoting = (currentRoleStr === 'User');
+                const title = isPromoting ? 'Promote User to Admin' : 'Remove Admin Role';
+                const actionText = isPromoting ? 'Promote to Admin' : 'Remove Admin Role';
+                const message = isPromoting
+                    ? `ADMIN PRIVILEGE WARNING\n\nYou are granting '${userName}' administrative access.\n\nCurrent role: User\nNew role: Admin\n\nThe new administrator will gain access to Sohba's administrative tools.\n\nNotice: They will NOT be able to remove or demote the administrator who granted them this privilege.\n\nProceed?`
+                    : `ADMIN PRIVILEGE REMOVAL\n\nYou are removing administrative access from '${userName}'.\n\nCurrent role: Admin\nNew role: User\n\nThis account will lose all administrative access.\n\nProceed with demotion?`;
+
+                showConfirmModal({
+                    title: title,
+                    message: message,
+                    type: isPromoting ? 'info' : 'delete',
+                    confirmText: actionText,
+                    onConfirm: async function () {
+                        const result = await SohbaApp.post('/Dashboard/ToggleUserAdminRole', { userId });
+                        if (result.success) {
+                            SohbaApp.toast(result.message || 'Role updated successfully', 'success');
+                            setTimeout(() => window.location.reload(), 800);
+                        } else {
+                            SohbaApp.toast(result.error || 'Role change rejected', 'error');
+                        }
+                    }
+                });
+            };
 
             // =========================
             // Filters

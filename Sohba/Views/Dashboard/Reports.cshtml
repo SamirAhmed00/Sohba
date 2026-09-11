@@ -160,43 +160,6 @@
             window.location.href = `/Dashboard/Reports?status=${status}`;
         }
 
-        function resolveReport(reportId) {
-            showConfirmModal({
-            title: 'Resolve Report',
-            message: 'Mark this report as resolved?',
-            type: 'info',
-            confirmText: 'Resolve',
-            onConfirm: async function () {
-                const result = await SohbaApp.post('/Dashboard/ResolveReport', { reportId });
-                if (result.success) {
-                    SohbaApp.toast('Report resolved', 'success');
-                    location.reload();
-                } else {
-                SohbaApp.toast(result.error || 'Failed to resolve report', 'error');
-                }
-            }
-        });
- }
-
-        function dismissReport(reportId) {
-             showConfirmModal({
-                 title: 'Dismiss Report',
-                 message: 'Dismiss this report?',
-                 type: 'warning',
-                 confirmText: 'Dismiss',
-                 onConfirm: async function () {
-                     const result = await SohbaApp.post('/Dashboard/DismissReport', { reportId });
-                     if (result.success) {
-                         SohbaApp.toast('Report dismissed', 'success');
-                         location.reload();
-                     } else {
-                         SohbaApp.toast(result.error || 'Failed to dismiss report', 'error');
-                     }
-                 }
-             });
-         }
-
-
         function deleteReportedPost(postId, reportId) {
              showConfirmModal({
                  title: 'Delete Post',
