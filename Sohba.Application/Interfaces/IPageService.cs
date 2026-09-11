@@ -36,5 +36,7 @@ namespace Sohba.Application.Interfaces
         Task<Result<bool>> ReviewFollowRequestAsync(Guid reviewerUserId, ReviewPageFollowRequestDto dto);
         Task<Result<IEnumerable<PageFollowRequestDto>>> GetPendingRequestsAsync(Guid userId, Guid? pageId = null);
         Task<Result<bool>> HasPendingRequestAsync(Guid pageId, Guid userId);
+        Task<Result<int>> GetPendingRequestsCountAsync(Guid pageId, Guid userId);
+        Task<Result<IEnumerable<DeletedPageDto>>> GetDeletedPagesAsync();
     }
 }

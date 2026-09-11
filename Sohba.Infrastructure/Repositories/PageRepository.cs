@@ -62,9 +62,11 @@ namespace Sohba.Infrastructure.Repositories
                 .Include(p => p.Admin)
                 .Where(p => p.Name.Contains(query) ||
                            p.Description.Contains(query))
+                .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
                 .ToListAsync();
         }
+
 
         public async Task<bool> IsFollowingAsync(Guid userId, Guid pageId)
         {
@@ -205,6 +207,22 @@ namespace Sohba.Infrastructure.Repositories
         {
             return await _context.Set<PageFollowRequest>()
                 .AnyAsync(r => r.PageId == pageId && r.UserId == userId && r.Status == PageFollowRequestStatus.Pending);
+        }
+
+        public async Task<int> GetPendingFollowRequestsCountAsync(Guid pageId)
+        {
+            return await _context.Set<PageFollowRequest>()
+                .CountAsync(r => r.PageId == pageId && r.Status == PageFollowRequestStatus.Pending);
+        }
+
+        public async Task<IEnumerable<Page>> GetDeletedPagesAsync() 
+        {
+            return await _context.Pages
+                .IgnoreQueryFilters()
+                .Where(p => p.IsDeleted)
+                .Include(p => p.Admin)
+                .OrderByDescending(p => p.DeletedAt)
+                .ToListAsync();
         }
     }
 }

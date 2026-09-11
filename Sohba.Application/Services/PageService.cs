@@ -227,16 +227,14 @@ namespace Sohba.Application.Services
                 var oldImage = page.ImageUrl;
                 var oldBg = page.BackgroundImageUrl;
 
-                _unitOfWork.Pages.Delete(page);
+                page.IsDeleted = true;
+                page.DeletionReason = reason.Trim();
+                page.DeletedAt = DateTime.UtcNow;
+                page.DeletedByUserId = adminId;
+                _unitOfWork.Pages.Update(page);
                 await _unitOfWork.CompleteAsync();
 
                 await _unitOfWork.CommitTransactionAsync();
-
-                // Safe cleanup after transaction commits
-                if (!string.IsNullOrEmpty(oldImage))
-                    await _fileStorage.DeleteFileAsync(oldImage);
-                if (!string.IsNullOrEmpty(oldBg))
-                    await _fileStorage.DeleteFileAsync(oldBg);
 
                 return Result.Success();
             }
@@ -247,6 +245,41 @@ namespace Sohba.Application.Services
                 return Result.Failure("An error occurred while deleting the page.");
             }
         }
+
+        public async Task<Result<IEnumerable<DeletedPageDto>>> GetDeletedPagesAsync()
+        {
+            var deletedPages = await _unitOfWork.Pages.GetDeletedPagesAsync();
+            var dtos = new List<DeletedPageDto>();
+
+            foreach (var page in deletedPages)
+            {
+                var deletedByName = "System";
+                if (page.DeletedByUserId.HasValue)
+                {
+                    var user = await _unitOfWork.Users.GetByIdAsync(page.DeletedByUserId.Value);
+                    if (user != null) deletedByName = user.Name;
+                }
+
+                dtos.Add(new DeletedPageDto
+                {
+                    Id = page.Id,
+                    Name = page.Name,
+                    Description = page.Description,
+                    ImageUrl = page.ImageUrl,
+                    IsPrivate = page.IsPrivate,
+                    CreatedAt = page.CreatedAt,
+                    DeletedAt = page.DeletedAt,
+                    DeletionReason = page.DeletionReason ?? "No reason provided",
+                    AdminId = page.AdminId,
+                    OwnerName = page.Admin?.Name ?? "Unknown Owner",
+                    DeletedByUserId = page.DeletedByUserId,
+                    DeletedByName = deletedByName
+                });
+            }
+
+            return Result<IEnumerable<DeletedPageDto>>.Success(dtos);
+        }
+
 
         public async Task<Result<bool>> ToggleFollowPageAsync(Guid userId, Guid pageId)
         {
@@ -754,6 +787,26 @@ namespace Sohba.Application.Services
             }).ToList();
 
             return Result<IEnumerable<PageFollowRequestDto>>.Success(dtos);
+        }
+
+        public async Task<Result<int>> GetPendingRequestsCountAsync(Guid pageId, Guid userId)
+        {
+            if (pageId == Guid.Empty || userId == Guid.Empty)
+                return Result<int>.Failure("Invalid request.");
+
+            var page = await _unitOfWork.Pages.GetByIdAsync(pageId);
+            if (page == null)
+                return Result<int>.Failure("Page not found.");
+
+            var role = await _unitOfWork.Pages.GetUserRoleInPageAsync(userId, pageId);
+            var isOwner = page.AdminId == userId || (role.HasValue && role.Value == PageRole.PageOwner);
+            var canReview = isOwner || (role.HasValue && role.Value >= PageRole.Admin);
+
+            if (!canReview)
+                return Result<int>.Failure("Unauthorized.");
+
+            var count = await _unitOfWork.Pages.GetPendingFollowRequestsCountAsync(pageId);
+            return Result<int>.Success(count);
         }
 
     }

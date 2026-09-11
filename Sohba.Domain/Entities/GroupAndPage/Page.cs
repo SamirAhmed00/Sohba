@@ -14,9 +14,16 @@ namespace Sohba.Domain.Entities.GroupAndPage
         public string? Rules { get; set; }
         public bool IsPrivate { get; set; } = false;
         public DateTime CreatedAt { get; set; }
+
+        // Soft Delete & Deletion Tracking
+        public bool IsDeleted { get; set; } = false;
+        public string? DeletionReason { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public Guid? DeletedByUserId { get; set; }
+
         // Navigation Properties
         public Guid AdminId { get; set; }
-        public virtual UserAggregate.User Admin { get; set; } // Admin is a User
+        public virtual UserAggregate.User Admin { get; set; } = null!;
         public virtual ICollection<PageFollower> Followers { get; set; } = new List<PageFollower>();
         public virtual ICollection<PageFollowRequest> FollowRequests { get; set; } = new List<PageFollowRequest>();
     }

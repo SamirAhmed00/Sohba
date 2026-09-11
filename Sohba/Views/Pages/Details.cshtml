@@ -68,8 +68,12 @@
                     @if (canEditPage)
                     {
                         <a asp-action="PageRequests" asp-route-pageId="@Model.Id"
-                           class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200">
-                            Review Requests
+                           id="viewRequestsBtn"
+                           class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200 inline-flex items-center gap-1.5">
+                            <span>View Requests</span>
+                            <span id="viewRequestsBadge" class="@(Model.PendingRequestsCount > 0 ? "" : "hidden") px-1.5 py-0.5 bg-amber-600 text-white text-[10px] font-bold rounded-full">
+                                [@Model.PendingRequestsCount]
+                            </span>
                         </a>
                         <a asp-action="Edit" asp-route-id="@Model.Id"
                            class="px-4 py-2 bg-slate-100 text-gray-700 font-semibold rounded-xl text-xs hover:bg-slate-200">
@@ -90,13 +94,13 @@
                     {
                         @if (Model.HasPendingRequest)
                         {
-                            <button id="followRequestBtn" disabled class="px-5 py-2.5 bg-slate-100 text-gray-500 font-bold rounded-xl text-xs cursor-not-allowed">
+                            <button data-follow-request-btn id="followRequestBtn" disabled class="px-5 py-2.5 bg-slate-100 text-gray-500 font-bold rounded-xl text-xs cursor-not-allowed">
                                 Request Pending
                             </button>
                         }
                         else
                         {
-                            <button onclick="openFollowRequestModal()" id="followRequestBtn" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs">
+                            <button data-follow-request-btn onclick="openFollowRequestModal()" id="followRequestBtn" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs">
                                 Follow Request
                             </button>
                         }
@@ -149,13 +153,13 @@
                         </p>
                         @if (Model.HasPendingRequest)
                         {
-                            <button disabled class="px-6 py-2.5 bg-slate-100 text-gray-500 font-semibold rounded-xl text-sm cursor-not-allowed">
-                                Request Pending Approval
+                            <button data-follow-request-btn disabled class="px-6 py-2.5 bg-slate-100 text-gray-500 font-semibold rounded-xl text-sm cursor-not-allowed">
+                                Request Pending
                             </button>
                         }
                         else
                         {
-                            <button onclick="openFollowRequestModal()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-sm">
+                            <button data-follow-request-btn onclick="openFollowRequestModal()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-sm">
                                 Follow Request
                             </button>
                         }
@@ -322,6 +326,7 @@
             window.__pagesIsFollowing = @(Model.IsFollowing ? "true" : "false");
             window.__pagesIsPrivate = @(Model.IsPrivate ? "true" : "false");
             window.__pagesIsAuthorized = @(isAuthorizedMember ? "true" : "false");
+            window.__pagesHasPendingRequest = @(Model.HasPendingRequest ? "true" : "false");
 
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initializePageDetails);

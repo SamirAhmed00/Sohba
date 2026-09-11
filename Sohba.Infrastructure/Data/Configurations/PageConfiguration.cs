@@ -28,9 +28,14 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(p => p.FollowRequests)
-                   .WithOne(r => r.Page)
-                   .HasForeignKey(r => r.PageId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                  .WithOne(r => r.Page)
+                  .HasForeignKey(r => r.PageId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Global Query Filter for Soft Delete
+            builder.HasQueryFilter(p => !p.IsDeleted);
+            builder.HasIndex(p => p.IsDeleted);
+            builder.HasIndex(p => p.CreatedAt);
         }
     }
 }

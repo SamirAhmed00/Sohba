@@ -38,7 +38,9 @@
         } else if (tab === 'about') {
             loadPageStats();
         } else if (tab === 'posts') {
+            syncFollowRequestButtons();
             loadPagePosts();
+
         }
     };
 
@@ -428,13 +430,9 @@
             if (result.success) {
                 SohbaApp.toast('Follow request submitted successfully.', 'success');
                 closeFollowRequestModal();
+                window.__pagesHasPendingRequest = true;
 
-                const reqBtn = document.getElementById('followRequestBtn');
-                if (reqBtn) {
-                    reqBtn.innerText = 'Request Pending';
-                    reqBtn.disabled = true;
-                    reqBtn.className = 'px-5 py-2.5 bg-slate-100 text-gray-500 font-bold rounded-xl text-sm cursor-not-allowed';
-                }
+                syncFollowRequestButtons();
             } else {
                 SohbaApp.toast(result.error || 'Failed to submit request.', 'error');
             }
@@ -677,8 +675,15 @@
             if (data && data.success) {
                 const postsCountEl = document.getElementById('postsCount');
                 const followersCountEl = document.getElementById('followersCount');
+                const badgeEl = document.getElementById('viewRequestsBadge');
+
                 if (postsCountEl) postsCountEl.textContent = data.postsCount;
                 if (followersCountEl) followersCountEl.textContent = data.followersCount;
+
+                if (badgeEl && typeof data.pendingRequestsCount === 'number') {
+                    badgeEl.textContent = `[${data.pendingRequestsCount}]`;
+                    badgeEl.classList.toggle('hidden', data.pendingRequestsCount <= 0);
+                }
             }
         } catch (error) {
             console.error('Error loading page stats:', error);
@@ -757,4 +762,44 @@
             reader.readAsDataURL(file);
         });
     };
+
+    window.syncFollowRequestButtons = function () {
+        if (!window.__pagesHasPendingRequest) return;
+        document.querySelectorAll('[data-follow-request-btn]').forEach(btn => {
+            btn.innerText = 'Request Pending';
+            btn.disabled = true;
+            btn.removeAttribute('onclick');
+            btn.className = btn.classList.contains('text-sm')
+                ? 'px-6 py-2.5 bg-slate-100 text-gray-500 font-semibold rounded-xl text-sm cursor-not-allowed'
+                : 'px-5 py-2.5 bg-slate-100 text-gray-500 font-bold rounded-xl text-xs cursor-not-allowed';
+        });
+    };
+
+    document.addEventListener('sohba:notificationReceived', function (e) {
+        const notif = e.detail;
+        if (!notif) return;
+
+        const type = notif.notificationType || notif.type;
+        const targetId = notif.targetId;
+
+        // If notification is PageFollowRequest for the active page, update badge in real time
+        if ((type === 'PageFollowRequest' || type === 8) && targetId && window.__pagesCurrentPageId) {
+            if (String(targetId).toLowerCase() === String(window.__pagesCurrentPageId).toLowerCase()) {
+                const badge = document.getElementById('viewRequestsBadge');
+                if (badge) {
+                    const currentText = badge.textContent.replace(/[^\d]/g, '');
+                    const currentCount = parseInt(currentText, 10) || 0;
+                    const newCount = currentCount + 1;
+                    badge.textContent = `[${newCount}]`;
+                    badge.classList.remove('hidden');
+                }
+
+                // Authoritative database sync in background
+                if (typeof window.loadPageStats === 'function') {
+                    window.loadPageStats();
+                }
+            }
+        }
+    });
+
 })();

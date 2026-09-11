@@ -5,6 +5,7 @@ using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
 
 using Sohba.ViewModels.Page;
@@ -65,6 +66,19 @@ namespace Sohba.Controllers
 
                 var pendingStatus = await _pageService.HasPendingRequestAsync(id, currentUserId);
                 result.Value.HasPendingRequest = pendingStatus.IsSuccess && pendingStatus.Value;
+
+                var role = await _pageService.GetUserRoleInPageAsync(currentUserId, id);
+                var isOwner = result.Value.AdminId == currentUserId || (role.HasValue && role.Value == PageRole.PageOwner);
+                var canReview = isOwner || (role.HasValue && role.Value >= PageRole.Admin);
+
+                if (canReview)
+                {
+                    var countResult = await _pageService.GetPendingRequestsCountAsync(id, currentUserId);
+                    if (countResult.IsSuccess)
+                    {
+                        result.Value.PendingRequestsCount = countResult.Value;
+                    }
+                }
             }
 
             return View(result.Value);
@@ -426,6 +440,8 @@ namespace Sohba.Controllers
         {
             if (pageId == Guid.Empty)
                 return Json(new { success = false, error = "Invalid page ID." });
+            
+            var userId = GetCurrentUserId();
 
             var postsResult = await _postService.GetPagePostsAsync(pageId, Guid.Empty);
             var followersCountResult = await _pageService.GetFollowersCountAsync(pageId);
@@ -433,11 +449,22 @@ namespace Sohba.Controllers
             var postsCount = postsResult.IsSuccess ? postsResult.Value?.Count() ?? 0 : 0;
             var followersCount = followersCountResult.IsSuccess ? followersCountResult.Value : 0;
 
+            int? pendingRequestsCount = null;
+            if (userId != Guid.Empty)
+            {
+                var countResult = await _pageService.GetPendingRequestsCountAsync(pageId, userId);
+                if (countResult.IsSuccess)
+                {
+                    pendingRequestsCount = countResult.Value;
+                }
+            }
+
             return Json(new
             {
                 success = true,
                 postsCount = postsCount,
-                followersCount = followersCount
+                followersCount = followersCount,
+                pendingRequestsCount = pendingRequestsCount
             });
         }
 

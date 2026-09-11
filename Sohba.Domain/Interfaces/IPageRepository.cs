@@ -38,5 +38,8 @@ namespace Sohba.Domain.Interfaces
         Task<IEnumerable<PageFollowRequest>> GetPendingFollowRequestsAsync(Guid pageId);
         Task<IEnumerable<PageFollowRequest>> GetPendingFollowRequestsForUserPagesAsync(Guid adminUserId);
         Task<bool> HasPendingRequestAsync(Guid pageId, Guid userId);
+        Task<int> GetPendingFollowRequestsCountAsync(Guid pageId);
+        Task<IEnumerable<Page>> GetDeletedPagesAsync();
+
     }
 }
