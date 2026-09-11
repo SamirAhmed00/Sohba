@@ -39,10 +39,6 @@ namespace Sohba.Application.Interfaces
 
         Task<Result> SavePostToCollectionAsync(Guid userId, Guid postId, Guid collectionId);
         Task<Result> SavePostToFavoritesAsync(Guid userId, Guid postId);
-
-
-        // TODO : I Will Remove It But Kept For Cabality
-        //Task<Result<IEnumerable<SavedPostsGroupedDto>>> GetSavedPostsGroupedAsync(Guid userId);
         Task<Result<PagedResult<SavedPostsGroupedDto>>> GetSavedPostsGroupedPagedAsync(
     Guid userId, int page = 1, int pageSize = 10);
 

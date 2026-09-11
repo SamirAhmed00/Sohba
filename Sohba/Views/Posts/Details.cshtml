@@ -3,10 +3,75 @@
 }
 @model Sohba.Application.DTOs.PostAggregate.PostResponseDto
 
-<div class="max-w-5xl mx-auto py-8 px-4">
-    <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-gray-500 hover:text-[#345e69] mb-6 transition-colors">
+<div class="max-w-4xl mx-auto py-8 px-4 space-y-6">
+    <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-gray-500 hover:text-[#345e69] transition-colors font-semibold">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-        <span class="font-bold">Back to Feed</span>
+        <span>Back to Feed</span>
     </a>
+
     <partial name="Partials/_PostCard" model="new List<Sohba.Application.DTOs.PostAggregate.PostResponseDto> { Model }" />
+
+    <!-- Inline Comments Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span>Comments</span>
+            <span class="text-xs px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full">@Model.CommentsCount</span>
+        </h3>
+
+        <!-- Comment Input -->
+        <div class="flex gap-3 mb-6">
+            <input type="text" id="detailsCommentInput" placeholder="Write a comment..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-[#345e69] transition" />
+            <button type="button" onclick="submitDetailsPageComment('@Model.Id')" class="bg-[#345e69] text-white px-5 py-2.5 rounded-2xl text-sm font-bold hover:bg-[#2a4b55] transition shadow-sm">Send</button>
+        </div>
+
+        <!-- Comments Container -->
+        <div id="detailsCommentsList" class="space-y-4">
+            <div class="text-slate-400 text-sm text-center py-4">Loading comments...</div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        async function loadDetailsComments(postId) {
+            const list = document.getElementById('detailsCommentsList');
+            if (!list) return;
+            try {
+                const res = await fetch(`/Posts/GetPostDetails?postId=${postId}`);
+                const data = await res.json();
+                if (data.comments && data.comments.length > 0) {
+                    list.innerHTML = data.comments.map(c => `
+                        <div class="flex items-start gap-3 p-3 rounded-2xl bg-slate-50/70 border border-slate-100">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.userName || 'User')}&background=random" class="w-8 h-8 rounded-full">
+                            <div class="flex-1">
+                                <span class="font-bold text-xs text-slate-900">${c.userName}</span>
+                                <p class="text-sm text-slate-700 mt-0.5">${c.content}</p>
+                                <span class="text-[11px] text-slate-400 mt-1 block">${new Date(c.createdAt).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p class="text-slate-400 text-sm italic text-center py-4">No comments yet. Be the first to comment!</p>';
+                }
+            } catch (err) {
+                list.innerHTML = '<p class="text-red-500 text-sm text-center py-4">Failed to load comments.</p>';
+            }
+        }
+
+        async function submitDetailsPageComment(postId) {
+            const input = document.getElementById('detailsCommentInput');
+            const content = input?.value?.trim();
+            if (!content) return;
+            const res = await SohbaApp.post('/Posts/Comment', { postId, content });
+            if (res.success) {
+                input.value = '';
+                loadDetailsComments(postId);
+                SohbaApp.toast('Comment posted!', 'success');
+            } else {
+                SohbaApp.toast(res.error || 'Failed to post comment', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => loadDetailsComments('@Model.Id'));
+    </script>
+}
