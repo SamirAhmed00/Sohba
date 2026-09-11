@@ -193,6 +193,20 @@
         <div class="lg:col-span-2 space-y-6">
             @if (Model.IsOwnProfile)
             {
+                <!-- Visible Create Post Entry Point on Profile -->
+                <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-3">
+                        <img src="@(Model.Profile.ProfilePictureUrl ?? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(Model.Profile.Name ?? "User")}&background=345e69&color=fff")"
+                             class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border border-slate-200"
+                             alt="@Model.Profile.Name">
+                        <button type="button"
+                                onclick="SohbaApp.openCreatePostModal()"
+                                class="flex-1 bg-slate-50 hover:bg-slate-100 text-left px-4 sm:px-5 py-3 rounded-2xl text-slate-500 text-sm font-medium border border-slate-200/80 transition-colors">
+                            What's on your mind, @Model.Profile.Name?
+                        </button>
+                    </div>
+                </div>
+
                 <partial name="Partials/_CreatePost" />
             }
 

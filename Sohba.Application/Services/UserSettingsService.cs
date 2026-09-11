@@ -27,7 +27,6 @@ namespace Sohba.Application.Services
             if (user == null)
                 return Result<UserSettingsDto>.Failure("User not found");
 
-            // TODO: Load user settings from database (you need to add settings table)
             var settings = new UserSettingsDto
             {
                 Email = user.Email,
