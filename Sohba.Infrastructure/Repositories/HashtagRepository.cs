@@ -38,6 +38,25 @@ namespace Sohba.Infrastructure.Repositories
                 _context.Hashtags.Update(hashtag);
             }
         }
+
+        public async Task<(IEnumerable<Hashtag> Items, int TotalCount)> GetTrendingHashtagsPagedAsync(int page, int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+
+            var query = _context.Hashtags
+                .Where(h => h.Count > 0)
+                .OrderByDescending(h => h.Count)
+                .ThenByDescending(h => h.UpdatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 
 }

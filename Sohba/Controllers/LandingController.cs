@@ -1,21 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Sohba.Controllers
 {
+    [EnableRateLimiting("Default")]
     public class LandingController : Controller
     {
+        [HttpGet]
         public IActionResult Index()
         {
-            // التحقق إذا كان المستخدم مسجل دخوله
-            if (User.Identity.IsAuthenticated)
+            if (User.Identity?.IsAuthenticated == true)
             {
-                // جلب اسم المستخدم من الـ Claims
                 var userName = User.FindFirst(ClaimTypes.Name)?.Value ??
                                User.Identity.Name ??
                                "User";
 
-                // تخزين اسم المستخدم في ViewBag لإرساله للـ View
                 ViewBag.IsAuthenticated = true;
                 ViewBag.UserName = userName;
             }

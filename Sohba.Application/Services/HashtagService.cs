@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -36,10 +37,26 @@ namespace Sohba.Application.Services
             if (string.IsNullOrWhiteSpace(tag))
                 return Result<IEnumerable<PostResponseDto>>.Failure("Tag is required");
 
-            var posts = await _unitOfWork.Posts.GetPostsByHashtagAsync(tag);
+            var cleanTag = tag.Trim().TrimStart('#').ToLowerInvariant();
+            var posts = await _unitOfWork.Posts.GetPostsByHashtagAsync(cleanTag, currentUserId);
 
-            var result = await _postService.MapPostsWithInteractions(posts, currentUserId); 
+            var result = await _postService.MapPostsWithInteractions(posts, currentUserId);
             return result;
+        }
+
+        public async Task<Result<PagedResult<HashtagDto>>> GetTrendingHashtagsPagedAsync(int page = 1, int pageSize = 5)
+        {
+            var (items, totalCount) = await _unitOfWork.Hashtags.GetTrendingHashtagsPagedAsync(page, pageSize);
+            var dtos = _mapper.Map<IEnumerable<HashtagDto>>(items);
+
+            return Result<PagedResult<HashtagDto>>.Success(new PagedResult<HashtagDto>
+            {
+                Items = dtos,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            });
         }
 
     }

@@ -95,9 +95,16 @@ namespace Sohba.Controllers
             var feedResult = await _postService.GetFeedAsync(userId, page, pageSize);
 
             var storiesResult = await _storyService.GetStoriesForFeedAsync(userId);
-            var trendingHashtags = await _hashtagService.GetTrendingHashtagsAsync(5);
+            const int hashtagPageSize = 5;
 
-            ViewBag.TrendingHashtags = trendingHashtags.Value;
+            var hashtagPagedResult =
+                await _hashtagService.GetTrendingHashtagsPagedAsync(1, hashtagPageSize);
+
+            ViewBag.TrendingHashtags =
+                hashtagPagedResult.Value?.Items ?? new List<HashtagDto>();
+
+            ViewBag.HasMoreHashtags =
+                hashtagPagedResult.Value?.HasNextPage ?? false;
             ViewBag.CurrentPage = page;
             ViewBag.PageSize = pageSize;
 
@@ -123,13 +130,29 @@ namespace Sohba.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> TrendingHashtags(int count = 15)
+        public async Task<IActionResult> TrendingHashtags(int page = 1, int pageSize = 5)
         {
-            var result = await _hashtagService.GetTrendingHashtagsAsync(count);
-            if (result.IsFailure)
-                return Json(BaseResponseDto<IEnumerable<HashtagDto>>.FailureResponse(result.Error));
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 20);
 
-            return Json(BaseResponseDto<IEnumerable<HashtagDto>>.SuccessResponse(result.Value));
+            var result = await _hashtagService.GetTrendingHashtagsPagedAsync(
+                page,
+                pageSize);
+
+            if (result.IsFailure)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = result.Error
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                data = result.Value
+            });
         }
 
 

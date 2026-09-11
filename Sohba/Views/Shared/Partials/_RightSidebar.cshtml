@@ -24,30 +24,46 @@
         </div>
 
         <div id="trendingHashtagsContainer" class="space-y-4">
-            @if (ViewBag.TrendingHashtags != null)
+            @if (ViewBag.TrendingHashtags != null &&
+                 ((IEnumerable<dynamic>)ViewBag.TrendingHashtags).Any())
             {
                 @foreach (var hashtag in ViewBag.TrendingHashtags)
                 {
-                    <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2" data-hashtag-tag="@hashtag.Tag">
+                    <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2"
+                         data-hashtag-tag="@hashtag.Tag">
+
                         <div class="flex justify-between items-start">
-                            <span class="text-xs text-gray-400 font-medium">Trending</span>
+                            <span class="text-xs text-gray-400 font-medium">
+                                Trending
+                            </span>
                         </div>
-                        <a href="/Posts/Hashtag?tag=@Uri.EscapeDataString(hashtag.Tag)" class="block">
+
+                        <a href="/Posts/Hashtag?tag=@Uri.EscapeDataString(hashtag.Tag)"
+                           class="block">
+
                             <h4 class="font-bold text-gray-800 text-sm mt-0.5 hover:text-[#345e69]">
                                 #@hashtag.Tag
                             </h4>
+
                         </a>
-                        <p class="text-xs text-gray-400 mt-1">@(hashtag.Count.ToString("N0")) posts</p>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            @(hashtag.Count.ToString("N0")) posts
+                        </p>
                     </div>
                 }
             }
             else
             {
-                <div class="text-xs text-center text-slate-400 py-4">No trends available</div>
+                <div class="text-xs text-center text-slate-400 py-4">
+                    No trends available
+                </div>
             }
         </div>
 
-        <button type="button" id="showMoreHashtagsBtn" class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors">
+        <button type="button"
+                id="showMoreHashtagsBtn"
+                class="w-full text-[#345e69] text-sm font-bold mt-2 hover:bg-[#345e69]/5 p-2 rounded-lg transition-colors @(ViewBag.HasMoreHashtags == true ? "" : "hidden")">
             Show More
         </button>
     </div>

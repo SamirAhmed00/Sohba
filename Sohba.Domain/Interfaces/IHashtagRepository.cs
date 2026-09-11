@@ -8,6 +8,7 @@ namespace Sohba.Domain.Interfaces
     public interface IHashtagRepository : IGenericRepository<Hashtag>
     {
         Task<IEnumerable<Hashtag>> GetTrendingHashtagsAsync(int count = 10);
+        Task<(IEnumerable<Hashtag> Items, int TotalCount)> GetTrendingHashtagsPagedAsync(int page, int pageSize);
         Task<Hashtag?> GetHashtagByTagAsync(string tag);
         Task IncrementHashtagCountAsync(string tag);
     }

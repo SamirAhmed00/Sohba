@@ -1,773 +1,433 @@
-﻿@{
-    ViewData["Title"] = "Sohba - Connect with the world";
+﻿@* File: Sohba/Views/Landing/Index.cshtml *@
+@{
+    ViewData["Title"] = "Connect with the World";
 }
 
-<script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    primary: {
-                        DEFAULT: '#3d8b8b', 
-                        50: '#f0f9f9', 
-                        100: '#d9f0f0',
-                        200: '#b3e0e0',
-                        300: '#80c9c9',
-                        400: '#5aadad',
-                        500: '#3d8b8b',
-                        600: '#317070',
-                        700: '#295959',
-                        800: '#234848',
-                        900: '#1d3c3c',
-                    },
-                    background: '#f7fafa', 
-                    foreground: '#1a2e35', 
-                    card: '#ffffff', 
-                    muted: '#f1f5f5',
-                    'muted-foreground': '#64748b', 
-                    border: '#e2eaea', 
-                },
-            },
-        },
-    }
-</script>
-
-<!-- Three.js & GSAP -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 @section Styles {
     <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
 }
-<!-- Header - Always LTR with New Logo -->
-<nav class="glass-header">
-    <div class="nav-container">
-        <!-- Logo -->
-        <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
-            <div
-                class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
-                <span class="text-white text-2xl font-black">S</span>
-            </div>
-            <span
-                class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
-                SOHBA
-            </span>
-        </a>
 
-        <!-- Auth Buttons / User Info -->
-        <div class="auth-links">
-            @if (ViewBag.IsAuthenticated == true)
-            {
-                <!-- If User Are Login Show Him -->
-                <span class="text-gray-600 font-bold text-sm" data-en="Welcome, @ViewBag.UserName"
-                        data-ar="مرحباً، @ViewBag.UserName">
-                    Welcome, @ViewBag.UserName
-                </span>
-                <a asp-controller="Home" asp-action="Index" class="auth-link-register" data-en="Go to Feed"
-                    data-ar="الصفحة الرئيسية">
-                    Go to Feed
-                </a>
-            }
-            else
-            {
-                <!-- If User Not In System -- Login/Register -->
-                <a asp-controller="Auth" asp-action="Login" class="auth-link-login" data-en="Login"
-                    data-ar="تسجيل الدخول">Login</a>
-                <a asp-controller="Auth" asp-action="Register" class="auth-link-register" data-en="Register"
-                    data-ar="إنشاء حساب">Register</a>
-            }
-            <!-- Language Toggle -->
-            <button class="lang-toggle" onclick="toggleLanguage()" id="langBtn">
-                العربية
-            </button>
-        </div>
-    </div>
-</nav>
+<!-- Open Graph & SEO Metadata -->
+<head>
+    <meta name="description" content="Sohba is a modern, privacy-focused social platform where real human connections happen. Share stories, join thriving groups, and interact authentically." />
+    <meta property="og:title" content="Sohba — Connect with the World" />
+    <meta property="og:description" content="Share stories, discover thriving communities, and build genuine social connections on Sohba." />
+    <meta property="og:type" content="website" />
+</head>
 
-<!-- Hero Section - Updated -->
-<section class="relative overflow-hidden">
-    @* Background gradient *@
-    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/30"></div>
+<div class="landing-wrapper selection:bg-[#345e69] selection:text-white">
 
-    @* Decorative elements *@
-    <div class="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl"></div>
-
-    <div class="container relative px-4 md:px-6 py-20 md:py-32">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            @* Content *@
-            <div class="flex flex-col gap-6 text-center lg:text-left">
-                <div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary w-fit mx-auto lg:mx-0">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                    </span>
-                    New Features Available
+    <!-- 1. NAVIGATION HEADER -->
+    <header class="glass-header" id="landingHeader">
+        <div class="nav-container">
+            <!-- Brand Logo -->
+            <a asp-controller="Landing" asp-action="Index" class="logo-link" aria-label="Sohba Home">
+                <div class="logo-icon">
+                    <span>S</span>
                 </div>
+                <span class="logo-text">SOHBA</span>
+            </a>
 
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground text-balance">
-                    Connect, Share
-                    <br />
-                    <span class="text-primary">Build Your Community</span>
-                </h1>
+            <!-- Section Navigation Anchors (Desktop) -->
+            <nav class="hidden md:flex items-center gap-8 nav-menu" aria-label="Page Sections">
+                <a href="#features" class="nav-anchor-link">Features</a>
+                <a href="#showcase" class="nav-anchor-link">Experience</a>
+                <a href="#metrics" class="nav-anchor-link">Metrics</a>
+                <a href="#about" class="nav-anchor-link">About</a>
+            </nav>
 
-                <p class="text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0 text-pretty">
-                    SOHBA is your gateway to a unique social experience, where technology meets real human connections in a safe and organized environment.
-                </p>
-
-                <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
-                    <a asp-controller="Home" asp-action="Register" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-medium">
-                        Get Started Free
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
-                    <a href="#" class="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border bg-background rounded-lg hover:bg-muted transition-all font-medium">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                        Watch Demo
-                    </a>
-                </div>
-
-                @* Social Proof *@
-                <div class="flex items-center gap-4 pt-6 justify-center lg:justify-start">
-                    <div class="flex -space-x-3">
-                        @for (int i = 1; i <= 4; i++)
-                        {
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/60 to-primary border-2 border-background flex items-center justify-center text-xs font-medium text-primary-foreground">
-                                @((char)(64 + i))
-                            </div>
-                        }
+            <!-- Authentication Actions -->
+            <div class="auth-links">
+                @if (ViewBag.IsAuthenticated == true)
+                {
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold text-slate-600 hidden sm:inline-block">
+                            Welcome back, <span class="text-[#345e69] font-bold">@ViewBag.UserName</span>
+                        </span>
+                        <a asp-controller="Home" asp-action="Index" class="btn-nav-primary">
+                            <span>Go to Feed</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
                     </div>
-                    <div class="text-sm text-muted-foreground">
-                        <span class="font-semibold text-foreground">1,200+</span> users joined this month
-                    </div>
-                </div>
-            </div>
-
-            @* Hero Image/Mockup *@
-            <div class="relative lg:pl-8">
-                <div class="relative bg-card rounded-2xl shadow-2xl border border-border overflow-hidden">
-                    @* Browser Chrome *@
-                    <div class="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border">
-                        <div class="flex gap-1.5">
-                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-                        </div>
-                        <div class="flex-1 mx-4">
-                            <div class="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground">
-                                sohba.app/feed
-                            </div>
-                        </div>
-                    </div>
-
-                    @* Mock Feed Content *@
-                    <div class="p-4 space-y-4 bg-gradient-to-b from-background to-muted/20 min-h-[300px]">
-                        @* Post Card *@
-                        <div class="bg-card rounded-xl p-4 shadow-sm border border-border">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                                    SA
-                                </div>
-                                <div>
-                                    <p class="font-medium text-sm text-foreground">Samir Ahmed</p>
-                                    <p class="text-xs text-muted-foreground">Just now</p>
-                                </div>
-                            </div>
-                            <p class="text-sm text-foreground mb-3">Welcome to SOHBA! Excited to connect with everyone here.</p>
-                            <div class="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span class="flex items-center gap-1">
-                                    <span class="text-red-500">❤</span> 24 reactions
-                                </span>
-                                <span>8 comments</span>
-                            </div>
-                        </div>
-
-                        @* Story Bar *@
-                        <div class="flex gap-3">
-                            @{
-                                string[] labels = { "Add Story", "User 1", "User 2" };
-                            }
-                            @for (int i = 0; i < labels.Length; i++)
-                            {
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="w-14 h-14 rounded-xl @(i == 0 ? "bg-primary/10 border-2 border-dashed border-primary/30" : "bg-gradient-to-br from-primary to-primary/60") flex items-center justify-center">
-                                        @if (i == 0)
-                                        {
-                                            <span class="text-primary text-xl">+</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-primary-foreground text-xs font-medium">@labels[i][0]</span>
-                                        }
-                                    </div>
-                                    <span class="text-[10px] text-muted-foreground">@labels[i]</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                @* Floating Elements *@
-                <div class="absolute -right-4 top-1/4 bg-card rounded-lg shadow-lg border border-border p-3 animate-pulse">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                            <span class="text-green-600 text-sm">✓</span>
-                        </div>
-                        <span class="text-xs font-medium text-foreground">New Friend Request</span>
-                    </div>
-                </div>
-
-                <div class="absolute -left-4 bottom-1/4 bg-card rounded-lg shadow-lg border border-border p-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span class="text-primary text-sm">★</span>
-                        </div>
-                        <span class="text-xs font-medium text-foreground">Trending Now</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<!-- Features Section - updated -->
-<section id="features" class="py-20 md:py-28 bg-background">
-    <div class="container px-4 md:px-6">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-                Everything You Need in One Place
-            </h2>
-            <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Powerful features designed for modern social interaction
-            </p>
-        </div>
-
-        @{
-            var features = new[]
-            {
-                new {
-                    Title = "Self Expression",
-                    Description = "Create text and image posts, add hashtags, and interact with friends through 6 different reactions.",
-                    Icon = "palette"
-                },
-                new {
-                    Title = "Smart Organization",
-                    Description = "Save important posts and categorize them in private folders (Work, Education, Favorites) for easy access later.",
-                    Icon = "folder-open"
-                },
-                new {
-                    Title = "Communities & Pages",
-                    Description = "Create your own groups or join public communities, and follow official pages to stay updated.",
-                    Icon = "users"
                 }
-            };
-        }
+                else
+                {
+                    <div class="flex items-center gap-3">
+                        <a asp-controller="Auth" asp-action="Login" class="btn-nav-ghost">Sign In</a>
+                        <a asp-controller="Auth" asp-action="Register" class="btn-nav-primary">
+                            <span>Join Sohba</span>
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </header>
 
-        <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
-            @foreach (var feature in features)
-            {
-                <div class="group relative bg-card rounded-2xl p-6 lg:p-8 border border-border hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
-                    <div class="mb-5">
-                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                            <i data-lucide="@feature.Icon" class="w-6 h-6"></i>
+    <!-- 2. HERO SECTION -->
+    <section class="hero-section" id="hero">
+        <!-- Interactive Three.js Background Canvas -->
+        <div id="hero-canvas-container" aria-hidden="true">
+            <canvas id="hero-canvas"></canvas>
+        </div>
+
+        <div class="container hero-inner">
+            <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[calc(100vh-5rem)] py-16 sm:py-24">
+
+                <!-- Left Column: Copy & CTAs -->
+                <div class="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left z-10">
+
+                    <!-- Pill Tag -->
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#345e69]/10 border border-[#345e69]/20 text-[#345e69] text-xs sm:text-sm font-bold w-fit mx-auto lg:mx-0 shadow-sm animate-fade-in">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#345e69] opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#345e69]"></span>
+                        </span>
+                        <span>Next-Generation Social Community</span>
+                    </div>
+
+                    <!-- Main Headline -->
+                    <h1 class="hero-title text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]">
+                        Where Real Connections
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#2a4a52] block sm:inline">
+                            Find Their Home.
+                        </span>
+                    </h1>
+
+                    <!-- Body Paragraph -->
+                    <p class="hero-subtitle text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                        Share your world with friends, dive into focused community groups, and experience social media engineered with authenticity, privacy, and speed at its core.
+                    </p>
+
+                    <!-- Hero CTA Buttons -->
+                    <div class="hero-cta-group flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                        @if (ViewBag.IsAuthenticated == true)
+                        {
+                            <a asp-controller="Home" asp-action="Index" class="btn-hero-primary w-full sm:w-auto">
+                                <span>Go to Your Feed</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary w-full sm:w-auto">
+                                <span>Get Started Free</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </a>
+                        }
+                        <a href="#showcase" class="btn-hero-secondary w-full sm:w-auto">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-[#345e69]"></i>
+                            <span>Explore Features</span>
+                        </a>
+                    </div>
+
+                    <!-- Social Proof / Community Counters -->
+                    <div class="flex items-center gap-4 pt-4 justify-center lg:justify-start">
+                        <div class="flex -space-x-3">
+                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-[#345e69] text-white flex items-center justify-center text-xs font-bold">M</div>
+                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-[#4a8291] text-white flex items-center justify-center text-xs font-bold">A</div>
+                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-slate-700 text-white flex items-center justify-center text-xs font-bold">S</div>
+                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">Y</div>
+                        </div>
+                        <div class="text-left text-xs sm:text-sm text-slate-500">
+                            <span class="font-black text-slate-800">12,000+</span> interactions this week
                         </div>
                     </div>
-                    <h3 class="text-xl font-semibold text-foreground mb-3">
-                        @feature.Title
-                    </h3>
-                    <p class="text-muted-foreground leading-relaxed">
-                        @feature.Description
+                </div>
+
+                <!-- Right Column: Interactive Product Showcase Composition -->
+                <div class="lg:col-span-5 relative z-10">
+                    <div class="hero-mockup-wrapper">
+
+                        <!-- Floating Post Card Preview -->
+                        <div class="mockup-card shadow-2xl rounded-3xl p-5 bg-white/95 backdrop-blur-xl border border-slate-200/80 transform hover:-translate-y-1 transition-all duration-300">
+
+                            <!-- Author Header -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] p-0.5 shadow-sm">
+                                        <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center font-black text-[#345e69] text-sm">
+                                            SA
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h2 class="font-bold text-slate-900 text-sm">Samir Ahmed</h2>
+                                            <span class="text-emerald-500 text-xs" title="Verified Member">✓</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-400">Just now • 🌐 Public</p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium">#Technology</span>
+                            </div>
+
+                            <!-- Post Content -->
+                            <p class="text-sm text-slate-700 leading-relaxed mb-4">
+                                Welcome to <strong class="text-[#345e69]">Sohba</strong>! Connect with your friends, build community groups, and share stories that matter.
+                            </p>
+
+                            <!-- Reaction Pills Row (6 Real Sohba Reactions) -->
+                            <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-base">👍</span>
+                                    <span class="text-base">❤️</span>
+                                    <span class="text-base">🔥</span>
+                                    <span class="font-bold text-slate-700 ml-1.5">48 reactions</span>
+                                </div>
+                                <span class="font-medium text-slate-500 hover:text-[#345e69] cursor-pointer">12 comments</span>
+                            </div>
+                        </div>
+
+                        <!-- Floating Live Story Rail Preview -->
+                        <div class="story-preview-pill shadow-xl rounded-2xl p-3 bg-white/95 backdrop-blur-md border border-slate-200/80 flex items-center gap-3 mt-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] p-0.5">
+                                <div class="w-full h-full bg-slate-50 rounded-[10px] flex items-center justify-center text-xs font-bold text-[#345e69]">
+                                    + Add
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-800">24-Hour Ephemeral Stories</p>
+                                <p class="text-[11px] text-slate-400">Share moments with custom privacy control</p>
+                            </div>
+                        </div>
+
+                        <!-- Floating Interaction Badge -->
+                        <div class="floating-badge top-badge hidden sm:flex items-center gap-2.5 p-3 rounded-2xl bg-white shadow-xl border border-slate-100 animate-float">
+                            <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                                <i data-lucide="user-check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Friend Request Accepted</p>
+                                <p class="text-[10px] text-slate-400">2 seconds ago</p>
+                            </div>
+                        </div>
+
+                        <!-- Floating Live Connection Badge -->
+                        <div class="floating-badge bottom-badge hidden sm:flex items-center gap-2.5 p-3 rounded-2xl bg-white shadow-xl border border-slate-100 animate-float-delayed">
+                            <div class="w-8 h-8 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center font-bold text-sm">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Real-Time SignalR</p>
+                                <p class="text-[10px] text-slate-400">Zero-refresh notifications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. PLATFORM CAPABILITIES / EXPERIENCE SHOWCASE -->
+    <section class="py-24 bg-white border-y border-slate-100" id="showcase">
+        <div class="container">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#345e69]">Engineered for Modern Humans</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 mb-4">
+                    The Complete Social Media Experience
+                </h2>
+                <p class="text-slate-600 text-base sm:text-lg">
+                    Everything you need to publish, discover, interact, and organize your digital life without noise or algorithmic fatigue.
+                </p>
+            </div>
+
+            <!-- Bento-Style Feature Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <!-- Card 1: Expressive Posts -->
+                <div class="bento-card group">
+                    <div class="bento-icon-box bg-blue-50 text-blue-600">
+                        <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="bento-title">Expressive Feed</h3>
+                    <p class="bento-desc">
+                        Publish rich text, multi-image posts, and hashtags. React using 6 distinct emotions and engage with nested comment threads up to 4 levels deep.
                     </p>
                 </div>
-            }
-        </div>
-    </div>
-</section>
 
-
-<!-- Control Section - Updated -->
-<section class="py-20 md:py-28 bg-muted/30">
-    <div class="container px-4 md:px-6">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-                Complete Control Over Your
-                <br />
-                Digital Experience
-            </h2>
-        </div>
-
-        @{
-            // البيانات الخاصة بالـ Capabilities
-            var capabilities = new[]
-            {
-                new { Number = "1", Title = "Privacy & Security", Description = "Blocking capabilities, email verification, and control over who sees your stories.", Icon = "shield" },
-                new { Number = "2", Title = "Global Search", Description = "Search for people, posts, groups, or even hashtags with one click.", Icon = "search" },
-                new { Number = "3", Title = "Professional Management", Description = "Complete admin dashboard to monitor statistics and manage reports and content.", Icon = "settings" }
-            };
-
-            // البيانات الخاصة بالـ Highlights
-            var highlights = new[]
-            {
-                new { Title = "Responsive Design", Description = "Works smoothly on all devices", Icon = "smartphone" },
-                new { Title = "Trending", Description = "Follow popular hashtags now", Icon = "trending-up" }
-            };
-        }
-
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            @* Left: Capability List *@
-            <div class="space-y-6">
-                @foreach (var cap in capabilities)
-                {
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-                            @cap.Number
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-foreground mb-1">@cap.Title</h3>
-                            <p class="text-muted-foreground text-sm leading-relaxed">@cap.Description</p>
-                        </div>
+                <!-- Card 2: Communities & Pages -->
+                <div class="bento-card group">
+                    <div class="bento-icon-box bg-emerald-50 text-emerald-600">
+                        <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
-                }
-            </div>
-
-            @* Right: Highlight Cards *@
-            <div class="grid sm:grid-cols-2 gap-4">
-                @foreach (var highlight in highlights)
-                {
-                    <div class="bg-card rounded-xl p-5 border border-border shadow-sm hover:shadow-md transition-shadow">
-                        <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-3">
-                            <i data-lucide="@highlight.Icon" class="w-5 h-5"></i>
-                        </div>
-                        <h4 class="font-semibold text-foreground mb-1">@highlight.Title</h4>
-                        <p class="text-sm text-muted-foreground">@highlight.Description</p>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</section>
-
-
-
-<!-- All Detailed Features - Updated -->
-
-<section class="py-20 md:py-28 bg-background">
-    <div class="container px-4 md:px-6">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
-                Complete Application Features
-            </h2>
-            <p class="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Advanced software architecture ensuring a comprehensive and professional social experience
-            </p>
-        </div>
-
-        @{
-            
-            var featureGroups = new[]
-            {
-                new { Title = "Authentication", Icon = "shield", Color = "text-amber-600", BgColor = "bg-amber-50", Features = new[] { "User Can Register", "User Can Login", "Reset Password" } },
-                new { Title = "Profile", Icon = "user", Color = "text-blue-600", BgColor = "bg-blue-50", Features = new[] { "View/Edit Profile", "Change Password", "Update Settings" } },
-                new { Title = "Posts", Icon = "file-text", Color = "text-green-600", BgColor = "bg-green-50", Features = new[] { "Create/Edit Post", "Delete Post", "View Feed" } },
-                new { Title = "Interactions", Icon = "heart", Color = "text-red-500", BgColor = "bg-red-50", Features = new[] { "React to Post", "Comment", "Reply to Comment" } },
-                new { Title = "Saved", Icon = "bookmark", Color = "text-purple-600", BgColor = "bg-purple-50", Features = new[] { "Save/Remove Post", "Categories", "Quick Access" } },
-                new { Title = "Friends", Icon = "users", Color = "text-cyan-600", BgColor = "bg-cyan-50", Features = new[] { "Friend Requests", "Block/Unblock", "Manage Connections" } },
-                new { Title = "Groups", Icon = "building-2", Color = "text-orange-600", BgColor = "bg-orange-50", Features = new[] { "Create Group", "Join/Leave", "Group Management" } },
-                new { Title = "Pages", Icon = "book-open", Color = "text-pink-600", BgColor = "bg-pink-50", Features = new[] { "Create Page", "Follow/Unfollow", "Page Admin" } },
-                new { Title = "Stories", Icon = "book-open", Color = "text-indigo-600", BgColor = "bg-indigo-50", Features = new[] { "Create Story", "View Stories", "Story Privacy" } },
-                new { Title = "Search", Icon = "search", Color = "text-teal-600", BgColor = "bg-teal-50", Features = new[] { "Global Search", "Filter Results", "Advanced Search" } },
-                new { Title = "Admin", Icon = "layout-dashboard", Color = "text-slate-600", BgColor = "bg-slate-100", Features = new[] { "Dashboard", "Manage Users", "Reports & Stats" } },
-                new { Title = "General", Icon = "sparkles", Color = "text-violet-600", BgColor = "bg-violet-50", Features = new[] { "Trending", "Responsive", "Real-time" } }
-            };
-        }
-
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            @foreach (var group in featureGroups)
-            {
-                <div class="bg-card rounded-xl p-5 border border-border hover:border-primary/20 hover:shadow-md transition-all duration-200">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-9 h-9 rounded-lg @group.BgColor @group.Color flex items-center justify-center">
-                            <i data-lucide="@group.Icon" class="w-4 h-4"></i>
-                        </div>
-                        <h3 class="font-semibold text-foreground">@group.Title</h3>
-                    </div>
-                    <ul class="space-y-2">
-                        @foreach (var feature in group.Features)
-                        {
-                            <li class="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span class="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
-                                @feature
-                            </li>
-                        }
-                    </ul>
+                    <h3 class="bento-title">Groups & Pages</h3>
+                    <p class="bento-desc">
+                        Create public or private communities. Manage members with tiered roles (Owner, Admin, Member), membership requests, and group-exclusive discussions.
+                    </p>
                 </div>
-            }
+
+                <!-- Card 3: Ephemeral Stories -->
+                <div class="bento-card group">
+                    <div class="bento-icon-box bg-purple-50 text-purple-600">
+                        <i data-lucide="camera" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="bento-title">24-Hour Stories</h3>
+                    <p class="bento-desc">
+                        Share moments with media and photos. Control story privacy with Friends-Only mode, track real-time viewer lists, and react instantly.
+                    </p>
+                </div>
+
+                <!-- Card 4: Smart Organization -->
+                <div class="bento-card group">
+                    <div class="bento-icon-box bg-amber-50 text-amber-600">
+                        <i data-lucide="bookmark" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="bento-title">Saved Collections</h3>
+                    <p class="bento-desc">
+                        Organize valuable content into custom folders such as Work, Favorites, and Education. Never lose an important post or resource again.
+                    </p>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
+    <!-- 4. DETAILED FEATURES OVERVIEW -->
+    <section class="py-24 bg-slate-50/70" id="features">
+        <div class="container">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#345e69]">Robust Architecture</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 mb-4">
+                    Security, Privacy, and Control
+                </h2>
+                <p class="text-slate-600 text-base">
+                    Built upon modern enterprise standards with full respect for your personal boundary.
+                </p>
+            </div>
 
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Architecture Feature 1 -->
+                <div class="feature-detail-card">
+                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Private & Secure</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Granular account privacy, peer-to-peer user blocking, email verification, and rate limiting ensure your community remains safe and spam-free.
+                    </p>
+                </div>
 
-<!-- About Section - Updated -->
-<section id="about" class="py-20 md:py-28 bg-muted/30">
-    <div class="container px-4 md:px-6">
-        <div class="flex flex-col items-center text-center max-w-2xl mx-auto">
-            @* Developer Avatar *@
-            <div class="relative mb-6">
-                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-3xl font-bold text-primary border-4 border-background shadow-lg">
+                <!-- Architecture Feature 2 -->
+                <div class="feature-detail-card">
+                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Universal Search</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Instant discovery across users, posts, trending hashtags, pages, and groups with unified global search and instant keyboard shortcuts.
+                    </p>
+                </div>
+
+                <!-- Architecture Feature 3 -->
+                <div class="feature-detail-card">
+                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
+                        <i data-lucide="bell" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Live SignalR Hubs</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Experience real-time notifications for reactions, comments, friend requests, and group invites delivered directly without refreshing your browser.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. VERIFIED PLATFORM METRICS -->
+    <section class="py-20 bg-[#345e69] text-white" id="metrics">
+        <div class="container">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+
+                <div class="metric-block">
+                    <div class="metric-number counter" data-value="1200" data-suffix="+">0</div>
+                    <div class="metric-label">Active Members</div>
+                </div>
+
+                <div class="metric-block">
+                    <div class="metric-number counter" data-value="6" data-suffix="">0</div>
+                    <div class="metric-label">Reaction Emotions</div>
+                </div>
+
+                <div class="metric-block">
+                    <div class="metric-number counter" data-value="100" data-suffix="%">0</div>
+                    <div class="metric-label">Private & Clean</div>
+                </div>
+
+                <div class="metric-block">
+                    <div class="metric-number counter" data-value="24" data-suffix="h">0</div>
+                    <div class="metric-label">Story Lifespan</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. ABOUT CREATOR / TECH STACK SECTION -->
+    <section class="py-24 bg-white" id="about">
+        <div class="container">
+            <div class="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-3xl p-8 sm:p-12 text-center shadow-sm">
+
+                <!-- Avatar Emblem -->
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] text-white text-2xl font-black flex items-center justify-center mx-auto mb-6 shadow-md shadow-[#345e69]/20">
                     SA
                 </div>
-                <div class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <span class="text-primary-foreground text-xs">✓</span>
+
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-3">
+                    Crafted with Pride by Samir Ahmed
+                </h2>
+
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl mx-auto mb-8">
+                    Sohba is engineered as an enterprise-grade social application built with <strong class="text-slate-800">ASP.NET Core 10</strong>, <strong class="text-slate-800">Entity Framework Core</strong>, and <strong class="text-slate-800">Tailwind CSS</strong>, blending scalable backend patterns with an intuitive, modern user experience.
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors shadow-sm">
+                        <i data-lucide="github" class="w-4 h-4"></i>
+                        <span>Explore on GitHub</span>
+                    </a>
+                    @if (ViewBag.IsAuthenticated == true)
+                    {
+                        <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#345e69] hover:bg-[#2a4a52] text-white text-sm font-semibold transition-colors shadow-sm">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            <span>Go to Feed</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Auth" asp-action="Register" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#345e69] hover:bg-[#2a4a52] text-white text-sm font-semibold transition-colors shadow-sm">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span>Create Account</span>
+                        </a>
+                    }
                 </div>
             </div>
+        </div>
+    </section>
 
-            <h2 class="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                About the Developer
-            </h2>
+    <!-- 7. FOOTER -->
+    <footer class="landing-footer">
+        <div class="container footer-content">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-[#345e69] text-white flex items-center justify-center font-bold text-sm">
+                    S
+                </div>
+                <span class="font-black tracking-tight text-slate-800 text-lg">SOHBA</span>
+            </div>
 
-            <p class="text-muted-foreground leading-relaxed mb-6">
-                SOHBA was developed by <span class="font-semibold text-foreground">Samir Ahmed</span>.
-                Passionate about building powerful software solutions and user interfaces that blend simplicity with professionalism.
+            <p class="text-xs text-slate-500 text-center sm:text-left">
+                &copy; @DateTime.UtcNow.Year Sohba Platform. Built by Samir Ahmed.
             </p>
 
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-border bg-background rounded-md hover:bg-muted transition-colors font-medium">
-                <i data-lucide="github" class="w-4 h-4"></i>
-                Follow on GitHub
-            </a>
-        </div>
-    </div>
-</section>
-
-
-<!-- Stats Bar - Updated -->
-<section class="py-16 bg-card border-y border-border">
-    <div class="container px-4 md:px-6">
-        @{
-            var stats = new[]
-            {
-                new { Value = 1200, Label = "User Capabilities", Suffix = "+" },
-                new { Value = 12, Label = "Technical Features", Suffix = "" },
-                new { Value = 50, Label = "Interactive Reactions", Suffix = "+" },
-                new { Value = 100, Label = "Data Security %", Suffix = "%" }
-            };
-        }
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            @foreach (var stat in stats)
-            {
-                <div class="text-center">
-                    <span class="text-4xl md:text-5xl font-bold text-primary counter" data-value="@stat.Value" data-suffix="@stat.Suffix">
-                        0
-                    </span>
-                    <p class="text-sm text-muted-foreground mt-2 uppercase tracking-wide">
-                        @stat.Label
-                    </p>
-                </div>
-            }
-        </div>
-    </div>
-</section>
-
-<!-- Footer -->
-<footer>
-    <div class="footer-content">
-        <!-- Logo -->
-        <a asp-controller="Landing" asp-action="Index" class="flex-shrink-0 flex items-center group cursor-pointer">
-            <div class="bg-[#345e69] w-10 h-10 flex items-center justify-center rounded-xl shadow-lg group-hover:rotate-12 group-hover:scale-110 transition-all duration-300 ease-in-out">
-                <span class="text-white text-2xl font-black">S</span>
+            <div class="flex items-center gap-4 text-xs font-semibold text-slate-600">
+                <a href="#hero" class="hover:text-[#345e69] transition-colors">Back to Top</a>
             </div>
-            <span class="ml-3 text-2xl font-black tracking-tighter bg-gradient-to-r from-[#345e69] via-[#345e69] via-[20%] to-[#4a8291] bg-[length:200%_auto] hover:bg-right transition-all duration-300 bg-clip-text text-transparent hidden md:block">
-                SOHBA
-            </span>
-        </a>
-        <p class="copyright" data-en="© 2026 Developed with pride by Samir Ahmed"
-            data-ar="© 2026 تم التطوير بكل فخر بواسطة سمير أحمد">© 2026 Developed with pride by Samir Ahmed</p>
-    </div>
-</footer>
+        </div>
+    </footer>
 
-@* <script>
-    // Language Management
-    let currentLang = 'en';
+</div>
 
-    function toggleLanguage() {
-    currentLang = currentLang === 'en' ? 'ar' : 'en';
-    const btn = document.getElementById('langBtn');
-    const html = document.documentElement;
-
-    // Update button
-    btn.textContent = currentLang === 'en' ? 'العربية' : 'English';
-
-    // Update direction
-    if (currentLang === 'ar') {
-    html.setAttribute('dir', 'rtl');
-    html.setAttribute('lang', 'ar');
-    } else {
-    html.setAttribute('dir', 'ltr');
-    html.setAttribute('lang', 'en');
-    }
-
-    // Update all translatable elements
-    document.querySelectorAll('[data-en]').forEach(el => {
-    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-    el.placeholder = el.getAttribute('data-' + currentLang);
-    } else {
-    el.textContent = el.getAttribute('data-' + currentLang);
-    }
-    });
-
-    // Save preference
-    localStorage.setItem('sohba-lang', currentLang);
-    }
-
-    // Load saved language
-    document.addEventListener('DOMContentLoaded', () => {
-    const savedLang = localStorage.getItem('sohba-lang');
-    if (savedLang === 'ar') {
-    toggleLanguage();
-    }
-    });
-
-    // GSAP Animations (Optimized)
-    gsap.registerPlugin(ScrollTrigger);
-
-   const heroElements = document.querySelectorAll(".hero-anim");
-
-if (heroElements.length > 0) {
-    gsap.from(heroElements, {
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.1,
-        ease: "power2.out"
-    });
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="~/js/features/landing.js" asp-append-version="true"></script>
 }
-
-    // Stats counter only
-    const stats = document.querySelectorAll(".stat-num");
-    stats.forEach(stat => {
-    const target = parseInt(stat.getAttribute("data-target"));
-    ScrollTrigger.create({
-    trigger: stat,
-    start: "top 85%",
-    once: true,
-    onEnter: () => {
-    gsap.to(stat, {
-    innerHTML: target,
-    duration: 2,
-    snap: { innerHTML: 1 },
-    ease: "power2.out"
-    });
-    }
-    });
-    });
-
-    // Three.js Background (Optimized)
-const canvasContainer = document.getElementById('canvas-container');
-
-if (canvasContainer && typeof THREE !== 'undefined') {
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-
-    const renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: false,
-        powerPreference: "low-power"
-    });
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-
-    canvasContainer.appendChild(renderer.domElement);
-
-    // Minimal particles
-    const geometry = new THREE.BufferGeometry();
-    const count = 50;
-    const posArr = new Float32Array(count * 3);
-
-    for (let i = 0; i < count * 3; i++) {
-        posArr[i] = (Math.random() - 0.5) * 10;
-    }
-
-    geometry.setAttribute(
-        'position',
-        new THREE.BufferAttribute(posArr, 3)
-    );
-
-    const material = new THREE.PointsMaterial({
-        color: 0x345e69,
-        size: 0.08,
-        transparent: true,
-        opacity: 0.3
-    });
-
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-
-    camera.position.z = 4;
-
-    // Animation loop with frame skipping
-    let frameCount = 0;
-
-    function animate() {
-        requestAnimationFrame(animate);
-
-        frameCount++;
-
-        if (frameCount % 2 === 0) {
-            points.rotation.y += 0.0005;
-            renderer.render(scene, camera);
-        }
-    }
-
-    animate();
-
-    // Resize handler
-    let resizeTimeout;
-
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-
-        resizeTimeout = setTimeout(() => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(
-                window.innerWidth,
-                window.innerHeight
-            );
-        }, 200);
-    });
-
-    // Cleanup on page hide
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            renderer.dispose();
-        }
-    });
-}
-
-    // Minimal particles
-    const geometry = new THREE.BufferGeometry();
-    const count = 50;
-    const posArr = new Float32Array(count * 3);
-    for (let i = 0; i < count * 3; i++) {
-    posArr[i] = (Math.random() - 0.5) * 10;
-    }
-    geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-
-    const material = new THREE.PointsMaterial({
-    color: 0x345e69,
-    size: 0.08,
-    transparent: true,
-    opacity: 0.3
-    });
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-    camera.position.z = 4;
-
-    // Animation loop with frame skipping
-    let frameCount = 0;
-    function animate() {
-    requestAnimationFrame(animate);
-    frameCount++;
-    if (frameCount % 2 === 0) {
-    points.rotation.y += 0.0005;
-    renderer.render(scene, camera);
-    }
-    }
-    animate();
-
-    // Resize handler
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    }, 200);
-    });
-
-    // Cleanup on page hide
-    document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-    renderer.dispose();
-    }
-    });
-
-
-    // Animation For Landing
-    const observerOptions = { threshold: 0.5 };
-    const statsObserver = new IntersectionObserver((entries) => {
-    
-    entries.forEach(entry => {
-    
-    if (entry.isIntersecting) {
-    
-    const statNumbers = entry.target.querySelectorAll('.stat-number');
-    statNumbers.forEach(stat => {
-    
-    const target = parseInt(stat.dataset.target);
-    animateCounter(stat, target);
-    });
-    statsObserver.unobserve(entry.target);
-    } 
-    });
-    }, observerOptions);
-
-    const statsSection = document.querySelector('section.bg-primary');
-    if (statsSection) { statsObserver.observe(statsSection); } 
-
-    function animateCounter(element, target) {
-    
-    let current = 0;
-    const increment = target / 50;
-    const timer = setInterval(() => {
-    
-    current += increment;
-    if (current >= target) {
-    
-    element.textContent = target;
-    clearInterval(timer);
-    } else {
-    
-    element.textContent = Math.floor(current);
-    } 
-    }, 30);
-    }
-
-
-    // Counter 
-    document.addEventListener("DOMContentLoaded", () => {
-    const counters = document.querySelectorAll('.counter');
-    const duration = 2000; // 2 seconds
-
-    counters.forEach(counter => {
-    const target = parseInt(counter.getAttribute('data-value'));
-    const suffix = counter.getAttribute('data-suffix');
-    let start = 0;
-    const stepTime = Math.abs(Math.floor(duration / target));
-
-    const timer = setInterval(() => {
-    start += 1;
-    counter.innerText = start.toLocaleString() + suffix;
-    if (start >= target) {
-    clearInterval(timer);
-    counter.innerText = target.toLocaleString() + suffix;
-    }
-    }, stepTime);
-    });
-    });
-
-    // تفعيل أيقونات Lucide
-    lucide.createIcons();
-</script>
-
- *@
