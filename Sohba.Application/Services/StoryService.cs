@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.StoryAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
@@ -19,13 +20,17 @@ namespace Sohba.Application.Services
         private readonly IMapper _mapper;
         private readonly IStoryDomainService _storyDomainService;
         private readonly INotificationService _notificationService;
+        private readonly IFileStorageService _fileStorage;
+        private readonly ILogger<StoryService> _logger;
 
-        public StoryService(IUnitOfWork unitOfWork, IMapper mapper, IStoryDomainService storyDomainService, INotificationService notificationService)
+        public StoryService(IUnitOfWork unitOfWork, IMapper mapper, IStoryDomainService storyDomainService, INotificationService notificationService, IFileStorageService fileStorage, ILogger<StoryService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _storyDomainService = storyDomainService;
             _notificationService = notificationService;
+            _fileStorage = fileStorage;
+            _logger = logger;
         }
 
         public async Task<Result<StoryResponseDto>> CreateStoryAsync(StoryCreateDto storyDto, Guid userId)
@@ -46,12 +51,22 @@ namespace Sohba.Application.Services
             // StoryService must NOT perform any file I/O (Application layer cannot touch Infrastructure).
             var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
+            string? normalizedMediaType = null;
+            if (!string.IsNullOrEmpty(storyDto.MediaUrl))
+            {
+                normalizedMediaType = (storyDto.MediaType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true
+                                      || storyDto.MediaUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+                                      || storyDto.MediaUrl.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
+                    ? "video"
+                    : "image";
+            }
+
             var story = new Story
             {
                 UserId = userId,
-                Content = storyDto.Content,
+                Content = string.IsNullOrWhiteSpace(storyDto.Content) ? null : storyDto.Content.Trim(),
                 MediaUrl = storyDto.MediaUrl,
-                MediaType = storyDto.MediaType ?? (storyDto.MediaUrl != null ? "image" : null),
+                MediaType = normalizedMediaType,
                 CreatedAt = now,
                 ExpiresAt = now.AddHours(24),
                 IsDeleted = false,
@@ -67,7 +82,7 @@ namespace Sohba.Application.Services
             {
                 Id = story.Id,
                 Content = story.Content,
-                MediaUrl = story.MediaUrl,
+                MediaUrl = !string.IsNullOrEmpty(story.MediaUrl) ? $"/Stories/Media?storyId={story.Id}" : null,
                 MediaType = story.MediaType,
                 UserName = user.Name,
                 UserProfilePicture = user.ProfilePictureUrl,
@@ -117,15 +132,16 @@ namespace Sohba.Application.Services
             {
                 foreach (var story in userStories)
                 {
-                    var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(story.Id);
-                    var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(story.Id, userId);
+                    // Memory projection from eager-loaded Viewers navigation property
+                    var viewersCount = story.Viewers?.Count ?? 0;
+                    var hasViewed = story.Viewers?.Any(v => v.UserId == userId) ?? false;
 
                     result.Add(new StoryResponseDto
                     {
                         Id = story.Id,
                         UserId = story.UserId,
                         Content = story.Content,
-                        MediaUrl = story.MediaUrl,
+                        MediaUrl = !string.IsNullOrEmpty(story.MediaUrl) ? $"/Stories/Media?storyId={story.Id}" : null,
                         MediaType = story.MediaType,
                         UserName = story.User?.Name,
                         UserProfilePicture = story.User?.ProfilePictureUrl,
@@ -139,6 +155,7 @@ namespace Sohba.Application.Services
             }
 
             return Result<IEnumerable<StoryResponseDto>>.Success(result);
+
         }
 
         public async Task<Result<StoryResponseDto>> GetStoryByIdAsync(Guid storyId, Guid currentUserId)
@@ -148,6 +165,9 @@ namespace Sohba.Application.Services
             if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
                 return Result<StoryResponseDto>.Failure("Story not found or expired.");
 
+            // Block check: blocked users cannot access stories
+            if (await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(currentUserId, story.UserId))
+                return Result<StoryResponseDto>.Failure("Story not found.");
 
             // PRIVACY CHECK: Check if user is friends with story creator
             var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, story.UserId);
@@ -158,10 +178,8 @@ namespace Sohba.Application.Services
             var canView = _storyDomainService.CanViewStory(
                     currentUserId, story.UserId, story.Privacy, isOwnerAccountPrivate, isFriend, story.CreatedAt);
 
-
             if (!canView.IsSuccess)
                 return Result<StoryResponseDto>.Failure(canView.Error);
-
 
             var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(storyId);
             var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(storyId, currentUserId);
@@ -170,7 +188,7 @@ namespace Sohba.Application.Services
             {
                 Id = story.Id,
                 Content = story.Content,
-                MediaUrl = story.MediaUrl,
+                MediaUrl = !string.IsNullOrEmpty(story.MediaUrl) ? $"/Stories/Media?storyId={story.Id}" : null,
                 MediaType = story.MediaType,
                 UserName = story.User?.Name,
                 UserProfilePicture = story.User?.ProfilePictureUrl,
@@ -197,6 +215,20 @@ namespace Sohba.Application.Services
                 return Result.Success();
             }
 
+            if (await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(userId, story.UserId))
+                return Result.Failure("Story not found or expired.");
+
+            // Enforce authorization: non-owners must be authorized to view the story
+            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(userId, story.UserId);
+            var owner = await _unitOfWork.Users.GetByIdAsync(story.UserId);
+            var isOwnerAccountPrivate = owner?.IsPrivateAccount ?? false;
+
+            var canView = _storyDomainService.CanViewStory(
+                userId, story.UserId, story.Privacy, isOwnerAccountPrivate, isFriend, story.CreatedAt);
+
+            if (!canView.IsSuccess)
+                return Result.Failure(canView.Error);
+
             var alreadyViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(storyId, userId);
             if (!alreadyViewed)
             {
@@ -207,43 +239,67 @@ namespace Sohba.Application.Services
             return Result.Success();
         }
 
-        public async Task<Result> DeleteStoryAsync(Guid storyId, Guid userId)
+        public async Task<string?> GetStoryStoragePathAsync(Guid storyId)
         {
             var story = await _unitOfWork.Stories.GetByIdAsync(storyId);
+            return story?.MediaUrl;
+        }
 
-            if (story == null)
-                return Result.Failure("Story not found.");
+        public async Task<Result> DeleteStoryAsync(Guid storyId, Guid userId, bool isAdmin = false)
+        {
+            var story = await _unitOfWork.Stories.GetByIdAsync(storyId);
+            if (story == null) return Result.Failure("Story not found.");
 
-            if (story.UserId != userId)
+            if (!isAdmin && story.UserId != userId)
                 return Result.Failure("You are not authorized to delete this story.");
 
             story.IsDeleted = true;
             _unitOfWork.Stories.Update(story);
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation("Story {StoryId} deleted by User {UserId} (Admin: {IsAdmin})", storyId, userId, isAdmin);
             return Result.Success();
         }
 
         public async Task<Result<IEnumerable<StoryResponseDto>>> GetUserStoriesAsync(Guid userId, Guid currentUserId)
         {
-            var stories = await _unitOfWork.Stories.GetUserStoriesAsync(userId, currentUserId);
+            if (userId != currentUserId && await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(currentUserId, userId))
+                return Result<IEnumerable<StoryResponseDto>>.Failure("User stories unavailable.");
+
+            var targetUser = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (targetUser == null)
+                return Result<IEnumerable<StoryResponseDto>>.Failure("User not found.");
+
+            if (userId != currentUserId && targetUser.IsPrivateAccount)
+            {
+                var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, userId);
+                if (!isFriend)
+                    return Result<IEnumerable<StoryResponseDto>>.Failure("This account is private. You must be friends to view this story.");
+            }
+
+            var stories = (await _unitOfWork.Stories.GetUserStoriesAsync(userId, currentUserId)).ToList();
+            var storyIds = stories.Select(s => s.Id).ToList();
+
+            // Batch-load reaction statistics and current user reactions in 2 single queries
+            var reactionCounts = await _unitOfWork.Stories.GetReactionCountsForStoriesAsync(storyIds);
+            var userReactions = await _unitOfWork.Stories.GetUserReactionsForStoriesAsync(storyIds, currentUserId);
 
             var result = new List<StoryResponseDto>();
             foreach (var story in stories)
             {
-                var viewersCount = await _unitOfWork.Stories.GetViewersCountAsync(story.Id);
-                var hasViewed = await _unitOfWork.Stories.HasUserViewedStoryAsync(story.Id, currentUserId);
+                // In-memory projection from eager-loaded Viewers
+                var viewersCount = story.Viewers?.Count ?? 0;
+                var hasViewed = story.Viewers?.Any(v => v.UserId == currentUserId) ?? false;
 
-                var reactionsCount = await _unitOfWork.Stories.GetReactionCountAsync(story.Id);
-                var userReaction = await _unitOfWork.Stories.GetReactionAsync(story.Id, currentUserId);
-
+                reactionCounts.TryGetValue(story.Id, out var reactionsCount);
+                var currentUserReacted = userReactions.ContainsKey(story.Id);
 
                 result.Add(new StoryResponseDto
                 {
                     Id = story.Id,
                     UserId = story.UserId,
                     Content = story.Content,
-                    MediaUrl = story.MediaUrl,
+                    MediaUrl = !string.IsNullOrEmpty(story.MediaUrl) ? $"/Stories/Media?storyId={story.Id}" : null,
                     MediaType = story.MediaType,
                     UserName = story.User?.Name,
                     UserProfilePicture = story.User?.ProfilePictureUrl,
@@ -253,7 +309,7 @@ namespace Sohba.Application.Services
                     HasUserViewed = hasViewed,
                     Privacy = story.Privacy.ToString(),
                     ReactionsCount = reactionsCount,
-                    CurrentUserReacted = userReaction != null
+                    CurrentUserReacted = currentUserReacted
                 });
             }
 
@@ -261,10 +317,14 @@ namespace Sohba.Application.Services
         }
 
 
+
         public async Task<Result<(bool Added, int NewCount)>> ToggleStoryReactionAsync(Guid userId, Guid storyId, ReactionType type)
         {
             var story = await _unitOfWork.Stories.GetByIdAsync(storyId);
             if (story == null || story.IsDeleted || story.ExpiresAt < DateTime.UtcNow)
+                return Result<(bool, int)>.Failure("Story not found or expired.");
+
+            if (await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(userId, story.UserId))
                 return Result<(bool, int)>.Failure("Story not found or expired.");
 
             // Reuse the same visibility check as viewing — you cannot react to a story you
@@ -281,8 +341,18 @@ namespace Sohba.Application.Services
 
             if (existing != null)
             {
-                _unitOfWork.Stories.RemoveReaction(existing);
-                added = false;
+                if (existing.Type == type)
+                {
+                    // Same type: toggle off
+                    _unitOfWork.Stories.RemoveReaction(existing);
+                    added = false;
+                }
+                else
+                {
+                    // Different type: update reaction
+                    existing.Type = type;
+                    added = true;
+                }
             }
             else
             {

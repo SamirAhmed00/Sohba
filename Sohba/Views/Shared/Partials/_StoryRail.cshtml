@@ -72,14 +72,26 @@
                 <div class="absolute inset-0 @(unviewedCount > 0 ? "border-2 border-[#345e69]" : "border border-gray-300") rounded-2xl z-10"></div>
 
                 <!-- Story Media -->
+                @{
+                    var storyMediaUrl = $"/Stories/Media?storyId={firstStory.Id}";
+                    var isVideoStory = !string.IsNullOrEmpty(firstStory.MediaType) && firstStory.MediaType.Contains("video");
+                }
                 @if (!string.IsNullOrEmpty(firstStory.MediaUrl))
                 {
-                    <img src="@firstStory.MediaUrl" class="w-full h-full object-cover" alt="Story" loading="lazy">
+                    @if (isVideoStory)
+                    {
+                        <video src="@storyMediaUrl#t=0.5" class="w-full h-full object-cover pointer-events-none" preload="metadata" muted playsinline></video>
+                    }
+                    else
+                    {
+                        <img src="@storyMediaUrl" class="w-full h-full object-cover" alt="Story" loading="lazy" onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=@(Uri.EscapeDataString(firstStory.UserName ?? "User"))&background=345e69&color=fff';">
+                    }
                 }
                 else
                 {
-                    <img src="https://ui-avatars.com/api/?name=@firstStory.UserName&background=random"
-                         class="w-full h-full object-cover" alt="Story">
+                    <div class="w-full h-full bg-gradient-to-br from-[#345e69] to-slate-800 flex items-center justify-center p-2 text-center text-white text-xs font-semibold">
+                        @(firstStory.Content ?? firstStory.UserName)
+                    </div>
                 }
 
                 <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60"></div>

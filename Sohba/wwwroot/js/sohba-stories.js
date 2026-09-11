@@ -46,62 +46,127 @@ function showStory(index) {
 
     // Load media
     const contentDiv = document.getElementById('storyContent');
-    if (story.mediaType === 'video') {
-        contentDiv.innerHTML = `<video src="${story.mediaUrl}" class="max-h-full max-w-full" autoplay></video>`;
-    } else {
-        contentDiv.innerHTML = `<img src="${story.mediaUrl || 'https://via.placeholder.com/600'}" class="max-h-full max-w-full object-contain">`;
-    }
+    contentDiv.replaceChildren();
 
+    if (story.mediaType === 'video') {
+        const video = document.createElement('video');
+        video.src = story.mediaUrl;
+        video.className = 'max-h-full max-w-full';
+        video.autoplay = true;
+        video.playsInline = true;
+        contentDiv.appendChild(video);
+    } else {
+        const img = document.createElement('img');
+        img.src = story.mediaUrl || 'https://via.placeholder.com/600';
+        img.className = 'max-h-full max-w-full object-contain';
+        contentDiv.appendChild(img);
+    }
 
     const currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
     const isOwner = currentUserId && story.userId === currentUserId;
     document.getElementById('storyOwnerActions').classList.toggle('hidden', !isOwner);
-    document.getElementById('storyViewersTrigger').style.cursor = isOwner ? 'pointer' : 'default';
-    document.getElementById('storyViewersTrigger').onclick = isOwner ? openStoryViewersPanel : null;
+
+    const viewersTrigger = document.getElementById('storyViewersTrigger');
+    if (viewersTrigger) {
+        viewersTrigger.style.cursor = isOwner ? 'pointer' : 'default';
+        viewersTrigger.onclick = isOwner ? openStoryViewersPanel : null;
+    }
 
     // reaction state
     document.getElementById('storyLikeCount').textContent = story.reactionsCount || 0;
     document.getElementById('storyLikeIcon').textContent = story.currentUserReacted ? '❤️' : '🤍';
 
-    fetch('/Stories/MarkAsViewed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storyId: story.id })
-    });
+    window.SohbaApp.post('/Stories/MarkAsViewed', { storyId: story.id });
 }
 
 // Progress bar
 function startProgress() {
+    const progressBar = document.getElementById('storyProgress');
+    if (progressBar) progressBar.style.width = '0%';
+
+    const currentStory = currentUserStories[currentStoryIndex];
+    const videoEl = document.querySelector('#storyContent video');
+
+    if (currentStory && currentStory.mediaType === 'video' && videoEl) {
+        videoEl.ontimeupdate = function () {
+            if (videoEl.duration) {
+                const pct = (videoEl.currentTime / videoEl.duration) * 100;
+                if (progressBar) progressBar.style.width = pct + '%';
+            }
+        };
+        videoEl.onended = function () {
+            navigateStory('next');
+        };
+        return;
+    }
+
     let progress = 0;
     progressInterval = setInterval(() => {
         progress += 1;
-        document.getElementById('storyProgress').style.width = progress + '%';
+        if (progressBar) progressBar.style.width = progress + '%';
 
         if (progress >= 100) {
             clearInterval(progressInterval);
             navigateStory('next');
         }
-    }, 50); // 5 seconds total
+    }, 50); // 5 seconds total for images
+}
+
+// Helper to unconditionally stop and unload all playing videos in the Story Viewer
+function stopAllStoryVideos() {
+    const contentDiv = document.getElementById('storyContent');
+    if (contentDiv) {
+        const videos = contentDiv.querySelectorAll('video');
+        videos.forEach(video => {
+            video.ontimeupdate = null;
+            video.onended = null;
+            video.pause();
+            video.currentTime = 0;
+            video.removeAttribute('src');
+            try {
+                video.load(); // Forces browser to abort media decoding and stop audio
+            } catch (e) {
+                // Ignore load abort exceptions
+            }
+        });
+        contentDiv.replaceChildren();
+    }
 }
 
 // Navigation
 window.navigateStory = function (direction) {
     clearInterval(progressInterval);
+    stopAllStoryVideos();
 
     if (direction === 'next') {
         if (currentStoryIndex < currentUserStories.length - 1) {
             showStory(currentStoryIndex + 1);
             startProgress();
         } else {
-            closeStoryViewer();
+            // Advance to next user's stories in rail if available
+            const currentCard = document.querySelector(`.story-user-card[data-user-id="${currentUserId}"]`);
+            const nextCard = currentCard ? currentCard.nextElementSibling : null;
+            const nextUserId = nextCard ? nextCard.getAttribute('data-user-id') : null;
+
+            if (nextUserId) {
+                openStoryViewer(nextUserId);
+            } else {
+                closeStoryViewer();
+            }
         }
     } else if (direction === 'prev') {
         if (currentStoryIndex > 0) {
             showStory(currentStoryIndex - 1);
             startProgress();
+        } else {
+            const progressBar = document.getElementById('storyProgress');
+            if (progressBar) progressBar.style.width = '0%';
+            startProgress();
         }
     }
 };
+
+
 
 
 
@@ -188,11 +253,16 @@ window.closeStoryViewersPanel = function () {
 
 
 
-// Close viewer
+// Close viewer: Immediately terminates video playback and audio, then hides modal
 window.closeStoryViewer = function () {
-    document.getElementById('storyViewerModal').classList.add('hidden');
-    document.body.style.overflow = '';
     clearInterval(progressInterval);
+    stopAllStoryVideos();
+
+    const modal = document.getElementById('storyViewerModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    document.body.style.overflow = '';
     currentUserId = null;
     currentUserStories = [];
 };
@@ -222,3 +292,32 @@ function timeAgo(date) {
     if (hours < 24) return hours + 'h ago';
     return Math.floor(hours / 24) + 'd ago';
 }
+
+// Rail and trigger event delegation consolidated from stories.js
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-action="scroll-stories"]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const direction = this.dataset.direction;
+            const container = document.getElementById('storiesContainer');
+            if (!container) return;
+            const scrollAmount = 200;
+            container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+        });
+    });
+
+    const createStoryCard = document.querySelector('[data-action="open-create-story"]');
+    if (createStoryCard) {
+        createStoryCard.addEventListener('click', function () {
+            if (typeof openStoryModal === 'function') openStoryModal();
+        });
+    }
+
+    document.querySelectorAll('[data-action="open-story-viewer"]').forEach(card => {
+        card.addEventListener('click', function () {
+            const userId = this.dataset.userId;
+            if (userId && typeof openStoryViewer === 'function') {
+                openStoryViewer(userId);
+            }
+        });
+    });
+});

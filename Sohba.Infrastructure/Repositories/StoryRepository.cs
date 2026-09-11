@@ -15,12 +15,12 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Story>> GetActiveStoriesAsync(Guid userId)
         {
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var now = DateTime.UtcNow;
 
             return await _context.Stories
                 .Include(s => s.User)
                 .Where(s => s.UserId == userId &&
-                           s.CreatedAt >= cutoffTime &&
+                           s.ExpiresAt > now &&
                            !s.IsDeleted)
                 .OrderBy(s => s.CreatedAt)
                 .ToListAsync();
@@ -28,16 +28,24 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Story>> GetStoriesForFeedAsync(Guid currentUserId)
         {
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var now = DateTime.UtcNow;
 
-            // جلب أصدقاء المستخدم (مؤقتاً بنجيب كل الـ public stories)
-            // TODO: بعد ما Friendship يشتغل، هنضيف شرط الأصدقاء
+            var friendIds = await _context.Friends
+                .Where(f => (f.UserId == currentUserId || f.FriendUserId == currentUserId)
+                            && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == currentUserId ? f.FriendUserId : f.UserId)
+                .ToListAsync();
+
             return await _context.Stories
                 .Include(s => s.User)
                 .Include(s => s.Viewers)
-                .Where(s => s.CreatedAt >= cutoffTime &&
+                .Where(s => s.ExpiresAt > now &&
                            !s.IsDeleted &&
-                           (s.Privacy == StoryPrivacy.Public || s.UserId == currentUserId))
+                           (
+                               s.UserId == currentUserId ||
+                               (s.Privacy == StoryPrivacy.Public && friendIds.Contains(s.UserId)) ||
+                               (s.Privacy == StoryPrivacy.FriendsOnly && friendIds.Contains(s.UserId))
+                           ))
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
         }
@@ -68,9 +76,9 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task DeleteExpiredStoriesAsync()
         {
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var now = DateTime.UtcNow;
             var expiredStories = await _context.Stories
-                .Where(s => s.CreatedAt < cutoffTime && !s.IsDeleted)
+                .Where(s => s.ExpiresAt <= now && !s.IsDeleted)
                 .ToListAsync();
 
             foreach (var story in expiredStories)
@@ -83,7 +91,7 @@ namespace Sohba.Infrastructure.Repositories
 
         public async Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId)
         {
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var now = DateTime.UtcNow;
 
             var isFriend = await _context.Friends
                  .AnyAsync(f =>
@@ -99,8 +107,9 @@ namespace Sohba.Infrastructure.Repositories
 
             return await _context.Stories
                 .Include(s => s.User)
+                .Include(s => s.Viewers)
                 .Where(s => s.UserId == userId &&
-                           s.CreatedAt >= cutoffTime &&
+                           s.ExpiresAt > now &&
                            !s.IsDeleted &&
                            (s.UserId == currentUserId ||
                             s.Privacy == StoryPrivacy.Public ||
@@ -108,6 +117,7 @@ namespace Sohba.Infrastructure.Repositories
                 .OrderBy(s => s.CreatedAt)
                 .ToListAsync();
         }
+
 
         public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
         {
@@ -141,14 +151,56 @@ namespace Sohba.Infrastructure.Repositories
             return await _context.Set<StoryReaction>().CountAsync(r => r.StoryId == storyId);
         }
 
+        public async Task<Dictionary<Guid, int>> GetReactionCountsForStoriesAsync(IEnumerable<Guid> storyIds)
+        {
+            var idList = storyIds.ToList();
+            if (!idList.Any()) return new Dictionary<Guid, int>();
+
+            return await _context.Set<StoryReaction>()
+                .Where(r => idList.Contains(r.StoryId))
+                .GroupBy(r => r.StoryId)
+                .Select(g => new { StoryId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.StoryId, x => x.Count);
+        }
+
+        public async Task<Dictionary<Guid, StoryReaction>> GetUserReactionsForStoriesAsync(IEnumerable<Guid> storyIds, Guid userId)
+        {
+            var idList = storyIds.ToList();
+            if (!idList.Any()) return new Dictionary<Guid, StoryReaction>();
+
+            return await _context.Set<StoryReaction>()
+                .Where(r => idList.Contains(r.StoryId) && r.UserId == userId)
+                .ToDictionaryAsync(r => r.StoryId, r => r);
+        }
+
         public void AddReaction(StoryReaction reaction)
         {
             _context.Set<StoryReaction>().Add(reaction);
         }
-
         public void RemoveReaction(StoryReaction reaction)
         {
             _context.Set<StoryReaction>().Remove(reaction);
         }
+
+        public async Task<(IReadOnlyList<Story> Items, int TotalCount)> GetStoriesAdminPagedAsync(int page, int pageSize)
+        {
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+
+            var now = DateTime.UtcNow;
+            var query = _context.Stories
+                .Include(s => s.User)
+                .Where(s => !s.IsDeleted && s.ExpiresAt > now)
+                .OrderByDescending(s => s.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
     }
 }

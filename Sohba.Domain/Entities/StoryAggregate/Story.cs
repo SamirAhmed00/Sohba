@@ -9,7 +9,7 @@ namespace Sohba.Domain.Entities.StoryAggregate
     public class Story
     {
         public Guid Id { get; set; }
-        public string Content { get; set; }
+        public string? Content { get; set; }
         public string? MediaUrl { get; set; } 
         public string? MediaType { get; set; }
         public DateTime CreatedAt { get; set; }

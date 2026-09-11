@@ -14,8 +14,6 @@ namespace Sohba.Domain.Domain_Rules.Interface
 
         // Logic check for expiration
         bool IsStoryExpired(DateTime createdAt);
-
-        Result CanHighlightStory(Guid userId, Guid creatorId, bool isExpired);
     }
 }
 

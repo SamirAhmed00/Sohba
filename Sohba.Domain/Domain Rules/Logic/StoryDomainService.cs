@@ -59,14 +59,5 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return createdAt.AddHours(24) < DateTime.UtcNow;
         }
 
-        public Result CanHighlightStory(Guid userId, Guid creatorId, bool isExpired)
-        {
-            if (userId != creatorId)
-                return Result.Failure("Only the owner can highlight their story.");
-
-            // Even expired stories can be highlighted (archived), so we generally allow it
-            // unless there is a specific business rule against it.
-            return Result.Success();
-        }
     }
 }

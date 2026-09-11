@@ -20,6 +20,10 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasQueryFilter(s => !s.IsDeleted);
+
+            // Indexes for active story filtering and user story feeds
+            builder.HasIndex(s => new { s.UserId, s.ExpiresAt });
+            builder.HasIndex(s => new { s.ExpiresAt, s.IsDeleted });
         }
     }
 }

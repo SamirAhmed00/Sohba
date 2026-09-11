@@ -21,6 +21,9 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .WithMany()
                    .HasForeignKey(v => v.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // One viewer entry per user per story
+            builder.HasIndex(v => new { v.StoryId, v.UserId }).IsUnique();
         }
     }
 }

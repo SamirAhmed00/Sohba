@@ -23,24 +23,39 @@
                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#345e69]/20"
                           placeholder="What's on your mind?"></textarea>
 
-                <!-- Image Upload -->
-                <div class="mt-4">
-                    <button onclick="document.getElementById('storyMedia').click()"
-                            class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl hover:border-[#345e69] hover:bg-[#345e69]/5 transition-colors flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5 text-[#345e69]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Distinct Media Upload Options: Image & Video -->
+                <div class="mt-4 grid grid-cols-2 gap-3" id="storyUploadButtonsContainer">
+                    <!-- Upload Image Button -->
+                    <button type="button" onclick="document.getElementById('storyImageInput').click()"
+                            class="py-3 px-2 border-2 border-dashed border-slate-300 rounded-xl hover:border-[#345e69] hover:bg-[#345e69]/5 transition-colors flex flex-col items-center justify-center gap-1.5 text-center">
+                        <svg class="w-6 h-6 text-[#345e69]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span class="text-sm font-medium text-gray-600">Upload Photo</span>
+                        <span class="text-xs font-semibold text-gray-700">Upload Photo</span>
+                        <span class="text-[10px] text-gray-400">JPG, PNG, WEBP (Max 5MB)</span>
                     </button>
-                    <input type="file" id="storyMedia" accept="image/*,video/*" class="hidden" onchange="handleStoryMediaSelect(event)">
+                    <input type="file" id="storyImageInput" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" class="hidden" onchange="handleStoryImageSelect(event)">
+
+                    <!-- Upload Video Button -->
+                    <button type="button" onclick="document.getElementById('storyVideoInput').click()"
+                            class="py-3 px-2 border-2 border-dashed border-slate-300 rounded-xl hover:border-[#345e69] hover:bg-[#345e69]/5 transition-colors flex flex-col items-center justify-center gap-1.5 text-center">
+                        <svg class="w-6 h-6 text-[#345e69]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-xs font-semibold text-gray-700">Upload Video</span>
+                        <span class="text-[10px] text-gray-400">MP4, MOV (Max 50MB)</span>
+                    </button>
+                    <input type="file" id="storyVideoInput" accept=".mp4,.mov,video/mp4,video/quicktime,video/*" class="hidden" onchange="handleStoryVideoSelect(event)">
                 </div>
 
-                <!-- Preview -->
+                <!-- Preview Container -->
                 <div id="storyPreviewContainer" class="mt-4 hidden">
-                    <div class="relative">
-                        <img id="storyPreview" class="w-full rounded-xl object-cover max-h-64" src="" alt="Preview">
-                        <button onclick="removeStoryMedia()"
-                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                    <div class="relative bg-slate-900 rounded-xl overflow-hidden">
+                        <img id="storyPreview" class="w-full rounded-xl object-contain max-h-64 hidden" src="" alt="Preview">
+                        <video id="storyVideoPreview" class="w-full rounded-xl object-contain max-h-64 hidden" controls playsinline></video>
+                        <div id="storyMediaBadge" class="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded font-mono truncate max-w-[200px]"></div>
+                        <button type="button" onclick="removeStoryMedia()"
+                                class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -57,8 +72,8 @@
                 </div>
 
                 <!-- Post Button -->
-                <button onclick="submitStory()"
-                        class="w-full mt-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors">
+                <button id="submitStoryBtn" onclick="submitStory()"
+                        class="w-full mt-4 py-3 bg-[#345e69] text-white font-semibold rounded-xl hover:bg-[#2a4b55] transition-colors disabled:opacity-50">
                     Share to Story
                 </button>
             </div>
@@ -77,72 +92,218 @@
         }
     }
 
-    function handleStoryMediaSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    function handleStoryImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('storyPreview').src = e.target.result;
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(ext) && !file.type.startsWith('image/')) {
+                window.SohbaApp?.toast('Unsupported image format. Allowed: JPG, PNG, WEBP, GIF', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const maxImageSize = 5 * 1024 * 1024; // 5 MB
+            if (file.size > maxImageSize) {
+                window.SohbaApp?.toast('Image size exceeds the 5MB limit.', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('storyVideoInput').value = '';
+
+            const imgEl = document.getElementById('storyPreview');
+            const videoEl = document.getElementById('storyVideoPreview');
+            const badge = document.getElementById('storyMediaBadge');
+
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.classList.add('hidden');
+
+            imgEl.src = URL.createObjectURL(file);
+            imgEl.classList.remove('hidden');
+            if (badge) badge.textContent = `Photo: ${file.name}`;
+
             document.getElementById('storyPreviewContainer').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-    }
+        }
 
-    function removeStoryMedia() {
-        selectedFile = null;
-        document.getElementById('storyMedia').value = '';
-        document.getElementById('storyPreviewContainer').classList.add('hidden');
+        function handleStoryVideoSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const allowedExtensions = ['.mp4', '.mov'];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(ext) && file.type !== 'video/mp4' && file.type !== 'video/quicktime') {
+                window.SohbaApp?.toast('Unsupported video format. Allowed: MP4, MOV', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const maxVideoSize = 50 * 1024 * 1024; // 50 MB
+            if (file.size > maxVideoSize) {
+                window.SohbaApp?.toast('Video size exceeds the 50MB limit.', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('storyImageInput').value = '';
+
+            const imgEl = document.getElementById('storyPreview');
+            const videoEl = document.getElementById('storyVideoPreview');
+            const badge = document.getElementById('storyMediaBadge');
+
+            imgEl.removeAttribute('src');
+            imgEl.classList.add('hidden');
+
+            videoEl.src = URL.createObjectURL(file);
+            videoEl.classList.remove('hidden');
+            if (badge) badge.textContent = `Video: ${file.name}`;
+
+            document.getElementById('storyPreviewContainer').classList.remove('hidden');
+        }
+
+        function removeStoryMedia() {
+            selectedFile = null;
+            document.getElementById('storyImageInput').value = '';
+            document.getElementById('storyVideoInput').value = '';
+
+            const imgEl = document.getElementById('storyPreview');
+            const videoEl = document.getElementById('storyVideoPreview');
+            const badge = document.getElementById('storyMediaBadge');
+
+            if (imgEl) {
+                imgEl.removeAttribute('src');
+                imgEl.classList.add('hidden');
+            }
+            if (videoEl) {
+                videoEl.pause();
+                videoEl.removeAttribute('src');
+                videoEl.classList.add('hidden');
+            }
+            if (badge) badge.textContent = '';
+
+            document.getElementById('storyPreviewContainer').classList.add('hidden');
+        }
+
+       function closeStoryModal() {
+        const modal = document.getElementById('storyModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+
+        const contentInput = document.getElementById('createStoryContent');
+        if (contentInput) {
+            contentInput.value = '';
+        }
+
+        const privacySelect = document.getElementById('storyPrivacy');
+        if (privacySelect) {
+            privacySelect.value = 'Public';
+        }
+
+        removeStoryMedia();
+
+        const btn = document.getElementById('submitStoryBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Share to Story';
+        }
+
+        document.body.style.overflow = '';
     }
 
     async function submitStory() {
-        const content = document.getElementById('createStoryContent').value.trim();
-        const privacy = document.getElementById('storyPrivacy').value;
+        const contentInput = document.getElementById('createStoryContent');
+        const content = contentInput ? contentInput.value.trim() : '';
+        const privacyInput = document.getElementById('storyPrivacy');
+        const privacy = privacyInput ? privacyInput.value : 'Public';
 
-        if (!content && !selectedFile) {
-            SohbaApp.toast('Please add text or media to your story', 'error');
+        if (!selectedFile) {
+            if (window.SohbaApp && SohbaApp.toast) {
+                SohbaApp.toast('Please upload an image or video for your story.', 'error');
+            }
             return;
+        }
+
+        const btn = document.getElementById('submitStoryBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Sharing...';
         }
 
         const formData = new FormData();
         formData.append('Content', content);
         formData.append('Privacy', privacy);
-
-        if (selectedFile) {
-            formData.append('MediaFile', selectedFile);
-        }
+        formData.append('MediaFile', selectedFile);
 
         try {
+            const token = window.SohbaApp?.getAntiForgeryToken() ||
+                          document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                          document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
             const response = await fetch('/Stories/Create', {
                 method: 'POST',
                 headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
                 body: formData
             });
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                const errorMsg = errorData?.error || errorData?.Error || `Request failed (HTTP ${response.status})`;
+                if (window.SohbaApp && SohbaApp.toast) {
+                    SohbaApp.toast(errorMsg, 'error');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Share to Story';
+                }
+                return;
+            }
+
             const result = await response.json();
 
-            if (result.success) {
-                SohbaApp.toast('Story created successfully!', 'success');
+            if (result.success || result.Success) {
+                if (window.SohbaApp && SohbaApp.toast) {
+                    SohbaApp.toast('Story created successfully!', 'success');
+                }
                 closeStoryModal();
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 600);
             } else {
-                SohbaApp.toast(result.error || 'Failed to create story', 'error');
+                const errorMsg = result.error || result.Error || 'Failed to create story';
+                if (window.SohbaApp && SohbaApp.toast) {
+                    SohbaApp.toast(errorMsg, 'error');
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Share to Story';
+                }
             }
         } catch (error) {
-            console.error('Error:', error);
-            SohbaApp.toast('Network error', 'error');
+            console.error('[submitStory] Unexpected error:', error);
+            if (window.SohbaApp && SohbaApp.toast) {
+                SohbaApp.toast('Network error. Please check your connection and try again.', 'error');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Share to Story';
+            }
         }
     }
 
-    function closeStoryModal() {
-        document.getElementById('storyModal').classList.add('hidden');
-        document.getElementById('createStoryContent').value = '';
-        document.getElementById('storyMedia').value = '';
-        document.getElementById('storyPreviewContainer').classList.add('hidden');
-        selectedFile = null;
-        document.body.style.overflow = '';
-    }
+    // Explicitly expose functions to the global scope for event handlers
+    window.openStoryModal = openStoryModal;
+    window.closeStoryModal = closeStoryModal;
+    window.submitStory = submitStory;
+    window.removeStoryMedia = removeStoryMedia;
+    window.handleStoryImageSelect = handleStoryImageSelect;
+    window.handleStoryVideoSelect = handleStoryVideoSelect;
 </script>

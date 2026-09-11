@@ -81,6 +81,7 @@ namespace Sohba.Infrastructure.DependencyInjection
             services.AddTransient<Sohba.Application.Interfaces.IEmailService, MailtrapEmailService>();
 
             services.AddHostedService<NotificationCleanupService>();
+            services.AddHostedService<StoryCleanupService>();
 
             return services;
         }
