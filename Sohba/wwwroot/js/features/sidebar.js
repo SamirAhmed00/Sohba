@@ -99,47 +99,124 @@ function renderTrendingHashtagItem(tag, count) {
         </div>`;
 }
 
+let currentHashtagPage = 1;
+const hashtagPageSize = 5;
+let isHashtagLoading = false;
+
 async function loadMoreTrendingHashtags() {
     const container = document.getElementById('trendingHashtagsContainer');
     const button = document.getElementById('showMoreHashtagsBtn');
-    if (!container) return;
+
+    if (!container || !button || isHashtagLoading) {
+        return;
+    }
+
+    isHashtagLoading = true;
+    button.disabled = true;
+
+    const originalText = button.textContent;
+    button.textContent = 'Loading...';
 
     try {
-        const response = await fetch('/Home/TrendingHashtags?count=15');
-        const payload = await response.json();
-        const hashtags = payload.data ?? payload.Data ?? [];
+        const nextPage = currentHashtagPage + 1;
 
-        if (!payload.success && !payload.Success) {
-            if (window.SohbaApp && SohbaApp.toast) {
-                SohbaApp.toast(payload.error || payload.Error || 'Failed to load hashtags', 'error');
+        const response = await fetch(
+            `/Home/TrendingHashtags?page=${nextPage}&pageSize=${hashtagPageSize}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
             }
-            return;
-        }
-
-        const existing = new Set(
-            Array.from(container.querySelectorAll('[data-hashtag-tag]'))
-                .map(el => (el.getAttribute('data-hashtag-tag') || '').toLowerCase())
         );
 
-        const extras = hashtags.filter(h => {
-            const tag = h.tag || h.Tag;
-            return tag && !existing.has(String(tag).toLowerCase());
-        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
 
-        extras.forEach(h => {
-            container.insertAdjacentHTML(
-                'beforeend',
-                renderTrendingHashtagItem(h.tag || h.Tag, h.count ?? h.Count)
+        const payload = await response.json();
+
+        if (!payload.success && !payload.Success) {
+            throw new Error(
+                payload.error ||
+                payload.Error ||
+                'Failed to load hashtags'
+            );
+        }
+
+        const pagedData =
+            payload.data ??
+            payload.Data;
+
+        const hashtags =
+            pagedData?.items ??
+            pagedData?.Items ??
+            [];
+
+        const totalPages =
+            pagedData?.totalPages ??
+            pagedData?.TotalPages ??
+            1;
+
+        const currentPage =
+            pagedData?.page ??
+            pagedData?.Page ??
+            nextPage;
+
+        const existing = new Set(
+            Array.from(
+                container.querySelectorAll('[data-hashtag-tag]')
+            ).map(el =>
+                (el.getAttribute('data-hashtag-tag') || '')
+                    .trim()
+                    .toLowerCase()
+            )
+        );
+
+        const extras = hashtags.filter(hashtag => {
+            const tag = hashtag.tag || hashtag.Tag;
+
+            if (!tag) {
+                return false;
+            }
+
+            return !existing.has(
+                String(tag).trim().toLowerCase()
             );
         });
 
-        if (button && extras.length === 0) {
+        extras.forEach(hashtag => {
+            const tag = hashtag.tag || hashtag.Tag;
+            const count = hashtag.count ?? hashtag.Count ?? 0;
+
+            container.insertAdjacentHTML(
+                'beforeend',
+                renderTrendingHashtagItem(tag, count)
+            );
+        });
+
+        currentHashtagPage = currentPage;
+
+        if (currentHashtagPage >= totalPages) {
             button.classList.add('hidden');
         }
+
     } catch (error) {
-        console.warn('[sidebar.js] Failed to load more hashtags:', error);
+        console.warn(
+            '[sidebar.js] Failed to load more hashtags:',
+            error
+        );
+
         if (window.SohbaApp && SohbaApp.toast) {
-            SohbaApp.toast('Failed to load hashtags', 'error');
+            SohbaApp.toast(
+                'Failed to load hashtags',
+                'error'
+            );
         }
+
+    } finally {
+        isHashtagLoading = false;
+        button.disabled = false;
+        button.textContent = originalText;
     }
 }
