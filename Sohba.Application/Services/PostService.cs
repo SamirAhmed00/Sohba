@@ -588,7 +588,33 @@ namespace Sohba.Application.Services
             return Result<IEnumerable<PostResponseDto>>.Success(dtos);
         }
 
-        
+        public async Task<Result<PagedResult<PostResponseDto>>> GetPostsAdminPagedAsync(string? search, string? source, int page, int pageSize)
+        {
+            var (posts, totalCount, counts) = await _unitOfWork.Posts.GetPostsAdminPagedAsync(search, source, page, pageSize);
+
+            var dtos = posts.Select(p =>
+            {
+                var dto = _mapper.Map<PostResponseDto>(p);
+                dto.AuthorName = p.User?.Name ?? "Unknown User";
+
+                if (counts.TryGetValue(p.Id, out var countData))
+                {
+                    dto.CommentsCount = countData.comments;
+                    dto.ReactionsCount = countData.reactions;
+                }
+                return dto;
+            }).ToList();
+
+            return Result<PagedResult<PostResponseDto>>.Success(new PagedResult<PostResponseDto>
+            {
+                Items = dtos,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            });
+        }
+
     }
 }
 

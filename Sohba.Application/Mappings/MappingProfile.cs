@@ -25,7 +25,8 @@ namespace Sohba.Application.Mappings
             // Map Request DTO to Entity (For registration)
             CreateMap<UserRequestDto, User>();
 
-            CreateMap<User, UserResponseDto>();
+            CreateMap<User, UserResponseDto>()
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));
 
             // --- Post Mapping ---
             CreateMap<PostCreateDto, Post>()

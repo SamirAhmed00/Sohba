@@ -153,6 +153,41 @@ namespace Sohba.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Sohba.Domain.Entities.AdminAggregate.AdminAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AdminEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TargetEntity")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AdminAuditLogs");
+                });
+
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.Group", b =>
                 {
                     b.Property<Guid>("Id")
@@ -947,8 +982,18 @@ namespace Sohba.Infrastructure.Migrations
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("PromotedByAdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("PushNotifications")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("User");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -982,6 +1027,10 @@ namespace Sohba.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("PromotedByAdminUserId");
+
+                    b.HasIndex("Role");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -1384,6 +1433,16 @@ namespace Sohba.Infrastructure.Migrations
                     b.Navigation("Receiver");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Sohba.Domain.Entities.UserAggregate.User", b =>
+                {
+                    b.HasOne("Sohba.Domain.Entities.UserAggregate.User", "PromotedByAdminUser")
+                        .WithMany()
+                        .HasForeignKey("PromotedByAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PromotedByAdminUser");
                 });
 
             modelBuilder.Entity("Sohba.Domain.Entities.GroupAndPage.Group", b =>
