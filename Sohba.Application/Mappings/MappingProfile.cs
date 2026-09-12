@@ -167,8 +167,6 @@ namespace Sohba.Application.Mappings
             CreateMap<User, AuthResponseDto>();
 
 
-
-    
         }
         // --- Helper Class ---
         private static List<string> DeserializePostImageUrls(string? json)
