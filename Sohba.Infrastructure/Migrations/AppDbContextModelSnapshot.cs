@@ -699,7 +699,6 @@ namespace Sohba.Infrastructure.Migrations
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -725,7 +724,9 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ExpiresAt", "IsDeleted");
+
+                    b.HasIndex("UserId", "ExpiresAt");
 
                     b.ToTable("Stories");
                 });
@@ -777,9 +778,10 @@ namespace Sohba.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StoryId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("StoryId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("StoryViewer");
                 });

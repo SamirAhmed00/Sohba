@@ -143,6 +143,21 @@ namespace Sohba
                         });
                     });
 
+                    // Story creation endpoint - Partitioned by User ID or IP
+                    options.AddPolicy("StoryCreate", httpContext =>
+                    {
+                        var partitionKey = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                           ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                           ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    });
+
                     // Feed endpoints (Home, LoadMore) - Partitioned by IP address
                     options.AddPolicy("Feed", httpContext =>
                     {
