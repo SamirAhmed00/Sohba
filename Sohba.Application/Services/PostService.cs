@@ -110,20 +110,25 @@ namespace Sohba.Application.Services
                 }
                 else if (postDto.SourceType == PostSourceType.Page)
                 {
-                    // Rule: Only the page admin can post on a page
                     var page = await _unitOfWork.Pages.GetByIdAsync(postDto.SourceId.Value);
-                    if (page == null)
-                        return Result<PostResponseDto>.Failure("Page not found.");
+                    if (page == null || page.IsDeleted)
+                        return Result<PostResponseDto>.Failure("Page not found or has been deleted.");
 
-                    if (page.AdminId != userId)
-                        return Result<PostResponseDto>.Failure(
-                            "Access denied: Only the page administrator can post on this page.");
+                    var userRole = await _unitOfWork.Pages.GetUserRoleInPageAsync(userId, page.Id);
+                    bool hasPostingPermission = page.AdminId == userId || (userRole.HasValue && userRole.Value >= PageRole.CoAdmin);
+
+                    if (!hasPostingPermission)
+                        return Result<PostResponseDto>.Failure("Access denied: Only page administrators and co-admins can post on this page.");
+
                     pageId = postDto.SourceId;
                 }
             }
             // --- End Access Control ---
 
             var post = _mapper.Map<Post>(postDto);
+
+            // Synchronize IsPrivate with the canonical Privacy value
+            post.IsPrivate = post.Privacy == PostPrivacy.Private;
             post.UserId = userId;
             post.CreatedAt = DateTime.UtcNow;
 
