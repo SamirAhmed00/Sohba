@@ -158,7 +158,7 @@ namespace Sohba.Application.Mappings
                 .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name));
             CreateMap<User, UserSearchResultDto>();
             CreateMap<Group, GroupSearchResultDto>()
-                .ForMember(dest => dest.MembersCount, opt => opt.MapFrom(src => src.GroupMembers.Count));
+                .ForMember(dest => dest.MembersCount, opt => opt.MapFrom(src => src.GroupMembers.Count(m => !m.IsBanned)));
             CreateMap<Page, PageSearchResultDto>();
 
 
