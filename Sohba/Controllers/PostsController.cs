@@ -127,6 +127,12 @@ namespace Sohba.Controllers
                     var uploadResult = await _fileStorage.SaveFileAsync(file, "posts");
                     if (!uploadResult.IsSuccess)
                     {
+                        // Clean up any files saved prior to the failure
+                        foreach (var savedUrl in imageUrls)
+                        {
+                            await _fileStorage.DeleteFileAsync(savedUrl);
+                        }
+
                         if (isAjax)
                             return Json(new { success = false, error = uploadResult.Error });
                         ModelState.AddModelError("ImageFiles", uploadResult.Error);
@@ -152,12 +158,26 @@ namespace Sohba.Controllers
 
             var isGroupOrPagePost = groupId.HasValue || pageId.HasValue;
 
+            string? videoUrl = null;
+            if (model.VideoFile != null && model.VideoFile.Length > 0)
+            {
+                var videoUploadResult = await _fileStorage.SaveFileAsync(model.VideoFile, "posts");
+                if (!videoUploadResult.IsSuccess)
+                {
+                    if (isAjax) return Json(new { success = false, error = videoUploadResult.Error });
+                    ModelState.AddModelError("VideoFile", videoUploadResult.Error);
+                    return View(model);
+                }
+                videoUrl = videoUploadResult.Value;
+            }
+
             var dto = new PostCreateDto
             {
                 Title = model.Title,
                 Content = model.Content,
                 ImageUrl = imageUrl ?? imageUrls.FirstOrDefault(),
                 ImageUrls = imageUrls,
+                VideoUrl = videoUrl,
                 Privacy = isGroupOrPagePost
                     ? PostPrivacy.Public
                     : (model.IsPrivate ? PostPrivacy.Private : model.Privacy)
@@ -310,6 +330,16 @@ namespace Sohba.Controllers
 
                 if (uploadResult.Value != null)
                     finalImageUrls.Add(uploadResult.Value);
+            }
+
+            var existingPost = await _postService.GetPostByIdAsync(model.Id, userId);
+            if (existingPost.IsSuccess && existingPost.Value?.ImageUrls != null)
+            {
+                var removedUrls = existingPost.Value.ImageUrls.Except(finalImageUrls).ToList();
+                foreach (var removedUrl in removedUrls)
+                {
+                    await _fileStorage.DeleteFileAsync(removedUrl);
+                }
             }
 
             var updateDto = new PostUpdateDto

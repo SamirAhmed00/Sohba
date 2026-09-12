@@ -28,7 +28,7 @@ namespace Sohba.Application.Services
 
         private readonly INotificationService _notificationService; 
         private readonly IUserService _userService;
-
+        private readonly IFileStorageService _fileStorageService;
         private readonly ILogger<PostService> _logger;
 
         public PostService(IUnitOfWork unitOfWork, IMapper mapper, IPostDomainService postDomainService, INotificationService notificationService, IUserService userService, ILogger<PostService> logger)
@@ -176,134 +176,55 @@ namespace Sohba.Application.Services
             return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
         }
 
-        //public async Task<Result<PostResponseDto>> CreatePostAsync(PostCreateDto postDto, Guid userId)
-        //{
-        //    var validation = _postDomainService.CanCreatePost(userId, postDto.Content, !string.IsNullOrEmpty(postDto.ImageUrl));
-        //    if (!validation.IsSuccess)
-        //    {
-        //        _logger.LogWarning("Post creation rejected for user {UserId}: {Reason}", userId, validation.Error);
-        //        return Result<PostResponseDto>.Failure(validation.Error);
-        //    }
 
-        //    // --- Access Control for Group/Page Posts ---
-        //    Guid? groupId = null;
-        //    Guid? pageId = null;
-        //    if (postDto.SourceId.HasValue)
-        //    {
-        //        if (postDto.SourceType == PostSourceType.Group)
-        //        {
-        //            // Rule: Only active, non-banned group members can post in a group
-        //            var isMember = await _unitOfWork.Groups.IsMemberAsync(userId, postDto.SourceId.Value);
-        //            if (!isMember)
-        //                return Result<PostResponseDto>.Failure(
-        //                    "Access denied: You must be an active member of this group to post in it.");
-        //            groupId = postDto.SourceId;
-        //        }
-        //        else if (postDto.SourceType == PostSourceType.Page)
-        //        {
-        //            // Rule: Only the page admin can post on a page
-        //            var page = await _unitOfWork.Pages.GetByIdAsync(postDto.SourceId.Value);
-        //            if (page == null)
-        //                return Result<PostResponseDto>.Failure("Page not found.");
-
-        //            if (page.AdminId != userId)
-        //                return Result<PostResponseDto>.Failure(
-        //                    "Access denied: Only the page administrator can post on this page.");
-        //            pageId = postDto.SourceId;
-        //        }
-        //    }
-        //    // --- End Access Control ---
-
-        //    var post = _mapper.Map<Post>(postDto);
-        //    post.UserId = userId;
-        //    post.CreatedAt = DateTime.UtcNow;
-
-        //    if (postDto.ImageUrls != null && postDto.ImageUrls.Any())
-        //    {
-        //        post.ImageUrls = JsonSerializer.Serialize(postDto.ImageUrls);
-        //        if (string.IsNullOrEmpty(post.ImageUrl))
-        //           post.ImageUrl = postDto.ImageUrls.First();
-        //    }
-
-        //    if (postDto.SourceId.HasValue)
-        //    {
-        //        post.SourceType = postDto.SourceType;
-        //        post.SourceId = postDto.SourceId;
-
-        //        if (postDto.SourceType == PostSourceType.Group)
-        //            post.GroupId = postDto.SourceId;
-        //        else if (postDto.SourceType == PostSourceType.Page)
-        //            post.PageId = postDto.SourceId;
-        //    }
-
-        //    // Extract hashtags from content
-        //    var extractedTags = ExtractHashtags(postDto.Content).ToList();
-
-        //    await _unitOfWork.BeginTransactionAsync();
-        //    try
-        //    {
-        //        _unitOfWork.Posts.Add(post);
-        //        await _unitOfWork.CompleteAsync();
-
-        //        if (extractedTags.Any())
-        //        {
-        //            string userLocation = "Egypt";
-        //            await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, extractedTags, userLocation);
-        //            await _unitOfWork.CompleteAsync();
-        //        }
-
-        //        await _unitOfWork.CommitTransactionAsync();
-        //    }
-        //    catch
-        //    {
-        //        await _unitOfWork.RollbackTransactionAsync();
-        //        throw;
-        //    }
-
-        //    //  Send notifications based on post type
-        //    await SendPostNotifications(post, userId, groupId, pageId);
-
-        //    _logger.LogInformation("Post created: {PostId} by user {UserId}, source type {SourceType}", post.Id, userId, postDto.SourceType);
-        //    return Result<PostResponseDto>.Success(_mapper.Map<PostResponseDto>(post));
-        //}
-
-
-        public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId)
+        public async Task<Result<PostResponseDto>> GetPostByIdAsync(Guid postId, Guid currentUserId, bool isAdmin = false)
         {
+
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
+           
 
             if (post == null || post.IsDeleted)
                 return Result<PostResponseDto>.Failure("Post not found or has been deleted.");
 
+            if (!isAdmin)
+            {
+                if (post.GroupId.HasValue)
+                {
+                    var group = await _unitOfWork.Groups.GetByIdAsync(post.GroupId.Value);
+                    if (group != null && group.IsPrivate)
+                    {
+                        var isMember = await _unitOfWork.Groups.IsMemberAsync(currentUserId, group.Id);
+                        if (!isMember)
+                            return Result<PostResponseDto>.Failure("Access denied: You must be a member of this private group to view this post.");
+                    }
+                }
 
-            // PRIVACY CHECK: Verify user can view this post
-            var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
-            var canView = _postDomainService.CanViewPost(
-                currentUserId,
-                post.UserId,
-                post.Privacy,
-                isFriend
-            );
+                var isFriend = await _unitOfWork.Friendships.AreFriendsAsync(currentUserId, post.UserId);
+                var isBlocked = await _unitOfWork.Friendships.IsBlockedEitherDirectionAsync(currentUserId, post.UserId);
+                if (isBlocked)
+                    return Result<PostResponseDto>.Failure("Post not found.");
+                var canView = _postDomainService.CanViewPost(
+                    currentUserId,
+                    post.UserId,
+                    post.Privacy,
+                    isFriend
+                );
 
-            if (!canView.IsSuccess)
-                return Result<PostResponseDto>.Failure(canView.Error);
+                if (!canView.IsSuccess)
+                    return Result<PostResponseDto>.Failure(canView.Error);
+            }
 
             var ids = new List<Guid> { postId };
             var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
 
             var userReaction = await _unitOfWork.Interactions.GetReactionAsync(currentUserId, postId);
 
-
-
-
             var savedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
 
-            // A post is "saved" only when it is in a NON-Favorite collection.
             var isSaved = savedPosts.Any(s => s.PostId == postId && s.Tag != SavedTag.Favorite);
             var isFavorite = savedPosts.Any(s => s.PostId == postId && s.Tag == SavedTag.Favorite);
 
             var response = _mapper.Map<PostResponseDto>(post);
-            
 
             if (counts.TryGetValue(postId, out var countData))
             {
@@ -319,6 +240,7 @@ namespace Sohba.Application.Services
             return Result<PostResponseDto>.Success(response);
         }
 
+
         public async Task<Result> UpdatePostAsync(Guid postId, PostUpdateDto postDto, Guid userId)
         {
             var post = await _unitOfWork.Posts.GetByIdAsync(postId);
@@ -332,6 +254,8 @@ namespace Sohba.Application.Services
 
             // 2. Map updated values
             _mapper.Map(postDto, post);
+            // Synchronize IsPrivate with the canonical Privacy value
+            post.IsPrivate = post.Privacy == PostPrivacy.Private;
             post.UpdatedAt = DateTime.UtcNow;
 
             if (postDto.ImageUrls != null && postDto.ImageUrls.Any())
@@ -343,6 +267,18 @@ namespace Sohba.Application.Services
             {
                 post.ImageUrls = null;
                 post.ImageUrl = null;
+            }
+
+            // Synchronize hashtags on update
+            var updatedTags = ExtractHashtags(postDto.Content).ToList();
+            var currentPostHashtags = await _unitOfWork.Hashtags.GetAllAsync();
+            var existingHashtagMap = (await _unitOfWork.Posts.GetByIdAsync(postId))?.PostHashtags?.ToList() ?? new List<PostHashtag>();
+
+            // Add newly introduced tags
+            var tagsToAdd = updatedTags.Where(t => !existingHashtagMap.Any(ph => ph.Hashtag != null && ph.Hashtag.Tag.Equals(t, StringComparison.OrdinalIgnoreCase))).ToList();
+            if (tagsToAdd.Any())
+            {
+                await _unitOfWork.Posts.AddHashtagsToPostAsync(post.Id, tagsToAdd, "Egypt");
             }
 
             _unitOfWork.Posts.Update(post);
@@ -360,15 +296,51 @@ namespace Sohba.Application.Services
                 return Result.Failure("Post not found.");
             }
 
-            // 1. Check permission via Domain Service
-            var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin);
+            bool isContainerAdmin = false;
+            if (post.GroupId.HasValue)
+            {
+                var role = _unitOfWork.Groups.GetUserRoleInGroup(userId, post.GroupId.Value);
+                isContainerAdmin = role == GroupRole.Admin || role == GroupRole.CoAdmin;
+            }
+            else if (post.PageId.HasValue)
+            {
+                var pageRole = await _unitOfWork.Pages.GetUserRoleInPageAsync(userId, post.PageId.Value);
+                isContainerAdmin = pageRole.HasValue && pageRole.Value >= PageRole.Admin;
+            }
+
+            var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin, isContainerAdmin);
             if (!result.IsSuccess)
             {
                 _logger.LogWarning("Post deletion rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, result.Error);
                 return result;
             }
 
-            // 2. Apply Soft Delete
+
+            // 2. Decrement hashtag counts on post deletion
+            if (post.PostHashtags != null && post.PostHashtags.Any())
+            {
+                foreach (var ph in post.PostHashtags)
+                {
+                    if (ph.Hashtag != null && ph.Hashtag.Count > 0)
+                    {
+                        ph.Hashtag.Count--;
+                        ph.Hashtag.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+            }
+
+            // Clean up physical video file on deletion
+            if (!string.IsNullOrWhiteSpace(post.VideoUrl))
+            {
+                await _fileStorageService.DeleteFileAsync(post.VideoUrl);
+            }
+
+            // Clean up physical image file on deletion
+            if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+            {
+                await _fileStorageService.DeleteFileAsync(post.ImageUrl);
+            }
+            // 3. Apply Soft Delete
             post.IsDeleted = true;
             post.UpdatedAt = DateTime.UtcNow;
 
@@ -400,6 +372,17 @@ namespace Sohba.Application.Services
 
         public async Task<Result<IEnumerable<PostResponseDto>>> GetGroupPostsAsync(Guid groupId, Guid currentUserId)
         {
+            var group = await _unitOfWork.Groups.GetByIdAsync(groupId);
+            if (group == null || group.IsDeleted)
+                return Result<IEnumerable<PostResponseDto>>.Failure("Group not found.");
+
+            if (group.IsPrivate)
+            {
+                var isMember = await _unitOfWork.Groups.IsMemberAsync(currentUserId, groupId);
+                if (!isMember)
+                    return Result<IEnumerable<PostResponseDto>>.Failure("Access denied: This group is private.");
+            }
+
             var posts = await _unitOfWork.Posts.GetGroupPostsAsync(groupId);
             return await MapPostsWithInteractions(posts, currentUserId);
         }
@@ -490,11 +473,10 @@ namespace Sohba.Application.Services
             var ids = postList.Select(p => p.Id).ToList();
             var counts = await _unitOfWork.Posts.GetPostsCountsAsync(ids);
             var userReactions = await _unitOfWork.Interactions.GetUserReactionsForPostsAsync(currentUserId, ids);
-            var userSavedPosts = await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId);
+            var userSavedPosts = (await _unitOfWork.Interactions.GetSavedPostsByUserAsync(currentUserId))
+                .Where(sp => ids.Contains(sp.PostId));
 
             var reactionDict = userReactions.ToDictionary(r => r.PostId, r => r.Type.ToString());
-            // A post can be saved to multiple collections (e.g. a named collection AND Favorites).
-            // Group by PostId and collect all tags so we don't throw on duplicate keys.
             var savedDict = userSavedPosts
                 .GroupBy(s => s.PostId)
                 .ToDictionary(g => g.Key, g => g.Select(s => s.Tag).ToList());

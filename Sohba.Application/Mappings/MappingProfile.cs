@@ -28,18 +28,31 @@ namespace Sohba.Application.Mappings
             CreateMap<User, UserResponseDto>();
 
             // --- Post Mapping ---
-            CreateMap<PostCreateDto, Post>().ForMember(dest => dest.ImageUrls, opt => opt.Ignore());
+            CreateMap<PostCreateDto, Post>()
+                            .ForMember(dest => dest.ImageUrls, opt => opt.Ignore())
+                            .ForMember(dest => dest.VideoUrl, opt => opt.MapFrom(src => src.VideoUrl));
             CreateMap<PostUpdateDto, Post>();
             CreateMap<Post, PostResponseDto>()
-                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.User.Name))
-                .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.IsPrivate))
-                .ForMember(dest => dest.Privacy, opt => opt.MapFrom(src => src.Privacy))
-                .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.SourceType.ToString()))
-                .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
-                    src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
-                    src.SourceType == PostSourceType.Page && src.Page != null ? src.Page.Name :
-                    null))
-                .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => DeserializePostImageUrls(src.ImageUrls)));
+                            .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src =>
+                                src.SourceType == PostSourceType.Page && src.Page != null
+                                    ? src.Page.Name
+                                    : (src.User != null ? src.User.Name : "User")))
+                            .ForMember(dest => dest.AuthorAvatarUrl, opt => opt.MapFrom(src =>
+                                src.SourceType == PostSourceType.Page && src.Page != null
+                                    ? src.Page.ImageUrl
+                                    : (src.User != null ? src.User.ProfilePictureUrl : null)))
+                            .ForMember(dest => dest.AuthorProfileUrl, opt => opt.MapFrom(src =>
+                                src.SourceType == PostSourceType.Page && src.Page != null
+                                    ? $"/Pages/Details/{src.Page.Id}"
+                                    : $"/Profile/Index/{src.UserId}"))
+                            .ForMember(dest => dest.IsPrivate, opt => opt.MapFrom(src => src.Privacy == PostPrivacy.Private))
+                            .ForMember(dest => dest.Privacy, opt => opt.MapFrom(src => src.Privacy))
+                            .ForMember(dest => dest.SourceType, opt => opt.MapFrom(src => src.SourceType.ToString()))
+                            .ForMember(dest => dest.SourceName, opt => opt.MapFrom(src =>
+                                src.SourceType == PostSourceType.Group && src.Group != null ? src.Group.Name :
+                                src.SourceType == PostSourceType.Page && src.Page != null ? src.Page.Name :
+                                null))
+                            .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(src => DeserializePostImageUrls(src.ImageUrls)));
 
             // --- Comment Mapping ---
             CreateMap<CommentRequestDto, Comment>();
