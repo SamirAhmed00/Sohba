@@ -393,7 +393,6 @@ namespace Sohba.Application.Services
 
                 _logger.LogInformation("Admin delete notification dispatched to user {UserId} for post {PostId}", post.UserId, postId);
 
-                // TODO: [Soon Feature] Real-Time Chat
             }
 
             return Result.Success();

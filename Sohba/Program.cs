@@ -33,12 +33,6 @@ namespace Sohba
             // ============================================================
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.File(
-                    path: "logs/sohba-.log",
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 30,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception}"
-                )
                 .CreateBootstrapLogger();
 
             try
@@ -134,11 +128,13 @@ namespace Sohba
                         });
                     });
 
-                    // API endpoints (Posts, Comments, Reactions, etc.) - Partitioned by IP address
+                    // API endpoints (Posts, Comments, Reactions, etc.) - Partitioned by User ID or IP
                     options.AddPolicy("Api", httpContext =>
                     {
-                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        var partitionKey = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                           ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                           ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 60,
                             Window = TimeSpan.FromMinutes(1),
@@ -173,16 +169,33 @@ namespace Sohba
                         });
                     });
 
-                    // Dashboard (Admin only) - Partitioned by IP address
-                    options.AddPolicy("Dashboard", httpContext =>
+                    // Search endpoints (QuickSearch, Results) - Partitioned by User ID or IP
+                    options.AddPolicy("Search", httpContext =>
                     {
-                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        var partitionKey = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                           ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                           ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 30,
+                            PermitLimit = 60,
                             Window = TimeSpan.FromMinutes(1),
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                             QueueLimit = 0
+                        });
+                    });
+
+                    // Dashboard (Admin only) - Partitioned by User ID (fallback to IP)
+                    options.AddPolicy("Dashboard", httpContext =>
+                    {
+                        var partitionKey = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                           ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                           ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 180,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 5
                         });
                     });
 
