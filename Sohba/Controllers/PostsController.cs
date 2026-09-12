@@ -398,40 +398,57 @@ namespace Sohba.Controllers
             if (!Enum.TryParse<ReactionType>(request.ReactionType, true, out var type))
                 return BadRequest(new { success = false, error = "Invalid reaction type." });
 
-            var existingReaction = await _interactionService.GetUserReactionAsync(userId, request.PostId);
-
-            if (existingReaction != null)
+            try
             {
-                var removeResult = await _interactionService.RemoveReactionAsync(userId, request.PostId);
+                var existingReaction = await _interactionService.GetUserReactionAsync(userId, request.PostId);
 
-                if (!removeResult.IsSuccess)
-                    return Json(new { success = false, error = removeResult.Error });
-
-                var newCount = await _interactionService.GetReactionCountAsync(request.PostId);
-
-                return Json(new
+                if (existingReaction != null)
                 {
-                    success = true,
-                    action = "removed",
-                    newCount
-                });
+                    if (existingReaction.Type == type)
+                    {
+                        var removeResult = await _interactionService.RemoveReactionAsync(userId, request.PostId);
+                        if (!removeResult.IsSuccess)
+                            return Json(new { success = false, error = removeResult.Error });
+
+                        var countAfterRemove = await _interactionService.GetReactionCountAsync(request.PostId);
+                        return Json(new { success = true, action = "removed", newCount = countAfterRemove });
+                    }
+                    else
+                    {
+                        var updateResult = await _interactionService.AddReactionAsync(userId, request.PostId, type);
+                        if (!updateResult.IsSuccess)
+                            return Json(new { success = false, error = updateResult.Error });
+
+                        var newCount = await _interactionService.GetReactionCountAsync(request.PostId);
+                        return Json(new
+                        {
+                            success = true,
+                            action = "added",
+                            newCount,
+                            reactionType = request.ReactionType
+                        });
+                    }
+                }
+                else
+                {
+                    var addResult = await _interactionService.AddReactionAsync(userId, request.PostId, type);
+                    if (!addResult.IsSuccess)
+                        return Json(new { success = false, error = addResult.Error });
+
+                    var newCount = await _interactionService.GetReactionCountAsync(request.PostId);
+                    return Json(new
+                    {
+                        success = true,
+                        action = "added",
+                        newCount,
+                        reactionType = request.ReactionType
+                    });
+                }
             }
-            else
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
             {
-                var addResult = await _interactionService.AddReactionAsync(userId, request.PostId, type);
-
-                if (!addResult.IsSuccess)
-                    return Json(new { success = false, error = addResult.Error });
-
-                var newCount = await _interactionService.GetReactionCountAsync(request.PostId);
-
-                return Json(new
-                {
-                    success = true,
-                    action = "added",
-                    newCount,
-                    reactionType = request.ReactionType
-                });
+                var currentCount = await _interactionService.GetReactionCountAsync(request.PostId);
+                return Json(new { success = true, action = "added", newCount = currentCount, reactionType = request.ReactionType });
             }
         }
 
