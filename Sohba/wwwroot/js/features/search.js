@@ -288,42 +288,12 @@ function initializeMobileSearch() {
     }
 }
 
-// ============================================================
-// FRIENDS SEARCH BUTTON (Find Friends page)
-// ============================================================
-function initializeFriendsSearch() {
-    const friendsSearchBtn = document.getElementById('friendsSearchBtn');
-    const searchInput = document.getElementById('friendsSearchInput');
-    if (friendsSearchBtn && searchInput) {
-        friendsSearchBtn.addEventListener('click', function () {
-            const term = searchInput.value.trim().toLowerCase();
-            const userCards = document.querySelectorAll('.user-card');
-            let visibleCount = 0;
-            userCards.forEach(card => {
-                const name = (card.dataset.name || '').toLowerCase();
-                if (name.includes(term)) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            const noResults = document.getElementById('noResultsMessage');
-            if (noResults) {
-                noResults.classList.toggle('hidden', visibleCount > 0);
-            }
-        });
-    }
-}
-
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
         initializeGlobalSearch();
         initializeMobileSearch();
-        initializeFriendsSearch();
     });
 } else {
     initializeGlobalSearch();
     initializeMobileSearch();
-    initializeFriendsSearch();
 }

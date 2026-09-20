@@ -7,7 +7,6 @@ using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
 using Sohba.Domain.Common;
 using Sohba.ViewModels.Friend;
-using static Sohba.Controllers.FriendsController;
 
 namespace Sohba.Controllers
 {
@@ -59,6 +58,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> SendRequest([FromBody] SendRequestModel model)
         {
@@ -74,6 +74,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> Unfriend([FromBody] UnfriendModel model)
         {
@@ -86,6 +87,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserModel model)
         {
@@ -98,6 +100,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> UnblockUser([FromBody] UnblockUserModel model)
         {
@@ -156,6 +159,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> AcceptRequest([FromBody] AcceptRequestModel model)
         {
@@ -168,6 +172,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> RejectRequest([FromBody] RejectRequestModel model)
         {
@@ -180,6 +185,7 @@ namespace Sohba.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [EnableRateLimiting("FriendRequest")]
         public async Task<IActionResult> CancelRequest([FromBody] CancelRequestModel model)
         {

@@ -2,55 +2,6 @@
  * Friends Feature module capturing UI interaction and API calls.
  */
 
-// Search functionality for Find Friends
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('friendsSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function (e) {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            const userCards = document.querySelectorAll('.user-card');
-            let visibleCount = 0;
-
-            userCards.forEach(card => {
-                const name = card.dataset.name;
-                if (name && name.includes(searchTerm)) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Show/hide no results message
-            const noResults = document.getElementById('noResultsMessage');
-            if (noResults) {
-                if (visibleCount === 0) {
-                    noResults.classList.remove('hidden');
-                } else {
-                    noResults.classList.add('hidden');
-                }
-            }
-        });
-    }
-});
-
-// Filter functionality
-function filterUsers(filter, event) {
-    // Update active button
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active', 'bg-[#345e69]', 'text-white');
-        btn.classList.add('bg-slate-100', 'text-gray-700');
-    });
-    const target = event.target;
-    target.classList.add('active', 'bg-[#345e69]', 'text-white');
-    target.classList.remove('bg-slate-100', 'text-gray-700');
-
-    // TODO: Implement actual filtering with AJAX
-    if (window.SohbaApp) {
-        SohbaApp.toast('Filter by ' + filter + ' coming soon!', 'info');
-    }
-}
-
 // Redirect to view profile
 function viewProfile(userId) {
     window.location.href = `/Profile/Index/${userId}`;
