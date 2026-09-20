@@ -1,6 +1,6 @@
-﻿@* File: Sohba/Views/Landing/Index.cshtml *@
+@* File: Sohba/Views/Landing/Index.cshtml *@
 @{
-    ViewData["Title"] = "Connect with the World";
+    ViewData["Title"] = "Sohba — Where Real Connections Live";
 }
 
 @section Styles {
@@ -9,15 +9,17 @@
 
 <!-- Open Graph & SEO Metadata -->
 <head>
-    <meta name="description" content="Sohba is a modern, privacy-focused social platform where real human connections happen. Share stories, join thriving groups, and interact authentically." />
-    <meta property="og:title" content="Sohba — Connect with the World" />
-    <meta property="og:description" content="Share stories, discover thriving communities, and build genuine social connections on Sohba." />
+    <meta name="description" content="Sohba is a modern, privacy-first social platform: real-time notifications, 24-hour stories, threaded conversations, groups, pages, and enterprise-grade moderation — built end-to-end on ASP.NET Core." />
+    <meta property="og:title" content="Sohba — Where Real Connections Live" />
+    <meta property="og:description" content="A full-stack ASP.NET Core social platform engineered for authenticity, privacy, and real-time speed." />
     <meta property="og:type" content="website" />
 </head>
 
-<div class="landing-wrapper selection:bg-[#345e69] selection:text-white">
+<div class="landing-wrapper">
 
-    <!-- 1. NAVIGATION HEADER -->
+    <!-- ============================================================
+         1. NAVIGATION HEADER
+         ============================================================ -->
     <header class="glass-header" id="landingHeader">
         <div class="nav-container">
             <!-- Brand Logo -->
@@ -28,397 +30,490 @@
                 <span class="logo-text">SOHBA</span>
             </a>
 
-            <!-- Section Navigation Anchors (Desktop) -->
-            <nav class="hidden md:flex items-center gap-8 nav-menu" aria-label="Page Sections">
-                <a href="#features" class="nav-anchor-link">Features</a>
-                <a href="#showcase" class="nav-anchor-link">Experience</a>
-                <a href="#metrics" class="nav-anchor-link">Metrics</a>
-                <a href="#about" class="nav-anchor-link">About</a>
+            <nav class="nav-menu" aria-label="Page Sections">
+                <a href="#showcase" class="nav-anchor-link">Features</a>
+                <a href="#community" class="nav-anchor-link">Community</a>
+                <a href="#security" class="nav-anchor-link">Privacy</a>
+                <a href="#stack" class="nav-anchor-link">Technology</a>
             </nav>
 
-            <!-- Authentication Actions -->
             <div class="auth-links">
                 @if (ViewBag.IsAuthenticated == true)
                 {
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-semibold text-slate-600 hidden sm:inline-block">
-                            Welcome back, <span class="text-[#345e69] font-bold">@ViewBag.UserName</span>
-                        </span>
-                        <a asp-controller="Home" asp-action="Index" class="btn-nav-primary">
-                            <span>Go to Feed</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </a>
-                    </div>
+                    <span class="welcome-tag">Welcome back, <strong>@ViewBag.UserName</strong></span>
+                    <a asp-controller="Home" asp-action="Index" class="btn-nav-primary">
+                        <span>Go to Feed</span>
+                        <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+                    </a>
                 }
                 else
                 {
-                    <div class="flex items-center gap-3">
-                        <a asp-controller="Auth" asp-action="Login" class="btn-nav-ghost">Sign In</a>
-                        <a asp-controller="Auth" asp-action="Register" class="btn-nav-primary">
-                            <span>Join Sohba</span>
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </div>
+                    <a asp-controller="Auth" asp-action="Login" class="btn-nav-ghost">Sign In</a>
+                    <a asp-controller="Auth" asp-action="Register" class="btn-nav-primary">
+                        <span>Join Sohba</span>
+                        <i data-lucide="sparkles" style="width:14px;height:14px"></i>
+                    </a>
                 }
             </div>
         </div>
     </header>
 
-    <!-- 2. HERO SECTION -->
+    <!-- ============================================================
+         2. HERO
+         ============================================================ -->
     <section class="hero-section" id="hero">
-        <!-- Interactive Three.js Background Canvas -->
         <div id="hero-canvas-container" aria-hidden="true">
             <canvas id="hero-canvas"></canvas>
         </div>
 
         <div class="container hero-inner">
-            <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[calc(100vh-5rem)] py-16 sm:py-24">
+            <div class="hero-grid">
 
-                <!-- Left Column: Copy & CTAs -->
-                <div class="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left z-10">
-
-                    <!-- Pill Tag -->
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#345e69]/10 border border-[#345e69]/20 text-[#345e69] text-xs sm:text-sm font-bold w-fit mx-auto lg:mx-0 shadow-sm animate-fade-in">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#345e69] opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#345e69]"></span>
-                        </span>
-                        <span>Next-Generation Social Community</span>
+                <div class="hero-copy">
+                    <div class="hero-pill" data-anim="fade-up">
+                        <span class="pill-dot"><span class="ping"></span><span class="dot"></span></span>
+                        <span>Full-stack ASP.NET Core social platform</span>
                     </div>
 
-                    <!-- Main Headline -->
-                    <h1 class="hero-title text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]">
-                        Where Real Connections
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#345e69] via-[#4a8291] to-[#2a4a52] block sm:inline">
-                            Find Their Home.
-                        </span>
+                    <h1 class="hero-title">
+                        <span class="line" data-anim="mask-line">Where real connections</span>
+                        <span class="line" data-anim="mask-line"><em>find their home.</em></span>
                     </h1>
 
-                    <!-- Body Paragraph -->
-                    <p class="hero-subtitle text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                        Share your world with friends, dive into focused community groups, and experience social media engineered with authenticity, privacy, and speed at its core.
+                    <p class="hero-subtitle" data-anim="fade-up">
+                        A social space for sharing moments, finding your people, and joining communities. Explore a chronological feed, 24-hour stories, threaded conversations, groups, pages, and real-time notifications.
                     </p>
 
-                    <!-- Hero CTA Buttons -->
-                    <div class="hero-cta-group flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                    <div class="hero-cta-group" data-anim="fade-up">
                         @if (ViewBag.IsAuthenticated == true)
                         {
-                            <a asp-controller="Home" asp-action="Index" class="btn-hero-primary w-full sm:w-auto">
-                                <span>Go to Your Feed</span>
-                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            <a asp-controller="Home" asp-action="Index" class="btn-hero-primary">
+                                <span>Go to your feed</span>
+                                <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
                             </a>
                         }
                         else
                         {
-                            <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary w-full sm:w-auto">
-                                <span>Get Started Free</span>
-                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary">
+                                <span>Create free account</span>
+                                <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
                             </a>
                         }
-                        <a href="#showcase" class="btn-hero-secondary w-full sm:w-auto">
-                            <i data-lucide="play-circle" class="w-5 h-5 text-[#345e69]"></i>
-                            <span>Explore Features</span>
+                        <a href="#showcase" class="btn-hero-secondary">
+                            <i data-lucide="layout-grid" style="width:18px;height:18px"></i>
+                            <span>Explore the platform</span>
                         </a>
                     </div>
 
-                    <!-- Social Proof / Community Counters -->
-                    <div class="flex items-center gap-4 pt-4 justify-center lg:justify-start">
-                        <div class="flex -space-x-3">
-                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-[#345e69] text-white flex items-center justify-center text-xs font-bold">M</div>
-                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-[#4a8291] text-white flex items-center justify-center text-xs font-bold">A</div>
-                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-slate-700 text-white flex items-center justify-center text-xs font-bold">S</div>
-                            <div class="w-9 h-9 rounded-full ring-2 ring-white bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">Y</div>
+                    <div class="hero-proof" data-anim="fade-up">
+                        <div class="stack">
+                            <span style="background:#345e6a">M</span>
+                            <span style="background:#79b9a9">A</span>
+                            <span style="background:#1f414b">S</span>
+                            <span style="background:#ddaa76">Y</span>
                         </div>
-                        <div class="text-left text-xs sm:text-sm text-slate-500">
-                            <span class="font-black text-slate-800">12,000+</span> interactions this week
-                        </div>
+                        <span>Built on a real Clean Architecture solution — Domain, Application, Infrastructure &amp; Web</span>
                     </div>
                 </div>
 
-                <!-- Right Column: Interactive Product Showcase Composition -->
-                <div class="lg:col-span-5 relative z-10">
-                    <div class="hero-mockup-wrapper">
+                <div class="hero-visual" data-anim="fade-left">
+                    <div class="hero-mockup-wrapper" style="position:relative; padding: 20px 0;">
 
-                        <!-- Floating Post Card Preview -->
-                        <div class="mockup-card shadow-2xl rounded-3xl p-5 bg-white/95 backdrop-blur-xl border border-slate-200/80 transform hover:-translate-y-1 transition-all duration-300">
-
-                            <!-- Author Header -->
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] p-0.5 shadow-sm">
-                                        <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center font-black text-[#345e69] text-sm">
-                                            SA
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-1.5">
-                                            <h2 class="font-bold text-slate-900 text-sm">Samir Ahmed</h2>
-                                            <span class="text-emerald-500 text-xs" title="Verified Member">✓</span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-400">Just now • 🌐 Public</p>
-                                    </div>
-                                </div>
-                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium">#Technology</span>
-                            </div>
-
-                            <!-- Post Content -->
-                            <p class="text-sm text-slate-700 leading-relaxed mb-4">
-                                Welcome to <strong class="text-[#345e69]">Sohba</strong>! Connect with your friends, build community groups, and share stories that matter.
-                            </p>
-
-                            <!-- Reaction Pills Row (6 Real Sohba Reactions) -->
-                            <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
-                                <div class="flex items-center gap-1">
-                                    <span class="text-base">👍</span>
-                                    <span class="text-base">❤️</span>
-                                    <span class="text-base">🔥</span>
-                                    <span class="font-bold text-slate-700 ml-1.5">48 reactions</span>
-                                </div>
-                                <span class="font-medium text-slate-500 hover:text-[#345e69] cursor-pointer">12 comments</span>
-                            </div>
-                        </div>
-
-                        <!-- Floating Live Story Rail Preview -->
-                        <div class="story-preview-pill shadow-xl rounded-2xl p-3 bg-white/95 backdrop-blur-md border border-slate-200/80 flex items-center gap-3 mt-4">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] p-0.5">
-                                <div class="w-full h-full bg-slate-50 rounded-[10px] flex items-center justify-center text-xs font-bold text-[#345e69]">
-                                    + Add
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-xs font-bold text-slate-800">24-Hour Ephemeral Stories</p>
-                                <p class="text-[11px] text-slate-400">Share moments with custom privacy control</p>
-                            </div>
-                        </div>
-
-                        <!-- Floating Interaction Badge -->
-                        <div class="floating-badge top-badge hidden sm:flex items-center gap-2.5 p-3 rounded-2xl bg-white shadow-xl border border-slate-100 animate-float">
-                            <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">
-                                <i data-lucide="user-check" class="w-4 h-4"></i>
-                            </div>
+                        <div class="floating-badge top-badge animate-float" data-anim="pop">
+                            <i data-lucide="zap" style="width:18px;height:18px"></i>
                             <div>
-                                <p class="text-xs font-bold text-slate-800">Friend Request Accepted</p>
-                                <p class="text-[10px] text-slate-400">2 seconds ago</p>
+                                <strong>Live now</strong>
+                                <span>SignalR notification</span>
                             </div>
                         </div>
 
-                        <!-- Floating Live Connection Badge -->
-                        <div class="floating-badge bottom-badge hidden sm:flex items-center gap-2.5 p-3 rounded-2xl bg-white shadow-xl border border-slate-100 animate-float-delayed">
-                            <div class="w-8 h-8 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center font-bold text-sm">
-                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <div class="mockup-card">
+                            <div class="mockup-header">
+                                <div class="mockup-avatar">M</div>
+                                <div class="mockup-meta">
+                                    <strong>Mona Adel</strong>
+                                    <span>Posted in <strong>UX Circle</strong> · 2m ago</span>
+                                </div>
                             </div>
+                            <div class="mockup-body">
+                                <p>Just shipped the new onboarding flow 🎉 Feedback welcome — tagging the design crew.</p>
+                                <div class="mockup-image"></div>
+                            </div>
+                            <div class="mockup-reactions">
+                                <span class="reaction-chip">❤️ 42</span>
+                                <span class="reaction-chip">😂 8</span>
+                                <span>12 comments</span>
+                            </div>
+                        </div>
+
+                        <div class="floating-badge bottom-badge animate-float-delayed" data-anim="pop">
+                            <i data-lucide="shield-check" style="width:18px;height:18px"></i>
                             <div>
-                                <p class="text-xs font-bold text-slate-800">Real-Time SignalR</p>
-                                <p class="text-[10px] text-slate-400">Zero-refresh notifications</p>
+                                <strong>Private by default</strong>
+                                <span>Blocking + soft-delete</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marquee -->
+    <div class="marquee-section" aria-hidden="true">
+        <div class="marquee-track">
+            <span>6 reaction emotions</span><span>24-hour protected stories</span><span>4-level threaded comments</span><span>Real-time SignalR notifications</span><span>Groups with role hierarchy</span><span>Automatic WebP optimisation</span><span>Policy-based rate limiting</span><span>Immutable admin audit log</span>
+            <span>6 reaction emotions</span><span>24-hour protected stories</span><span>4-level threaded comments</span><span>Real-time SignalR notifications</span><span>Groups with role hierarchy</span><span>Automatic WebP optimisation</span><span>Policy-based rate limiting</span><span>Immutable admin audit log</span>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         3. BENTO FEATURE SHOWCASE
+         ============================================================ -->
+    <section class="showcase-section" id="showcase">
+        <div class="container">
+            <div class="section-head" data-anim="fade-up">
+                <span class="eyebrow">The platform</span>
+                <h2>A social experience built around the way people connect.</h2>
+                <p>Explore the core experiences available in Sohba, from everyday sharing to community spaces and thoughtful controls.</p>
+            </div>
+
+            <div class="bento-grid">
+
+                <div class="bento-card dark span-2" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="layout-list" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Core feed</span>
+                    <h3>One chronological timeline, three sources</h3>
+                    <p>Personal posts, group posts, and page posts merge into a single feed — sorted strictly by time, filtered by privacy and membership, never by an engagement algorithm.</p>
+                </div>
+
+                <div class="bento-card" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="smile" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Engagement</span>
+                    <h3>Six reaction emotions</h3>
+                    <p>Like, Love, Haha, Wow, Sad, Angry — one reaction per person, toggled instantly.</p>
+                </div>
+
+                <div class="bento-card" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="message-square" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Conversations</span>
+                    <h3>Threaded, 4 levels deep</h3>
+                    <p>Nested replies with a domain-enforced depth guard, so threads stay readable.</p>
+                </div>
+
+                <div class="bento-card span-row-2" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="clock" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Stories</span>
+                    <h3>24-hour stories, protected media</h3>
+                    <p>Photos, video, and text stories that expire on the hour. Media lives outside the public web root and streams only after a live authorization check — friendship, blocking, and privacy are all verified per request.</p>
+                </div>
+
+                <div class="bento-card" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="users" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Groups</span>
+                    <h3>Groups with real roles</h3>
+                    <p>Member, Co-Admin, Admin — join requests reviewed, not just rubber-stamped.</p>
+                </div>
+
+                <div class="bento-card" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="flag" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Pages</span>
+                    <h3>Creator &amp; business pages</h3>
+                    <p>Four-tier roles up to Page Owner, with safe ownership transfer.</p>
+                </div>
+
+                <div class="bento-card dark span-2" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="bookmark" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Saved</span>
+                    <h3>Custom saved collections</h3>
+                    <p>Bookmark posts into Favorites, Watch Later, Work, or your own folders — tagged and grouped for effortless retrieval later.</p>
+                </div>
+
+                <div class="bento-card span-2" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="search" style="width:22px;height:22px"></i></div>
+                    <span class="bento-tag">Discovery</span>
+                    <h3>One search bar, four entities</h3>
+                    <p>Posts, people, groups, and pages — with live autocomplete and privacy-aware results that never leak what you shouldn't see.</p>
+                </div>
 
             </div>
         </div>
     </section>
 
-    <!-- 3. PLATFORM CAPABILITIES / EXPERIENCE SHOWCASE -->
-    <section class="py-24 bg-white border-y border-slate-100" id="showcase">
+    <!-- ============================================================
+         4. COMMUNITY EXPERIENCE
+         ============================================================ -->
+    <section class="community-section" id="community">
         <div class="container">
-            <div class="text-center max-w-3xl mx-auto mb-16">
-                <span class="text-xs font-bold uppercase tracking-wider text-[#345e69]">Engineered for Modern Humans</span>
-                <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 mb-4">
-                    The Complete Social Media Experience
-                </h2>
-                <p class="text-slate-600 text-base sm:text-lg">
-                    Everything you need to publish, discover, interact, and organize your digital life without noise or algorithmic fatigue.
-                </p>
+            <div class="section-head center" data-anim="fade-up">
+                <span class="eyebrow">Find your people</span>
+                <h2>One place for your moments, conversations, and communities.</h2>
+                <p>Keep up with friends, share what matters, and take part in spaces built around shared interests.</p>
             </div>
+            <div class="community-grid">
+                <article class="community-card community-card-large" data-anim="reveal">
+                    <div class="community-art feed-art"><span class="art-bubble bubble-one">A little moment worth sharing.</span><span class="art-bubble bubble-two"><i data-lucide="heart"></i> Loved by your circle</span><div class="art-orbit"></div></div>
+                    <div class="community-card-copy"><span class="bento-tag">Your feed</span><h3>Catch up in your own time.</h3><p>A chronological timeline brings together personal, group, and page posts, so updates are presented by time rather than an engagement ranking.</p></div>
+                </article>
+                <article class="community-card" data-anim="reveal">
+                    <div class="community-art stories-art"><div class="story-ring"><i data-lucide="clock-3"></i></div><span class="story-label">24 hours</span></div>
+                    <div class="community-card-copy"><span class="bento-tag">Stories</span><h3>Small updates, shared in the moment.</h3><p>Post photo, video, or text stories that are designed to expire after 24 hours, with media access protected by authorization checks.</p></div>
+                </article>
+                <article class="community-card" data-anim="reveal">
+                    <div class="community-art groups-art"><div class="people-stack"><span>J</span><span>N</span><span>M</span><span>+</span></div><div class="group-art-lines"><i></i><i></i><i></i></div></div>
+                    <div class="community-card-copy"><span class="bento-tag">Groups &amp; pages</span><h3>Make room for shared interests.</h3><p>Join groups, follow pages, and participate in spaces with role-based management for members, co-admins, admins, and owners.</p></div>
+                </article>
+                <article class="community-card community-card-wide" data-anim="reveal">
+                    <div class="community-art discover-art"><div class="search-orb"><i data-lucide="search"></i></div><span class="discover-chip chip-a">People</span><span class="discover-chip chip-b">Groups</span><span class="discover-chip chip-c">Posts</span><span class="discover-chip chip-d">Pages</span></div>
+                    <div class="community-card-copy"><span class="bento-tag">Discovery &amp; saved posts</span><h3>Find it now. Keep it for later.</h3><p>Search across posts, people, groups, and pages with privacy-aware results. Save posts into named collections to return to them when you need them.</p></div>
+                </article>
+            </div>
+        </div>
+    </section>
 
-            <!-- Bento-Style Feature Grid -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                <!-- Card 1: Expressive Posts -->
-                <div class="bento-card group">
-                    <div class="bento-icon-box bg-blue-50 text-blue-600">
-                        <i data-lucide="layout-grid" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="bento-title">Expressive Feed</h3>
-                    <p class="bento-desc">
-                        Publish rich text, multi-image posts, and hashtags. React using 6 distinct emotions and engage with nested comment threads up to 4 levels deep.
-                    </p>
+    <!-- ============================================================
+         5. DEEP DIVE — REAL-TIME ENGINE
+         ============================================================ -->
+    <section class="deepdive-section" id="realtime">
+        <div class="container">
+            <div class="deepdive-row">
+                <div class="deepdive-copy" data-anim="fade-right">
+                    <span class="eyebrow">Real-time engine</span>
+                    <h2>Notifications that arrive before you refresh.</h2>
+                    <p>A dedicated SignalR hub, authenticated over a hybrid cookie + JWT handshake, pushes every meaningful event straight to the browser — no polling, no delay.</p>
+                    <ul class="deepdive-list">
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Hybrid authentication.</strong> A secure HTTP-only cookie serves page navigation, while a signed JWT — extracted from the query string on handshake — authorizes the WebSocket.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Seven event types.</strong> Reactions, comments, friend requests, group invitations, page follows, story likes, and system alerts — each targeted at the exact recipient.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Resilient client.</strong> Automatic reconnection with backoff, live toast messages, and an unread badge that updates without a page reload.</div></li>
+                    </ul>
                 </div>
-
-                <!-- Card 2: Communities & Pages -->
-                <div class="bento-card group">
-                    <div class="bento-icon-box bg-emerald-50 text-emerald-600">
-                        <i data-lucide="users" class="w-6 h-6"></i>
+                <div class="deepdive-visual" data-anim="fade-left">
+                    <div class="panel-card">
+                        <div class="panel-head"><span></span><span></span><span></span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="heart" style="width:16px;height:16px"></i>PostLike</span><span class="value">Clients.User(id)</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="message-circle" style="width:16px;height:16px"></i>PostComment</span><span class="value">ReceiveNotification</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="user-plus" style="width:16px;height:16px"></i>FriendRequest</span><span class="value">SignalR Hub</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="users" style="width:16px;height:16px"></i>GroupInvitation</span><span class="value">/notificationHub</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="flag" style="width:16px;height:16px"></i>PageFollow</span><span class="value">Instant</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="clock" style="width:16px;height:16px"></i>StoryLike</span><span class="value">Realtime</span></div>
                     </div>
-                    <h3 class="bento-title">Groups & Pages</h3>
-                    <p class="bento-desc">
-                        Create public or private communities. Manage members with tiered roles (Owner, Admin, Member), membership requests, and group-exclusive discussions.
-                    </p>
-                </div>
-
-                <!-- Card 3: Ephemeral Stories -->
-                <div class="bento-card group">
-                    <div class="bento-icon-box bg-purple-50 text-purple-600">
-                        <i data-lucide="camera" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="bento-title">24-Hour Stories</h3>
-                    <p class="bento-desc">
-                        Share moments with media and photos. Control story privacy with Friends-Only mode, track real-time viewer lists, and react instantly.
-                    </p>
-                </div>
-
-                <!-- Card 4: Smart Organization -->
-                <div class="bento-card group">
-                    <div class="bento-icon-box bg-amber-50 text-amber-600">
-                        <i data-lucide="bookmark" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="bento-title">Saved Collections</h3>
-                    <p class="bento-desc">
-                        Organize valuable content into custom folders such as Work, Favorites, and Education. Never lose an important post or resource again.
-                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 4. DETAILED FEATURES OVERVIEW -->
-    <section class="py-24 bg-slate-50/70" id="features">
+    <!-- ============================================================
+         5. DEEP DIVE — SECURITY & PRIVACY
+         ============================================================ -->
+    <section class="deepdive-section" id="security">
         <div class="container">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <span class="text-xs font-bold uppercase tracking-wider text-[#345e69]">Robust Architecture</span>
-                <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 mb-4">
-                    Security, Privacy, and Control
-                </h2>
-                <p class="text-slate-600 text-base">
-                    Built upon modern enterprise standards with full respect for your personal boundary.
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Architecture Feature 1 -->
-                <div class="feature-detail-card">
-                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Private & Secure</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
-                        Granular account privacy, peer-to-peer user blocking, email verification, and rate limiting ensure your community remains safe and spam-free.
-                    </p>
+            <div class="deepdive-row reverse">
+                <div class="deepdive-copy" data-anim="fade-left">
+                    <span class="eyebrow">Security &amp; privacy</span>
+                    <h2>Guarded at every layer, not bolted on after.</h2>
+                    <p>From brute-force protection to file-upload spoofing, Sohba treats security as architecture, not an afterthought.</p>
+                    <ul class="deepdive-list">
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Eight rate-limit policies.</strong> Auth, feed, search, story creation, and friend requests each get their own partitioned window — by IP or by user.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Two-way blocking, separate from bans.</strong> Peer-to-peer blocking hides content instantly; platform bans are a distinct administrative action with a full lineage trail.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Magic-byte upload validation.</strong> Every image is decoded and re-encoded to WebP — spoofed extensions are rejected before they ever touch disk.</div></li>
+                    </ul>
                 </div>
-
-                <!-- Architecture Feature 2 -->
-                <div class="feature-detail-card">
-                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
-                        <i data-lucide="search" class="w-6 h-6"></i>
+                <div class="deepdive-visual" data-anim="fade-right">
+                    <div class="panel-card">
+                        <div class="panel-head"><span></span><span></span><span></span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="lock" style="width:16px;height:16px"></i>Auth</span><span class="value">15 req / min · IP</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="rss" style="width:16px;height:16px"></i>Feed</span><span class="value">60 req / min</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="image" style="width:16px;height:16px"></i>StoryCreate</span><span class="value">10 req / min · user</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="user-plus" style="width:16px;height:16px"></i>FriendRequest</span><span class="value">30 req / min</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="search" style="width:16px;height:16px"></i>Search</span><span class="value">60 req / min</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="shield" style="width:16px;height:16px"></i>Rejected</span><span class="value">HTTP 429 JSON</span></div>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Universal Search</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
-                        Instant discovery across users, posts, trending hashtags, pages, and groups with unified global search and instant keyboard shortcuts.
-                    </p>
-                </div>
-
-                <!-- Architecture Feature 3 -->
-                <div class="feature-detail-card">
-                    <div class="w-12 h-12 rounded-xl bg-[#345e69]/10 text-[#345e69] flex items-center justify-center mb-5">
-                        <i data-lucide="bell" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Live SignalR Hubs</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed">
-                        Experience real-time notifications for reactions, comments, friend requests, and group invites delivered directly without refreshing your browser.
-                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 5. VERIFIED PLATFORM METRICS -->
-    <section class="py-20 bg-[#345e69] text-white" id="metrics">
+    <!-- ============================================================
+         7. DEEP DIVE — ADMIN COMMAND CENTER
+         ============================================================ -->
+    <section class="deepdive-section" id="admin">
         <div class="container">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-
-                <div class="metric-block">
-                    <div class="metric-number counter" data-value="1200" data-suffix="+">0</div>
-                    <div class="metric-label">Active Members</div>
+            <div class="deepdive-row">
+                <div class="deepdive-copy" data-anim="fade-right">
+                    <span class="eyebrow">Moderation</span>
+                    <h2>A command center for keeping the community healthy.</h2>
+                    <p>A dedicated dashboard gives administrators the tools to act fast — and every action leaves a permanent, auditable trace.</p>
+                    <ul class="deepdive-list">
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Live analytics.</strong> User growth, blocked accounts, posts, groups, and pending reports — charted by day.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Reports queue.</strong> Spam, harassment, and inappropriate content routed to admins, with resolve, dismiss, or remove-and-resolve actions.</div></li>
+                        <li><span class="check"><i data-lucide="check" style="width:13px;height:13px"></i></span><div><strong>Admin lineage.</strong> Every admin tracks who promoted them, so a sub-admin can never demote or block the platform owner.</div></li>
+                    </ul>
                 </div>
+                <div class="deepdive-visual" data-anim="fade-left">
+                    <div class="panel-card">
+                        <div class="panel-head"><span></span><span></span><span></span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="bar-chart-3" style="width:16px;height:16px"></i>Dashboard</span><span class="value">Live counts</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="flag" style="width:16px;height:16px"></i>Reports</span><span class="value">Pending → Resolved</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="eye-off" style="width:16px;height:16px"></i>HidePost</span><span class="value">Soft moderation</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="user-x" style="width:16px;height:16px"></i>BlockUser</span><span class="value">Ban ≠ delete</span></div>
+                        <div class="panel-row"><span class="label"><i data-lucide="file-clock" style="width:16px;height:16px"></i>AuditLog</span><span class="value">Immutable</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="metric-block">
+    <!-- ============================================================
+         8. TECH STACK
+         ============================================================ -->
+    <section class="stack-section" id="stack">
+        <div class="container">
+            <div class="section-head center" data-anim="fade-up">
+                <span class="eyebrow">Under the hood</span>
+                <h2>Built on a real, layered .NET architecture.</h2>
+                <p>Domain, Application, Infrastructure, and Web projects — each with a single responsibility.</p>
+            </div>
+            <div class="stack-grid">
+                <div class="stack-chip" data-anim="reveal"><span class="name">.NET 10</span><span class="role">Runtime</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">EF Core</span><span class="role">ORM</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">SQL Server</span><span class="role">Database</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">SignalR</span><span class="role">Real-time</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">Identity</span><span class="role">Auth</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">AutoMapper</span><span class="role">Mapping</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">FluentValidation</span><span class="role">Validation</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">ImageSharp</span><span class="role">Media pipeline</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">Serilog</span><span class="role">Observability</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">GSAP</span><span class="role">Motion</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">Three.js</span><span class="role">3D canvas</span></div>
+                <div class="stack-chip" data-anim="reveal"><span class="name">Razor MVC</span><span class="role">Views</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         9. METRICS
+         ============================================================ -->
+    <section class="metrics-section" id="metrics">
+        <div class="container">
+            <div class="metrics-grid">
+                <div class="metric-block" data-anim="fade-up">
+                    <div class="metric-number counter" data-value="21" data-suffix="">0</div>
+                    <div class="metric-label">Domain entities</div>
+                </div>
+                <div class="metric-block" data-anim="fade-up">
                     <div class="metric-number counter" data-value="6" data-suffix="">0</div>
-                    <div class="metric-label">Reaction Emotions</div>
+                    <div class="metric-label">Reaction emotions</div>
                 </div>
-
-                <div class="metric-block">
-                    <div class="metric-number counter" data-value="100" data-suffix="%">0</div>
-                    <div class="metric-label">Private & Clean</div>
+                <div class="metric-block" data-anim="fade-up">
+                    <div class="metric-number counter" data-value="8" data-suffix="">0</div>
+                    <div class="metric-label">Rate-limit policies</div>
                 </div>
-
-                <div class="metric-block">
+                <div class="metric-block" data-anim="fade-up">
                     <div class="metric-number counter" data-value="24" data-suffix="h">0</div>
-                    <div class="metric-label">Story Lifespan</div>
+                    <div class="metric-label">Story lifespan</div>
                 </div>
-
             </div>
         </div>
     </section>
 
-    <!-- 6. ABOUT CREATOR / TECH STACK SECTION -->
-    <section class="py-24 bg-white" id="about">
+    <!-- ============================================================
+         10. TOPICS / ADVANCED TOPICS
+         ============================================================ -->
+    <section class="topics-section" id="topics">
         <div class="container">
-            <div class="max-w-3xl mx-auto bg-slate-50 border border-slate-200/80 rounded-3xl p-8 sm:p-12 text-center shadow-sm">
+            <div class="section-head center" data-anim="fade-up">
+                <span class="eyebrow">How Sohba was engineered</span>
+                <h2>From solid foundations to production-grade systems.</h2>
+                <p>Every concept below is implemented in the codebase — not a checklist, a build log.</p>
+            </div>
 
-                <!-- Avatar Emblem -->
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#345e69] to-[#4a8291] text-white text-2xl font-black flex items-center justify-center mx-auto mb-6 shadow-md shadow-[#345e69]/20">
-                    SA
+            <div class="topics-grid" data-anim="fade-up">
+                <div class="topics-col">
+                    <div class="topics-col-head foundations">
+                        <div class="badge"><i data-lucide="layers" style="width:19px;height:19px"></i></div>
+                        <div>
+                            <h3>Foundations</h3>
+                            <span>The architecture everything else stands on</span>
+                        </div>
+                    </div>
+                    <div class="topic-list">
+                        <div class="topic-item"><span class="dot"></span><div><strong>Clean / layered architecture</strong> — Domain, Application, Infrastructure, and Web kept strictly separate.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>ASP.NET Core MVC &amp; Razor Views</strong> — server-rendered pages with AJAX-aware controllers.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Entity Framework Core</strong> — code-first modelling with Fluent API configurations.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>ASP.NET Core Identity</strong> — role-based authorization for Users, Admins, and Owners.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Repository &amp; Unit of Work</strong> — a consistent data-access boundary across every feature.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>DTOs &amp; AutoMapper</strong> — domain entities never leak directly into views.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>FluentValidation</strong> — declarative, testable input rules on every form.</div></div>
+                    </div>
                 </div>
 
-                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-3">
-                    Crafted with Pride by Samir Ahmed
-                </h2>
+                <div class="topics-col">
+                    <div class="topics-col-head advanced">
+                        <div class="badge"><i data-lucide="cpu" style="width:19px;height:19px"></i></div>
+                        <div>
+                            <h3>Advanced engineering</h3>
+                            <span>What makes Sohba feel production-grade</span>
+                        </div>
+                    </div>
+                    <div class="topic-list">
+                        <div class="topic-item"><span class="dot"></span><div><strong>SignalR real-time hubs</strong> — authenticated over a JWT handshake, not just a demo chat.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Domain-driven business rules</strong> — dedicated domain services enforce privacy and depth limits.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Soft-delete via global query filters</strong> — deleted data disappears everywhere, instantly, by design.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Filtered SQL indexes</strong> — uniqueness enforced only on active pending requests.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Policy-based rate limiting</strong> — eight partitioned windows tuned per endpoint risk.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Background hosted services</strong> — hourly story cleanup, daily notification pruning.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Image pipeline with rollback</strong> — magic-byte checks, WebP re-encoding, automatic cleanup on failure.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Protected out-of-webroot media</strong> — story files streamed only after a live authorization check.</div></div>
+                        <div class="topic-item"><span class="dot"></span><div><strong>Immutable audit logging</strong> — every admin action recorded, with lineage protection built in.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <p class="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl mx-auto mb-8">
-                    Sohba is engineered as an enterprise-grade social application built with <strong class="text-slate-800">ASP.NET Core 10</strong>, <strong class="text-slate-800">Entity Framework Core</strong>, and <strong class="text-slate-800">Tailwind CSS</strong>, blending scalable backend patterns with an intuitive, modern user experience.
+    <!-- ============================================================
+         11. CREDITS / SIGNATURE
+         ============================================================ -->
+    <section class="credits-section" id="about">
+        <div id="credits-canvas-container" aria-hidden="true">
+            <canvas id="credits-canvas"></canvas>
+        </div>
+        <div class="container">
+            <div class="credits-inner">
+                <div class="credits-emblem" data-anim="pop">SA</div>
+                <span class="eyebrow" data-anim="fade-up">Crafted end-to-end by</span>
+                <h2 data-anim="fade-up">Samir Ahmed</h2>
+                <p data-anim="fade-up">
+                    Sohba is a full-stack <strong>ASP.NET Core</strong> social platform — architecture, database design, real-time systems, and this landing page, all built by one developer as a showcase of production-grade engineering.
                 </p>
-
-                <div class="flex flex-wrap items-center justify-center gap-4">
-                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors shadow-sm">
-                        <i data-lucide="github" class="w-4 h-4"></i>
+                <div class="credits-links" data-anim="fade-up">
+                    <a href="https://www.linkedin.com/in/samir-ahmed00/" target="_blank" rel="noopener noreferrer" class="btn-social linkedin">
+                        <i data-lucide="linkedin" style="width:18px;height:18px"></i>
+                        <span>Connect on LinkedIn</span>
+                    </a>
+                    <a href="https://github.com/SamirAhmed00" target="_blank" rel="noopener noreferrer" class="btn-social github">
+                        <i data-lucide="github" style="width:18px;height:18px"></i>
                         <span>Explore on GitHub</span>
                     </a>
-                    @if (ViewBag.IsAuthenticated == true)
-                    {
-                        <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#345e69] hover:bg-[#2a4a52] text-white text-sm font-semibold transition-colors shadow-sm">
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            <span>Go to Feed</span>
-                        </a>
-                    }
-                    else
-                    {
-                        <a asp-controller="Auth" asp-action="Register" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#345e69] hover:bg-[#2a4a52] text-white text-sm font-semibold transition-colors shadow-sm">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i>
-                            <span>Create Account</span>
-                        </a>
-                    }
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 7. FOOTER -->
+    <!-- ============================================================
+         12. FOOTER
+         ============================================================ -->
     <footer class="landing-footer">
         <div class="container footer-content">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-[#345e69] text-white flex items-center justify-center font-bold text-sm">
-                    S
-                </div>
-                <span class="font-black tracking-tight text-slate-800 text-lg">SOHBA</span>
+            <div class="footer-brand">
+                <div class="mark">S</div>
+                <strong>Sohba</strong>
             </div>
-
-            <p class="text-xs text-slate-500 text-center sm:text-left">
-                &copy; @DateTime.UtcNow.Year Sohba Platform. Built by Samir Ahmed.
-            </p>
-
-            <div class="flex items-center gap-4 text-xs font-semibold text-slate-600">
-                <a href="#hero" class="hover:text-[#345e69] transition-colors">Back to Top</a>
+            <p class="copyright">&copy; @DateTime.UtcNow.Year Sohba Platform. Built by Samir Ahmed.</p>
+            <div class="footer-links">
+                <a href="#hero">Back to top</a>
+                <a href="https://github.com/SamirAhmed00" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/samir-ahmed00/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
             </div>
         </div>
     </footer>
