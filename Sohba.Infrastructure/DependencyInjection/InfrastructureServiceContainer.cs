@@ -67,6 +67,8 @@ namespace Sohba.Infrastructure.DependencyInjection
             services.AddScoped<IHashtagRepository, HashtagRepository>();
             services.AddScoped<IPageRepository, PageRepository>();
             //services.AddScoped<INotificationHubService, NotificationHubService>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IGenericAdminLogRepository, AdminAuditLogRepository>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 

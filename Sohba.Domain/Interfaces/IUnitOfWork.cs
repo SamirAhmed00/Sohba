@@ -2,8 +2,15 @@
 using System.Collections.Generic;
 using System.Text;
 
+using Sohba.Domain.Entities.AdminAggregate;
+
 namespace Sohba.Domain.Interfaces
 {
+    public interface IGenericAdminLogRepository : IGenericRepository<AdminAuditLog>
+    {
+        Task<(IReadOnlyList<AdminAuditLog> Items, int TotalCount)> GetLogsPagedAsync(string? actionFilter, int page, int pageSize);
+    }
+
     public interface IUnitOfWork : IDisposable
     {
         IFriendshipRepository Friendships { get; }
@@ -18,6 +25,7 @@ namespace Sohba.Domain.Interfaces
 
         IPageRepository Pages { get; }
 
+        IGenericAdminLogRepository AdminLogs { get; }
 
         Task<int> CompleteAsync();
 

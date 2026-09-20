@@ -1,7 +1,6 @@
-﻿@model Sohba.ViewModels.Dashboard.DashboardPostsViewModel
+@model Sohba.ViewModels.Dashboard.DashboardPostsViewModel
 @{
     ViewData["Title"] = "Manage Posts";
-    // Layout = "~/Views/Shared/_Layout.cshtml";
     Layout = "_AppLayout";
 }
 
@@ -265,18 +264,14 @@
                 }
             });
 
-            // =========================
             // Filters
-            // =========================
             window.applyFilters = function () {
         const search = document.getElementById('dashboardSearchInput')?.value || '';
                 const source = document.getElementById('sourceFilter')?.value || 'all';
                 window.location.href = `/Dashboard/Posts?search=${encodeURIComponent(search)}&source=${source}`;
             };
 
-            // =========================
             // View Post
-            // =========================
             window.viewPost = async function (postId) {
             if (!postId) return;
             try {
@@ -305,9 +300,7 @@
             document.body.style.overflow = '';
             };
 
-            // =========================
             // Hide Post with Modal
-            // =========================
             window.hidePost = async function (postId) {
                 if (!postId) return;
 
@@ -354,9 +347,7 @@
                 });
             };
 
-            // =========================
             // Admin Delete Post Reason Modal
-            // =========================
             window.openAdminDeleteReasonModal = function (postId) {
                 const modal = document.getElementById('adminDeleteReasonModal');
                 const input = document.getElementById('adminDeleteReasonInput');
@@ -418,9 +409,7 @@
                 });
             };
 
-            // =========================
             // Delete Post entry point
-            // =========================
             window.deletePost = function (postId) {
                 if (!postId) return;
                 window.openAdminDeleteReasonModal(postId);

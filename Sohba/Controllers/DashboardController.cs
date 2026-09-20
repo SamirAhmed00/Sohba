@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -126,7 +126,7 @@ namespace Sohba.Controllers
 
 
 
-        // ==================== Users Management ====================
+        // Users Management
 
         [HttpGet]
         public async Task<IActionResult> Users(string search = "", string status = "all", int page = 1)
@@ -239,7 +239,7 @@ namespace Sohba.Controllers
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
 
-        // ==================== Posts Management ====================
+        // Posts Management
 
         [HttpGet]
         public async Task<IActionResult> Posts(string search = "", string source = "all", int page = 1)
@@ -301,7 +301,7 @@ namespace Sohba.Controllers
 
             return Json(new { success = result.IsSuccess, error = result.Error });
         }
-        // ==================== Deleted Groups Moderation ====================
+        // Deleted Groups Moderation
 
         [HttpGet]
         public async Task<IActionResult> DeletedGroups(string search = "", int page = 1)
@@ -336,7 +336,7 @@ namespace Sohba.Controllers
             return View(viewModel);
         }
 
-        // ==================== Reports Management ====================
+        // Reports Management
 
         [HttpGet]
         public async Task<IActionResult> Reports(string status = "pending", int page = 1)
@@ -395,7 +395,7 @@ namespace Sohba.Controllers
             return Json(new { success = deleteResult.IsSuccess, error = deleteResult.Error });
         }
 
-        // ==================== Modal Actions ====================
+        // Modal Actions
 
         [HttpGet]
         public async Task<IActionResult> GetUserDetails(Guid userId)
@@ -641,17 +641,7 @@ namespace Sohba.Controllers
         [HttpGet]
         public async Task<IActionResult> AuditLogs(string actionFilter = "all", int page = 1)
         {
-            var dbContext = HttpContext.RequestServices.GetRequiredService<Sohba.Infrastructure.Data.AppDbContext>();
-            var query = dbContext.AdminAuditLogs.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(actionFilter) && !actionFilter.Equals("all", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(l => l.Action == actionFilter);
-            }
-
-            var totalCount = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(query);
-            var items = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync(
-                query.OrderByDescending(l => l.Timestamp).Skip((page - 1) * 25).Take(25));
+            var (logs, totalCount) = await _unitOfWork.AdminLogs.GetLogsPagedAsync(actionFilter, page, 25);
 
             var viewModel = new DashboardAuditLogsViewModel
             {
@@ -659,7 +649,7 @@ namespace Sohba.Controllers
                 CurrentPage = page,
                 PageSize = 25,
                 TotalCount = totalCount,
-                Logs = items
+                Logs = logs.ToList()
             };
 
             return View(viewModel);
@@ -669,8 +659,7 @@ namespace Sohba.Controllers
         {
             try
             {
-                var dbContext = HttpContext.RequestServices.GetRequiredService<Sohba.Infrastructure.Data.AppDbContext>();
-                dbContext.AdminAuditLogs.Add(new AdminAuditLog
+                _unitOfWork.AdminLogs.Add(new AdminAuditLog
                 {
                     AdminId = GetCurrentUserId(),
                     AdminEmail = User.Identity?.Name ?? "Admin",
@@ -680,7 +669,7 @@ namespace Sohba.Controllers
                     Details = details,
                     Timestamp = DateTime.UtcNow
                 });
-                await dbContext.SaveChangesAsync();
+                await _unitOfWork.CompleteAsync();
             }
             catch (Exception ex)
             {

@@ -24,7 +24,8 @@ namespace Sohba.Infrastructure.Repositories
             IReportingRepository reports,
             IInteractionRepository interactions,
             IHashtagRepository hashtags,
-            IPageRepository pages)
+            IPageRepository pages,
+            IGenericAdminLogRepository adminLogs)
         {
             _context = context;
             
@@ -39,6 +40,7 @@ namespace Sohba.Infrastructure.Repositories
             Interactions = interactions;
             Hashtags = hashtags;
             Pages = pages;
+            AdminLogs = adminLogs;
         }
 
         public IUserRepository Users { get; private set; }
@@ -51,6 +53,7 @@ namespace Sohba.Infrastructure.Repositories
         public IInteractionRepository Interactions { get; private set; }
         public IPageRepository Pages { get; private set; }
         public IHashtagRepository Hashtags { get; private set; }
+        public IGenericAdminLogRepository AdminLogs { get; private set; }
 
         public async Task<int> CompleteAsync()
         {

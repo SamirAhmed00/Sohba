@@ -1,8 +1,7 @@
-﻿@using Sohba.Domain.Enums
+@using Sohba.Domain.Enums
 @model Sohba.ViewModels.Dashboard.DashboardUsersViewModel
 @{
     ViewData["Title"] = "Manage Users";
-    // Layout = "~/Views/Shared/_Layout.cshtml";
     Layout = "_AppLayout";
 }
 
@@ -287,9 +286,7 @@
                 });
             };
 
-            // =========================
             // Filters
-            // =========================
             window.applyFilters = function () {
                 const search = document.getElementById('dashboardSearchInput')?.value || '';
                 const status = document.getElementById('statusFilter')?.value || '';
@@ -298,9 +295,7 @@
                     `/Dashboard/Users?search=${encodeURIComponent(search)}&status=${status}`;
             };
 
-            // =========================
             // Block User
-            // =========================
             window.blockUser = async function (userId) {
                 showConfirmModal({
                     title: 'Block User',
@@ -331,9 +326,7 @@
                 });
             };
 
-            // =========================
             // Unblock User
-            // =========================
             window.unblockUser = async function (userId) {
                 showConfirmModal({
                     title: 'Unblock User',
@@ -366,9 +359,7 @@
                 });
             };
 
-            // =========================
             // Delete User
-            // =========================
             window.deleteUser = async function (userId) {
                 showConfirmModal({
                     title: 'Delete User',
@@ -387,9 +378,7 @@
                 });
             };
 
-            // =========================
             // View User
-            // =========================
             window.viewUser = async function (userId) {
                 try {
                     const response = await fetch(`/Dashboard/GetUserDetails?userId=${userId}`);
