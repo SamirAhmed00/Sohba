@@ -11,7 +11,9 @@ using Sohba.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Group = Sohba.Domain.Entities.GroupAndPage.Group;
 
 namespace Sohba.Application.Services
 {
@@ -117,9 +119,7 @@ namespace Sohba.Application.Services
             return Result<GroupResponseDto>.Success(response);
         }
 
-        public async Task<Result<GroupResponseDto>> CreateGroupAsync(
-            GroupCreateDto groupDto,
-            Guid adminId)
+        public async Task<Result<GroupResponseDto>> CreateGroupAsync(GroupCreateDto groupDto,Guid adminId)
         {
             var group = _mapper.Map<Group>(groupDto);
 
@@ -141,6 +141,8 @@ namespace Sohba.Application.Services
 
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation("Group {GroupId} ('{GroupName}') created by user {UserId}", group.Id, group.Name, adminId);
+
             var response = _mapper.Map<GroupResponseDto>(group);
 
             response.AdminName =
@@ -153,9 +155,7 @@ namespace Sohba.Application.Services
             return Result<GroupResponseDto>.Success(response);
         }
 
-        public async Task<Result<GroupResponseDto>> UpdateGroupAsync(
-            GroupUpdateDto updateDto,
-            Guid userId)
+        public async Task<Result<GroupResponseDto>> UpdateGroupAsync(GroupUpdateDto updateDto, Guid userId)
         {
             var trackedGroup =
                 await _unitOfWork.Groups.GetTrackedGroupByIdAsync(
@@ -182,6 +182,12 @@ namespace Sohba.Application.Services
             trackedGroup.IsPrivate = updateDto.IsPrivate;
 
             await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                "Group {GroupId} ('{GroupName}') updated by user {UserId}",
+                trackedGroup.Id,
+                trackedGroup.Name,
+                userId);
 
             var response =
                 _mapper.Map<GroupResponseDto>(trackedGroup);
@@ -221,13 +227,7 @@ namespace Sohba.Application.Services
                 return Result<bool>.Failure(
                     validation.Error);
 
-            _logger.LogInformation(
-                "Group {GroupId} ('{Name}') soft-deleted by user {UserId} (Admin: {IsAdmin}). Reason: {Reason}",
-                groupId,
-                group.Name,
-                userId,
-                isAdmin,
-                reason);
+           
 
             // 1. Soft-delete all posts belonging to this group.
             var groupPosts =
@@ -268,12 +268,19 @@ namespace Sohba.Application.Services
             var affectedRows =
                 await _unitOfWork.CompleteAsync();
 
+
+            _logger.LogInformation(
+               "Group {GroupId} ('{Name}') soft-deleted by user {UserId} (Admin: {IsAdmin}). Reason: {Reason}",
+               groupId,
+               group.Name,
+               userId,
+               isAdmin,
+               reason);
+
             return Result<bool>.Success(affectedRows > 0);
         }
 
-        public async Task<Result<bool>> JoinGroupAsync(
-            Guid groupId,
-            Guid userId)
+        public async Task<Result<bool>> JoinGroupAsync(Guid groupId, Guid userId)
         {
             var group =
                 await _unitOfWork.Groups.GetByIdAsync(groupId);
@@ -316,8 +323,9 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Groups.AddMember(newMember);
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("User {UserId} joined group {GroupId} ('{GroupName}')", userId, groupId, group.Name);
 
             if (affectedRows > 0 &&
                 group.AdminId != userId)
@@ -341,9 +349,7 @@ namespace Sohba.Application.Services
                 affectedRows > 0);
         }
 
-        public async Task<Result<bool>> LeaveGroupAsync(
-            Guid groupId,
-            Guid userId)
+        public async Task<Result<bool>> LeaveGroupAsync(Guid groupId, Guid userId)
         {
             var group =
                 await _unitOfWork.Groups.GetByIdAsync(groupId);
@@ -420,8 +426,9 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Groups.RemoveMember(member);
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation("User {UserId} left group {GroupId} ('{GroupName}')", userId, groupId, group.Name);
 
             if (affectedRows > 0 && !isOwner)
             {
@@ -527,10 +534,7 @@ namespace Sohba.Application.Services
                 .Success(dtos);
         }
 
-        public async Task<Result<bool>> PromoteMemberAsync(
-            Guid groupId,
-            Guid targetUserId,
-            Guid actionUserId)
+        public async Task<Result<bool>> PromoteMemberAsync(Guid groupId, Guid targetUserId, Guid actionUserId)
         {
             var group =
                 await _unitOfWork.Groups.GetByIdAsync(groupId);
@@ -601,11 +605,14 @@ namespace Sohba.Application.Services
                     "User is already at the highest membership role.");
             }
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+            
 
             if (affectedRows > 0)
             {
+                _logger.LogInformation( "User {TargetUserId} promoted in group {GroupId} by user {ActorUserId}", targetUserId, groupId, actionUserId);
+
+
                 await _notificationService.CreateNotificationAsync(
                     receiverId: targetUserId,
                     message:
@@ -693,11 +700,17 @@ namespace Sohba.Application.Services
                     "Regular members cannot be demoted further.");
             }
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
 
             if (affectedRows > 0)
             {
+                _logger.LogInformation(
+                    "User {TargetUserId} demoted in group {GroupId} by user {ActorUserId}",
+                    targetUserId,
+                    groupId,
+                    actionUserId);
+
                 await _notificationService.CreateNotificationAsync(
                     receiverId: targetUserId,
                     message:
@@ -770,8 +783,13 @@ namespace Sohba.Application.Services
             _unitOfWork.Groups.RemoveMember(
                 memberToKick);
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                 "User {TargetUserId} removed from group {GroupId} by user {ActorUserId}",
+                 targetUserId,
+                 groupId,
+                 adminId);
 
             if (affectedRows > 0)
             {
@@ -788,7 +806,7 @@ namespace Sohba.Application.Services
                 affectedRows > 0);
         }
 
-        // ==================== Private Group Join Requests ====================
+        // Private Group Join Requests
 
         public async Task<Result<bool>> SubmitJoinRequestAsync(
             Guid userId,
@@ -844,8 +862,12 @@ namespace Sohba.Application.Services
             _unitOfWork.Groups.AddJoinRequest(
                 request);
 
-            var affectedRows =
-                await _unitOfWork.CompleteAsync();
+            var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                    "User {UserId} submitted join request for group {GroupId}",
+                    userId,
+                    dto.GroupId);
 
             if (affectedRows > 0)
             {
@@ -1054,6 +1076,13 @@ namespace Sohba.Application.Services
 
                 await _unitOfWork.CompleteAsync();
 
+                _logger.LogInformation(
+                        "Join request {RequestId} for group {GroupId} approved by user {ReviewerId} (new member {MemberId})",
+                        request.Id,
+                        request.GroupId,
+                        actionUserId,
+                        request.UserId);
+
                 await _notificationService
                     .CreateNotificationAsync(
                         receiverId: request.UserId,
@@ -1069,6 +1098,13 @@ namespace Sohba.Application.Services
                     GroupJoinRequestStatus.Rejected;
 
                 await _unitOfWork.CompleteAsync();
+
+                _logger.LogInformation(
+                    "Join request {RequestId} for group {GroupId} rejected by user {ReviewerId} (requester {RequesterId})",
+                    request.Id,
+                    request.GroupId,
+                    actionUserId,
+                    request.UserId);
 
                 await _notificationService
                     .CreateNotificationAsync(

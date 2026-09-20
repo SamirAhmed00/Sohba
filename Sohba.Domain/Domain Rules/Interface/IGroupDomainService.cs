@@ -1,4 +1,4 @@
-﻿using Sohba.Domain.Common;
+using Sohba.Domain.Common;
 using Sohba.Domain.Enums;
 using System;
 
@@ -6,7 +6,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
 {
     public interface IGroupDomainService
     {
-        // ==================== Joining ====================
+        // Joining
 
         Result CanJoinGroup(
             Guid userId,
@@ -25,7 +25,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
             bool isUserBanned,
             bool hasExistingPendingRequest);
 
-        // ==================== Group Content ====================
+        // Group Content
 
         Result CanPostInGroup(
             Guid userId,
@@ -34,7 +34,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
             bool isUserBanned,
             bool isGroupLocked);
 
-        // ==================== Member Management ====================
+        // Member Management
 
         Result CanPromoteMember(
             Guid actionUserId,
@@ -57,14 +57,14 @@ namespace Sohba.Domain.Domain_Rules.Interface
             GroupRole? targetUserRole,
             Guid groupOwnerId);
 
-        // ==================== Invitations ====================
+        // Invitations
 
         Result CanInviteToGroup(
             Guid inviterId,
             bool isMember,
             bool groupAllowsMemberInvites);
 
-        // ==================== Group Management ====================
+        // Group Management
 
         Result CanDeleteGroup(
             Guid userId,
@@ -82,7 +82,7 @@ namespace Sohba.Domain.Domain_Rules.Interface
             bool isOwner,
             int eligibleReplacementsCount);
 
-        // ==================== Join Request Management ====================
+        // Join Request Management
 
         Result CanReviewJoinRequest(
             Guid actionUserId,

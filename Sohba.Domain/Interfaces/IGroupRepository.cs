@@ -1,4 +1,4 @@
-﻿
+
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Enums;
 using System;
@@ -9,7 +9,7 @@ namespace Sohba.Domain.Interfaces
 {
     public interface IGroupRepository : IGenericRepository<Group>
     {
-        // ==================== Membership ====================
+        // Membership
 
         Task<bool> IsMemberAsync(
             Guid userId,
@@ -33,7 +33,7 @@ namespace Sohba.Domain.Interfaces
             Guid groupId,
             Guid userId);
 
-        // ==================== Groups ====================
+        // Groups
 
         Task<IEnumerable<Group>> GetGroupsByUserIdAsync(
             Guid userId);
@@ -65,18 +65,18 @@ namespace Sohba.Domain.Interfaces
         Task<Group?> GetTrackedGroupByIdAsync(
             Guid id);
 
-        // ==================== Ownership ====================
+        // Ownership
 
         Task<GroupMember?>
             GetEarliestEligibleMemberForOwnershipTransferAsync(
                 Guid groupId,
                 Guid excludeUserId);
 
-        // ==================== Deleted Groups ====================
+        // Deleted Groups
 
         Task<IEnumerable<Group>> GetDeletedGroupsAsync();
 
-        // ==================== Join Requests ====================
+        // Join Requests
 
         void AddJoinRequest(
             GroupJoinRequest request);

@@ -17,9 +17,7 @@ namespace Sohba.Infrastructure.Repositories
         {
         }
 
-        // ============================================================
         // Groups
-        // ============================================================
 
         public override async Task<IEnumerable<Group>> GetAllAsync()
         {
@@ -134,9 +132,7 @@ namespace Sohba.Infrastructure.Repositories
                     g.Id == id);
         }
 
-        // ============================================================
         // Membership
-        // ============================================================
 
         public async Task<bool> IsMemberAsync(
             Guid userId,
@@ -288,9 +284,7 @@ namespace Sohba.Infrastructure.Repositories
             return (items, totalCount);
         }
 
-        // ============================================================
         // Ownership Transfer
-        // ============================================================
 
         public async Task<GroupMember?>
             GetEarliestEligibleMemberForOwnershipTransferAsync(
@@ -321,9 +315,7 @@ namespace Sohba.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        // ============================================================
         // Deleted Groups
-        // ============================================================
 
         public async Task<IEnumerable<Group>>
             GetDeletedGroupsAsync()
@@ -336,9 +328,7 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // ============================================================
         // Group Admins
-        // ============================================================
 
         public async Task<IEnumerable<GroupMember>>
             GetGroupAdminsAsync(
@@ -354,9 +344,7 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // ============================================================
         // Join Requests
-        // ============================================================
 
         public void AddJoinRequest(
             GroupJoinRequest request)

@@ -1,4 +1,4 @@
-﻿using Sohba.Domain.Common;
+using Sohba.Domain.Common;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Enums;
 using System;
@@ -7,9 +7,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
 {
     public class GroupDomainService : IGroupDomainService
     {
-        // ============================================================
         // Group Deletion
-        // ============================================================
 
         public Result CanDeleteGroup(
             Guid userId,
@@ -25,9 +23,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Group Update
-        // ============================================================
 
         public Result CanUpdateGroup(
             Guid userId,
@@ -43,9 +39,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Group Invitations
-        // ============================================================
 
         public Result CanInviteToGroup(
             Guid inviterId,
@@ -67,9 +61,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Group Joining
-        // ============================================================
 
         public Result CanJoinGroup(
             Guid userId,
@@ -145,9 +137,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Group Posts
-        // ============================================================
 
         public Result CanPostInGroup(
             Guid userId,
@@ -177,9 +167,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Promote Member
-        // ============================================================
 
         public Result CanPromoteMember(
             Guid actionUserId,
@@ -255,9 +243,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
                 "Invalid promotion request.");
         }
 
-        // ============================================================
         // Demote Member
-        // ============================================================
 
         public Result CanDemoteMember(
             Guid actionUserId,
@@ -333,9 +319,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
                 "Invalid demotion request.");
         }
 
-        // ============================================================
         // Kick Member
-        // ============================================================
 
         public Result CanKickMember(
             Guid actionUserId,
@@ -415,9 +399,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Leave Group
-        // ============================================================
 
         public Result CanLeaveGroup(
             Guid userId,
@@ -437,9 +419,7 @@ namespace Sohba.Domain.Domain_Rules.Logic
             return Result.Success();
         }
 
-        // ============================================================
         // Review Join Requests
-        // ============================================================
 
         public Result CanReviewJoinRequest(
             Guid actionUserId,

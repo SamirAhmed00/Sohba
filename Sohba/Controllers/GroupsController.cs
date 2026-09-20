@@ -280,8 +280,7 @@ namespace Sohba.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            GroupEditViewModel model)
+        public async Task<IActionResult> Edit(GroupEditViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
@@ -292,6 +291,7 @@ namespace Sohba.Controllers
                 return RedirectToAction("Login", "Auth");
 
             string? imageUrl = model.ImageUrl;
+            string? oldImageUrl = imageUrl;
 
             if (model.ImageFile != null)
             {
@@ -315,6 +315,9 @@ namespace Sohba.Controllers
             string? backgroundImageUrl =
                 model.BackgroundImageUrl;
 
+            string? oldBackgroundImageUrl =
+                backgroundImageUrl;
+
             if (model.BackgroundImageFile != null)
             {
                 var bgUploadResult =
@@ -324,6 +327,14 @@ namespace Sohba.Controllers
 
                 if (!bgUploadResult.IsSuccess)
                 {
+                    // Roll back the newly uploaded image if background upload fails.
+                    if (model.ImageFile != null &&
+                        !string.IsNullOrEmpty(imageUrl) &&
+                        imageUrl != oldImageUrl)
+                    {
+                        await _fileStorage.DeleteFileAsync(imageUrl);
+                    }
+
                     ModelState.AddModelError(
                         "BackgroundImageFile",
                         bgUploadResult.Error);
@@ -353,9 +364,40 @@ namespace Sohba.Controllers
 
             if (result.IsSuccess)
             {
+                // Delete the old image only after the database update succeeds.
+                if (model.ImageFile != null &&
+                    !string.IsNullOrEmpty(oldImageUrl) &&
+                    oldImageUrl != imageUrl)
+                {
+                    await _fileStorage.DeleteFileAsync(oldImageUrl);
+                }
+
+                // Delete the old background image only after the database update succeeds.
+                if (model.BackgroundImageFile != null &&
+                    !string.IsNullOrEmpty(oldBackgroundImageUrl) &&
+                    oldBackgroundImageUrl != backgroundImageUrl)
+                {
+                    await _fileStorage.DeleteFileAsync(oldBackgroundImageUrl);
+                }
+
                 return RedirectToAction(
                     "Details",
                     new { id = model.Id });
+            }
+
+            // Roll back newly uploaded files when the update fails.
+            if (model.ImageFile != null &&
+                !string.IsNullOrEmpty(imageUrl) &&
+                imageUrl != oldImageUrl)
+            {
+                await _fileStorage.DeleteFileAsync(imageUrl);
+            }
+
+            if (model.BackgroundImageFile != null &&
+                !string.IsNullOrEmpty(backgroundImageUrl) &&
+                backgroundImageUrl != oldBackgroundImageUrl)
+            {
+                await _fileStorage.DeleteFileAsync(backgroundImageUrl);
             }
 
             ModelState.AddModelError(
@@ -577,7 +619,7 @@ namespace Sohba.Controllers
                 });
         }
 
-        // ==================== Membership & Roles ====================
+        // Membership & Roles
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -782,7 +824,7 @@ namespace Sohba.Controllers
             });
         }
 
-        // ==================== Join Requests ====================
+        // Join Requests
 
         [HttpPost]
         [ValidateAntiForgeryToken]
