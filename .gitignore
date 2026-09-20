@@ -361,3 +361,23 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local environment / secret files (never commit real values)
+.env
+.env.*
+!.env.example
+
+# AI/agent tooling residue (local only)
+.kilo/
+
+# User-generated uploaded media (created at runtime by LocalFileStorageService;
+# directories are recreated on demand via Directory.CreateDirectory)
+Sohba/wwwroot/uploads/
+Sohba/ProtectedUploads/
+
+# Test/coverage output (coverlet XPlat Code Coverage writes here)
+TestResults/
+coverage/
+
+# Accidental shell/scratch artifacts
+*-modal-diff.txt
