@@ -1,0 +1,31 @@
+# Build context exclusions for the Sohba application image.
+
+**/bin/
+**/obj/
+**/node_modules/
+**/.vs/
+**/.vscode/
+**/TestResults/
+**/coverage/
+**/.git/
+.github/
+**/*.user
+
+# Runtime data and local secrets - never baked into an image
+.env
+.env.*
+!.env.example
+Sohba/wwwroot/uploads/
+Sohba/ProtectedUploads/
+Sohba/logs/
+logs/
+*.log
+
+# Documentation and local tooling not needed by dotnet publish
+Readme.md
+ELASTICSEARCH.md
+Dockerfile
+docker-compose*.yml
+.gitignore
+.gitattributes
+*.md

@@ -1,0 +1,84 @@
+# =====================================================================
+# SOHBA - full application stack (MVC app + SQL Server)
+# =====================================================================
+# Elasticsearch/Kibana log tooling is NOT part of this stack; it lives in
+# docker-compose.dev.yml and is optional for running the application.
+#
+# Usage:
+#   1. cp .env.example .env  and set the values marked "required".
+#   2. docker compose up --build
+#   3. Open http://localhost:8080
+#
+# TLS: the app publishes plain HTTP on 8080 so that a reverse proxy (or ingress)
+# can terminate HTTPS in front of it. Reviewing on http://localhost works because
+# browsers treat localhost as a secure context, which the Secure auth/refresh
+# cookies rely on.
+#
+# Database: the app applies EF Core migrations automatically on startup
+# (DBInitializer.InitializeAsync), so the Sohba database and schema are created
+# in the SQL Server container on first run.
+# =====================================================================
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sohba-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env (see .env.example)}
+      - MSSQL_PID=Developer
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - sohba-db-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "(/opt/mssql-tools18/bin/sqlcmd || /opt/mssql-tools/bin/sqlcmd) -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" > /dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sohba-app
+    # Development is an option for content-rich demos: it additionally seeds the
+    # admin/test accounts and sample content (DBInitializer). Production keeps the
+    # real deployment configuration and only seeds roles + the platform Owner.
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=${MSSQL_DATABASE:-Sohba};User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True
+      - Jwt__Key=${JWT_KEY:?Set JWT_KEY in .env (min 32 characters)}
+      - Jwt__Issuer=${JWT_ISSUER:-http://localhost:8080}
+      - Jwt__Audience=${JWT_AUDIENCE:-http://localhost:8080}
+      - Sohba__Owner__Email=${SOHBA_OWNER_EMAIL:?Set SOHBA_OWNER_EMAIL in .env}
+      - Sohba__Owner__InitialPassword=${SOHBA_OWNER_INITIAL_PASSWORD:?Set SOHBA_OWNER_INITIAL_PASSWORD in .env}
+      # Optional log shipping to an Elasticsearch instance (docker-compose.dev.yml)
+      - SOHBA_ES_URL=${SOHBA_ES_URL:-}
+      - SOHBA_ES_USER=${SOHBA_ES_USER:-}
+      - SOHBA_ES_PASSWORD=${SOHBA_ES_PASSWORD:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - sohba-uploads:/app/wwwroot/uploads
+      - sohba-protected-uploads:/app/ProtectedUploads
+      - sohba-logs:/app/logs
+      # Persists the Data Protection key ring so auth cookies survive restarts.
+      - sohba-dp-keys:/home/app/.aspnet/DataProtection-Keys
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sohba-db-data:
+  sohba-uploads:
+  sohba-protected-uploads:
+  sohba-logs:
+  sohba-dp-keys:

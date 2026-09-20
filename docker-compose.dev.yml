@@ -1,0 +1,70 @@
+# =====================================================================
+# SOHBA - DEVELOPMENT-ONLY Elasticsearch (log storage) + optional Kibana
+# =====================================================================
+# Scope: THIS SETUPS LOGS ONLY. Sohba application/business search stays
+#        100% SQL-based. Never index users/posts/groups/pages/hashtags here.
+#
+# Usage:
+#   1. cp .env.example .env   (then set SOHBA_ES_PASSWORD)
+#   2. docker compose -f docker-compose.dev.yml up -d elasticsearch
+#   3. Optional Kibana (operations tooling; Sohba does NOT depend on it):
+#      docker compose -f docker-compose.dev.yml --profile kibana up -d
+#
+# Security:
+#   - Security is ENABLED (elastic/<SOHBA_ES_PASSWORD from local .env>).
+#   - Ports are bound to 127.0.0.1 only - never exposed publicly.
+#   - TLS is disabled for plain-HTTP localhost development only.
+#     Production clusters must run with TLS + real secrets.
+# =====================================================================
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+    container_name: sohba-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ELASTIC_PASSWORD=${SOHBA_ES_PASSWORD:?Set SOHBA_ES_PASSWORD in .env next to this file (see .env.example)}
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - sohba-es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -u elastic:$$ELASTIC_PASSWORD http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # OPTIONAL - development/operations tooling only.
+  # Sohba never requires Kibana to build or run.
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.19.0
+    container_name: sohba-kibana
+    profiles: ["kibana"]
+    environment:
+    - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    - ELASTICSEARCH_SERVICEACCOUNTTOKEN=${KIBANA_SERVICE_ACCOUNT_TOKEN}
+    - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_SECURITY_ENCRYPTION_KEY}
+    - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_SAVED_OBJECTS_ENCRYPTION_KEY}
+    - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_ENCRYPTION_KEY}
+    ports:
+      - "127.0.0.1:5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sohba-es-data:
