@@ -31,13 +31,14 @@ namespace Sohba.Application.Services
         private readonly IFileStorageService _fileStorageService;
         private readonly ILogger<PostService> _logger;
 
-        public PostService(IUnitOfWork unitOfWork, IMapper mapper, IPostDomainService postDomainService, INotificationService notificationService, IUserService userService, ILogger<PostService> logger)
+        public PostService(IUnitOfWork unitOfWork, IMapper mapper, IPostDomainService postDomainService, INotificationService notificationService, IUserService userService, IFileStorageService fileStorageService, ILogger<PostService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _postDomainService = postDomainService;
             _notificationService = notificationService;
             _userService = userService;
+            _fileStorageService = fileStorageService;
             _logger = logger;
         }
 
@@ -252,12 +253,10 @@ namespace Sohba.Application.Services
             if (post == null || post.IsDeleted)
                 return Result.Failure("Post not found.");
 
-            // 1. Delegate permission check to Domain Service
             var canUpdate = _postDomainService.CanUpdatePost(userId, postId, post.UserId, post.IsDeleted);
             if (!canUpdate.IsSuccess)
                 return canUpdate;
 
-            // 2. Map updated values
             _mapper.Map(postDto, post);
             // Synchronize IsPrivate with the canonical Privacy value
             post.IsPrivate = post.Privacy == PostPrivacy.Private;
@@ -313,15 +312,25 @@ namespace Sohba.Application.Services
                 isContainerAdmin = pageRole.HasValue && pageRole.Value >= PageRole.Admin;
             }
 
-            var result = _postDomainService.CanDeletePost(userId, postId, post.UserId, isAdmin, isContainerAdmin);
+            var result = _postDomainService.CanDeletePost(
+                userId,
+                postId,
+                post.UserId,
+                isAdmin,
+                isContainerAdmin);
+
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("Post deletion rejected for user {UserId} on post {PostId}: {Reason}", userId, postId, result.Error);
+                _logger.LogWarning(
+                    "Post deletion rejected for user {UserId} on post {PostId}: {Reason}",
+                    userId,
+                    postId,
+                    result.Error);
+
                 return result;
             }
 
-
-            // 2. Decrement hashtag counts on post deletion
+            // Decrement hashtag counts on post deletion
             if (post.PostHashtags != null && post.PostHashtags.Any())
             {
                 foreach (var ph in post.PostHashtags)
@@ -334,42 +343,48 @@ namespace Sohba.Application.Services
                 }
             }
 
-            // Clean up physical video file on deletion
-            if (!string.IsNullOrWhiteSpace(post.VideoUrl))
-            {
-                await _fileStorageService.DeleteFileAsync(post.VideoUrl);
-            }
-
-            // Clean up physical image file on deletion
-            if (!string.IsNullOrWhiteSpace(post.ImageUrl))
-            {
-                await _fileStorageService.DeleteFileAsync(post.ImageUrl);
-            }
-            // 3. Apply Soft Delete
+            // Apply the soft delete first: physical files are freed only after the save
+            // succeeded, so a failed save can never leave a live post with deleted files.
             post.IsDeleted = true;
             post.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Posts.Update(post);
             await _unitOfWork.CompleteAsync();
 
-            // 3. Send real-time notification to post owner if deleted by an Administrator
+            // Clean up physical files only after the soft delete persisted.
+            if (!string.IsNullOrWhiteSpace(post.VideoUrl))
+            {
+                await _fileStorageService.DeleteFileAsync(post.VideoUrl);
+            }
+
+            if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+            {
+                await _fileStorageService.DeleteFileAsync(post.ImageUrl);
+            }
+
+            // Notify the post owner with the deletion reason when an Administrator removed the post
             if (isAdmin && post.UserId != userId)
             {
                 var adminProfile = await _userService.GetProfileAsync(userId);
                 var adminName = adminProfile.Value?.Name ?? "An Administrator";
-                var deletionReason = !string.IsNullOrWhiteSpace(reason) ? reason.Trim() : "Violation of community guidelines";
-                var notificationMessage = $"Your post '{post.Title}' was deleted by {adminName}. Reason: {deletionReason}";
+                var deletionReason = !string.IsNullOrWhiteSpace(reason)
+                    ? reason.Trim()
+                    : "Violation of community guidelines";
+
+                var notificationMessage =
+                    $"Your post '{post.Title}' was deleted by {adminName}. Reason: {deletionReason}";
 
                 await _notificationService.CreateNotificationAsync(
                     receiverId: post.UserId,
                     message: notificationMessage,
                     type: NotificationType.SystemAlert,
                     senderId: userId,
-                    targetId: null
-                );
+                    targetId: null);
 
-                _logger.LogInformation("Admin delete notification dispatched to user {UserId} for post {PostId}", post.UserId, postId);
-
+                _logger.LogInformation(
+                    "Admin delete notification dispatched to user {UserId} for post {PostId}",
+                    post.UserId,
+                    postId);
             }
 
             return Result.Success();
@@ -532,7 +547,7 @@ namespace Sohba.Application.Services
             var user = await _userService.GetProfileAsync(userId);
             var userName = user.Value?.Name ?? "Someone";
 
-            // 1. If posted in a group, notify group admin
+            // Group posts notify the group admin only.
             if (groupId.HasValue)
             {
                 var group = await _unitOfWork.Groups.GetByIdAsync(groupId.Value);
@@ -550,7 +565,7 @@ namespace Sohba.Application.Services
                 // Notify group members (optional - but we'll skip to avoid spam)
             }
 
-            // 2. If posted on a page, notify page admin
+            // Page posts notify the page admin only.
             if (pageId.HasValue)
             {
                 var page = await _unitOfWork.Pages.GetByIdAsync(pageId.Value);
@@ -566,8 +581,8 @@ namespace Sohba.Application.Services
                 }
             }
 
-            // 3. If user has friends, notify them (optional - can be skipped)
-            // This is a "friend activity" notification - we'll implement it later
+            // Group members and friends are intentionally not notified: fan-out on every
+            // post would generate excessive notification volume.
         }
 
         public async Task<Result<int>> GetPostsCountAsync()

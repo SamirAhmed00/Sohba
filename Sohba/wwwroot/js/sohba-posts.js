@@ -163,19 +163,24 @@ window.SohbaApp.submitComment = async function () {
 
         
 
+        // Stored XSS protection: escape every user-controlled value with the shared
+        // helper from sohba-modal.js before building the comment HTML.
+        const safeCommentName = escapeModalHtml(result.comment.userName);
+        const safeCommentContent = escapeModalHtml(result.comment.content);
+
         const commentId = `comment-${result.comment.id}`;
         const commentHtml = `
                 <div class="flex items-start gap-3 mb-3">
                     <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(result.comment.userName)}&background=random"
                          class="w-8 h-8 rounded-full flex-shrink-0">
                     <div class="flex-1 min-w-0">
-                        <span class="font-semibold text-sm text-gray-900">${result.comment.userName}</span>
+                        <span class="font-semibold text-sm text-gray-900">${safeCommentName}</span>
                         <div id="${commentId}" class="text-sm text-gray-700 break-words">
-                            ${result.comment.content}
+                            ${safeCommentContent}
                         </div>
                         <div class="flex items-center gap-3 mt-1">
                             <span class="text-xs text-gray-400">${new Date(result.comment.createdAt).toLocaleString()}</span>
-                            <button onclick="SohbaApp.showReplyForm('${result.comment.id}', '${result.comment.userName}')"
+                            <button onclick="SohbaApp.showReplyForm('${result.comment.id}', '${safeCommentName}')"
                                     class="text-xs text-[#345e69] hover:underline font-medium">
                                 Reply
                             </button>
@@ -420,9 +425,9 @@ window.SohbaApp.openSavePostModal = async function (postId) {
         listEl.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">No collections yet. Create one below.</div>';
     } else {
         listEl.innerHTML = collections.map(c => `
-            <button onclick="SohbaApp.saveToCollection('${postId}', '${c.id}')"
+            <button onclick="SohbaApp.saveToCollection('${postId}', '${escapeModalHtml(c.id)}')"
                     class="w-full text-left px-4 py-2.5 rounded-xl hover:bg-slate-50 text-sm font-semibold text-gray-700">
-                ${c.name}
+                ${escapeModalHtml(c.name)}
             </button>
         `).join('');
     }

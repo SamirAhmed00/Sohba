@@ -94,6 +94,16 @@ namespace Sohba.Infrastructure
                 if (file.Length > MaxVideoFileSizeBytes)
                     return Result<string>.Failure($"Video size ({file.Length / 1024.0 / 1024.0:F1} MB) exceeds the 50 MB limit.");
 
+                // Basic content verification: the file must start with an ISO-BMFF 'ftyp' box.
+                // This blocks renamed non-video files; full container validation is out of scope.
+                if (!await HasValidVideoSignatureAsync(file, extension))
+                {
+                    _logger.LogWarning(
+                        "Rejected video upload with invalid content signature: {FileName} (extension {Extension}, size {Size})",
+                        file.FileName, extension, file.Length);
+                    return Result<string>.Failure("The uploaded file is not a valid MP4/MOV video.");
+                }
+
                 var uniqueVideoName = $"{Guid.NewGuid()}{extension}";
                 var videoFilePath = Path.Combine(targetFolder, uniqueVideoName);
 
@@ -114,6 +124,7 @@ namespace Sohba.Infrastructure
                     ? Result<string>.Success($"ProtectedUploads/{subFolder}/{uniqueVideoName}")
                     : Result<string>.Success($"/uploads/{subFolder}/{uniqueVideoName}");
             }
+
 
             if (file.Length > MaxFileSizeBytes)
                 return Result<string>.Failure($"File size ({file.Length / 1024.0 / 1024.0:F1} MB) exceeds the 5 MB limit.");
@@ -216,6 +227,46 @@ namespace Sohba.Infrastructure
                 File.Delete(absolutePath);
 
             return Task.CompletedTask;
+        }
+
+
+        private static readonly HashSet<string> _allowedMp4MajorBrands = new(StringComparer.Ordinal)
+        {
+            "isom", "iso2", "iso5", "iso6", "iso9", "isoa", "mp41", "mp42", "mp71",
+            "avc1", "dash", "msdh", "msd1", "m4v ", "mpi "
+        };
+
+        /// <summary>
+        /// Verifies the file starts with an ISO Base Media File Format 'ftyp' box.
+        /// MP4 requires a known ISO major brand (and not the QuickTime brand);
+        /// MOV requires the QuickTime major brand 'qt  '.
+        /// </summary>
+        private static async Task<bool> HasValidVideoSignatureAsync(IFormFile file, string extension)
+        {
+            const int headerLength = 12; // 4 bytes box size + 'ftyp' + 4 bytes major brand
+            var buffer = new byte[headerLength];
+
+            await using var stream = file.OpenReadStream();
+            var read = 0;
+            while (read < headerLength)
+            {
+                var n = await stream.ReadAsync(buffer.AsMemory(read, headerLength - read));
+                if (n == 0) break;
+                read += n;
+            }
+
+            if (read < headerLength)
+                return false;
+
+            // bytes 4..7 must be 'ftyp'
+            if (buffer[4] != (byte)'f' || buffer[5] != (byte)'t' || buffer[6] != (byte)'y' || buffer[7] != (byte)'p')
+                return false;
+
+            var majorBrand = System.Text.Encoding.ASCII.GetString(buffer, 8, 4);
+
+            return extension == ".mov"
+                ? majorBrand == "qt  "
+                : majorBrand != "qt  " && _allowedMp4MajorBrands.Contains(majorBrand);
         }
     }
 }

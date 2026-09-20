@@ -20,7 +20,7 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(sp => sp.Post)
-                   .WithMany()
+                   .WithMany(p => p.SavedByUsers)
                    .HasForeignKey(sp => sp.PostId)
                    .OnDelete(DeleteBehavior.Restrict);
 
@@ -29,7 +29,9 @@ namespace Sohba.Infrastructure.Data.Configurations
                    .HasForeignKey(sp => sp.CollectionId)
                    .OnDelete(DeleteBehavior.SetNull);
 
-            builder.HasIndex(sp => new { sp.UserId, sp.PostId, sp.CollectionId });
+            builder.HasIndex(sp => new { sp.UserId, sp.PostId, sp.CollectionId })
+                    .IsUnique()
+                   .HasDatabaseName("IX_SavedPost_UserId_PostId_CollectionId");
         }
     }
 

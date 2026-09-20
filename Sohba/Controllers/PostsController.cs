@@ -164,11 +164,27 @@ namespace Sohba.Controllers
                 var videoUploadResult = await _fileStorage.SaveFileAsync(model.VideoFile, "posts");
                 if (!videoUploadResult.IsSuccess)
                 {
+                    await RollbackUploadedFilesAsync();
+
                     if (isAjax) return Json(new { success = false, error = videoUploadResult.Error });
                     ModelState.AddModelError("VideoFile", videoUploadResult.Error);
                     return View(model);
                 }
                 videoUrl = videoUploadResult.Value;
+            }
+            // Rolls back every media file saved during this request (idempotent; DeleteFileAsync
+            // is a no-op for missing files).
+            async Task RollbackUploadedFilesAsync()
+            {
+                foreach (var savedUrl in imageUrls)
+                {
+                    await _fileStorage.DeleteFileAsync(savedUrl);
+                }
+
+                if (!string.IsNullOrEmpty(videoUrl))
+                {
+                    await _fileStorage.DeleteFileAsync(videoUrl);
+                }
             }
 
             var dto = new PostCreateDto
@@ -217,6 +233,7 @@ namespace Sohba.Controllers
                     return RedirectToAction("Index", "Home");
             }
 
+            await RollbackUploadedFilesAsync();
             if (isAjax)
             {
                 return Json(new { success = false, error = result.Error });
@@ -308,6 +325,7 @@ namespace Sohba.Controllers
                 return Json(BaseResponseDto<object>.FailureResponse("User not authenticated."));
 
             var finalImageUrls = new List<string>(model.RetainedImageUrls ?? new List<string>());
+            var uploadedThisRequest = new List<string>();
 
             // Upload any new images
             if (model.NewImageFiles != null && model.NewImageFiles.Any())
@@ -316,30 +334,40 @@ namespace Sohba.Controllers
                 {
                     var uploadResult = await _fileStorage.SaveFileAsync(file, "posts");
                     if (!uploadResult.IsSuccess)
+                    {
+                        await RollbackEditUploadsAsync(uploadedThisRequest);
                         return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
+                    }
 
                     if (uploadResult.Value != null)
+                    {
                         finalImageUrls.Add(uploadResult.Value);
+                        uploadedThisRequest.Add(uploadResult.Value);
+                    }
                 }
             }
             else if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
                 var uploadResult = await _fileStorage.SaveFileAsync(model.ImageFile, "posts");
                 if (!uploadResult.IsSuccess)
+                {
+                    await RollbackEditUploadsAsync(uploadedThisRequest);
                     return Json(BaseResponseDto<object>.FailureResponse(uploadResult.Error));
+                }
 
                 if (uploadResult.Value != null)
+                {
                     finalImageUrls.Add(uploadResult.Value);
+                    uploadedThisRequest.Add(uploadResult.Value);
+                }
             }
 
             var existingPost = await _postService.GetPostByIdAsync(model.Id, userId);
-            if (existingPost.IsSuccess && existingPost.Value?.ImageUrls != null)
+            if (!existingPost.IsSuccess || existingPost.Value == null)
             {
-                var removedUrls = existingPost.Value.ImageUrls.Except(finalImageUrls).ToList();
-                foreach (var removedUrl in removedUrls)
-                {
-                    await _fileStorage.DeleteFileAsync(removedUrl);
-                }
+                // The post no longer exists or is not visible to this user; nothing may be updated.
+                await RollbackEditUploadsAsync(uploadedThisRequest);
+                return Json(BaseResponseDto<object>.FailureResponse(existingPost.Error ?? "Post not found."));
             }
 
             var updateDto = new PostUpdateDto
@@ -356,11 +384,31 @@ namespace Sohba.Controllers
 
             if (result.IsSuccess)
             {
+                // Persisted successfully — only now is it safe to delete replaced media.
+                var removedUrls = existingPost.Value.ImageUrls?.Except(finalImageUrls).ToList()
+                                  ?? new List<string>();
+                foreach (var removedUrl in removedUrls)
+                {
+                    await _fileStorage.DeleteFileAsync(removedUrl);
+                }
+
                 var updatedPost = await _postService.GetPostByIdAsync(model.Id, userId);
                 return Json(BaseResponseDto<PostResponseDto>.SuccessResponse(updatedPost.Value));
             }
 
+            // Update failed: remove files uploaded during this request so no orphans remain.
+            await RollbackEditUploadsAsync(uploadedThisRequest);
             return Json(BaseResponseDto<object>.FailureResponse(result.Error));
+        }
+
+        // Deletes only files uploaded during the current edit request; DeleteFileAsync is a
+        // no-op for missing files, so repeated rollback calls are safe.
+        async Task RollbackEditUploadsAsync(List<string> uploadedUrls)
+        {
+            foreach (var uploadedUrl in uploadedUrls)
+            {
+                await _fileStorage.DeleteFileAsync(uploadedUrl);
+            }
         }
 
         [HttpPost]
