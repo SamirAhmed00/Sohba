@@ -34,8 +34,10 @@ namespace Sohba.Infrastructure.Data
         public DbSet<PageFollower> PageFollowers { get; set; }
 
         public DbSet<Friend> Friends { get; set; }  
-        public DbSet<User> Users { get; set; }
-
+        // Redeclared to shadow the identically-typed DbSet<User> inherited from
+        // IdentityUserContext; the compiler needs the explicit `new`.
+        public new DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryReaction> StoryReactions { get; set; }
         public DbSet<GroupJoinRequest> GroupJoinRequests { get; set; } = null!;

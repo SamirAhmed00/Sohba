@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Sohba.Application.Settings
+﻿namespace Sohba.Application.Settings
 {
     public class JwtSettings
     {
@@ -10,6 +6,8 @@ namespace Sohba.Application.Settings
         public string Issuer { get; set; } = string.Empty;
         public string Audience { get; set; } = string.Empty;
         public double ExpireDays { get; set; } = 7;
+        public double AccessTokenLifetimeMinutes { get; set; } = 60;
+        public double RefreshTokenLifetimeDays { get; set; } = 14;
 
         public void Validate()
         {
@@ -24,6 +22,13 @@ namespace Sohba.Application.Settings
 
             if (ExpireDays <= 0)
                 throw new InvalidOperationException("JWT ExpireDays must be greater than 0.");
+
+            if (AccessTokenLifetimeMinutes <= 0)
+                throw new InvalidOperationException("JWT AccessTokenLifetimeMinutes must be greater than 0.");
+
+            if (RefreshTokenLifetimeDays <= 0)
+                throw new InvalidOperationException("JWT RefreshTokenLifetimeDays must be greater than 0.");
         }
+
     }
 }

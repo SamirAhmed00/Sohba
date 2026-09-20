@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.UserAggregate;
 using Sohba.Application.Interfaces;
+using Sohba.Application.Settings;
 using Sohba.Domain.Entities.UserAggregate;
 
 namespace Sohba.Controllers
@@ -12,19 +13,43 @@ namespace Sohba.Controllers
     [EnableRateLimiting("Auth")]
     public class AuthController : Controller
     {
+        private const string RefreshTokenCookieName = "Sohba.RefreshToken";
+
         private readonly IAuthService _authService;
         private readonly SignInManager<User> _signInManager;
         private readonly ILogger<AuthController> _logger;
+        private readonly UserManager<User> _userManager;
+        private readonly IRefreshTokenService _refreshTokenService;
+        private readonly IJwtService _jwtService;
+        private readonly JwtSettings _jwtSettings;
 
         public AuthController(
             IAuthService authService,
             SignInManager<User> signInManager,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            UserManager<User> userManager,
+            IRefreshTokenService refreshTokenService,
+            IJwtService jwtService,
+            Microsoft.Extensions.Options.IOptions<JwtSettings> jwtSettings)
         {
             _authService = authService;
             _signInManager = signInManager;
             _logger = logger;
+            _userManager = userManager;
+            _refreshTokenService = refreshTokenService;
+            _jwtService = jwtService;
+            _jwtSettings = jwtSettings.Value;
         }
+
+        private CookieOptions RefreshCookieOptions() => new()
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddDays(
+        _jwtSettings.RefreshTokenLifetimeDays),
+            Path = "/Auth"
+        };
 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -58,12 +83,27 @@ namespace Sohba.Controllers
 
             _logger.LogInformation("User logged in successfully: {Email}", loginDto.Email);
 
+            // Issue the refresh token for the JWT/SignalR surface. Failure is logged but must
+            // never block a successful cookie login.
+            var refreshResult = await _refreshTokenService.IssueAsync(
+                result.Value.Id, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (refreshResult.IsSuccess)
+            {
+                Response.Cookies.Append(RefreshTokenCookieName, refreshResult.Value, RefreshCookieOptions());
+            }
+            else
+            {
+                _logger.LogWarning("Refresh token issuance failed after login for {Email}: {Error}",
+                    loginDto.Email, refreshResult.Error);
+            }
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
             }
 
             return RedirectToAction("Index", "Home");
+
         }
 
         [HttpGet]
@@ -102,6 +142,15 @@ namespace Sohba.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            // Revoke the refresh token (defense in depth) and clear its cookie.
+            var refreshResult = await _refreshTokenService.RevokeAsync(
+                Request.Cookies[RefreshTokenCookieName], HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (refreshResult.IsFailure)
+            {
+                _logger.LogWarning("Refresh token revocation during logout failed: {Error}", refreshResult.Error);
+            }
+            Response.Cookies.Delete(RefreshTokenCookieName);
+
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login");
         }
@@ -173,6 +222,63 @@ namespace Sohba.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+
+
+        // REFRESH TOKEN ENDPOINTS (JWT / SignalR surface only)
+        // The raw refresh token lives ONLY in an HttpOnly, Secure,
+        // SameSite=Lax cookie scoped to /Auth. It is never returned
+        // in a response body, never logged, never placed in meta tags.
+
+        [HttpPost]
+        [EnableRateLimiting("TokenRefresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            var rawToken = Request.Cookies[RefreshTokenCookieName];
+            var requestIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var result = await _refreshTokenService.RotateAsync(rawToken, requestIp);
+            if (result.IsFailure)
+            {
+                Response.Cookies.Delete(RefreshTokenCookieName);
+                return new JsonResult(BaseResponseDto.FailureResponse(result.Error))
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized
+                };
+            }
+
+            // Re-check account state: a blocked / deactivated / deleted account must not
+            // be able to mint new access tokens.
+            var user = await _userManager.FindByIdAsync(result.Value.UserId.ToString());
+            if (user == null || user.IsBlocked || !user.IsActive || user.IsDeleted)
+            {
+                await _refreshTokenService.RevokeAllForUserAsync(result.Value.UserId, requestIp);
+                Response.Cookies.Delete(RefreshTokenCookieName);
+                return new JsonResult(BaseResponseDto.FailureResponse("Account unavailable."))
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized
+                };
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var accessToken = _jwtService.GenerateToken(user, roles);
+
+            Response.Cookies.Append(RefreshTokenCookieName, result.Value.NewRawToken, RefreshCookieOptions());
+
+            return Json(new { success = true, accessToken });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Revoke()
+        {
+            var result = await _refreshTokenService.RevokeAsync(
+                Request.Cookies[RefreshTokenCookieName], HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            Response.Cookies.Delete(RefreshTokenCookieName);
+            return Json(new BaseResponseDto { Success = result.IsSuccess, Error = result.Error });
         }
     }
 }

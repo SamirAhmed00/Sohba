@@ -3,10 +3,7 @@ using Sohba.Application.Interfaces;
 using Sohba.Application.Services;
 using Sohba.Domain.Domain_Rules.Interface;
 using Sohba.Domain.Domain_Rules.Logic;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 
 namespace Sohba.Application.DependencyInjection
 {
@@ -14,18 +11,16 @@ namespace Sohba.Application.DependencyInjection
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // Register AutoMapper and scan the current assembly for MappingProfile classes
+            services.AddMemoryCache();
+
             services.AddAutoMapper(cfg =>
             {
                 cfg.AddMaps(Assembly.GetExecutingAssembly());
             });
 
-            
-            // Application Services Registration
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IGroupService, GroupService>();
             services.AddScoped<IPostService, PostService>();
-            
             services.AddScoped<IStoryService, StoryService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFriendshipService, FriendshipService>();
@@ -34,12 +29,11 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IReportingService, ReportingService>();
             services.AddScoped<IHashtagService, HashtagService>();
             services.AddScoped<ISearchService, SearchService>();
-            services.AddScoped<JwtService>();
             services.AddScoped<IUserSettingsService, UserSettingsService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
-            // Domain Services Registration
             services.AddScoped<IFriendshipDomainService, FriendshipDomainService>();
             services.AddScoped<IGroupDomainService, GroupDomainService>();
             services.AddScoped<IInteractionDomainService, InteractionDomainService>();
@@ -50,7 +44,6 @@ namespace Sohba.Application.DependencyInjection
             services.AddScoped<IReportingDomainService, ReportingDomainService>();
             services.AddScoped<IStoryDomainService, StoryDomainService>();
             services.AddScoped<IPageDomainService, PageDomainService>();
-
 
             return services;
         }

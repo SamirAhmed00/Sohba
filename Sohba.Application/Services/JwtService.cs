@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Settings;
@@ -12,11 +11,10 @@ namespace Sohba.Application.Services
 {
     public class JwtService : IJwtService
     {
-        private readonly IConfiguration _configuration;
         private readonly JwtSettings _jwtSettings;
         public JwtService(IOptions<JwtSettings> jwtSettings)
         {
-            _jwtSettings = jwtSettings.Value; // doesn't Exsit in The Current Context
+            _jwtSettings = jwtSettings.Value;
             _jwtSettings.Validate();
         }
 
@@ -38,8 +36,9 @@ namespace Sohba.Application.Services
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            
-            var expires = DateTime.Now.AddDays(Convert.ToDouble(_jwtSettings.ExpireDays));
+
+            var expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenLifetimeMinutes);
+
 
             var token = new JwtSecurityToken(
                issuer: _jwtSettings.Issuer,
