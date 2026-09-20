@@ -4,7 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	  <NoWarn>$(NoWarn);NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,8 +15,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.8" />
-	<PackageReference Include="SixLabors.ImageSharp" Version="4.1.0" />
+    <!-- ImageSharp 4.x refuses to build in Release without a Six Labors license key
+         (SixLabors.ImageSharp.targets -> ValidateLicenseTask). The 3.1.x line requires no
+         build-time key and is the latest release that does not; the imaging API used here is
+         identical on both lines. -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
 
   <ItemGroup>
