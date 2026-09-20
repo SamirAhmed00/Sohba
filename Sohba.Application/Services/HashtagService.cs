@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Memory;
 using Sohba.Application.DTOs.Common;
 using Sohba.Application.DTOs.PostAggregate;
 using Sohba.Application.Interfaces;
@@ -16,13 +17,15 @@ namespace Sohba.Application.Services
         private readonly IInteractionService _interactionService;
         private readonly IMapper _mapper;
         private readonly IPostService _postService;
+        private readonly IMemoryCache _memoryCache;
 
-        public HashtagService(IUnitOfWork unitOfWork, IInteractionService interactionService, IMapper mapper, IPostService postService)
+        public HashtagService(IUnitOfWork unitOfWork, IInteractionService interactionService, IMapper mapper, IPostService postService, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _interactionService = interactionService;
             _mapper = mapper;
             _postService = postService;
+            _memoryCache = memoryCache;
         }
 
         public async Task<Result<IEnumerable<HashtagDto>>> GetTrendingHashtagsAsync(int count = 10)
@@ -46,17 +49,36 @@ namespace Sohba.Application.Services
 
         public async Task<Result<PagedResult<HashtagDto>>> GetTrendingHashtagsPagedAsync(int page = 1, int pageSize = 5)
         {
-            var (items, totalCount) = await _unitOfWork.Hashtags.GetTrendingHashtagsPagedAsync(page, pageSize);
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 50);
+
+            var cacheKey = $"trending-hashtags:{page}:{pageSize}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out var cached) &&
+                cached is PagedResult<HashtagDto> cachedResult)
+            {
+                return Result<PagedResult<HashtagDto>>.Success(cachedResult);
+            }
+
+            var (items, totalCount) =
+                await _unitOfWork.Hashtags.GetTrendingHashtagsPagedAsync(page, pageSize);
+
             var dtos = _mapper.Map<IEnumerable<HashtagDto>>(items);
 
-            return Result<PagedResult<HashtagDto>>.Success(new PagedResult<HashtagDto>
+            var pagedResult = new PagedResult<HashtagDto>
             {
                 Items = dtos,
                 TotalCount = totalCount,
                 Page = page,
                 PageSize = pageSize,
                 TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-            });
+            };
+
+            var entry = _memoryCache.CreateEntry(cacheKey);
+            entry.SetValue(pagedResult);
+            entry.SetAbsoluteExpiration(TimeSpan.FromSeconds(30));
+
+            return Result<PagedResult<HashtagDto>>.Success(pagedResult);
         }
 
     }
