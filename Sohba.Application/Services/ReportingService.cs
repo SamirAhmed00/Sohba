@@ -29,13 +29,15 @@ namespace Sohba.Application.Services
             IMapper mapper,
             IReportingDomainService reportingDomainService,
             INotificationService notificationService,
-            IUserService userService)
+            IUserService userService,
+            ILogger<ReportingService> logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _reportingDomainService = reportingDomainService;
             _notificationService = notificationService;
             _userService = userService;
+            _logger = logger;
         }        
 
         public async Task<Result<PostReportResponseDto>> ReportPostWithDetailsAsync(PostReportRequestDto reportDto, Guid reporterId)

@@ -490,8 +490,6 @@ namespace Sohba.Application.Services
         }
 
 
-        // ------------------------
-
         public async Task<Result<IEnumerable<SavedCollectionDto>>> GetUserCollectionsAsync(Guid userId)
         {
             var collections = await _unitOfWork.Interactions.GetCollectionsByUserAsync(userId);

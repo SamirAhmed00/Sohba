@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Sohba.Domain.Entities.GroupAndPage;
 using Sohba.Domain.Entities.PostAggregate;
-using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.StoryAggregate;
 using Sohba.Domain.Entities.UserAggregate;
 using Sohba.Domain.Enums;
@@ -24,15 +25,22 @@ namespace Sohba.Infrastructure.DBInitializer
 
         public async Task InitializeAsync()
         {
+            var environment = _serviceProvider.GetRequiredService<IWebHostEnvironment>();
+
             // Apply migrations
             await _context.Database.MigrateAsync();
 
-            // Seed roles, bootstrap Owner, seed admin and test users
+            // Seed roles and bootstrap the platform Owner in every environment
             await SeedRolesAsync();
-            await BootstrapOwnerUserAsync();
-            await SeedAdminUserAsync();
-            await SeedTestUsersAsync();
-            await SeedExtraTestDataAsync();
+            await BootstrapOwnerUserAsync(environment);
+
+            // Development-only convenience seeding (admin/test accounts + demo content)
+            if (environment.IsDevelopment())
+            {
+                await SeedAdminUserAsync();
+                await SeedTestUsersAsync();
+                await SeedExtraTestDataAsync();
+            }
         }
 
         private async Task SeedRolesAsync()
@@ -51,12 +59,11 @@ namespace Sohba.Infrastructure.DBInitializer
             }
         }
 
-        private async Task BootstrapOwnerUserAsync()
+        private async Task BootstrapOwnerUserAsync(IWebHostEnvironment environment)
         {
             var configuration = _serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
             var userManager = _serviceProvider.GetRequiredService<UserManager<User>>();
 
-            // Read strictly from ASP.NET Core configuration (reads launchSettings, environment variables, or user secrets)
             var ownerEmail = configuration["Sohba:Owner:Email"] ?? configuration["Sohba__Owner__Email"] ?? "owner@sohba.com";
             var initialPassword = configuration["Sohba:Owner:InitialPassword"] ?? configuration["Sohba__Owner__InitialPassword"];
 
@@ -65,6 +72,12 @@ namespace Sohba.Infrastructure.DBInitializer
             {
                 if (string.IsNullOrWhiteSpace(initialPassword))
                 {
+                    if (!environment.IsDevelopment())
+                    {
+                        throw new InvalidOperationException(
+                            "Sohba:Owner:InitialPassword must be configured (e.g. environment variable Sohba__Owner__InitialPassword) before the Owner account can be created outside Development.");
+                    }
+
                     initialPassword = "Owner@Secure123!";
                 }
 
@@ -137,16 +150,12 @@ namespace Sohba.Infrastructure.DBInitializer
             }
         }
 
-        // ============================================================
         // NEW: Seed Test Users with different scenarios
-        // ============================================================
         private async Task SeedTestUsersAsync()
         {
             var userManager = _serviceProvider.GetRequiredService<UserManager<User>>();
 
-            // ============================================================
             // USER 1: Mohammed - Has friends, groups, pages, posts
-            // ============================================================
             var mohammed = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("22222222-2222-2222-2222-222222222222"),
@@ -157,9 +166,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Mohammed&background=345e69&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 2: Ahmed - Has friends, groups, pages (no posts yet)
-            // ============================================================
             var ahmed = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("33333333-3333-3333-3333-333333333333"),
@@ -170,9 +177,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Ahmed&background=4a8291&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 3: Sara - Has friends only (no groups, no pages)
-            // ============================================================
             var sara = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("44444444-4444-4444-4444-444444444444"),
@@ -183,9 +188,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Sara&background=8B5CF6&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 4: Khaled - Has no friends, no groups, no pages (NEW USER)
-            // ============================================================
             var khaled = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("55555555-5555-5555-5555-555555555555"),
@@ -196,9 +199,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Khaled&background=10B981&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 5: Layla - Has groups only (no friends, no pages)
-            // ============================================================
             var layla = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("66666666-6666-6666-6666-666666666666"),
@@ -209,9 +210,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Layla&background=EC4899&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 6: Omar - Has pages only (no friends, no groups)
-            // ============================================================
             var omar = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("77777777-7777-7777-7777-777777777777"),
@@ -222,9 +221,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Omar&background=F59E0B&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 7: Nour - Has friends and groups (no pages)
-            // ============================================================
             var nour = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("88888888-8888-8888-8888-888888888888"),
@@ -235,9 +232,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 "https://ui-avatars.com/api/?name=Nour&background=8B5CF6&color=fff&size=128"
             );
 
-            // ============================================================
             // USER 8: Youssef - Has friends and pages (no groups)
-            // ============================================================
             var youssef = await CreateUserIfNotExists(
                 userManager,
                 Guid.Parse("99999999-9999-9999-9999-999999999999"),
@@ -307,9 +302,7 @@ namespace Sohba.Infrastructure.DBInitializer
             User nour,
             User youssef)
         {
-            // ============================================================
             // 1. FRIENDSHIPS
-            // ============================================================
 
             // Mohammed's Friends: Ahmed, Sara, Nour, Youssef (4 friends)
             var mohammedFriends = new[] { ahmed, sara, nour, youssef };
@@ -341,9 +334,7 @@ namespace Sohba.Infrastructure.DBInitializer
             // Omar sent request to Ahmed (pending)
             await AddFriendshipAsync(omar.Id, ahmed.Id, FriendshipStatus.Pending);
 
-            // ============================================================
             // 2. GROUPS
-            // ============================================================
 
             // Group 1: "Sohba Developers" - Admin: Mohammed
             var devGroup = await CreateGroupAsync(
@@ -386,9 +377,7 @@ namespace Sohba.Infrastructure.DBInitializer
             await AddGroupMemberAsync(travelGroup.Id, sara.Id, GroupRole.Member);
             await AddGroupMemberAsync(travelGroup.Id, khaled.Id, GroupRole.Member);
 
-            // ============================================================
             // 3. PAGES
-            // ============================================================
 
             // Page 1: "Sohba Tech" - Admin: Mohammed
             var techPage = await CreatePageAsync(
@@ -430,9 +419,7 @@ namespace Sohba.Infrastructure.DBInitializer
             await AddPageFollowerAsync(foodPage.Id, sara.Id);
             await AddPageFollowerAsync(foodPage.Id, youssef.Id);
 
-            // ============================================================
             // 4. POSTS
-            // ============================================================
 
             // Mohammed's Posts
             await CreatePostAsync(
@@ -491,9 +478,7 @@ namespace Sohba.Infrastructure.DBInitializer
             await _context.SaveChangesAsync();
         }
 
-        // ============================================================
         // HELPER METHODS
-        // ============================================================
 
         private async Task AddFriendshipAsync(Guid userId, Guid friendUserId, FriendshipStatus status)
         {
@@ -603,21 +588,18 @@ namespace Sohba.Infrastructure.DBInitializer
 
             _context.Pages.Add(page);
 
-            // ✅ Save and verify the page was created
             var rowsAffected = await _context.SaveChangesAsync();
             if (rowsAffected == 0)
             {
                 throw new Exception($"Failed to create page '{name}'");
             }
 
-            // ✅ Verify the page exists in database
             var savedPage = await _context.Pages.FindAsync(page.Id);
             if (savedPage == null)
             {
                 throw new Exception($"Page '{name}' was not found after save");
             }
 
-            // ✅ Admin automatically follows their page
             await AddPageFollowerAsync(page.Id, adminId, PageRole.PageOwner);
 
 
@@ -734,7 +716,7 @@ namespace Sohba.Infrastructure.DBInitializer
             
             if (await _context.Stories.AnyAsync()) return;
 
-            // ================= 1. STORIES =================
+            // STORIES
             _context.Stories.Add(new Story
             {
                 Id = Guid.NewGuid(),
@@ -756,7 +738,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 UserId = sara.Id
             });
 
-            // ================= 2. بوستات خاصة/Friends + جوه Group/Page =================
+            // Private / Friends-only posts + Group/Page posts
             var privatePost = new Post
             {
                 Id = Guid.NewGuid(),
@@ -782,7 +764,7 @@ namespace Sohba.Infrastructure.DBInitializer
             _context.Posts.AddRange(privatePost, friendsOnlyPost);
             await _context.SaveChangesAsync();
 
-            // بوست جوه جروب (لازم تجيب GroupId الحقيقي من الداتابيز الأول)
+            // Group post (resolve the real GroupId from the database first)
             var devGroup = await _context.Groups.FirstAsync(g => g.Name == "Sohba Developers");
             var groupPost = new Post
             {
@@ -813,7 +795,7 @@ namespace Sohba.Infrastructure.DBInitializer
             _context.Posts.AddRange(groupPost, pagePost);
             await _context.SaveChangesAsync();
 
-            // ================= 3. كومنتات وردود =================
+            // Comments and replies
             var firstPublicPost = await _context.Posts.FirstAsync(p => p.Title == "Welcome to Sohba! 🚀");
             var rootComment = new Comment
             {
@@ -836,11 +818,11 @@ namespace Sohba.Infrastructure.DBInitializer
                 ParentCommentId = rootComment.Id
             });
 
-            // ================= 4. تفاعلات (Reactions) =================
+            // Reactions
             _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Like, CreatedAt = DateTime.UtcNow, UserId = ahmed.Id, PostId = firstPublicPost.Id });
             _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Love, CreatedAt = DateTime.UtcNow, UserId = sara.Id, PostId = firstPublicPost.Id });
 
-            // ================= 5. بلاغات (Reports) — لاختبار Dashboard =================
+            // Reports (for Dashboard testing)
             var adminTestPost = await _context.Posts.FirstAsync(p => p.Title == "My Travel Story: Paris ✨");
             _context.PostReports.Add(new PostReport
             {
@@ -852,7 +834,7 @@ namespace Sohba.Infrastructure.DBInitializer
                 UserId = khaled.Id
             });
 
-            // ================= 6. بوستات محفوظة (Saved/Favorite) =================
+            // Saved posts (Favorite)
             _context.SavedPost.Add(new SavedPost
             {
                 Id = Guid.NewGuid(),

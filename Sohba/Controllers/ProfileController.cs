@@ -17,7 +17,6 @@ namespace Sohba.Controllers
     public class ProfileController : BaseController
     {
         private readonly IUserService _userService;
-        //private readonly ISocialService _socialService; // removed because it's The same As FriendshipService
         private readonly IPostService _postService;
         private readonly IUserSettingsService _userSettingsService;
         private readonly IFriendshipService _friendshipService;
@@ -162,7 +161,6 @@ namespace Sohba.Controllers
 
             var userId = GetCurrentUserId();
 
-            // 1. Read current database values
             var profileResult = await _userService.GetProfileAsync(userId);
             if (profileResult.IsFailure)
             {
@@ -179,7 +177,6 @@ namespace Sohba.Controllers
 
             try
             {
-                // 2. Upload new profile picture if provided
                 if (model.ProfileImageFile != null && model.ProfileImageFile.Length > 0)
                 {
                     var uploadResult = await _fileStorage.SaveFileAsync(model.ProfileImageFile, "profiles");
@@ -191,7 +188,6 @@ namespace Sohba.Controllers
                     newProfilePictureUrl = uploadResult.Value;
                 }
 
-                // 3. Upload new background image if provided
                 if (model.BackgroundImageFile != null && model.BackgroundImageFile.Length > 0)
                 {
                     var uploadResult = await _fileStorage.SaveFileAsync(model.BackgroundImageFile, "profiles");
@@ -208,7 +204,7 @@ namespace Sohba.Controllers
                     newBackgroundImageUrl = uploadResult.Value;
                 }
 
-                // 4. Construct DTO with new URLs if uploaded, otherwise fallback to trusted database URLs
+                // Persisted URLs are reused when no replacement file was uploaded.
                 var dto = new UserRequestDto
                 {
                     Name = model.Name,
@@ -217,7 +213,6 @@ namespace Sohba.Controllers
                     BackgroundImageUrl = newBackgroundImageUrl ?? oldBackgroundImageUrl
                 };
 
-                // 5. Commit database update
                 var updateResult = await _userService.UpdateProfileAsync(userId, dto);
                 if (!updateResult.IsSuccess)
                 {
@@ -235,7 +230,8 @@ namespace Sohba.Controllers
                     return View(model);
                 }
 
-                // 6. ONLY AFTER successful database persistence, safely delete replaced old files
+                // Replaced files are removed only after the database update succeeded, so a
+                // failed save can never leave the profile pointing at a deleted image.
                 if (!string.IsNullOrEmpty(newProfilePictureUrl) &&
                     !string.IsNullOrEmpty(oldProfilePictureUrl) &&
                     oldProfilePictureUrl.StartsWith("/uploads/profiles/", StringComparison.OrdinalIgnoreCase))

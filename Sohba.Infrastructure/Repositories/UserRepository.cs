@@ -15,16 +15,7 @@ namespace Sohba.Infrastructure.Repositories
 
         public override async Task<User> GetByIdAsync(Guid id)
         {
-
-            // Count total users
-            //var totalUsers = await _context.Users.CountAsync();         
-
-            // Try with no filters
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == id);
-                //.AsNoTracking()
-
-            return user;
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
         public async Task<User> GetByUsernameAsync(string username)
         {
