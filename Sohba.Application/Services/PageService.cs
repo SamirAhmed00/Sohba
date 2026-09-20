@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sohba.Application.DTOs.GroupAndPageAggregate;
@@ -13,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Page = Sohba.Domain.Entities.GroupAndPage.Page;
 
 namespace Sohba.Application.Services
 {
@@ -85,6 +87,13 @@ namespace Sohba.Application.Services
             _unitOfWork.Pages.AddFollower(follower);
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation(
+                "Page {PageId} ('{PageName}') created by user {UserId} (Private: {IsPrivate})",
+                page.Id,
+                page.Name,
+                adminId,
+                page.IsPrivate);
+
             var response = _mapper.Map<PageResponseDto>(page);
             return Result<PageResponseDto>.Success(response);
         }
@@ -118,6 +127,12 @@ namespace Sohba.Application.Services
             try
             {
                 await _unitOfWork.CompleteAsync();
+
+                _logger.LogInformation(
+                    "User {UserId} followed page {PageId} ('{PageName}')",
+                    userId,
+                    pageId,
+                    page.Name);
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
@@ -157,6 +172,12 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.RemoveFollower(userId, pageId);
             await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                "User {UserId} unfollowed page {PageId} ('{PageName}')",
+                userId,
+                pageId,
+                page.Name);
 
             if (page.AdminId != userId)
             {
@@ -381,7 +402,10 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.Update(page);
             await _unitOfWork.CompleteAsync();
-
+            _logger.LogInformation(
+                "Page {PageId} ('{PageName}') updated",
+                page.Id,
+                page.Name);
             var response = _mapper.Map<PageResponseDto>(page);
             return Result<PageResponseDto>.Success(response);
         }
@@ -402,6 +426,13 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.RemoveFollower(targetUserId, pageId);
             var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                    "User {TargetUserId} removed from page {PageId} by user {ActorUserId}",
+                    targetUserId,
+                    pageId,
+                    adminId);
+
 
             if (affectedRows > 0)
             {
@@ -443,6 +474,12 @@ namespace Sohba.Application.Services
 
             follower.Role = newRole;
             var affectedRows = await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                "User {TargetUserId} promoted in page {PageId} by user {ActorUserId}",
+                targetUserId,
+                pageId,
+                adminId);
             return Result<bool>.Success(affectedRows > 0);
         }
 
@@ -462,6 +499,11 @@ namespace Sohba.Application.Services
 
             follower.Role = newRole;
             var affectedRows = await _unitOfWork.CompleteAsync();
+            _logger.LogInformation(
+                "User {TargetUserId} demoted in page {PageId} by user {ActorUserId}",
+                targetUserId,
+                pageId,
+                adminId);
             return Result<bool>.Success(affectedRows > 0);
         }
 
@@ -489,6 +531,11 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.Update(page);
             var affectedRows = await _unitOfWork.CompleteAsync();
+            _logger.LogInformation(
+                  "Page {PageId} ownership transferred from {OldOwnerId} to {NewOwnerId}",
+                  pageId,
+                  adminId,
+                  targetUserId);
             return Result<bool>.Success(affectedRows > 0);
         }
 
@@ -545,6 +592,12 @@ namespace Sohba.Application.Services
                 _unitOfWork.Pages.RemoveFollower(userId, pageId);
                 await _unitOfWork.CompleteAsync();
 
+                _logger.LogInformation(
+                    "User {UserId} transferred ownership of page {PageId} to user {NewOwnerId} while leaving",
+                    userId,
+                    pageId,
+                    successor.UserId);
+
                 var previousOwner = await _userService.GetProfileAsync(userId);
                 var previousOwnerName = previousOwner.Value?.Name ?? "The previous owner";
 
@@ -575,6 +628,11 @@ namespace Sohba.Application.Services
 
             _unitOfWork.Pages.RemoveFollower(userId, pageId);
             await _unitOfWork.CompleteAsync();
+
+            _logger.LogInformation(
+                "User {UserId} left page {PageId}",
+                userId,
+                pageId);
             var user = await _userService.GetProfileAsync(userId);
             var userName = user.Value?.Name ?? "A user";
 
@@ -679,6 +737,11 @@ namespace Sohba.Application.Services
             _unitOfWork.Pages.AddFollowRequest(request);
             await _unitOfWork.CompleteAsync();
 
+            _logger.LogInformation(
+                "User {UserId} submitted follow request for page {PageId}",
+                userId,
+                dto.PageId);
+
             var requester = await _userService.GetProfileAsync(userId);
             var requesterName = requester.Value?.Name ?? "A user";
 
@@ -731,6 +794,12 @@ namespace Sohba.Application.Services
 
                 await _unitOfWork.CompleteAsync();
 
+                _logger.LogInformation(
+                        "Follow request {RequestId} for page {PageId} approved by user {ReviewerId}",
+                        request.Id,
+                        request.PageId,
+                        reviewerUserId);
+
                 await _notificationService.CreateNotificationAsync(
                     receiverId: request.UserId,
                     message: $"Your request to follow '{request.Page.Name}' has been accepted.",
@@ -743,6 +812,12 @@ namespace Sohba.Application.Services
             {
                 request.Status = PageFollowRequestStatus.Rejected;
                 await _unitOfWork.CompleteAsync();
+
+                _logger.LogInformation(
+                    "Follow request {RequestId} for page {PageId} rejected by user {ReviewerId}",
+                    request.Id,
+                    request.PageId,
+                    reviewerUserId);
 
                 await _notificationService.CreateNotificationAsync(
                     receiverId: request.UserId,
