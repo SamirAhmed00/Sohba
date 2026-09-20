@@ -37,15 +37,15 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
 
             return await _context.Stories
+                .AsNoTracking()
                 .Include(s => s.User)
-                .Include(s => s.Viewers)
                 .Where(s => s.ExpiresAt > now &&
-                           !s.IsDeleted &&
-                           (
-                               s.UserId == currentUserId ||
-                               (s.Privacy == StoryPrivacy.Public && friendIds.Contains(s.UserId)) ||
-                               (s.Privacy == StoryPrivacy.FriendsOnly && friendIds.Contains(s.UserId))
-                           ))
+                            !s.IsDeleted &&
+                            (
+                                s.UserId == currentUserId ||
+                                (s.Privacy == StoryPrivacy.Public && friendIds.Contains(s.UserId)) ||
+                                (s.Privacy == StoryPrivacy.FriendsOnly && friendIds.Contains(s.UserId))
+                            ))
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
         }
@@ -74,19 +74,27 @@ namespace Sohba.Infrastructure.Repositories
                 .CountAsync(v => v.StoryId == storyId);
         }
 
-        public async Task DeleteExpiredStoriesAsync()
+        public async Task<List<string>> DeleteExpiredStoriesAsync()
         {
             var now = DateTime.UtcNow;
             var expiredStories = await _context.Stories
                 .Where(s => s.ExpiresAt <= now && !s.IsDeleted)
                 .ToListAsync();
 
+            var mediaUrls = new List<string>();
+
             foreach (var story in expiredStories)
             {
                 story.IsDeleted = true;
+
+                if (!string.IsNullOrWhiteSpace(story.MediaUrl))
+                {
+                    mediaUrls.Add(story.MediaUrl);
+                }
             }
 
             await _context.SaveChangesAsync();
+            return mediaUrls;
         }
 
         public async Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId)
@@ -118,16 +126,15 @@ namespace Sohba.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-
         public async Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId)
         {
-            var friendships = await _context.Friends
+            return await _context.Friends
                 .Where(f => (f.UserId == userId || f.FriendUserId == userId)
                             && f.Status == FriendshipStatus.Accepted)
+                .Select(f => f.UserId == userId
+                    ? f.FriendUserId
+                    : f.UserId)
                 .ToListAsync();
-
-            var friendIds = friendships.Select(f => f.UserId == userId ? f.FriendUserId : f.UserId).ToList();
-            return friendIds;
         }
 
 
@@ -162,6 +169,42 @@ namespace Sohba.Infrastructure.Repositories
                 .Select(g => new { StoryId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.StoryId, x => x.Count);
         }
+
+        public async Task<Dictionary<Guid, int>> GetViewerCountsForStoriesAsync(IEnumerable<Guid> storyIds)
+        {
+            var idList = storyIds.ToList();
+
+            if (!idList.Any())
+            {
+                return new Dictionary<Guid, int>();
+            }
+
+            return await _context.Set<StoryViewer>()
+                .Where(v => idList.Contains(v.StoryId))
+                .GroupBy(v => v.StoryId)
+                .Select(g => new
+                {
+                    StoryId = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.StoryId, x => x.Count);
+        }
+
+        public async Task<List<Guid>> GetViewedStoryIdsAsync(IEnumerable<Guid> storyIds, Guid userId)
+        {
+            var idList = storyIds.ToList();
+
+            if (!idList.Any())
+            {
+                return new List<Guid>();
+            }
+
+            return await _context.Set<StoryViewer>()
+                .Where(v => idList.Contains(v.StoryId) && v.UserId == userId)
+                .Select(v => v.StoryId)
+                .ToListAsync();
+        }
+
 
         public async Task<Dictionary<Guid, StoryReaction>> GetUserReactionsForStoriesAsync(IEnumerable<Guid> storyIds, Guid userId)
         {

@@ -12,7 +12,8 @@ namespace Sohba.Domain.Interfaces
         Task AddViewerAsync(Guid storyId, Guid userId);        
         Task<bool> HasUserViewedStoryAsync(Guid storyId, Guid userId);
         Task<int> GetViewersCountAsync(Guid storyId);
-        Task DeleteExpiredStoriesAsync();
+        Task<List<string>> DeleteExpiredStoriesAsync();
+
         Task<IEnumerable<Story>> GetUserStoriesAsync(Guid userId, Guid currentUserId);
         Task<IEnumerable<Guid>> GetFriendIdsAsync(Guid userId);
 
@@ -26,6 +27,8 @@ namespace Sohba.Domain.Interfaces
         void RemoveReaction(StoryReaction reaction);
         Task<(IReadOnlyList<Story> Items, int TotalCount)> GetStoriesAdminPagedAsync(int page, int pageSize);
 
+        Task<Dictionary<Guid, int>> GetViewerCountsForStoriesAsync(IEnumerable<Guid> storyIds);
 
+        Task<List<Guid>> GetViewedStoryIdsAsync(IEnumerable<Guid> storyIds, Guid userId);
     }
 }

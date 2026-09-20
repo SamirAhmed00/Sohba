@@ -104,7 +104,7 @@ namespace Sohba.Application.Services
 
             var stories = await _unitOfWork.Stories.GetStoriesForFeedAsync(userId);
 
-            //  PRIVACY CHECK: Enhanced filtering
+            // PRIVACY CHECK: Enhanced filtering
             var filteredStories = stories.Where(s =>
                 s.CreatedAt >= cutoffTime &&
                 !s.IsDeleted &&
@@ -121,6 +121,18 @@ namespace Sohba.Application.Services
                 .OrderByDescending(s => s.CreatedAt)
                 .ToList();
 
+            // Batch-load viewer counts and viewed story IDs instead of
+            // materializing the entire StoryViewer collection for every story.
+            var storyIds = filteredStories.Select(s => s.Id).ToList();
+
+            var viewerCounts =
+                await _unitOfWork.Stories.GetViewerCountsForStoriesAsync(storyIds);
+
+            var viewedIds =
+                await _unitOfWork.Stories.GetViewedStoryIdsAsync(storyIds, userId);
+
+            var viewedSet = viewedIds.ToHashSet();
+
             var groupedStories = filteredStories
                 .GroupBy(s => s.UserId)
                 .Select(g => g.OrderBy(s => s.CreatedAt).ToList())
@@ -132,16 +144,22 @@ namespace Sohba.Application.Services
             {
                 foreach (var story in userStories)
                 {
-                    // Memory projection from eager-loaded Viewers navigation property
-                    var viewersCount = story.Viewers?.Count ?? 0;
-                    var hasViewed = story.Viewers?.Any(v => v.UserId == userId) ?? false;
+                    var viewersCount =
+                        viewerCounts.TryGetValue(story.Id, out var count)
+                            ? count
+                            : 0;
+
+                    var hasViewed =
+                        viewedSet.Contains(story.Id);
 
                     result.Add(new StoryResponseDto
                     {
                         Id = story.Id,
                         UserId = story.UserId,
                         Content = story.Content,
-                        MediaUrl = !string.IsNullOrEmpty(story.MediaUrl) ? $"/Stories/Media?storyId={story.Id}" : null,
+                        MediaUrl = !string.IsNullOrEmpty(story.MediaUrl)
+                            ? $"/Stories/Media?storyId={story.Id}"
+                            : null,
                         MediaType = story.MediaType,
                         UserName = story.User?.Name,
                         UserProfilePicture = story.User?.ProfilePictureUrl,
@@ -155,7 +173,6 @@ namespace Sohba.Application.Services
             }
 
             return Result<IEnumerable<StoryResponseDto>>.Success(result);
-
         }
 
         public async Task<Result<StoryResponseDto>> GetStoryByIdAsync(Guid storyId, Guid currentUserId)

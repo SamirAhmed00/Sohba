@@ -62,6 +62,12 @@ namespace Sohba.Controllers
             if (result.IsSuccess)
                 return Json(BaseResponseDto<StoryResponseDto>.SuccessResponse(result.Value));
 
+
+            // Rollback: the physical file was saved before the DB write; remove it now.
+            if (!string.IsNullOrEmpty(model.MediaUrl))
+                await _fileStorage.DeleteFileAsync(model.MediaUrl);
+
+
             return Json(BaseResponseDto<StoryResponseDto>.FailureResponse(result.Error));
         }
 
