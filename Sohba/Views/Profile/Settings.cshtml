@@ -40,10 +40,10 @@
 
     <form asp-action="Settings" asp-controller="Profile" method="post" class="space-y-6">
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Email" />
+        @* <input type="hidden" asp-for="Email" />
         <input type="hidden" asp-for="Name" />
         <input type="hidden" asp-for="Bio" />
-        <input type="hidden" asp-for="ProfilePictureUrl" />
+        <input type="hidden" asp-for="ProfilePictureUrl" /> *@
 
         <!-- Privacy Card -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">

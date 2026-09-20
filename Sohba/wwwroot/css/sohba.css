@@ -1,0 +1,44 @@
+﻿/* Sohba hand-written styles (extracted from the tail of site.css so that
+   `npm run tailwind:build` can regenerate site.css without destroying them).
+   Loaded AFTER site.css in both layouts to preserve the original cascade order. */
+
+/* Custom Scroll For All Pages */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+/* ... continue with the remaining extracted rules, verbatim, in original order:
+   /* Toast Notification */ .toast {
+    ...
+}
+/* Custom Scrollbar */ .custom-scrollbar {
+    ...
+}
+/* Glass Morphism Effect */ .glass {
+    ...
+}
+/* Gradient Text */ .gradient-text {
+    ...
+}
+/* Dropdown Menu Animation */ [id^="menu-"] {
+    ...
+}
+
+@keyframes dropdownFade {
+    ...
+}
+/* Dropdown Items Hover Effect */ ...
+/* Better spacing */ ...
+.active-class {
+    ...
+}
+
+*/

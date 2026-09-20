@@ -313,50 +313,6 @@ async function handleNotificationNavigation(event, notificationId, targetUrl, is
         window.location.href = targetUrl;
     }
 }
-//  {
-//     if (!notificationId) return;
-//     if (typeof window.showConfirmModal !== 'function') return;
-
-//     window.showConfirmModal({
-//         title: 'Delete notification',
-//         message: 'Delete this notification?',
-//         type: 'delete',
-//         confirmText: 'Delete',
-//         onConfirm: async function () {
-
-//             try {
-//                 const token = window.SohbaApp?.getAntiForgeryToken() || '';
-//                 const response = await fetch(`/Notifications/Delete?id=${encodeURIComponent(notificationId)}`, {
-//                     method: 'POST',
-//                     headers: {
-//                         'Content-Type': 'application/json',
-//                         'X-CSRF-TOKEN': token
-//                     }
-//                 });
-//                 const result = await response.json();
-
-//                 if (result.success) {
-//                     const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
-//                     if (item) {
-//                         item.style.transition = 'opacity 0.3s ease';
-//                         item.style.opacity = '0';
-//                         setTimeout(() => item.remove(), 300);
-//                     }
-//                     await updateNotificationCount();
-//                     if (typeof SohbaApp !== 'undefined' && SohbaApp.toast) {
-//                         SohbaApp.toast('Notification deleted', 'success');
-//                     }
-//                 }
-//             } catch (error) {
-//                 console.error('Error deleting notification:', error);
-//                 if (typeof SohbaApp !== 'undefined' && SohbaApp.toast) {
-//                     SohbaApp.toast('Failed to delete notification', 'error');
-//                 }
-//             }
-//         }
-//     });
-// }
-
 // ============================================================
 // SIGNALR NOTIFICATION CONNECTION
 // ============================================================
@@ -368,7 +324,6 @@ function initializeSignalR() {
     if (isSignalRConnected) return;
 
     if (!document.getElementById('notifBtn')) {
-        console.log('⚠️ Notification elements not found, retrying...');
         setTimeout(initializeSignalR, 500);
         return;
     }
@@ -378,7 +333,7 @@ function initializeSignalR() {
         const token = tokenMeta?.getAttribute('content');
 
         if (!token) {
-            console.warn('⚠️ No JWT token found, SignalR will not connect');
+            console.warn('No JWT token found, SignalR will not connect');
             return;
         }
 
@@ -391,29 +346,26 @@ function initializeSignalR() {
             .build();
 
         notificationConnection.on('ReceiveNotification', function (notification) {
-            console.log('📨 New notification received:', notification);
             handleNotificationReceived(notification);
         });
 
         notificationConnection.start()
             .then(() => {
                 isSignalRConnected = true;
-                console.log('✅ SignalR connected for notifications');
             })
             .catch(function (err) {
-                console.error('❌ SignalR connection failed:', err);
+                console.error('SignalR connection failed:', err);
                 isSignalRConnected = false;
                 setTimeout(initializeSignalR, 5000);
             });
 
         notificationConnection.onclose(function () {
-            console.log('⚠️ SignalR connection closed');
             isSignalRConnected = false;
             setTimeout(initializeSignalR, 5000);
         });
 
     } catch (error) {
-        console.error('❌ SignalR initialization error:', error);
+        console.error('SignalR initialization error:', error);
         setTimeout(initializeSignalR, 5000);
     }
 }
@@ -509,12 +461,10 @@ function initNotificationSystem() {
     const notifDropdown = document.getElementById('notifDropdown');
 
     if (!notifBtn || !notifDropdown) {
-        console.warn('⚠️ Notification elements not found, retrying...');
+        console.warn('Notification elements not found, retrying...');
         setTimeout(initNotificationSystem, 500);
         return;
     }
-
-    console.log('✅ Notification system initialized');
 
     updateNotificationCount();
     setInterval(updateNotificationCount, 30000);

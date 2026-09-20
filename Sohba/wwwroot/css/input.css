@@ -1,1 +1,7 @@
 ﻿@import "tailwindcss";
+
+/* Explicit content sources: every Razor view and all hand-written JS that may contain
+   utility classes. Keeps generation deterministic (v4 auto-detection also works, but is
+   implicit). node_modules/bin/obj are git-ignored and therefore never scanned. */
+@source "../Views";
+@source "../wwwroot/js";

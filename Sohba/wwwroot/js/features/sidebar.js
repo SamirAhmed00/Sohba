@@ -30,19 +30,27 @@ async function loadFriendSuggestions() {
         const users = payload.data ?? payload.Data ?? [];
 
         if (users.length > 0) {
-            container.innerHTML = users.map(user => `
+            container.innerHTML = users.map(user => {
+                // Stored XSS protection: escape every user-controlled value with the
+                // shared helper from sohba-modal.js (loaded before this runs).
+                const safeId = escapeModalHtml(user.id || user.Id);
+                const safeName = escapeModalHtml(user.name || user.Name);
+                const safeAvatar = escapeModalHtml(user.profilePictureUrl || user.ProfilePictureUrl
+                    || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.Name)}&background=345e69&color=fff`);
+
+                return `
                 <div class="flex items-center justify-between group">
-                    <a href="/Profile/Index/${user.id || user.Id}" class="flex items-center gap-3 min-w-0">
-                        <img src="${user.profilePictureUrl || user.ProfilePictureUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.Name)}&background=345e69&color=fff`}"
-                             class="w-10 h-10 rounded-xl object-cover" alt="${user.name || user.Name}">
+                    <a href="/Profile/Index/${safeId}" class="flex items-center gap-3 min-w-0">
+                        <img src="${safeAvatar}"
+                             class="w-10 h-10 rounded-xl object-cover" alt="${safeName}">
                         <div>
                             <h5 class="text-sm font-bold text-gray-800 group-hover:text-[#345e69] transition-colors">
-                                ${user.name || user.Name}
+                                ${safeName}
                             </h5>
                             <p class="text-xs text-gray-400">Suggested for you</p>
                         </div>
                     </a>
-                    <button onclick="sendSidebarFriendRequest('${user.id || user.Id}', event)"
+                    <button onclick="sendSidebarFriendRequest('${safeId}', event)"
                             class="text-[#345e69] bg-[#345e69]/10 hover:bg-[#345e69] hover:text-white p-2 rounded-lg transition-all duration-300"
                             aria-label="Add friend">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -51,7 +59,8 @@ async function loadFriendSuggestions() {
                         </svg>
                     </button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         } else {
             container.innerHTML = '<div class="text-xs text-center text-slate-400 py-2">No suggestions right now</div>';
         }
@@ -84,15 +93,16 @@ async function sendSidebarFriendRequest(userId, event) {
 }
 function renderTrendingHashtagItem(tag, count) {
     const safeTag = encodeURIComponent(tag);
+    const safeTagDisplay = escapeModalHtml(tag);
     const countLabel = Number(count || 0).toLocaleString();
     return `
-        <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2" data-hashtag-tag="${tag}">
+        <div class="hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-colors -mx-2" data-hashtag-tag="${safeTagDisplay}">
             <div class="flex justify-between items-start">
                 <span class="text-xs text-gray-400 font-medium">Trending</span>
             </div>
             <a href="/Posts/Hashtag?tag=${safeTag}" class="block">
                 <h4 class="font-bold text-gray-800 text-sm mt-0.5 hover:text-[#345e69]">
-                    #${tag}
+                    #${safeTagDisplay}
                 </h4>
             </a>
             <p class="text-xs text-gray-400 mt-1">${countLabel} posts</p>
