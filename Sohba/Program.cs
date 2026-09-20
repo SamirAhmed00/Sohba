@@ -1,3 +1,8 @@
+using Elastic.Channels;
+using Elastic.Ingest.Elasticsearch;
+using Elastic.Ingest.Elasticsearch.DataStreams;
+using Elastic.Serilog.Sinks;
+using Elastic.Transport;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,17 +15,17 @@ using Serilog;
 using Sohba.Application.DependencyInjection;
 using Sohba.Application.Interfaces;
 using Sohba.Application.Settings;
-using Sohba.Extensions;
-using Sohba.Handlers;
-using Sohba.Hubs;
-using Sohba.Infrastructure.DependencyInjection;
-using System;
-using System.Text;
-using System.Threading.RateLimiting;
-
 using Sohba.Converters;
 using Sohba.Extensions;
 using Sohba.Filters;
+using Sohba.Handlers;
+using Sohba.Hubs;
+using Sohba.Infrastructure.Data;
+using Sohba.Infrastructure.DependencyInjection;
+using System;
+using System.Text;
+using System.Threading.Channels;
+using System.Threading.RateLimiting;
 
 namespace Sohba
 {
@@ -28,9 +33,6 @@ namespace Sohba
     {
         public static async Task Main(string[] args)
         {
-            // ============================================================
-            // 0. SERILOG BOOTSTRAP
-            // ============================================================
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateBootstrapLogger();
@@ -41,25 +43,93 @@ namespace Sohba
 
                 var builder = WebApplication.CreateBuilder(args);
 
-                // ============================================================
-                // أضف السطر ده عشان يحل محل الـ logging الافتراضي بـ Serilog
-                // ============================================================
                 builder.Host.UseSerilog((context, services, configuration) =>
-                    configuration
+                {
+                    var serilogConfiguration = configuration
                         .ReadFrom.Configuration(context.Configuration)
                         .ReadFrom.Services(services)
                         .Enrich.FromLogContext()
+                        .Enrich.WithProperty("Application", "Sohba")
+                        .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
                         .WriteTo.Console()
                         .WriteTo.File(
                             path: "logs/sohba-.log",
                             rollingInterval: RollingInterval.Day,
                             retainedFileCountLimit: 30,
                             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception}"
-                        ));
+                        );
 
-                // ============================================================
-                // 1. REGISTER JWT SETTINGS 
-                // ============================================================
+                    // Optional Elasticsearch log sink. Log storage only - application
+                    // search stays SQL-based and no business data is sent to it.
+                    // - Activated only when SOHBA_ES_URL is configured; the app
+                    //   runs normally without Elasticsearch.
+                    // - Events are written into a bounded in-memory channel and
+                    //   shipped in the background. Under an Elasticsearch outage
+                    //   the channel drops events instead of blocking requests.
+                    // - The File sink above remains the durable fallback.
+                    // - Credentials come from environment/secret configuration,
+                    //   never from appsettings.json or source code.
+                    var elasticsearchUrl = context.Configuration["SOHBA_ES_URL"];
+                    Log.Information("Elasticsearch URL configured: {ElasticsearchUrl}", elasticsearchUrl ?? "<NULL>");
+                    if (string.IsNullOrWhiteSpace(elasticsearchUrl))
+                    {
+                        return;
+                    }
+
+                    serilogConfiguration.WriteTo.Elasticsearch(
+                        nodes: new[] { new Uri(elasticsearchUrl) },
+                        configureOptions: options =>
+                        {
+                            // logs-sohba-<environment> data stream, e.g. logs-sohba-development
+                            options.DataStream = new DataStreamName(
+                                "logs",
+                                "sohba",
+                                context.HostingEnvironment.EnvironmentName.ToLowerInvariant());
+
+                            // Install the ECS component/index templates for the data
+                            // stream on first use; failures are silent so a missing or
+                            // misconfigured Elasticsearch never breaks the app.
+                            options.BootstrapMethod = BootstrapMethod.Silent;
+
+                            // Optional native ILM policy for retention (e.g.
+                            // a 7-day dev / 30-day prod policy). The policy must
+                            // exist in Elasticsearch; when unset the shipped
+                            // default "logs" policy applies.
+                            var ilmPolicy = context.Configuration["SOHBA_ES_ILM_POLICY"];
+                            if (!string.IsNullOrWhiteSpace(ilmPolicy))
+                            {
+                                options.IlmPolicy = ilmPolicy;
+                            }
+
+                            // Batching/backpressure: bounded inbound buffer with
+                            // DropWrite guarantees logging can never add request
+                            // latency when Elasticsearch is down or slow.
+                            options.ConfigureChannel = channelOptions =>
+                            {
+                                channelOptions.BufferOptions = new BufferOptions
+                                {
+                                    InboundBufferMaxSize = 10_000,
+                                    OutboundBufferMaxSize = 500,
+                                    OutboundBufferMaxLifetime = TimeSpan.FromSeconds(5),
+                                    ExportMaxConcurrency = 2,
+                                    BoundedChannelFullMode = BoundedChannelFullMode.DropWrite
+                                };
+                            };
+                        },
+                        configureTransport: transportConfiguration =>
+                        {
+                            // Basic auth from secret configuration only
+                            // (environment variables / user secrets).
+                            var esUser = context.Configuration["SOHBA_ES_USER"];
+                            var esPassword = context.Configuration["SOHBA_ES_PASSWORD"];
+                            if (!string.IsNullOrEmpty(esUser) && !string.IsNullOrEmpty(esPassword))
+                            {
+                                transportConfiguration.Authentication(new BasicAuthentication(esUser, esPassword));
+                            }
+                        });
+                });
+
+                // JWT settings are validated before anything depends on them.
                 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
                 if (jwtSettings != null)
                 {
@@ -67,9 +137,6 @@ namespace Sohba
                     builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
                 }
 
-                // ============================================================
-                // 2. ADD JWT AUTHENTICATION 
-                // ============================================================
                 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing"));
 
                 builder.Services.AddAuthentication(options =>
@@ -110,9 +177,6 @@ namespace Sohba
 
 
 
-                // ============================================================
-                //  RATE LIMITING
-                // ============================================================
                 builder.Services.AddRateLimiter(options =>
                 {
                     // Auth endpoints (Login, Register, ForgotPassword) - Partitioned by IP address
@@ -122,6 +186,18 @@ namespace Sohba
                         return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 15,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    });
+
+                    options.AddPolicy("TokenRefresh", httpContext =>
+                    {
+                        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(clientIp, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
                             Window = TimeSpan.FromMinutes(1),
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                             QueueLimit = 0
@@ -249,14 +325,12 @@ namespace Sohba
 
 
 
-                // ============================================================
-                // 3. INFRASTRUCTURE & APPLICATION SERVICES 
-                // ============================================================
                 builder.Services.AddInfrastructureService(builder.Configuration);
                 builder.Services.AddApplicationServices();
-                builder.Services.AddHealthChecks();
+                builder.Services.AddSingleton(TimeProvider.System);
 
-                // COOKIE AUTH 
+                builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
+
                 builder.Services.AddAuthorization();
 
                 builder.Services.ConfigureApplicationCookie(options =>
@@ -274,9 +348,6 @@ namespace Sohba
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 });
 
-                // ============================================================
-                // 4. SIGNALR 
-                // ============================================================
                 builder.Services.AddSignalR(options =>
                 {
                     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
@@ -284,9 +355,6 @@ namespace Sohba
                 });
                 builder.Services.AddScoped<INotificationEventHandler, NotificationEventHandler>();
 
-                // ============================================================
-                // 5. MVC & VALIDATION
-                // ============================================================
                 builder.Services.AddControllersWithViews(options =>
                 {
                     options.Filters.Add<ValidationFilter>();
@@ -309,19 +377,15 @@ namespace Sohba
                 builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Validators.PostCreateViewModelValidator>();
                 builder.Services.AddValidatorsFromAssemblyContaining<Sohba.Application.Validators.CommentRequestDtoValidator>();
 
-                // ============================================================
-                // 6. BUILD APP
-                // ============================================================
                 var app = builder.Build();
 
-                // ============================================================
-                // 7. DATABASE INITIALIZATION 
-                // ============================================================
                 await app.InitializeDatabaseAsync();
 
-                // ============================================================
-                // 8. MIDDLEWARE PIPELINE 
-                // ============================================================
+                // Correlation + request logging wrap the entire pipeline.
+                // CorrelationId reaches every log event, including the global
+                // exception handler below.
+                app.UseMiddleware<Sohba.Middleware.RequestCorrelationMiddleware>();
+                app.UseMiddleware<Sohba.Middleware.RequestLoggingMiddleware>();
                 // Global Exception Handler must execute at the start of the pipeline
                 app.UseExceptionHandler(appError =>
                 {
@@ -331,7 +395,13 @@ namespace Sohba
                         var exception = exceptionFeature?.Error;
 
                         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-                        logger.LogError(exception, "Unhandled exception processing {Path}", context.Request.Path);
+                        var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+
+                        logger.LogError(
+                            exception,
+                            "Unhandled exception processing {Path} for user {UserId}",
+                            context.Request.Path,
+                            userId);
 
                         if (HttpErrorResponseHelper.IsAjaxOrJsonRequest(context.Request))
                         {
@@ -352,6 +422,8 @@ namespace Sohba
                     app.UseHsts();
                 }
                 app.UseHttpsRedirection();
+                // Production security-header baseline (CSP + nosniff + frame + referrer).
+                app.UseSecurityHeaders();
                 app.UseStaticFiles();
                 app.UseRouting();
 
