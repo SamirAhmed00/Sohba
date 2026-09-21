@@ -12,17 +12,17 @@ namespace Sohba.Extensions
     public static class SecurityHeadersExtensions
     {
         private const string ContentSecurityPolicy =
-            "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; " +
-            "style-src 'self' 'unsafe-inline'; " +
-            "img-src 'self' data: blob: https://ui-avatars.com; " +
-            "media-src 'self' blob:; " +
-            "font-src 'self' data:; " +
-            "connect-src 'self' ws: wss:; " +
-            "frame-ancestors 'none'; " +
-            "base-uri 'self'; " +
-            "form-action 'self'; " +
-            "object-src 'none'";
+                "default-src 'self'; " +
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://cdn.tailwindcss.com; " +
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; " +
+                "img-src 'self' data: blob: https://ui-avatars.com; " +
+                "media-src 'self' blob:; " +
+                "font-src 'self' data: https://fonts.gstatic.com; " +
+                "connect-src 'self' ws: wss:; " +
+                "frame-ancestors 'none'; " +
+                "base-uri 'self'; " +
+                "form-action 'self'; " +
+                "object-src 'none'";
 
         public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
         {

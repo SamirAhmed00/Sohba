@@ -1,4 +1,5 @@
-﻿@using System.Security.Claims
+﻿@* File: Sohba/Views/Shared/_AppLayout *@
+@using System.Security.Claims
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     var jwtToken = ViewBag.JwtToken ?? Context.Items["JwtToken"] as string;

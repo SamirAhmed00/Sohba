@@ -1,45 +1,49 @@
 /**
- * Sohba Landing Page — Interactive Controller
- * GSAP entrance + ScrollTrigger reveals, dual Three.js particle scenes
- * (hero + credits), animated metric counters, adaptive header, Lucide icons.
+ * Sohba Landing v3 — Interactive Controller
+ * GSAP entrance + ScrollTrigger reveals, full-screen Three.js particle scenes,
+ * scroll progress bar, bento 3D tilt, animated counters, adaptive header,
+ * mobile menu, slow-gradient logo letter FX (header + footer).
+ * Motion is mandatory by design — no reduced-motion guards.
  */
-
 (function () {
     'use strict';
 
-    
-
-    /* ------------------------------------------------------------
-       1. Lucide Icons
-       ------------------------------------------------------------ */
+    /* ---------- 1. Lucide Icons ---------- */
     function initIcons() {
         if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
             lucide.createIcons();
         }
     }
 
-    /* ------------------------------------------------------------
-       2. Adaptive Header (solidify on scroll)
-       ------------------------------------------------------------ */
+    /* ---------- 2. Adaptive Header ---------- */
     function initHeader() {
         const header = document.getElementById('landingHeader');
         if (!header) return;
-
-        function onScroll() {
-            if (window.scrollY > 24) {
-                header.classList.add('is-scrolled');
-            } else {
-                header.classList.remove('is-scrolled');
-            }
-        }
-
+        const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 24);
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
     }
 
-    /* ------------------------------------------------------------
-       3. Smooth Anchor Scrolling
-       ------------------------------------------------------------ */
+    /* ---------- 3. Mobile Menu ---------- */
+    function initMobileMenu() {
+        const header = document.getElementById('landingHeader');
+        const toggle = document.getElementById('navToggle');
+        if (!header || !toggle) return;
+
+        toggle.addEventListener('click', function () {
+            const open = header.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        header.querySelectorAll('.nav-anchor-link').forEach(function (link) {
+            link.addEventListener('click', function () {
+                header.classList.remove('nav-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+    }
+
+    /* ---------- 4. Smooth Anchor Scrolling ---------- */
     function initSmoothScroll() {
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -48,18 +52,35 @@
                 const targetEl = document.querySelector(targetId);
                 if (targetEl) {
                     e.preventDefault();
-                    targetEl.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
     }
 
-    /* ------------------------------------------------------------
-       4. Animated Metric Counters
-       ------------------------------------------------------------ */
+    /* ---------- 4.5 Scroll Progress Bar ---------- */
+    function initScrollProgress() {
+        var bar = document.querySelector('.scroll-progress');
+        if (!bar) return;
+        var raf = null;
+
+        function update() {
+            raf = null;
+            var doc = document.documentElement;
+            var max = doc.scrollHeight - window.innerHeight;
+            var p = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+            bar.style.transform = 'scaleX(' + p + ')';
+        }
+
+        window.addEventListener('scroll', function () {
+            if (raf === null) raf = requestAnimationFrame(update);
+        }, { passive: true });
+
+        window.addEventListener('resize', update, { passive: true });
+        update();
+    }
+
+    /* ---------- 5. Animated Counters ---------- */
     function initCounters() {
         const counters = document.querySelectorAll('.counter');
         if (!counters.length) return;
@@ -68,9 +89,7 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const el = entry.target;
-                    const target = parseInt(el.getAttribute('data-value'), 10) || 0;
-                    const suffix = el.getAttribute('data-suffix') || '';
-                    animateCounter(el, target, suffix);
+                    animateCounter(el, parseInt(el.getAttribute('data-value'), 10) || 0, el.getAttribute('data-suffix') || '');
                     obs.unobserve(el);
                 }
             });
@@ -80,16 +99,10 @@
     }
 
     function animateCounter(el, target, suffix) {
-        if (target === 0) {
-            el.textContent = target.toLocaleString() + suffix;
-            return;
-        }
         const duration = 1600;
         const start = performance.now();
-
         function tick(now) {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
+            const progress = Math.min((now - start) / duration, 1);
             const eased = 1 - Math.pow(1 - progress, 3);
             el.textContent = Math.floor(eased * target).toLocaleString() + suffix;
             if (progress < 1) requestAnimationFrame(tick);
@@ -98,29 +111,11 @@
         requestAnimationFrame(tick);
     }
 
-    /* ------------------------------------------------------------
-       5. GSAP: Hero Entrance Timeline
-       ------------------------------------------------------------ */
-    function initHeroTimeline() {
-        if (typeof gsap === 'undefined') return;
-
-        gsap.set('.hero-title .line', { yPercent: 110 });
-
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-        tl.to('.hero-pill', { opacity: 1, y: 0, duration: 0.9 }, 0.1)
-          .to('.hero-title .line', { yPercent: 0, duration: 1.2, stagger: 0.16 }, 0.25)
-          .to('.hero-subtitle', { opacity: 1, y: 0, duration: 1.1 }, 0.75)
-          .to('.hero-cta-group', { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }, 0.95)
-          .to('.hero-proof', { opacity: 1, y: 0, duration: 1 }, 1.1)
-          .to('.hero-visual', { opacity: 1, x: 0, scale: 1, duration: 1.4, ease: 'power3.out' }, 0.4)
-          .to('.top-badge', { opacity: 1, y: 0, duration: 1 }, 1.2)
-          .to('.bottom-badge', { opacity: 1, y: 0, duration: 1 }, 1.35);
-    }
-
+    /* ---------- 6. GSAP Hero Entrance ---------- */
     function setHeroInitialStates() {
         if (typeof gsap === 'undefined') return;
-        gsap.set('.hero-pill', { opacity: 0, y: 16 });
+        gsap.set('.hero-title .line', { yPercent: 110 });
+        gsap.set('.hero-pill', { opacity: 0, y: 18 });
         gsap.set('.hero-subtitle', { opacity: 0, y: 22 });
         gsap.set('.hero-cta-group', { opacity: 0, y: 22 });
         gsap.set('.hero-proof', { opacity: 0, y: 16 });
@@ -128,132 +123,156 @@
         gsap.set('.top-badge, .bottom-badge', { opacity: 0, y: 14 });
     }
 
-    /* ------------------------------------------------------------
-       6. GSAP + ScrollTrigger: Section Reveal System
-       ------------------------------------------------------------ */
+    function initHeroTimeline() {
+        if (typeof gsap === 'undefined') return;
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+        tl.to('.hero-title .line', { yPercent: 0, duration: 1.1, stagger: 0.14 }, 0.1)
+            .to('.hero-pill', { opacity: 1, y: 0, duration: 0.8 }, 0.05)
+            .to('.hero-subtitle', { opacity: 1, y: 0, duration: 1 }, 0.7)
+            .to('.hero-cta-group', { opacity: 1, y: 0, duration: 0.9 }, 0.9)
+            .to('.hero-proof', { opacity: 1, y: 0, duration: 0.9 }, 1.05)
+            .to('.hero-visual', { opacity: 1, x: 0, scale: 1, duration: 1.3 }, 0.4)
+            .to('.top-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.2)
+            .to('.bottom-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.35);
+    }
+
+    /* ---------- 7. GSAP ScrollTrigger Reveals ---------- */
     function initScrollReveals() {
-        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ) return;
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
         gsap.registerPlugin(ScrollTrigger);
 
         const outsideHero = sel => Array.from(document.querySelectorAll(sel))
             .filter(el => !el.closest('#hero'));
 
-        // Generic fade-up group (section heads, deepdive copy blocks, list groups)
-        const fadeUpEls = outsideHero('[data-anim="fade-up"]');
-        fadeUpEls.forEach(el => {
+        outsideHero('[data-anim="fade-up"]').forEach(el => {
             gsap.fromTo(el, { opacity: 0, y: 40 }, {
-                opacity: 1, y: 0, duration: 1.2, ease: 'power3.out',
+                opacity: 1, y: 0, duration: 1.1, ease: 'power3.out',
                 scrollTrigger: { trigger: el, start: 'top 85%', once: true }
             });
         });
 
-        // Directional slides for deep-dive alternating rows
         outsideHero('[data-anim="fade-right"]').forEach(el => {
             gsap.fromTo(el, { opacity: 0, x: -50 }, {
-                opacity: 1, x: 0, duration: 1.3, ease: 'power3.out',
+                opacity: 1, x: 0, duration: 1.2, ease: 'power3.out',
                 scrollTrigger: { trigger: el, start: 'top 82%', once: true }
             });
         });
 
         outsideHero('[data-anim="fade-left"]').forEach(el => {
             gsap.fromTo(el, { opacity: 0, x: 50 }, {
-                opacity: 1, x: 0, duration: 1.3, ease: 'power3.out',
+                opacity: 1, x: 0, duration: 1.2, ease: 'power3.out',
                 scrollTrigger: { trigger: el, start: 'top 82%', once: true }
             });
         });
 
-        // Bento / stack chip batch reveal — staggered, slow, orchestrated
-        ScrollTrigger.batch('.bento-card[data-anim="reveal"]', {
-            start: 'top 88%',
-            once: true,
-            onEnter: batch => gsap.to(batch, {
-                opacity: 1, y: 0, scale: 1, duration: 1.1, ease: 'power3.out', stagger: 0.14
-            })
-        });
         gsap.set('.bento-card[data-anim="reveal"]', { opacity: 0, y: 46, scale: 0.97 });
-
-        ScrollTrigger.batch('.stack-chip[data-anim="reveal"]', {
-            start: 'top 92%',
-            once: true,
-            onEnter: batch => gsap.to(batch, {
-                opacity: 1, y: 0, duration: 0.9, ease: 'power2.out', stagger: 0.08
-            })
+        ScrollTrigger.batch('.bento-card[data-anim="reveal"]', {
+            start: 'top 88%', once: true,
+            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power3.out', stagger: 0.12 })
         });
-        gsap.set('.stack-chip[data-anim="reveal"]', { opacity: 0, y: 26 });
 
-        // Deep-dive visual panel cards — slight rotation-in for a premium feel
+        gsap.set('.stack-chip[data-anim="reveal"]', { opacity: 0, y: 26 });
+        ScrollTrigger.batch('.stack-chip[data-anim="reveal"]', {
+            start: 'top 92%', once: true,
+            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', stagger: 0.07 })
+        });
+
+        gsap.set('.ship-card[data-anim="reveal"]', { opacity: 0, y: 40 });
+        ScrollTrigger.batch('.ship-card[data-anim="reveal"]', {
+            start: 'top 88%', once: true,
+            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', stagger: 0.14 })
+        });
+
         outsideHero('.panel-card').forEach(el => {
             gsap.fromTo(el, { opacity: 0, y: 50, rotateX: 6 }, {
-                opacity: 1, y: 0, rotateX: 0, duration: 1.3, ease: 'power3.out',
+                opacity: 1, y: 0, rotateX: 0, duration: 1.2, ease: 'power3.out',
                 scrollTrigger: { trigger: el, start: 'top 85%', once: true }
             });
         });
 
-        // Panel rows inside each deep-dive visual — staggered line-by-line
         document.querySelectorAll('.panel-card').forEach(card => {
-            const rows = card.querySelectorAll('.panel-row');
-            gsap.fromTo(rows, { opacity: 0, x: 20 }, {
-                opacity: 1, x: 0, duration: 0.8, ease: 'power2.out', stagger: 0.12,
+            gsap.fromTo(card.querySelectorAll('.panel-row'), { opacity: 0, x: 20 }, {
+                opacity: 1, x: 0, duration: 0.7, ease: 'power2.out', stagger: 0.1,
                 scrollTrigger: { trigger: card, start: 'top 78%', once: true }
             });
         });
 
-        // Deep-dive list items — slow staggered reveal
         document.querySelectorAll('.deepdive-list').forEach(list => {
-            const items = list.querySelectorAll('li');
-            gsap.fromTo(items, { opacity: 0, y: 18 }, {
-                opacity: 1, y: 0, duration: 1, ease: 'power2.out', stagger: 0.14,
+            gsap.fromTo(list.querySelectorAll('li'), { opacity: 0, y: 18 }, {
+                opacity: 1, y: 0, duration: 0.9, ease: 'power2.out', stagger: 0.13,
                 scrollTrigger: { trigger: list, start: 'top 85%', once: true }
             });
         });
 
-        // Topics columns — reveal each column then stagger its items
         document.querySelectorAll('.topics-col').forEach((col, i) => {
             const items = col.querySelectorAll('.topic-item');
             gsap.fromTo(col, { opacity: 0, y: 40 }, {
-                opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: i * 0.15,
+                opacity: 1, y: 0, duration: 1.1, ease: 'power3.out', delay: i * 0.15,
                 scrollTrigger: { trigger: '.topics-grid', start: 'top 82%', once: true }
             });
             gsap.fromTo(items, { opacity: 0, y: 14 }, {
-                opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', stagger: 0.06,
+                opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.05,
                 delay: 0.3 + i * 0.15,
                 scrollTrigger: { trigger: '.topics-grid', start: 'top 82%', once: true }
             });
         });
 
-        // Metrics — subtle rise for the whole grid
         gsap.fromTo('.metrics-grid .metric-block', { opacity: 0, y: 30 }, {
-            opacity: 1, y: 0, duration: 1.1, ease: 'power3.out', stagger: 0.12,
+            opacity: 1, y: 0, duration: 1, ease: 'power3.out', stagger: 0.1,
             scrollTrigger: { trigger: '.metrics-grid', start: 'top 85%', once: true }
         });
 
-        // Credits — orchestrated single reveal moment
-        gsap.timeline({
-            scrollTrigger: { trigger: '.credits-inner', start: 'top 80%', once: true }
-        })
-        .fromTo('.credits-emblem', { opacity: 0, scale: 0.7, rotate: -8 }, { opacity: 1, scale: 1, rotate: 0, duration: 1, ease: 'back.out(1.6)' })
-        .fromTo('.credits-inner .eyebrow', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.5')
-        .fromTo('.credits-inner h2', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9 }, '-=0.55')
-        .fromTo('.credits-inner p', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9 }, '-=0.6')
-        .fromTo('.credits-links', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9 }, '-=0.6');
+        gsap.timeline({ scrollTrigger: { trigger: '.credits-inner', start: 'top 80%', once: true } })
+            .fromTo('.credits-emblem', { opacity: 0, scale: 0.7, rotate: -8 }, { opacity: 1, scale: 1, rotate: 0, duration: 0.9, ease: 'back.out(1.6)' })
+            .fromTo('.credits-inner .eyebrow', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7 }, '-=0.45')
+            .fromTo('.credits-inner h2', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.5')
+            .fromTo('.credits-name-rule', { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7 }, '-=0.5')
+            .fromTo('.credits-inner p', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.55')
+            .fromTo('.credits-links', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.55');
 
-        // Section eyebrow/heading micro-reveal (mask-style rise) for section-heads not already covered
         outsideHero('.section-head').forEach(head => {
-            const kids = head.querySelectorAll('.eyebrow, h2, p');
-            gsap.fromTo(kids, { opacity: 0, y: 24 }, {
-                opacity: 1, y: 0, duration: 1, ease: 'power2.out', stagger: 0.12,
+            gsap.fromTo(head.querySelectorAll('.eyebrow, h2, p'), { opacity: 0, y: 24 }, {
+                opacity: 1, y: 0, duration: 0.9, ease: 'power2.out', stagger: 0.1,
                 scrollTrigger: { trigger: head, start: 'top 85%', once: true }
             });
         });
     }
 
-    /* ------------------------------------------------------------
-       7. Three.js — Reusable Particle Constellation
-       ------------------------------------------------------------ */
+    /* ---------- 7.5 Bento 3D Tilt (mouse-follow) ---------- */
+    function initBentoTilt() {
+        if (typeof gsap === 'undefined') return;
+        if (window.matchMedia('(hover: none)').matches) return;
+
+        document.querySelectorAll('.bento-card').forEach(function (card) {
+            gsap.set(card, { transformPerspective: 900 });
+
+            var lift = gsap.quickTo(card, 'y', { duration: 0.35, ease: 'power2.out' });
+            var rotX = gsap.quickTo(card, 'rotationX', { duration: 0.45, ease: 'power2.out' });
+            var rotY = gsap.quickTo(card, 'rotationY', { duration: 0.45, ease: 'power2.out' });
+
+            card.addEventListener('mouseenter', function () { lift(-5); });
+
+            card.addEventListener('mousemove', function (e) {
+                var r = card.getBoundingClientRect();
+                var px = (e.clientX - r.left) / r.width - 0.5;
+                var py = (e.clientY - r.top) / r.height - 0.5;
+                rotY(px * 7);
+                rotX(-py * 7);
+            });
+
+            card.addEventListener('mouseleave', function () {
+                lift(0);
+                rotX(0);
+                rotY(0);
+            });
+        });
+    }
+
+    /* ---------- 8. Three.js Particle Constellation (full-area) ---------- */
     function createParticleScene(opts) {
         const canvas = document.getElementById(opts.canvasId);
         const container = document.getElementById(opts.containerId);
-        if ( !canvas || !container || typeof THREE === 'undefined') return;
+        if (!canvas || !container || typeof THREE === 'undefined') return;
 
         let scene, camera, renderer, particles, particlePositions, linesGeometry, lineMesh;
         let animationFrameId = null;
@@ -261,7 +280,8 @@
 
         const particleCount = opts.particleCount || 45;
         const maxDistance = opts.maxDistance || 3.2;
-        const color = opts.color || [0.20, 0.37, 0.41];
+        const color = opts.color;
+        const bounds = opts.bounds || { x: 7, y: 5, z: 3 };
         const particlesData = [];
 
         function init() {
@@ -280,12 +300,9 @@
             particlePositions = new Float32Array(particleCount * 3);
 
             for (let i = 0; i < particleCount; i++) {
-                const x = (Math.random() - 0.5) * 14;
-                const y = (Math.random() - 0.5) * 10;
-                const z = (Math.random() - 0.5) * 6;
-                particlePositions[i * 3] = x;
-                particlePositions[i * 3 + 1] = y;
-                particlePositions[i * 3 + 2] = z;
+                particlePositions[i * 3] = (Math.random() - 0.5) * bounds.x * 2;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * bounds.y * 2;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * bounds.z * 2;
                 particlesData.push({
                     velocity: new THREE.Vector3(
                         (Math.random() - 0.5) * 0.008,
@@ -294,29 +311,20 @@
                     )
                 });
             }
-
             pGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 
-            const pMaterial = new THREE.PointsMaterial({
+            particles = new THREE.Points(pGeometry, new THREE.PointsMaterial({
                 color: new THREE.Color(color[0], color[1], color[2]),
-                size: 0.16,
-                transparent: true,
-                opacity: 0.65
-            });
-
-            particles = new THREE.Points(pGeometry, pMaterial);
+                size: 0.15, transparent: true, opacity: 0.7
+            }));
             scene.add(particles);
 
             linesGeometry = new THREE.BufferGeometry();
             const maxConnections = particleCount * particleCount;
-            const linePositions = new Float32Array(maxConnections * 3);
-            const lineColors = new Float32Array(maxConnections * 3);
+            linesGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxConnections * 3), 3).setUsage(THREE.DynamicDrawUsage));
+            linesGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(maxConnections * 3), 3).setUsage(THREE.DynamicDrawUsage));
 
-            linesGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3).setUsage(THREE.DynamicDrawUsage));
-            linesGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3).setUsage(THREE.DynamicDrawUsage));
-
-            const lineMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.25 });
-            lineMesh = new THREE.LineSegments(linesGeometry, lineMaterial);
+            lineMesh = new THREE.LineSegments(linesGeometry, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.3 }));
             scene.add(lineMesh);
 
             start();
@@ -337,9 +345,9 @@
                 positions[i * 3 + 1] += data.velocity.y;
                 positions[i * 3 + 2] += data.velocity.z;
 
-                if (positions[i * 3] < -7 || positions[i * 3] > 7) data.velocity.x = -data.velocity.x;
-                if (positions[i * 3 + 1] < -5 || positions[i * 3 + 1] > 5) data.velocity.y = -data.velocity.y;
-                if (positions[i * 3 + 2] < -3 || positions[i * 3 + 2] > 3) data.velocity.z = -data.velocity.z;
+                if (positions[i * 3] < -bounds.x || positions[i * 3] > bounds.x) data.velocity.x = -data.velocity.x;
+                if (positions[i * 3 + 1] < -bounds.y || positions[i * 3 + 1] > bounds.y) data.velocity.y = -data.velocity.y;
+                if (positions[i * 3 + 2] < -bounds.z || positions[i * 3 + 2] > bounds.z) data.velocity.z = -data.velocity.z;
 
                 for (let j = i + 1; j < particleCount; j++) {
                     const dx = positions[i * 3] - positions[j * 3];
@@ -355,14 +363,12 @@
                         linePositions[vertexpos++] = positions[j * 3];
                         linePositions[vertexpos++] = positions[j * 3 + 1];
                         linePositions[vertexpos++] = positions[j * 3 + 2];
-
                         lineColors[colorpos++] = color[0] * alpha;
                         lineColors[colorpos++] = color[1] * alpha;
                         lineColors[colorpos++] = color[2] * alpha;
                         lineColors[colorpos++] = color[0] * alpha;
                         lineColors[colorpos++] = color[1] * alpha;
                         lineColors[colorpos++] = color[2] * alpha;
-
                         numConnected++;
                     }
                 }
@@ -382,24 +388,20 @@
         function start() { if (!isRunning) { isRunning = true; animate(); } }
         function stop() { isRunning = false; if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
 
-        function onResize() {
-            if (!container || !renderer || !camera) return;
-            const width = container.clientWidth || window.innerWidth;
-            const height = container.clientHeight || window.innerHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        }
-
         let resizeTimer = null;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(onResize, 150);
+            resizeTimer = setTimeout(() => {
+                if (!container || !renderer || !camera) return;
+                const width = container.clientWidth || window.innerWidth;
+                const height = container.clientHeight || window.innerHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }, 150);
         }, { passive: true });
 
-        document.addEventListener('visibilitychange', () => {
-            document.hidden ? stop() : start();
-        });
+        document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
 
         if ('IntersectionObserver' in window) {
             const io = new IntersectionObserver(entries => {
@@ -411,32 +413,121 @@
         init();
     }
 
-    /* ------------------------------------------------------------
-       Bootstrap
-       ------------------------------------------------------------ */
+    /* ---------- 9. Logo Letter FX — slow gradient + magnify (header + footer, letters only) ---------- */
+    function initLogoLetterFX() {
+        var HOT = [52, 94, 105]; 
+        var WHITE = [255, 255, 255]; 
+        var MAX_DIST = 110;          
+        var MAX_SCALE = 0.32;        
+        var LIFT = 5;                
+
+        function wrapLetters(el) {
+            if (el.dataset.fxWrapped === 'true') return;
+            var text = el.textContent;
+            el.textContent = '';
+            Array.from(text).forEach(function (ch) {
+                var span = document.createElement('span');
+                span.textContent = ch === ' ' ? '\u00A0' : ch;
+                span.style.display = 'inline-block';
+                span.style.transition = 'color 0.7s ease-out, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)';
+                el.appendChild(span);
+            });
+            el.dataset.fxWrapped = 'true';
+        }
+
+        function getSpans(container) {
+            var fxEl = container.querySelector('.letter-fx');
+            return fxEl ? fxEl.querySelectorAll('span') : [];
+        }
+
+        function cacheState(container) {
+            var spans = getSpans(container);
+            var centers = [];
+            spans.forEach(function (span) {
+                span.style.transform = '';
+                var r = span.getBoundingClientRect();
+                centers.push(r.left + r.width / 2);
+            });
+            container._fx = { spans: spans, centers: centers };
+        }
+
+        function applyFX(container, clientX) {
+            if (!container._fx) return;
+            var fx = container._fx;
+            fx.spans.forEach(function (span, i) {
+                var dist = Math.abs(clientX - fx.centers[i]);
+                var t = Math.max(0, 1 - dist / MAX_DIST);
+                t = t * t * (3 - 2 * t); // smoothstep
+                
+                var k = 1 - t;
+                var r = Math.round(HOT[0] + (WHITE[0] - HOT[0]) * k);
+                var g = Math.round(HOT[1] + (WHITE[1] - HOT[1]) * k);
+                var b = Math.round(HOT[2] + (WHITE[2] - HOT[2]) * k);
+                span.style.color = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+                var s = 1 + t * MAX_SCALE;
+                span.style.transform = 'translateY(' + (-t * LIFT).toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
+            });
+        }
+
+        function resetFX(container) {
+            if (!container._fx) return;
+            container._fx.spans.forEach(function (span) {
+                span.style.color = '';
+                span.style.transform = '';
+            });
+        }
+
+        document.querySelectorAll('.letter-fx').forEach(wrapLetters);
+
+        document.querySelectorAll('.logo-link, .footer-brand').forEach(function (container) {
+            var raf = null, x = 0;
+
+            container.addEventListener('mouseenter', function (e) {
+                cacheState(container);
+                x = e.clientX;
+                applyFX(container, x);
+            });
+
+            container.addEventListener('mousemove', function (e) {
+                x = e.clientX;
+                if (raf) return;
+                raf = requestAnimationFrame(function () { raf = null; applyFX(container, x); });
+            });
+
+            container.addEventListener('mouseleave', function () { resetFX(container); });
+        });
+    }
+
+    /* ---------- Bootstrap ---------- */
     function bootstrap() {
         initIcons();
         initHeader();
+        initMobileMenu();
         initSmoothScroll();
+        initScrollProgress();
         initCounters();
         setHeroInitialStates();
         initHeroTimeline();
         initScrollReveals();
+        initBentoTilt();
+        initLogoLetterFX();
 
         createParticleScene({
             canvasId: 'hero-canvas',
             containerId: 'hero-canvas-container',
-            particleCount: 45,
-            maxDistance: 3.2,
-            color: [0.20, 0.37, 0.41] // brand teal
+            particleCount: 80,              
+            maxDistance: 4.0,               
+            color: [52 / 255, 94 / 255, 105 / 255],   
+            bounds: { x: 14, y: 9, z: 4 }    
         });
 
         createParticleScene({
             canvasId: 'credits-canvas',
             containerId: 'credits-canvas-container',
-            particleCount: 30,
+            particleCount: 40,
             maxDistance: 3.6,
-            color: [0.72, 0.33, 0.37] // rose clay accent
+            color: [0.85, 0.96, 0.91]      
         });
     }
 

@@ -819,8 +819,15 @@ namespace Sohba.Infrastructure.DBInitializer
             });
 
             // Reactions
-            _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Like, CreatedAt = DateTime.UtcNow, UserId = ahmed.Id, PostId = firstPublicPost.Id });
-            _context.Reactions.Add(new Reaction { Id = Guid.NewGuid(), Type = ReactionType.Love, CreatedAt = DateTime.UtcNow, UserId = sara.Id, PostId = firstPublicPost.Id });
+            await AddReactionIfNotExistsAsync(
+                firstPublicPost.Id,
+                ahmed.Id,
+                ReactionType.Like);
+
+            await AddReactionIfNotExistsAsync(
+                firstPublicPost.Id,
+                sara.Id,
+                ReactionType.Love);
 
             // Reports (for Dashboard testing)
             var adminTestPost = await _context.Posts.FirstAsync(p => p.Title == "My Travel Story: Paris ✨");
@@ -842,6 +849,28 @@ namespace Sohba.Infrastructure.DBInitializer
                 PostId = adminTestPost.Id,
                 SavedAt = DateTime.UtcNow,
                 Tag = SavedTag.Favorite
+            });
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task AddReactionIfNotExistsAsync(Guid postId, Guid userId, ReactionType type)
+        {
+            var exists = await _context.Reactions
+                .AnyAsync(r =>
+                    r.PostId == postId &&
+                    r.UserId == userId);
+
+            if (exists)
+                return;
+
+            _context.Reactions.Add(new Reaction
+            {
+                Id = Guid.NewGuid(),
+                PostId = postId,
+                UserId = userId,
+                Type = type,
+                CreatedAt = DateTime.UtcNow
             });
 
             await _context.SaveChangesAsync();

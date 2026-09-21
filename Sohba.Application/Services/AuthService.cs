@@ -12,7 +12,7 @@ public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
-    private readonly JwtService _jwtService;
+    private readonly IJwtService _jwtService;
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
@@ -21,7 +21,7 @@ public class AuthService : IAuthService
     public AuthService(
         UserManager<User> userManager,
         SignInManager<User> signInManager,
-        JwtService jwtService,
+        IJwtService jwtService,
         IMapper mapper,
         IEmailService emailService,
         ILogger<AuthService> logger,
