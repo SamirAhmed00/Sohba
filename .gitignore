@@ -381,3 +381,6 @@ coverage/
 
 # Accidental shell/scratch artifacts
 *-modal-diff.txt
+
+# ASP.NET Core Data Protection keys
+Sohba/App_Data/keys/

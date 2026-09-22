@@ -6,7 +6,9 @@ using Elastic.Transport;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -364,6 +366,10 @@ namespace Sohba
                     options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
                 });
 
+
+                builder.Services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys")))
+                    .SetApplicationName("Sohba");
                 // Allow the antiforgery token to be supplied via the
                 // `X-CSRF-TOKEN` header (read by SohbaApp.post) so JSON AJAX
                 // endpoints without a form body can still satisfy
@@ -445,6 +451,13 @@ namespace Sohba
                     {
                         response.Redirect($"/Home/Error?code={response.StatusCode}");
                     }
+                });
+
+                app.UseForwardedHeaders(new ForwardedHeadersOptions
+                {
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                    KnownNetworks = { },  
+                    KnownProxies = { }
                 });
 
                 app.UseAuthentication();
