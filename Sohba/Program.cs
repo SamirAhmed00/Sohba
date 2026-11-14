@@ -433,7 +433,11 @@ namespace Sohba
                 app.UseStaticFiles();
                 app.UseRouting();
 
-                app.UseRateLimiter();
+                if (!(app.Environment.IsDevelopment() &&
+                        app.Configuration.GetValue<bool>("PerformanceTesting:DisableRateLimiting")))
+                {
+                    app.UseRateLimiter();
+                }
 
                 app.UseStatusCodePages(async statusCodeContext =>
                 {

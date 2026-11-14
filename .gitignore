@@ -384,3 +384,9 @@ coverage/
 
 # ASP.NET Core Data Protection keys
 Sohba/App_Data/keys/
+
+
+# Local / AI Agent files
+/AGENTS.md
+/Sohba/project-files.txt
+/tests/
