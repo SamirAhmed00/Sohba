@@ -3,10 +3,12 @@
  * GSAP entrance + ScrollTrigger reveals, premium CSS aurora background,
  * scroll progress bar, bento 3D tilt, animated counters, adaptive header,
  * mobile menu, slow-gradient logo letter FX (header + footer).
- * Motion is mandatory by design — no reduced-motion guards.
+ * All motion is skipped when the user prefers reduced motion.
  */
 (function () {
     'use strict';
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     /* ---------- 1. Lucide Icons ---------- */
     function initIcons() {
@@ -54,7 +56,7 @@
                 const targetEl = document.querySelector(targetId);
                 if (targetEl) {
                     e.preventDefault();
-                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    targetEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
                 }
             });
         });
@@ -86,6 +88,14 @@
     function initCounters() {
         const counters = document.querySelectorAll('.counter');
         if (!counters.length) return;
+
+        if (reduceMotion) {
+            counters.forEach(el => {
+                el.textContent = (parseInt(el.getAttribute('data-value'), 10) || 0).toLocaleString()
+                    + (el.getAttribute('data-suffix') || '');
+            });
+            return;
+        }
 
         const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
@@ -359,11 +369,14 @@
         initSmoothScroll();
         initScrollProgress();
         initCounters();
-        setHeroInitialStates();
-        initHeroTimeline();
-        initScrollReveals();
-        initBentoTilt();
-        initLogoLetterFX();
+
+        if (!reduceMotion) {
+            setHeroInitialStates();
+            initHeroTimeline();
+            initScrollReveals();
+            initBentoTilt();
+            initLogoLetterFX();
+        }
     }
 
     if (document.readyState === 'loading') {
