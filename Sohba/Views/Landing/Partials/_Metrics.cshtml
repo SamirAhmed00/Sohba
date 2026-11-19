@@ -1,0 +1,28 @@
+@* File: Sohba/Views/Landing/Partials/_Metrics.cshtml — animated product counters *@
+@{
+    var stats = new[]
+    {
+        new { Value = 6,  Suffix = "",  Label = "Ways to react" },
+        new { Value = 24, Suffix = "h", Label = "Stories stay live" },
+        new { Value = 4,  Suffix = "",  Label = "Reply levels per thread" },
+        new { Value = 3,  Suffix = "",  Label = "Sources in one feed" },
+        new { Value = 5,  Suffix = "",  Label = "Things you can search" },
+        new { Value = 4,  Suffix = "",  Label = "Roles in every group" },
+        new { Value = 7,  Suffix = "",  Label = "Real-time notification types" },
+        new { Value = 1,  Suffix = "",  Label = "Home for your social life" }
+    };
+}
+
+<section class="metrics-section" id="metrics">
+    <div class="container">
+        <div class="metrics-grid">
+            @foreach (var stat in stats)
+            {
+                <div class="metric-block" data-anim="fade-up">
+                    <div class="metric-number counter" data-value="@stat.Value" data-suffix="@stat.Suffix">0</div>
+                    <div class="metric-label">@stat.Label</div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

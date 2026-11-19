@@ -353,7 +353,9 @@ a, button {
     background: radial-gradient(60% 50% at 8% 10%, rgba(52, 94, 105, 0.12), transparent 60%), radial-gradient(50% 45% at 95% 90%, rgba(52, 94, 105, 0.08), transparent 65%), linear-gradient(175deg, #e7eef2 0%, #f0f5f7 60%, var(--paper) 100%);
 }
 
-/* بدون mask — الـ particles بتاخد الشاشة كلها */
+/* Aurora background — premium replacement for the Three.js constellation.
+   Layered soft gradient blobs (teal / sage / mint family only), a fading dot
+   grid for structure, and a fine film grain for depth. Pure CSS, GPU-cheap. */
 #hero-canvas-container {
     position: absolute;
     inset: 0;
@@ -362,10 +364,106 @@ a, button {
     overflow: hidden;
 }
 
-#hero-canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
+.aurora {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.aurora-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(72px);
+    will-change: transform;
+}
+
+.aurora .b-one {
+    width: 58vw;
+    height: 58vw;
+    top: -20%;
+    right: -14%;
+    background: radial-gradient(circle at 38% 38%, rgba(121, 185, 169, 0.45), rgba(121, 185, 169, 0) 62%);
+    animation: aurora-drift-a 46s ease-in-out infinite alternate;
+}
+
+.aurora .b-two {
+    width: 50vw;
+    height: 50vw;
+    bottom: -24%;
+    left: -12%;
+    background: radial-gradient(circle at 55% 45%, rgba(52, 94, 105, 0.34), rgba(52, 94, 105, 0) 60%);
+    animation: aurora-drift-b 58s ease-in-out infinite alternate;
+}
+
+.aurora .b-three {
+    width: 32vw;
+    height: 32vw;
+    top: 26%;
+    left: 36%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 65%);
+    animation: aurora-drift-c 38s ease-in-out infinite alternate;
+}
+
+.aurora-dotgrid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(22, 41, 46, 0.10) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(85% 72% at 50% 42%, #000 26%, transparent 76%);
+    mask-image: radial-gradient(85% 72% at 50% 42%, #000 26%, transparent 76%);
+}
+
+.aurora-grain {
+    position: absolute;
+    inset: 0;
+    opacity: 0.32;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size: 240px 240px;
+}
+
+@keyframes aurora-drift-a {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-7%, 9%, 0) scale(1.14); }
+}
+
+@keyframes aurora-drift-b {
+    from { transform: translate3d(0, 0, 0) scale(1.08); }
+    to { transform: translate3d(8%, -7%, 0) scale(0.96); }
+}
+
+@keyframes aurora-drift-c {
+    from { transform: translate3d(-4%, 3%, 0); }
+    to { transform: translate3d(5%, -5%, 0); }
+}
+
+/* Dark aurora variant (credits section) — brighter sage on deep teal */
+.aurora.on-dark .b-one {
+    width: 46vw;
+    height: 46vw;
+    top: -12%;
+    right: -8%;
+    background: radial-gradient(circle at 40% 40%, rgba(121, 185, 169, 0.30), rgba(121, 185, 169, 0) 62%);
+}
+
+.aurora.on-dark .b-two {
+    width: 44vw;
+    height: 44vw;
+    bottom: -18%;
+    left: -10%;
+    background: radial-gradient(circle at 50% 50%, rgba(74, 130, 145, 0.40), rgba(74, 130, 145, 0) 62%);
+}
+
+.aurora.on-dark .b-three {
+    width: 26vw;
+    height: 26vw;
+    top: 18%;
+    left: 40%;
+    background: radial-gradient(circle at 50% 50%, rgba(231, 238, 241, 0.16), rgba(231, 238, 241, 0) 65%);
+}
+
+.aurora.on-dark .aurora-grain {
+    opacity: 0.22;
 }
 
 .hero-inner {
@@ -1716,7 +1814,7 @@ a, button {
     position: absolute;
     inset: 0;
     z-index: 0;
-    opacity: 0.75;
+    overflow: hidden;
     pointer-events: none;
 }
 
@@ -2131,3 +2229,12 @@ a, button {
         right: 4%;
     }
 }
+
+/* ============================================================
+   Refactor: hero proof-avatar colors moved out of inline styles.
+   Colors only — no size or layout values added or changed here.
+   ============================================================ */
+.hero-proof .stack .avatar-a { background: #2fae8f; }
+.hero-proof .stack .avatar-b { background: #0f7a5f; }
+.hero-proof .stack .avatar-c { background: #12795f; }
+.hero-proof .stack .avatar-d { background: #0c5f4b; }

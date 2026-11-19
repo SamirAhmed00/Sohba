@@ -1,0 +1,122 @@
+@* File: Sohba/Views/Landing/Partials/_Hero.cshtml — hero with premium aurora background + feed mockup *@
+@using Sohba.ViewModels.Landing
+@model LandingIndexViewModel
+
+<section class="hero-section" id="hero">
+    <div id="hero-canvas-container" aria-hidden="true">
+        <div class="aurora">
+            <span class="aurora-blob b-one"></span>
+            <span class="aurora-blob b-two"></span>
+            <span class="aurora-blob b-three"></span>
+            <span class="aurora-dotgrid"></span>
+            <span class="aurora-grain"></span>
+        </div>
+    </div>
+
+    <div class="container hero-inner">
+        <div class="hero-grid">
+
+            <div class="hero-copy">
+                <div class="hero-pill">
+                    <span class="pill-dot"><span class="ping"></span><span class="dot"></span></span>
+                    <span>New Features Available</span>
+                </div>
+
+                <h1 class="hero-title">
+                    <span class="line">Connect, Share</span>
+                    <span class="line"><em>Build Your Community</em></span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    SOHBA is your gateway to a unique social experience, where technology meets
+                    real human connections in a safe and organized environment.
+                </p>
+
+                <div class="hero-cta-group">
+                    @if (Model.IsAuthenticated)
+                    {
+                        <a asp-controller="Home" asp-action="Index" class="btn-hero-primary">
+                            <span>Go to your feed</span>
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary">
+                            <span>Get Started Free</span>
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    }
+                    <a href="#showcase" class="btn-hero-secondary">
+                        <i data-lucide="play"></i>
+                        <span>Watch Demo</span>
+                    </a>
+                </div>
+
+                <div class="hero-proof">
+                    <div class="stack">
+                        <span class="avatar-a">A</span>
+                        <span class="avatar-b">B</span>
+                        <span class="avatar-c">C</span>
+                        <span class="avatar-d">D</span>
+                    </div>
+                    <span><strong>1,200+</strong> users joined this month</span>
+                </div>
+            </div>
+
+            @* Decorative fake-UI mockup: hidden from assistive technology *@
+            <div class="hero-visual">
+                <div class="hero-mockup-wrapper" aria-hidden="true">
+
+                    <div class="mockup-card">
+                        <div class="browser-bar">
+                            <div class="browser-dots"><span></span><span></span><span></span></div>
+                            <div class="browser-url">sohba.app/feed</div>
+                        </div>
+                        <div class="mockup-body-wrap">
+                            <div class="mockup-header">
+                                <div class="mockup-avatar">SA</div>
+                                <div class="mockup-meta">
+                                    <strong>Samir Ahmed</strong>
+                                    <span>Just now</span>
+                                </div>
+                            </div>
+                            <div class="mockup-body">
+                                <p>Welcome to SOHBA! Excited to connect with everyone here.</p>
+                            </div>
+                            <div class="mockup-reactions">
+                                <span class="reaction-chip">❤️ 24 reactions</span>
+                                <span>8 comments</span>
+                            </div>
+                        </div>
+                        <div class="story-row">
+                            <div class="story-item">
+                                <div class="story-avatar add">+</div>
+                                <span class="story-label">Add Story</span>
+                            </div>
+                            <div class="story-item">
+                                <div class="story-avatar">U</div>
+                                <span class="story-label">User 1</span>
+                            </div>
+                            <div class="story-item">
+                                <div class="story-avatar">U</div>
+                                <span class="story-label">User 2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="floating-badge top-badge animate-float">
+                        <div class="badge-orb mint"><i data-lucide="check"></i></div>
+                        <strong>New Friend Request</strong>
+                    </div>
+
+                    <div class="floating-badge bottom-badge animate-float-delayed">
+                        <div class="badge-orb teal"><i data-lucide="star"></i></div>
+                        <strong>Trending Now</strong>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

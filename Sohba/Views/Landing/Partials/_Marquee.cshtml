@@ -1,0 +1,27 @@
+@* File: Sohba/Views/Landing/Partials/_Marquee.cshtml — decorative feature ticker (CSS loops it) *@
+@{
+    string[] features =
+    {
+        "Real-time notifications",
+        "24-hour stories",
+        "Groups with real roles",
+        "Creator & business pages",
+        "Six ways to react",
+        "Threaded conversations",
+        "Two-way blocking",
+        "Saved collections",
+        "One search for everything"
+    };
+}
+
+<div class="marquee-section" aria-hidden="true">
+    <div class="marquee-track">
+        @for (int copy = 0; copy < 3; copy++)
+        {
+            foreach (string feature in features)
+            {
+                <span>@feature</span>
+            }
+        }
+    </div>
+</div>

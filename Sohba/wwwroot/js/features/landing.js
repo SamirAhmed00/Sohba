@@ -1,6 +1,6 @@
 /**
- * Sohba Landing v3 — Interactive Controller
- * GSAP entrance + ScrollTrigger reveals, full-screen Three.js particle scenes,
+ * Sohba Landing v4 — Interactive Controller
+ * GSAP entrance + ScrollTrigger reveals, premium CSS aurora background,
  * scroll progress bar, bento 3D tilt, animated counters, adaptive header,
  * mobile menu, slow-gradient logo letter FX (header + footer).
  * Motion is mandatory by design — no reduced-motion guards.
@@ -44,6 +44,8 @@
     }
 
     /* ---------- 4. Smooth Anchor Scrolling ---------- */
+    /* Kept alongside the CSS `scroll-behavior: smooth` so anchor clicks stay
+       smooth even on older browsers without CSS support. */
     function initSmoothScroll() {
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -58,7 +60,7 @@
         });
     }
 
-    /* ---------- 4.5 Scroll Progress Bar ---------- */
+    /* ---------- 5. Scroll Progress Bar ---------- */
     function initScrollProgress() {
         var bar = document.querySelector('.scroll-progress');
         if (!bar) return;
@@ -80,7 +82,7 @@
         update();
     }
 
-    /* ---------- 5. Animated Counters ---------- */
+    /* ---------- 6. Animated Counters ---------- */
     function initCounters() {
         const counters = document.querySelectorAll('.counter');
         if (!counters.length) return;
@@ -111,7 +113,7 @@
         requestAnimationFrame(tick);
     }
 
-    /* ---------- 6. GSAP Hero Entrance ---------- */
+    /* ---------- 7. GSAP Hero Entrance ---------- */
     function setHeroInitialStates() {
         if (typeof gsap === 'undefined') return;
         gsap.set('.hero-title .line', { yPercent: 110 });
@@ -136,7 +138,7 @@
             .to('.bottom-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.35);
     }
 
-    /* ---------- 7. GSAP ScrollTrigger Reveals ---------- */
+    /* ---------- 8. GSAP ScrollTrigger Reveals ---------- */
     function initScrollReveals() {
         if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
         gsap.registerPlugin(ScrollTrigger);
@@ -144,43 +146,38 @@
         const outsideHero = sel => Array.from(document.querySelectorAll(sel))
             .filter(el => !el.closest('#hero'));
 
-        outsideHero('[data-anim="fade-up"]').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, y: 40 }, {
-                opacity: 1, y: 0, duration: 1.1, ease: 'power3.out',
-                scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+        /* Directional fade reveals share one template: fade-up | fade-right | fade-left */
+        const fadePresets = {
+            'fade-up': { from: { y: 40 }, start: 'top 85%', duration: 1.1 },
+            'fade-right': { from: { x: -50 }, start: 'top 82%', duration: 1.2 },
+            'fade-left': { from: { x: 50 }, start: 'top 82%', duration: 1.2 }
+        };
+
+        Object.keys(fadePresets).forEach(function (anim) {
+            const preset = fadePresets[anim];
+            outsideHero('[data-anim="' + anim + '"]').forEach(el => {
+                gsap.fromTo(el, Object.assign({ opacity: 0 }, preset.from), {
+                    opacity: 1, x: 0, y: 0, duration: preset.duration, ease: 'power3.out',
+                    scrollTrigger: { trigger: el, start: preset.start, once: true }
+                });
             });
         });
 
-        outsideHero('[data-anim="fade-right"]').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, x: -50 }, {
-                opacity: 1, x: 0, duration: 1.2, ease: 'power3.out',
-                scrollTrigger: { trigger: el, start: 'top 82%', once: true }
+        /* Batch reveals for card grids; same shape, different rhythm per group */
+        const batchPresets = [
+            { selector: '.bento-card[data-anim="reveal"]', y: 46, scale: 0.97, start: 'top 88%', duration: 1, ease: 'power3.out', stagger: 0.12 },
+            { selector: '.stack-chip[data-anim="reveal"]', y: 26, scale: 1, start: 'top 92%', duration: 0.8, ease: 'power2.out', stagger: 0.07 },
+            { selector: '.ship-card[data-anim="reveal"]', y: 40, scale: 1, start: 'top 88%', duration: 1, ease: 'power3.out', stagger: 0.14 }
+        ];
+
+        batchPresets.forEach(function (preset) {
+            gsap.set(preset.selector, { opacity: 0, y: preset.y, scale: preset.scale });
+            ScrollTrigger.batch(preset.selector, {
+                start: preset.start, once: true,
+                onEnter: batch => gsap.to(batch, {
+                    opacity: 1, y: 0, scale: 1, duration: preset.duration, ease: preset.ease, stagger: preset.stagger
+                })
             });
-        });
-
-        outsideHero('[data-anim="fade-left"]').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, x: 50 }, {
-                opacity: 1, x: 0, duration: 1.2, ease: 'power3.out',
-                scrollTrigger: { trigger: el, start: 'top 82%', once: true }
-            });
-        });
-
-        gsap.set('.bento-card[data-anim="reveal"]', { opacity: 0, y: 46, scale: 0.97 });
-        ScrollTrigger.batch('.bento-card[data-anim="reveal"]', {
-            start: 'top 88%', once: true,
-            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power3.out', stagger: 0.12 })
-        });
-
-        gsap.set('.stack-chip[data-anim="reveal"]', { opacity: 0, y: 26 });
-        ScrollTrigger.batch('.stack-chip[data-anim="reveal"]', {
-            start: 'top 92%', once: true,
-            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out', stagger: 0.07 })
-        });
-
-        gsap.set('.ship-card[data-anim="reveal"]', { opacity: 0, y: 40 });
-        ScrollTrigger.batch('.ship-card[data-anim="reveal"]', {
-            start: 'top 88%', once: true,
-            onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', stagger: 0.14 })
         });
 
         outsideHero('.panel-card').forEach(el => {
@@ -238,7 +235,7 @@
         });
     }
 
-    /* ---------- 7.5 Bento 3D Tilt (mouse-follow) ---------- */
+    /* ---------- 9. Bento 3D Tilt (mouse-follow) ---------- */
     function initBentoTilt() {
         if (typeof gsap === 'undefined') return;
         if (window.matchMedia('(hover: none)').matches) return;
@@ -268,158 +265,13 @@
         });
     }
 
-    /* ---------- 8. Three.js Particle Constellation (full-area) ---------- */
-    function createParticleScene(opts) {
-        const canvas = document.getElementById(opts.canvasId);
-        const container = document.getElementById(opts.containerId);
-        if (!canvas || !container || typeof THREE === 'undefined') return;
-
-        let scene, camera, renderer, particles, particlePositions, linesGeometry, lineMesh;
-        let animationFrameId = null;
-        let isRunning = false;
-
-        const particleCount = opts.particleCount || 45;
-        const maxDistance = opts.maxDistance || 3.2;
-        const color = opts.color;
-        const bounds = opts.bounds || { x: 7, y: 5, z: 3 };
-        const particlesData = [];
-
-        function init() {
-            const width = container.clientWidth || window.innerWidth;
-            const height = container.clientHeight || window.innerHeight;
-
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-            camera.position.z = 10;
-
-            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-            renderer.setSize(width, height);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-
-            const pGeometry = new THREE.BufferGeometry();
-            particlePositions = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount; i++) {
-                particlePositions[i * 3] = (Math.random() - 0.5) * bounds.x * 2;
-                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * bounds.y * 2;
-                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * bounds.z * 2;
-                particlesData.push({
-                    velocity: new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.008,
-                        (Math.random() - 0.5) * 0.008,
-                        (Math.random() - 0.5) * 0.004
-                    )
-                });
-            }
-            pGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
-            particles = new THREE.Points(pGeometry, new THREE.PointsMaterial({
-                color: new THREE.Color(color[0], color[1], color[2]),
-                size: 0.15, transparent: true, opacity: 0.7
-            }));
-            scene.add(particles);
-
-            linesGeometry = new THREE.BufferGeometry();
-            const maxConnections = particleCount * particleCount;
-            linesGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxConnections * 3), 3).setUsage(THREE.DynamicDrawUsage));
-            linesGeometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(maxConnections * 3), 3).setUsage(THREE.DynamicDrawUsage));
-
-            lineMesh = new THREE.LineSegments(linesGeometry, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.3 }));
-            scene.add(lineMesh);
-
-            start();
-        }
-
-        function animate() {
-            if (!isRunning) return;
-            animationFrameId = requestAnimationFrame(animate);
-
-            let vertexpos = 0, colorpos = 0, numConnected = 0;
-            const positions = particles.geometry.attributes.position.array;
-            const linePositions = linesGeometry.attributes.position.array;
-            const lineColors = linesGeometry.attributes.color.array;
-
-            for (let i = 0; i < particleCount; i++) {
-                const data = particlesData[i];
-                positions[i * 3] += data.velocity.x;
-                positions[i * 3 + 1] += data.velocity.y;
-                positions[i * 3 + 2] += data.velocity.z;
-
-                if (positions[i * 3] < -bounds.x || positions[i * 3] > bounds.x) data.velocity.x = -data.velocity.x;
-                if (positions[i * 3 + 1] < -bounds.y || positions[i * 3 + 1] > bounds.y) data.velocity.y = -data.velocity.y;
-                if (positions[i * 3 + 2] < -bounds.z || positions[i * 3 + 2] > bounds.z) data.velocity.z = -data.velocity.z;
-
-                for (let j = i + 1; j < particleCount; j++) {
-                    const dx = positions[i * 3] - positions[j * 3];
-                    const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
-                    const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
-                    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-                    if (dist < maxDistance) {
-                        const alpha = 1.0 - dist / maxDistance;
-                        linePositions[vertexpos++] = positions[i * 3];
-                        linePositions[vertexpos++] = positions[i * 3 + 1];
-                        linePositions[vertexpos++] = positions[i * 3 + 2];
-                        linePositions[vertexpos++] = positions[j * 3];
-                        linePositions[vertexpos++] = positions[j * 3 + 1];
-                        linePositions[vertexpos++] = positions[j * 3 + 2];
-                        lineColors[colorpos++] = color[0] * alpha;
-                        lineColors[colorpos++] = color[1] * alpha;
-                        lineColors[colorpos++] = color[2] * alpha;
-                        lineColors[colorpos++] = color[0] * alpha;
-                        lineColors[colorpos++] = color[1] * alpha;
-                        lineColors[colorpos++] = color[2] * alpha;
-                        numConnected++;
-                    }
-                }
-            }
-
-            linesGeometry.setDrawRange(0, numConnected * 2);
-            linesGeometry.attributes.position.needsUpdate = true;
-            linesGeometry.attributes.color.needsUpdate = true;
-            particles.geometry.attributes.position.needsUpdate = true;
-
-            particles.rotation.y += 0.0007;
-            lineMesh.rotation.y += 0.0007;
-
-            renderer.render(scene, camera);
-        }
-
-        function start() { if (!isRunning) { isRunning = true; animate(); } }
-        function stop() { isRunning = false; if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
-
-        let resizeTimer = null;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (!container || !renderer || !camera) return;
-                const width = container.clientWidth || window.innerWidth;
-                const height = container.clientHeight || window.innerHeight;
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height);
-            }, 150);
-        }, { passive: true });
-
-        document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
-
-        if ('IntersectionObserver' in window) {
-            const io = new IntersectionObserver(entries => {
-                entries.forEach(entry => entry.isIntersecting ? start() : stop());
-            }, { threshold: 0.08 });
-            io.observe(container);
-        }
-
-        init();
-    }
-
-    /* ---------- 9. Logo Letter FX — slow gradient + magnify (header + footer, letters only) ---------- */
+    /* ---------- 10. Logo Letter FX — slow gradient + magnify (header + footer, letters only) ---------- */
     function initLogoLetterFX() {
-        var HOT = [52, 94, 105]; 
-        var WHITE = [255, 255, 255]; 
-        var MAX_DIST = 110;          
-        var MAX_SCALE = 0.32;        
-        var LIFT = 5;                
+        var HOT = [52, 94, 105];
+        var WHITE = [255, 255, 255];
+        var MAX_DIST = 110;
+        var MAX_SCALE = 0.32;
+        var LIFT = 5;
 
         function wrapLetters(el) {
             if (el.dataset.fxWrapped === 'true') return;
@@ -458,7 +310,7 @@
                 var dist = Math.abs(clientX - fx.centers[i]);
                 var t = Math.max(0, 1 - dist / MAX_DIST);
                 t = t * t * (3 - 2 * t); // smoothstep
-                
+
                 var k = 1 - t;
                 var r = Math.round(HOT[0] + (WHITE[0] - HOT[0]) * k);
                 var g = Math.round(HOT[1] + (WHITE[1] - HOT[1]) * k);
@@ -512,23 +364,6 @@
         initScrollReveals();
         initBentoTilt();
         initLogoLetterFX();
-
-        createParticleScene({
-            canvasId: 'hero-canvas',
-            containerId: 'hero-canvas-container',
-            particleCount: 80,              
-            maxDistance: 4.0,               
-            color: [52 / 255, 94 / 255, 105 / 255],   
-            bounds: { x: 14, y: 9, z: 4 }    
-        });
-
-        createParticleScene({
-            canvasId: 'credits-canvas',
-            containerId: 'credits-canvas-container',
-            particleCount: 40,
-            maxDistance: 3.6,
-            color: [0.85, 0.96, 0.91]      
-        });
     }
 
     if (document.readyState === 'loading') {

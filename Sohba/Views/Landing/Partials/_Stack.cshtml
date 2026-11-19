@@ -1,0 +1,52 @@
+@* File: Sohba/Views/Landing/Partials/_Stack.cshtml — "Why Sohba" value chips (hand-drawn SVGs kept dependency-free) *@
+@{
+    static string Icon(string inner) =>
+        $"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\">{inner}</svg>";
+
+    var techs = new[]
+    {
+        new { Name = "Privacy first", Role = "By design",
+              Svg = Icon("<path d=\"M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5z\"></path><path d=\"M9.5 12 11 13.5 15 9.5\"></path>") },
+        new { Name = "Chronological", Role = "Time, not trends",
+              Svg = Icon("<circle cx=\"12\" cy=\"12\" r=\"9\"></circle><path d=\"M12 7v5l3 2\"></path>") },
+        new { Name = "Real-time", Role = "Never miss a beat",
+              Svg = Icon("<path d=\"M13 2 4 14h7l-1 8 9-12h-7z\"></path>") },
+        new { Name = "Your circle", Role = "You choose who sees what",
+              Svg = Icon("<rect x=\"5\" y=\"11\" width=\"14\" height=\"9\" rx=\"2\"></rect><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"></path>") },
+        new { Name = "Communities", Role = "Roles that keep order",
+              Svg = Icon("<circle cx=\"9\" cy=\"8\" r=\"3.5\"></circle><path d=\"M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5\"></path><path d=\"M16 4.6a3.5 3.5 0 0 1 0 6.8\"></path><path d=\"M17.5 14.7c1.8.8 3 2.6 3 5.3\"></path>") },
+        new { Name = "Creators", Role = "Pages for your brand",
+              Svg = Icon("<path d=\"M5 21V4\"></path><path d=\"M5 4h12l-2.5 4L17 12H5\"></path>") },
+        new { Name = "Six reactions", Role = "Say how you feel",
+              Svg = Icon("<circle cx=\"12\" cy=\"12\" r=\"9\"></circle><path d=\"M8.5 14a4.5 4.5 0 0 0 7 0\"></path><path d=\"M9 9.5h.01\"></path><path d=\"M15 9.5h.01\"></path>") },
+        new { Name = "Stories", Role = "Here now, gone in 24h",
+              Svg = Icon("<circle cx=\"12\" cy=\"12\" r=\"9\"></circle><circle cx=\"12\" cy=\"12\" r=\"4.5\"></circle>") },
+        new { Name = "Saved collections", Role = "Keep what matters",
+              Svg = Icon("<path d=\"M6 3h12v18l-6-4-6 4z\"></path>") },
+        new { Name = "Deep search", Role = "Posts, people, pages",
+              Svg = Icon("<circle cx=\"11\" cy=\"11\" r=\"7\"></circle><path d=\"m20 20-4-4\"></path>") },
+        new { Name = "Safe spaces", Role = "Fair, fast moderation",
+              Svg = Icon("<circle cx=\"12\" cy=\"12\" r=\"9\"></circle><circle cx=\"12\" cy=\"12\" r=\"3.5\"></circle><path d=\"m5.2 5.2 3.8 3.8\"></path><path d=\"m18.8 5.2-3.8 3.8\"></path><path d=\"m18.8 18.8-3.8-3.8\"></path><path d=\"m5.2 18.8 3.8-3.8\"></path>") },
+        new { Name = "Made with care", Role = "Built by one developer",
+              Svg = Icon("<path d=\"M12 20s-7-4.6-9.3-9A5.2 5.2 0 0 1 12 6.3 5.2 5.2 0 0 1 21.3 11c-2.3 4.4-9.3 9-9.3 9z\"></path>") }
+    };
+}
+
+<section class="stack-section" id="stack">
+    <div class="container">
+        <div class="section-head center" data-anim="fade-up">
+            <span class="eyebrow">Why Sohba</span>
+            <h2>A social platform that puts people first.</h2>
+            <p>No engagement games, no noise — just thoughtful features that respect your time, your privacy, and your community.</p>
+        </div>
+        <div class="stack-grid">
+            @foreach (var tech in techs)
+            {
+                <div class="stack-chip" data-anim="reveal">
+                    <div class="stack-icon">@Html.Raw(tech.Svg)</div>
+                    <span class="name">@tech.Name</span><span class="role">@tech.Role</span>
+                </div>
+            }
+        </div>
+    </div>
+</section>

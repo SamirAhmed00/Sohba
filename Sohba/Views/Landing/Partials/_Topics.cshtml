@@ -1,0 +1,74 @@
+@* File: Sohba/Views/Landing/Partials/_Topics.cshtml — two-column benefit lists *@
+@{
+    const string CheckIcon = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"></path></svg>";
+
+    var columns = new[]
+    {
+        new
+        {
+            CssClass = "foundations", HeadIcon = "heart-handshake",
+            Title = "Connect with confidence",
+            Subtitle = "Everyday sharing, made effortless",
+            Items = new[]
+            {
+                new { Label = "One timeline for everything", Text = "friends, groups, and pages together, in an order you can actually catch up on." },
+                new { Label = "Stories that live 24 hours", Text = "share the moment now; it quietly disappears tomorrow." },
+                new { Label = "Six honest reactions", Text = "more than a like — Love, Haha, Wow, Sad, and Angry too." },
+                new { Label = "Threads up to four levels deep", Text = "real discussions stay readable from the first word to the last." },
+                new { Label = "Groups with real roles", Text = "members, co-admins, admins, and owners, each with clear responsibilities." },
+                new { Label = "Creator & business pages", Text = "grow an audience with tiered roles and a safe ownership handover." },
+                new { Label = "Saved collections", Text = "bookmark anything into folders that fit your life — Favorites, Watch Later, Work." }
+            }
+        },
+        new
+        {
+            CssClass = "advanced", HeadIcon = "shield-check",
+            Title = "Feel safe, every day",
+            Subtitle = "Privacy that works quietly in the background",
+            Items = new[]
+            {
+                new { Label = "Two-way blocking", Text = "block anyone instantly; you both disappear from each other, everywhere." },
+                new { Label = "Privacy-aware search", Text = "results never reveal what someone chose to keep private." },
+                new { Label = "Story audience control", Text = "every view of your story is checked against your choices, every time." },
+                new { Label = "Join request approvals", Text = "groups decide who gets in; nobody stumbles in uninvited." },
+                new { Label = "Fair, fast moderation", Text = "reports reach the right hands and get resolved, dismissed, or removed in one tap." },
+                new { Label = "Accountability built in", Text = "every admin action is on the record, permanently and by design." },
+                new { Label = "Safe media handling", Text = "uploads are scanned and re-encoded before anyone can ever see them." }
+            }
+        }
+    };
+}
+
+<section class="topics-section" id="topics">
+    <div class="container">
+        <div class="section-head center" data-anim="fade-up">
+            <span class="eyebrow">What Sohba does for you</span>
+            <h2>Two ideas guide everything we build.</h2>
+            <p>Stay close to your people — and feel safe while you do it. Every benefit below serves one of the two.</p>
+        </div>
+
+        <div class="topics-grid" data-anim="fade-up">
+            @foreach (var col in columns)
+            {
+                <div class="topics-col">
+                    <div class="topics-col-head @col.CssClass">
+                        <div class="badge"><i data-lucide="@col.HeadIcon"></i></div>
+                        <div>
+                            <h3>@col.Title</h3>
+                            <span>@col.Subtitle</span>
+                        </div>
+                    </div>
+                    <div class="topic-list">
+                        @foreach (var item in col.Items)
+                        {
+                            <div class="topic-item">
+                                <span class="dot">@Html.Raw(CheckIcon)</span>
+                                <div><strong>@item.Label</strong> — @item.Text</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

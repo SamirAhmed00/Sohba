@@ -1,0 +1,108 @@
+@* File: Sohba/Views/Landing/Partials/_DeepDive.cshtml — the three deep-dive sections share one template *@
+@{
+    var sections = new[]
+    {
+        new
+        {
+            Id = "realtime", Reverse = false,
+            Eyebrow = "Real-time everything",
+            Heading = "Never miss a moment.",
+            Intro = "Reactions, comments, and friend requests reach you the second they happen — notifications appear on their own, whether you're scrolling your feed or away from the page.",
+            Items = new[]
+            {
+                new { Icon = "check", Label = "Instant notifications.", Text = "Reactions, comments, friend requests, group invitations, page follows, story likes, and system alerts — delivered the moment they happen, to you and only you." },
+                new { Icon = "check", Label = "Always up to date.", Text = "Live toasts and an unread badge that refresh on their own — no pull-to-refresh, no missed replies." },
+                new { Icon = "check", Label = "Stays connected.", Text = "If your network drops, Sohba quietly reconnects by itself so the conversation keeps going without you thinking about it." }
+            },
+            Rows = new[]
+            {
+                new { Icon = "heart", Label = "Someone reacts", Value = "You know instantly" },
+                new { Icon = "message-circle", Label = "New comment", Value = "Toast + badge" },
+                new { Icon = "user-plus", Label = "Friend request", Value = "Instant alert" },
+                new { Icon = "users", Label = "Group invitation", Value = "Instant alert" },
+                new { Icon = "flag", Label = "New page follower", Value = "Instant alert" },
+                new { Icon = "clock", Label = "Story like", Value = "Real-time" }
+            }
+        },
+        new
+        {
+            Id = "security", Reverse = true,
+            Eyebrow = "Privacy & safety",
+            Heading = "You're in control, always.",
+            Intro = "Sohba is privacy-first by design — your content, your circle, your rules. Safety features work quietly in the background, not as an afterthought.",
+            Items = new[]
+            {
+                new { Icon = "check", Label = "Block anyone, instantly.", Text = "Two-way blocking hides you from each other everywhere on Sohba — separate from platform moderation, and it always works both ways." },
+                new { Icon = "check", Label = "Your stories stay yours.", Text = "Story media is only ever shown to the audience you chose — checked every single time someone views it, not just when you post." },
+                new { Icon = "check", Label = "Safe by default.", Text = "Every upload is scanned and re-encoded before it's stored, so disguised files never reach your feed." },
+                new { Icon = "key-round", Label = "Sessions you can trust.", Text = "Sign-in sessions are protected end to end — if one is ever compromised, Sohba cuts it off immediately and keeps your account safe." }
+            },
+            Rows = new[]
+            {
+                new { Icon = "lock", Label = "Profile visibility", Value = "You decide" },
+                new { Icon = "rss", Label = "Your feed", Value = "Chronological" },
+                new { Icon = "image", Label = "Story audience", Value = "Your circle" },
+                new { Icon = "user-plus", Label = "Join requests", Value = "You approve" },
+                new { Icon = "search", Label = "Blocked accounts", Value = "Hidden instantly" },
+                new { Icon = "shield", Label = "Your content", Value = "Your rules" }
+            }
+        },
+        new
+        {
+            Id = "admin", Reverse = false,
+            Eyebrow = "Community health",
+            Heading = "Spaces that stay welcoming.",
+            Intro = "Behind every group and page are tools that keep conversations friendly — moderation that's fair, fast, and always accountable.",
+            Items = new[]
+            {
+                new { Icon = "check", Label = "See everything at a glance.", Text = "Growth, posts, groups, and reports — a live dashboard keeps every admin on top of their community." },
+                new { Icon = "check", Label = "Reports handled fairly.", Text = "Spam, harassment, or anything inappropriate reaches the right hands — resolve, dismiss, or remove in one place, in one tap." },
+                new { Icon = "check", Label = "Accountable moderation.", Text = "Every admin action is recorded permanently, and roles are structured so no one can ever act above their level." }
+            },
+            Rows = new[]
+            {
+                new { Icon = "bar-chart-3", Label = "Your community", Value = "Live overview" },
+                new { Icon = "flag", Label = "Reports", Value = "Handled fast" },
+                new { Icon = "eye-off", Label = "Problem posts", Value = "Hidden, not erased" },
+                new { Icon = "user-x", Label = "Problem members", Value = "Blocked, safely" },
+                new { Icon = "file-clock", Label = "Every action", Value = "On the record" }
+            }
+        }
+    };
+}
+
+@foreach (var s in sections)
+{
+    <section class="deepdive-section" id="@s.Id">
+        <div class="container">
+            <div class="deepdive-row@(s.Reverse ? " reverse" : "")">
+                <div class="deepdive-copy" data-anim="@(s.Reverse ? "fade-left" : "fade-right")">
+                    <span class="eyebrow">@s.Eyebrow</span>
+                    <h2>@s.Heading</h2>
+                    <p>@s.Intro</p>
+                    <ul class="deepdive-list">
+                        @foreach (var item in s.Items)
+                        {
+                            <li>
+                                <span class="check"><i data-lucide="@item.Icon"></i></span>
+                                <div><strong>@item.Label</strong> @item.Text</div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="deepdive-visual" data-anim="@(s.Reverse ? "fade-right" : "fade-left")">
+                    <div class="panel-card">
+                        <div class="panel-head"><span></span><span></span><span></span></div>
+                        @foreach (var row in s.Rows)
+                        {
+                            <div class="panel-row">
+                                <span class="label"><i data-lucide="@row.Icon"></i>@row.Label</span>
+                                <span class="value">@row.Value</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
