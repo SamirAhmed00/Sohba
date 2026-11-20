@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Sohba.ViewModels.Landing;
 using System.Security.Claims;
 
 namespace Sohba.Controllers
@@ -10,21 +11,15 @@ namespace Sohba.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            if (User.Identity?.IsAuthenticated == true)
+            var model = new LandingIndexViewModel
             {
-                var userName = User.FindFirst(ClaimTypes.Name)?.Value ??
-                               User.Identity.Name ??
-                               "User";
+                IsAuthenticated = User.Identity?.IsAuthenticated == true,
+                UserName = User.FindFirst(ClaimTypes.Name)?.Value
+                           ?? User.Identity?.Name
+                           ?? "User"
+            };
 
-                ViewBag.IsAuthenticated = true;
-                ViewBag.UserName = userName;
-            }
-            else
-            {
-                ViewBag.IsAuthenticated = false;
-            }
-
-            return View();
+            return View(model);
         }
     }
 }

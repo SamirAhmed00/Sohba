@@ -1,0 +1,198 @@
+@* File: Sohba/Views/Landing/Partials/_Hero.cshtml — hero with social-network constellation background + feed mockup *@
+@using Sohba.ViewModels.Landing
+@model LandingIndexViewModel
+
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+@{
+    var nodes = new[]
+    {
+        new { X = 4,  Y = 14, S = 36, O = 0.60, Ini = "NA", Flag = "" },
+        new { X = 17, Y = 7,  S = 28, O = 0.40, Ini = "MK", Flag = "" },
+        new { X = 33, Y = 16, S = 26, O = 0.35, Ini = "LY", Flag = "float" },
+        new { X = 47, Y = 9,  S = 40, O = 0.70, Ini = "OM", Flag = "ping" },
+        new { X = 61, Y = 5,  S = 30, O = 0.50, Ini = "RS", Flag = "" },
+        new { X = 74, Y = 13, S = 46, O = 0.90, Ini = "JD", Flag = "float" },
+        new { X = 88, Y = 8,  S = 34, O = 0.60, Ini = "SA", Flag = "" },
+        new { X = 96, Y = 30, S = 52, O = 1.00, Ini = "AH", Flag = "ping" },
+        new { X = 3,  Y = 50, S = 30, O = 0.50, Ini = "HN", Flag = "" },
+        new { X = 10, Y = 73, S = 48, O = 0.90, Ini = "YM", Flag = "float" },
+        new { X = 22, Y = 91, S = 34, O = 0.60, Ini = "KA", Flag = "" },
+        new { X = 38, Y = 85, S = 28, O = 0.35, Ini = "DL", Flag = "" },
+        new { X = 54, Y = 94, S = 40, O = 0.70, Ini = "TF", Flag = "float" },
+        new { X = 70, Y = 88, S = 32, O = 0.50, Ini = "BN", Flag = "" },
+        new { X = 86, Y = 92, S = 50, O = 0.90, Ini = "ZE", Flag = "ping" },
+        new { X = 95, Y = 66, S = 34, O = 0.60, Ini = "FR", Flag = "float" },
+        new { X = 30, Y = 46, S = 24, O = 0.30, Ini = "IB", Flag = "" }
+    };
+    string[][] palette =
+    {
+        new[] { "#79b9a9", "#4a8291" }, new[] { "#d9a879", "#b8855a" }, new[] { "#4a8291", "#264a54" },
+        new[] { "#9ac9bd", "#5d9a8c" }, new[] { "#e2a6a0", "#b8555f" }, new[] { "#345e69", "#1f414b" }
+    };
+
+    // connect every node to its 2 nearest neighbours -> one static SVG, painted once
+    var pairs = new HashSet<(int, int)>();
+    for (int i = 0; i < nodes.Length; i++)
+    {
+        var near = Enumerable.Range(0, nodes.Length).Where(j => j != i)
+            .OrderBy(j => Math.Pow(nodes[i].X - nodes[j].X, 2) + Math.Pow(nodes[i].Y - nodes[j].Y, 2)).Take(2);
+        foreach (var j in near) pairs.Add(i < j ? (i, j) : (j, i));
+    }
+}
+
+<section class="hero-section has-deco" id="hero">
+    <div id="hero-canvas-container" aria-hidden="true">
+        <div class="net">
+            <div class="net-inner">
+                <span class="net-wash"></span>
+                <span class="net-dots"></span>
+                <svg class="net-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    @foreach (var (p, q) in pairs)
+                    {
+                        <line x1="@nodes[p].X" y1="@nodes[p].Y" x2="@nodes[q].X" y2="@nodes[q].Y"></line>
+                    }
+                </svg>
+
+                @for (int i = 0; i < nodes.Length; i++)
+                {
+                    var n = nodes[i];
+                    var g = palette[i % palette.Length];
+                    var op = n.O.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    <span class="node@(n.Flag.Length > 0 ? " " + n.Flag : "")@(n.S < 34 ? " hide-sm" : "")"
+                          style="--x:@n.X;--y:@n.Y;--s:@(n.S)px;--o:@op;--c1:@g[0];--c2:@g[1];--dl:@(i % 5)s">
+                        @n.Ini
+                        @if (n.S >= 40)
+                        {
+                            <img src="~/images/landing/avatar-@((i % 6) + 1).webp" alt="" decoding="async" onerror="this.remove()" />
+                        }
+                    </span>
+                }
+
+                <span class="net-chip" style="--x:46;--y:16;--dl:0s"><i data-lucide="flame"></i>#Trending</span>
+                <span class="net-chip" style="--x:83;--y:19;--dl:1.2s"><i data-lucide="heart"></i>128 reactions</span>
+                <span class="net-chip" style="--x:66;--y:93;--dl:.6s"><i data-lucide="camera"></i>New story</span>
+                <span class="net-chip" style="--x:24;--y:78;--dl:1.8s"><i data-lucide="at-sign"></i>You were mentioned</span>
+            </div>
+        </div>
+
+        @Deco("3d-heart.webp", "heart", "left:1.5%;top:60%;--d:132px", "0.55", "-12")
+        @Deco("3d-chat.webp", "message-circle", "right:1%;top:58%;--d:150px", "0.75", "10")
+        @Deco("3d-bell.webp", "bell", "left:1.5%;top:11%;--d:96px", "0.4", "14")
+        @Deco("3d-camera.webp", "camera", "right:30%;bottom:1%;--d:108px", "0.3", "-8")
+    </div>
+
+    <div class="container hero-inner">
+        <div class="hero-grid">
+
+            <div class="hero-copy">
+                <div class="hero-pill">
+                    <span class="pill-dot"><span class="ping"></span><span class="dot"></span></span>
+                    <span>New Features Available</span>
+                </div>
+
+                <h1 class="hero-title">
+                    <span class="line">Connect, Share</span>
+                    <span class="line"><em>Build Your Community</em></span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    SOHBA is your gateway to a unique social experience, where technology meets
+                    real human connections in a safe and organized environment.
+                </p>
+
+                <div class="hero-cta-group">
+                    @if (Model.IsAuthenticated)
+                    {
+                        <a asp-controller="Home" asp-action="Index" class="btn-hero-primary">
+                            <span>Go to your feed</span>
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Auth" asp-action="Register" class="btn-hero-primary">
+                            <span>Get Started Free</span>
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    }
+                    <a href="#showcase" class="btn-hero-secondary">
+                        <i data-lucide="play"></i>
+                        <span>Watch Demo</span>
+                    </a>
+                </div>
+
+                <div class="hero-proof">
+                    <div class="stack">
+                        <span class="avatar-a">A</span>
+                        <span class="avatar-b">B</span>
+                        <span class="avatar-c">C</span>
+                        <span class="avatar-d">D</span>
+                    </div>
+                    <span><strong>1,200+</strong> users joined this month</span>
+                </div>
+            </div>
+
+            @* Decorative fake-UI mockup: hidden from assistive technology *@
+            <div class="hero-visual">
+                <div class="hero-mockup-wrapper" aria-hidden="true">
+
+                    <div class="mockup-card">
+                        <div class="browser-bar">
+                            <div class="browser-dots"><span></span><span></span><span></span></div>
+                            <div class="browser-url">sohba.app/feed</div>
+                        </div>
+                        <div class="mockup-body-wrap">
+                            <div class="mockup-header">
+                                <div class="mockup-avatar">SA</div>
+                                <div class="mockup-meta">
+                                    <strong>Samir Ahmed</strong>
+                                    <span>Just now</span>
+                                </div>
+                            </div>
+                            <div class="mockup-body">
+                                <p>Welcome to SOHBA! Excited to connect with everyone here.</p>
+                            </div>
+                            <div class="mockup-reactions">
+                                <span class="reaction-chip">❤️ 24 reactions</span>
+                                <span>8 comments</span>
+                            </div>
+                        </div>
+                        <div class="story-row">
+                            <div class="story-item">
+                                <div class="story-avatar add">+</div>
+                                <span class="story-label">Add Story</span>
+                            </div>
+                            <div class="story-item">
+                                <div class="story-avatar">U</div>
+                                <span class="story-label">User 1</span>
+                            </div>
+                            <div class="story-item">
+                                <div class="story-avatar">U</div>
+                                <span class="story-label">User 2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="floating-badge top-badge animate-float">
+                        <div class="badge-orb mint"><i data-lucide="check"></i></div>
+                        <strong>New Friend Request</strong>
+                    </div>
+
+                    <div class="floating-badge bottom-badge animate-float-delayed">
+                        <div class="badge-orb teal"><i data-lucide="star"></i></div>
+                        <strong>Trending Now</strong>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

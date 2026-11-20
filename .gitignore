@@ -390,3 +390,6 @@ Sohba/App_Data/keys/
 /AGENTS.md
 /Sohba/project-files.txt
 /tests/
+/tools/ui-qa/node_modules/
+/tools/ui-qa/shots/*
+!/tools/ui-qa/shots/baseline/

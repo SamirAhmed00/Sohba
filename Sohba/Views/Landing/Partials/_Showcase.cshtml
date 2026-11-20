@@ -1,0 +1,64 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
+@* File: Sohba/Views/Landing/Partials/_Showcase.cshtml — bento feature grid *@
+@{
+    var cards = new[]
+    {
+        new { CssClass = "dark span-2", Icon = "layout-list", Tag = "Core feed",
+              Title = "Your whole world in one feed",
+              Text = "Posts from friends, groups, and the pages you follow come together in a single timeline — always in order, easy to catch up on, and never rearranged to keep you scrolling." },
+        new { CssClass = "", Icon = "smile", Tag = "Engagement",
+              Title = "Six ways to react",
+              Text = "Like, Love, Haha, Wow, Sad, Angry — say exactly how you feel with a single tap, one reaction per person." },
+        new { CssClass = "", Icon = "message-square", Tag = "Conversations",
+              Title = "Conversations that flow",
+              Text = "Replies nest naturally up to four levels deep, so real discussions stay easy to follow — no more lost context." },
+        new { CssClass = "span-row-2", Icon = "clock", Tag = "Stories",
+              Title = "Moments that stay yours",
+              Text = "Share photo, video, and text stories that quietly disappear after 24 hours. Your media is never public — every view is checked against your privacy settings first." },
+        new { CssClass = "", Icon = "users", Tag = "Groups",
+              Title = "Groups that run themselves",
+              Text = "Give trusted members Co-Admin and Admin roles, review who joins, and let healthy communities manage their own space." },
+        new { CssClass = "", Icon = "flag", Tag = "Pages",
+              Title = "Grow your brand or business",
+              Text = "Creator and business pages with tiered roles up to Page Owner — and a safe handover when it's time to pass the keys." },
+        new { CssClass = "dark span-2", Icon = "bookmark", Tag = "Saved",
+              Title = "Keep what matters, organized",
+              Text = "Save any post into Favorites, Watch Later, Work, or folders you create — everything tagged and ready the moment you need it." },
+        new { CssClass = "span-2", Icon = "search", Tag = "Discovery",
+              Title = "Find anyone, anything",
+              Text = "One search across posts, people, groups, pages, and hashtags — with results that always respect what you've chosen to keep private." }
+    };
+}
+
+<section class="showcase-section has-deco" id="showcase">
+    @Deco("3d-bookmark.webp", "bookmark", "left:-1%;top:14%;--d:120px", "0.5", "-10")
+    @Deco("3d-hashtag.webp", "hash", "right:-1%;bottom:10%;--d:140px", "0.7", "12")
+    <div class="container">
+        <div class="section-head" data-anim="fade-up">
+            <span class="eyebrow">The platform</span>
+            <h2>A social experience built around the way people connect.</h2>
+            <p>Everything you need to share your day, grow your community, and stay close to the people who matter.</p>
+        </div>
+
+        <div class="bento-grid">
+            @foreach (var card in cards)
+            {
+                <div class="bento-card@(card.CssClass.Length > 0 ? " " + card.CssClass : "")" data-anim="reveal">
+                    <div class="bento-icon"><i data-lucide="@card.Icon"></i></div>
+                    <span class="bento-tag">@card.Tag</span>
+                    <h3>@card.Title</h3>
+                    <p>@card.Text</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
