@@ -1,5 +1,5 @@
 /* ============================================================
-   SOHBA LANDING v3 — Reference Theme
+   SOHBA LANDING v4 — Social Network Theme
    Teal #345e69 · Deep #1f414b · Mint #e7eef1 · Inter only
    Motion: mandatory · fast hovers · slow logo gradient FX
    ============================================================ */
@@ -66,7 +66,7 @@ a, button {
 .landing-wrapper {
     position: relative;
     width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip; /* clip (not hidden) so position:sticky keeps working */
 }
 
     .landing-wrapper section[id] {
@@ -134,10 +134,6 @@ a, button {
             margin-right: auto;
         }
 
-[data-anim] {
-    will-change: transform, opacity;
-}
-
 /* ============ HEADER ============ */
 .glass-header {
     position: fixed;
@@ -145,9 +141,7 @@ a, button {
     left: 0;
     right: 0;
     height: var(--header-height);
-    background: rgba(244, 248, 246, 0.8);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: rgba(244, 248, 246, 0.92);
     border-bottom: 1px solid transparent;
     z-index: 100;
     transition: background 0.3s var(--ease-snap), border-color 0.3s var(--ease-snap), box-shadow 0.3s var(--ease-snap);
@@ -353,7 +347,15 @@ a, button {
     background: radial-gradient(60% 50% at 8% 10%, rgba(52, 94, 105, 0.12), transparent 60%), radial-gradient(50% 45% at 95% 90%, rgba(52, 94, 105, 0.08), transparent 65%), linear-gradient(175deg, #e7eef2 0%, #f0f5f7 60%, var(--paper) 100%);
 }
 
-/* بدون mask — الـ particles بتاخد الشاشة كلها */
+/* ------------------------------------------------------------
+   SOCIAL NETWORK BACKGROUND (replaces Aura / Glow)
+   A constellation of avatars + connection lines + floating chips.
+   Performance rules: no filter, no blend-mode, no WebGL, no canvas.
+   - lines  = ONE static SVG (painted once)
+   - washes = static radial-gradients (painted once)
+   - motion = transform/opacity only (compositor), on ~10 elements
+   - animations auto-pause offscreen (.is-paused, toggled from JS)
+   ------------------------------------------------------------ */
 #hero-canvas-container {
     position: absolute;
     inset: 0;
@@ -362,10 +364,156 @@ a, button {
     overflow: hidden;
 }
 
-#hero-canvas {
+.net {
+    position: absolute;
+    inset: -5% -2%;
+}
+
+.net-inner {
+    position: absolute;
+    inset: 0;
+}
+
+.net-wash {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(38% 46% at 88% 12%, rgba(121, 185, 169, 0.28), transparent 70%),
+        radial-gradient(40% 46% at 6% 92%, rgba(52, 94, 105, 0.18), transparent 70%),
+        radial-gradient(26% 30% at 52% 46%, rgba(255, 255, 255, 0.75), transparent 72%);
+}
+
+.net-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(22, 41, 46, 0.09) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(85% 72% at 50% 42%, #000 24%, transparent 76%);
+    mask-image: radial-gradient(85% 72% at 50% 42%, #000 24%, transparent 76%);
+}
+
+.net-lines {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    display: block;
+}
+
+    .net-lines line {
+        stroke: rgba(52, 94, 105, 0.2);
+        stroke-width: 1;
+        stroke-dasharray: 2 5;
+        vector-effect: non-scaling-stroke;
+    }
+
+.node {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top: calc(var(--y) * 1%);
+    width: var(--s);
+    height: var(--s);
+    margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: calc(var(--s) * 0.34);
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, var(--c1, #4a8291), var(--c2, #264a54));
+    border: 3px solid #fff;
+    box-shadow: 0 12px 26px -12px rgba(31, 65, 75, 0.5);
+    opacity: var(--o, 1);
+}
+
+    .node img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .node.ping::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        border: 2px solid rgba(var(--teal-rgb), 0.5);
+        animation: node-ping 3.8s var(--dl, 0s) ease-out infinite;
+    }
+
+    .node.float {
+        animation: node-bob 7s var(--dl, 0s) ease-in-out infinite alternate;
+    }
+
+.net-chip {
+    position: absolute;
+    left: calc(var(--x) * 1%);
+    top: calc(var(--y) * 1%);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e2ece7;
+    box-shadow: 0 16px 30px -16px rgba(31, 65, 75, 0.4);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--teal-deep);
+    white-space: nowrap;
+    animation: node-bob 6s var(--dl, 0s) ease-in-out infinite alternate;
+}
+
+    .net-chip svg {
+        width: 14px;
+        height: 14px;
+        color: var(--teal);
+    }
+
+@keyframes node-ping {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+
+@keyframes node-bob {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, -12px, 0); }
+}
+
+/* Dark variant (credits) */
+.net.on-dark .net-wash {
+    background:
+        radial-gradient(40% 50% at 90% 8%, rgba(121, 185, 169, 0.2), transparent 70%),
+        radial-gradient(40% 50% at 4% 96%, rgba(74, 130, 145, 0.28), transparent 70%);
+}
+
+.net.on-dark .net-lines line {
+    stroke: rgba(158, 209, 196, 0.22);
+}
+
+.net.on-dark .node {
+    border-color: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 12px 26px -12px rgba(0, 0, 0, 0.6);
+}
+
+.net.on-dark .net-chip {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #d3e2e8;
+    box-shadow: none;
+}
+
+    .net.on-dark .net-chip svg {
+        color: #79b9a9;
+    }
+
+/* Pause every loop while a section is offscreen (class toggled from landing.js) */
+.is-paused *,
+.is-paused *::before,
+.is-paused *::after {
+    animation-play-state: paused !important;
 }
 
 .hero-inner {
@@ -1470,14 +1618,6 @@ a, button {
 }
 
 /* ============ METRICS ============ */
-.metrics-section {
-    padding: 100px 0;
-    background: linear-gradient(160deg, #3a6675, var(--teal-deep));
-    color: #fff;
-    position: relative;
-    overflow: hidden;
-}
-
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1716,7 +1856,7 @@ a, button {
     position: absolute;
     inset: 0;
     z-index: 0;
-    opacity: 0.75;
+    overflow: hidden;
     pointer-events: none;
 }
 
@@ -1976,8 +2116,7 @@ a, button {
         top: var(--header-height);
         left: 0;
         right: 0;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(14px);
+        background: rgba(255, 255, 255, 0.99);
         padding: 14px 24px 24px;
         gap: 2px;
         border-bottom: 1px solid var(--line);
@@ -2130,4 +2269,313 @@ a, button {
     .bubble-two {
         right: 4%;
     }
+}
+
+/* ============================================================
+   Refactor: hero proof-avatar colors moved out of inline styles.
+   Colors only — no size or layout values added or changed here.
+   ============================================================ */
+.hero-proof .stack .avatar-a { background: #2fae8f; }
+.hero-proof .stack .avatar-b { background: #0f7a5f; }
+.hero-proof .stack .avatar-c { background: #12795f; }
+.hero-proof .stack .avatar-d { background: #0c5f4b; }
+
+/* ============================================================
+   v4 — SIDE DECOR (3D icons / photos) + SCROLL BEHAVIOURS
+   Every image slot has a CSS fallback tile, so the sides are
+   never empty — even before the real images are dropped in.
+   ============================================================ */
+.has-deco {
+    position: relative;
+    overflow: clip; /* clip keeps position:sticky alive (hidden would break it) */
+}
+
+    .has-deco > .container {
+        position: relative;
+        z-index: 2;
+    }
+
+.deco {
+    position: absolute;
+    z-index: 1;
+    width: var(--d, 150px);
+    height: var(--d, 150px);
+    pointer-events: none;
+    will-change: transform;
+}
+
+    /* fake contact shadow — static gradient, zero GPU cost */
+    .deco::after {
+        content: '';
+        position: absolute;
+        left: 14%;
+        right: 14%;
+        bottom: -7%;
+        height: 13%;
+        z-index: -1;
+        background: radial-gradient(closest-side, rgba(22, 41, 46, 0.26), rgba(22, 41, 46, 0));
+    }
+
+.deco-in {
+    position: absolute;
+    inset: 0;
+    display: block;
+    animation: deco-bob 8s ease-in-out infinite alternate;
+}
+
+    .deco-in img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+.deco-fb {
+    position: absolute;
+    inset: 12%;
+    border-radius: 30%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #ffffff, var(--mint));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 22px 40px -18px rgba(31, 65, 75, 0.4), inset 0 1px 0 #fff;
+    color: var(--teal);
+}
+
+    .deco-fb svg {
+        width: 42%;
+        height: 42%;
+        stroke-width: 1.8;
+    }
+
+.deco-in.has-img .deco-fb {
+    display: none;
+}
+
+.deco-dark .deco-fb {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 22px 40px -18px rgba(0, 0, 0, 0.5);
+    color: #9ed1c4;
+}
+
+.deco-dark::after {
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+}
+
+@keyframes deco-bob {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, -14px, 0); }
+}
+
+/* sides are decoration only — hide where they would crowd the content */
+@media (max-width: 1099px) {
+    .deco {
+        display: none;
+    }
+}
+
+@media (max-width: 899px) {
+    .net-chip {
+        display: none;
+    }
+
+    .net .node.hide-sm {
+        display: none;
+    }
+}
+
+/* ---- community photo slots ---- */
+.art-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.community-art.has-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(22, 41, 46, 0) 35%, rgba(22, 41, 46, 0.3));
+}
+
+.community-art > :not(.art-photo):not(.art-bubble):not(.discover-chip):not(.art-orbit):not(.story-label) {
+    position: relative;
+    z-index: 1;
+}
+
+.community-art .art-bubble,
+.community-art .discover-chip,
+.community-art .story-label {
+    z-index: 2;
+}
+
+/* ---- nav spy ---- */
+.nav-anchor-link.is-active {
+    color: var(--ink);
+}
+
+    .nav-anchor-link.is-active::after {
+        width: 100%;
+    }
+
+/* ---- split-word headings ---- */
+.w {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: 0.14em;
+    margin-bottom: -0.14em;
+}
+
+.wi {
+    display: inline-block;
+}
+
+/* ---- deep dive: sticky visual + sequential highlight ---- */
+@media (min-width: 980px) {
+    .deepdive-visual {
+        position: sticky;
+        top: calc(var(--header-height) + 36px);
+        align-self: start;
+    }
+}
+
+.deepdive-list li .check {
+    transition: background var(--t-med) var(--ease-snap), color var(--t-med) var(--ease-snap), transform var(--t-med) var(--ease-pop);
+}
+
+.deepdive-list li.is-active .check {
+    background: var(--teal);
+    color: #fff;
+    transform: scale(1.14);
+}
+
+.deepdive-list li.is-active strong {
+    color: var(--teal-dark);
+}
+
+.deepdive-section .deco-corner {
+    position: absolute;
+    z-index: 3;
+}
+
+/* ---- metrics "curtain" card ---- */
+.metrics-section {
+    padding: clamp(40px, 6vw, 80px) 0;
+    background: transparent;
+    overflow: visible;
+}
+
+.metrics-card {
+    position: relative;
+    padding: clamp(56px, 7vw, 92px) 24px;
+    border-radius: 36px;
+    background: linear-gradient(160deg, #3a6675, var(--teal-deep));
+    color: #fff;
+    transform-origin: 50% 0;
+}
+
+    .metrics-card > .metrics-grid {
+        position: relative;
+        z-index: 2;
+    }
+
+/* ---- ship-ready connecting line ---- */
+.ship-grid {
+    position: relative;
+}
+
+.ship-line {
+    display: none;
+}
+
+@media (min-width: 760px) {
+    .ship-line {
+        display: block;
+        position: absolute;
+        top: 56px;
+        left: 17%;
+        right: 17%;
+        height: 2px;
+        background: var(--line-strong);
+        border-radius: 2px;
+        z-index: 0;
+    }
+
+        .ship-line i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), #79b9a9);
+            transform: scaleX(0);
+            transform-origin: 0 50%;
+            border-radius: 2px;
+        }
+
+    .ship-card {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+/* ---- credits: orbit ring around the emblem ---- */
+.credits-stage {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    margin: 0 auto 28px;
+}
+
+    .credits-stage .credits-emblem {
+        margin: 0;
+    }
+
+.credits-orbit {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    border: 1px dashed rgba(121, 185, 169, 0.5);
+    pointer-events: none;
+}
+
+    .credits-orbit::before,
+    .credits-orbit::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #79b9a9;
+        box-shadow: 0 0 0 5px rgba(121, 185, 169, 0.18);
+    }
+
+    .credits-orbit::before {
+        top: 8%;
+        left: 12%;
+    }
+
+    .credits-orbit::after {
+        bottom: 10%;
+        right: 8%;
+        width: 8px;
+        height: 8px;
+        background: #e7eef1;
+    }
+
+/* ---- low-end device mode (set from JS): keep the reveals, drop the extras ---- */
+.is-lite .net-chip,
+.is-lite .deco-in,
+.is-lite .node.float,
+.is-lite .node.ping::after {
+    animation: none;
+}
+
+.is-lite .marquee-track {
+    animation-duration: 45s;
 }

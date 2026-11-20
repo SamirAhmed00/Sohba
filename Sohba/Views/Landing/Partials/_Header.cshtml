@@ -1,0 +1,42 @@
+@* File: Sohba/Views/Landing/Partials/_Header.cshtml — fixed glass header *@
+@using Sohba.ViewModels.Landing
+@model LandingIndexViewModel
+
+<header class="glass-header" id="landingHeader">
+    <div class="nav-container">
+        <a asp-controller="Landing" asp-action="Index" class="logo-link" aria-label="Sohba Home">
+            <div class="logo-icon"><span>S</span></div>
+            <span class="logo-text letter-fx">SOHBA</span>
+        </a>
+
+        <nav class="nav-menu" id="navMenu" aria-label="Page Sections">
+            <a href="#showcase" class="nav-anchor-link">Features</a>
+            <a href="#community" class="nav-anchor-link">Community</a>
+            <a href="#security" class="nav-anchor-link">Privacy</a>
+            <a href="#stack" class="nav-anchor-link">Why Sohba</a>
+        </nav>
+
+        <div class="auth-links">
+            @if (Model.IsAuthenticated)
+            {
+                <span class="welcome-tag">Welcome back, <strong>@Model.UserName</strong></span>
+                <a asp-controller="Home" asp-action="Index" class="btn-nav-primary">
+                    <span>Go to Feed</span>
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Auth" asp-action="Login" class="btn-nav-ghost">Sign In</a>
+                <a asp-controller="Auth" asp-action="Register" class="btn-nav-primary">
+                    <span>Join Sohba</span>
+                    <i data-lucide="sparkles"></i>
+                </a>
+            }
+        </div>
+
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navMenu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>

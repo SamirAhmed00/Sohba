@@ -1,30 +1,33 @@
-﻿@* File: Sohba/Views/Shared/_LandingLayout *@
+@* File: Sohba/Views/Shared/_LandingLayout *@
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sohba</title>
+    <title>@(string.IsNullOrWhiteSpace(ViewData["Title"] as string) ? "Sohba" : ViewData["Title"])</title>
     <meta name="description" content="@ViewData["Description"]" />
     <meta property="og:title" content="@ViewData["Title"]" />
     <meta property="og:description" content="@ViewData["Description"]" />
     <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f4f8f6" />
     <link href="~/Sohba.ico" rel="icon" type="image/x-icon" />
 
-  
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
 
+    @* Warm up the CDN origins used by the deferred scripts below *@
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
 </head>
 <body>
     @RenderBody()
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    @* defer keeps execution order: gsap → ScrollTrigger → lucide → landing.js *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js" defer></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -1,0 +1,91 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+@{
+    var nodes = new[]
+    {
+        new { X = 8,  Y = 18, S = 44, Ini = "NA", Flag = "float" },
+        new { X = 22, Y = 8,  S = 36, Ini = "MK", Flag = "" },
+        new { X = 38, Y = 22, S = 40, Ini = "OM", Flag = "ping" },
+        new { X = 62, Y = 10, S = 44, Ini = "RS", Flag = "" },
+        new { X = 90, Y = 22, S = 48, Ini = "JD", Flag = "float" },
+        new { X = 94, Y = 62, S = 40, Ini = "AH", Flag = "" },
+        new { X = 76, Y = 90, S = 44, Ini = "YM", Flag = "ping" },
+        new { X = 42, Y = 88, S = 40, Ini = "KA", Flag = "" },
+        new { X = 12, Y = 80, S = 48, Ini = "TF", Flag = "float" }
+    };
+    string[][] palette =
+    {
+        new[] { "#79b9a9", "#4a8291" }, new[] { "#d9a879", "#b8855a" }, new[] { "#4a8291", "#264a54" },
+        new[] { "#9ac9bd", "#5d9a8c" }, new[] { "#e2a6a0", "#b8555f" }, new[] { "#345e69", "#1f414b" }
+    };
+    var pairs = new HashSet<(int, int)>();
+    for (int i = 0; i < nodes.Length; i++)
+    {
+        var near = Enumerable.Range(0, nodes.Length).Where(j => j != i)
+            .OrderBy(j => Math.Pow(nodes[i].X - nodes[j].X, 2) + Math.Pow(nodes[i].Y - nodes[j].Y, 2)).Take(2);
+        foreach (var j in near) pairs.Add(i < j ? (i, j) : (j, i));
+    }
+}
+
+@* File: Sohba/Views/Landing/Partials/_Credits.cshtml — author section with dark social-network background *@
+<section class="credits-section has-deco" id="about">
+    <div id="credits-canvas-container" aria-hidden="true">
+        <div class="net on-dark">
+            <div class="net-inner">
+                <span class="net-wash"></span>
+                <svg class="net-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    @foreach (var (p, q) in pairs)
+                    {
+                        <line x1="@nodes[p].X" y1="@nodes[p].Y" x2="@nodes[q].X" y2="@nodes[q].Y"></line>
+                    }
+                </svg>
+                @for (int i = 0; i < nodes.Length; i++)
+                {
+                    var n = nodes[i];
+                    var g = palette[i % palette.Length];
+                    <span class="node@(n.Flag.Length > 0 ? " " + n.Flag : "") hide-sm" style="--x:@n.X;--y:@n.Y;--s:@(n.S)px;--o:0.85;--c1:@g[0];--c2:@g[1];--dl:@(i % 4)s">
+                        @n.Ini
+                        <img src="~/images/landing/avatar-@((i % 6) + 1).webp" alt="" loading="lazy" decoding="async" onerror="this.remove()" />
+                    </span>
+                }
+                <span class="net-chip" style="--x:8;--y:46;--dl:0s"><i data-lucide="heart"></i>Made with care</span>
+                <span class="net-chip" style="--x:80;--y:70;--dl:1.2s"><i data-lucide="message-circle"></i>Say hi</span>
+            </div>
+        </div>
+        @Deco("3d-sparkle.webp", "sparkles", "left:4%;top:18%;--d:110px", "0.5", "-10", dark: true)
+        @Deco("3d-heart.webp", "heart", "right:4%;bottom:14%;--d:120px", "0.6", "12", dark: true)
+    </div>
+    <div class="container">
+        <div class="credits-inner">
+            <div class="credits-stage">
+            <span class="credits-orbit" aria-hidden="true"></span>
+            <div class="credits-emblem">
+                <img src="~/images/samirAhmed.webp" alt="Samir Ahmed" onerror="this.style.display='none'; this.parentElement.textContent='SA';" />
+            </div>
+            </div>
+            <span class="eyebrow" data-anim="fade-up">Crafted end-to-end by</span>
+            <h2 data-anim="fade-up">Samir Ahmed</h2>
+            <div class="credits-name-rule" data-anim="fade-up"></div>
+            <p data-anim="fade-up">
+                Sohba is a privacy-first social platform — designed, built, and polished end to end by <strong>one developer</strong>, from the product experience down to this very page.
+            </p>
+            <div class="credits-links" data-anim="fade-up">
+                <a href="https://www.linkedin.com/in/samir-ahmed00/" target="_blank" rel="noopener noreferrer" class="btn-social linkedin">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13M7.12 20.45H3.56V9h3.56z"></path></svg>
+                    <span>Connect on LinkedIn</span>
+                </a>
+                <a href="https://github.com/SamirAhmed00" target="_blank" rel="noopener noreferrer" class="btn-social github">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5a10.5 10.5 0 0 0-3.32 20.47c.52.1.72-.23.72-.5v-1.95c-2.94.64-3.56-1.27-3.56-1.27-.48-1.22-1.18-1.55-1.18-1.55-.96-.66.08-.64.08-.64 1.06.07 1.62 1.09 1.62 1.09.94 1.62 2.48 1.15 3.08.88.1-.68.37-1.15.67-1.42-2.35-.27-4.82-1.17-4.82-5.23 0-1.16.41-2.1 1.09-2.84-.11-.27-.47-1.36.1-2.83 0 0 .89-.29 2.92 1.08a10 10 0 0 1 5.32 0c2.03-1.37 2.92-1.08 2.92-1.08.57 1.47.21 2.56.1 2.83.68.74 1.09 1.68 1.09 2.84 0 4.07-2.48 4.96-4.84 5.22.38.33.72.97.72 1.96v2.9c0 .27.2.61.73.5A10.5 10.5 0 0 0 12 1.5"></path></svg>
+                    <span>Explore on GitHub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,40 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
+@* File: Sohba/Views/Landing/Partials/_ShipReady.cshtml — getting-started steps *@
+<section class="shipready-section has-deco" id="shipready">
+    @Deco("3d-hashtag.webp", "hash", "left:-1%;top:18%;--d:120px", "0.5", "-10")
+    @Deco("3d-chat.webp", "message-circle", "right:-1%;bottom:10%;--d:130px", "0.6", "10")
+    <div class="container">
+        <div class="section-head center" data-anim="fade-up">
+            <span class="eyebrow">Get started</span>
+            <h2>Three steps to your new favorite place.</h2>
+            <p>Sohba is free to join, easy to learn, and built to feel like home from your very first day.</p>
+        </div>
+        <div class="ship-grid">
+            <div class="ship-line" aria-hidden="true"><i></i></div>
+            <div class="ship-card" data-anim="reveal">
+                <div class="ship-icon"><i data-lucide="user-plus"></i></div>
+                <h3>1. Create your free account</h3>
+                <p>Sign up in under a minute — just you, your name, and what you want to share. No endless forms, no strings attached.</p>
+            </div>
+            <div class="ship-card" data-anim="reveal">
+                <div class="ship-icon"><i data-lucide="compass"></i></div>
+                <h3>2. Find your people</h3>
+                <p>Search for friends, join groups around your interests, and follow the pages and creators you care about.</p>
+            </div>
+            <div class="ship-card" data-anim="reveal">
+                <div class="ship-icon"><i data-lucide="share-2"></i></div>
+                <h3>3. Share your world</h3>
+                <p>Post, react, comment, and add stories — your feed stays in order, and your privacy stays yours.</p>
+            </div>
+        </div>
+    </div>
+</section>
