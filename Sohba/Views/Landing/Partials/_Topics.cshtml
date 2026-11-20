@@ -1,3 +1,13 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
 @* File: Sohba/Views/Landing/Partials/_Topics.cshtml — two-column benefit lists *@
 @{
     const string CheckIcon = "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"></path></svg>";
@@ -39,7 +49,9 @@
     };
 }
 
-<section class="topics-section" id="topics">
+<section class="topics-section has-deco" id="topics">
+    @Deco("3d-shield.webp", "shield-check", "left:-1%;top:12%;--d:120px", "0.5", "-8")
+    @Deco("3d-heart.webp", "heart", "right:-1%;bottom:6%;--d:110px", "0.6", "10")
     <div class="container">
         <div class="section-head center" data-anim="fade-up">
             <span class="eyebrow">What Sohba does for you</span>

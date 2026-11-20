@@ -1,14 +1,19 @@
 /**
  * Sohba Landing v4 — Interactive Controller
- * GSAP entrance + ScrollTrigger reveals, premium CSS aurora background,
+ * GSAP entrance + ScrollTrigger reveals + scrubbed depth parallax,
+ * CSS-only social-network background (pauses offscreen),
  * scroll progress bar, bento 3D tilt, animated counters, adaptive header,
  * mobile menu, slow-gradient logo letter FX (header + footer).
- * All motion is skipped when the user prefers reduced motion.
+ * Motion is mandatory by design — no reduced-motion guards.
  */
 (function () {
     'use strict';
 
-    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var root = document.documentElement;
+    /* Low-end devices keep every reveal but lose the idle loops + scrubbed parallax */
+    var isLite = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+    if (isLite) root.classList.add('is-lite');
+    var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     /* ---------- 1. Lucide Icons ---------- */
     function initIcons() {
@@ -56,7 +61,7 @@
                 const targetEl = document.querySelector(targetId);
                 if (targetEl) {
                     e.preventDefault();
-                    targetEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             });
         });
@@ -88,14 +93,6 @@
     function initCounters() {
         const counters = document.querySelectorAll('.counter');
         if (!counters.length) return;
-
-        if (reduceMotion) {
-            counters.forEach(el => {
-                el.textContent = (parseInt(el.getAttribute('data-value'), 10) || 0).toLocaleString()
-                    + (el.getAttribute('data-suffix') || '');
-            });
-            return;
-        }
 
         const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
@@ -145,7 +142,9 @@
             .to('.hero-proof', { opacity: 1, y: 0, duration: 0.9 }, 1.05)
             .to('.hero-visual', { opacity: 1, x: 0, scale: 1, duration: 1.3 }, 0.4)
             .to('.top-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.2)
-            .to('.bottom-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.35);
+            .to('.bottom-badge', { opacity: 1, y: 0, duration: 0.9 }, 1.35)
+            .from('#hero .net-inner', { opacity: 0, duration: 1.6, ease: 'power2.out' }, 0)
+            .from('#hero .node', { scale: 0.4, opacity: 0, duration: 0.9, stagger: 0.04, ease: 'back.out(1.8)', clearProps: 'transform,opacity' }, 0.3);
     }
 
     /* ---------- 8. GSAP ScrollTrigger Reveals ---------- */
@@ -238,7 +237,7 @@
             .fromTo('.credits-links', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8 }, '-=0.55');
 
         outsideHero('.section-head').forEach(head => {
-            gsap.fromTo(head.querySelectorAll('.eyebrow, h2, p'), { opacity: 0, y: 24 }, {
+            gsap.fromTo(head.querySelectorAll('.eyebrow, p'), { opacity: 0, y: 24 }, {
                 opacity: 1, y: 0, duration: 0.9, ease: 'power2.out', stagger: 0.1,
                 scrollTrigger: { trigger: head, start: 'top 85%', once: true }
             });
@@ -361,6 +360,159 @@
         });
     }
 
+
+    /* ---------- 11. Pause loops offscreen ---------- */
+    function initPauseOffscreen() {
+        if (!('IntersectionObserver' in window)) return;
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { e.target.classList.toggle('is-paused', !e.isIntersecting); });
+        }, { rootMargin: '120px 0px' });
+        document.querySelectorAll('.hero-section, .marquee-section, .has-deco').forEach(function (el) { io.observe(el); });
+    }
+
+    /* ---------- 12. Nav spy ---------- */
+    function initNavSpy() {
+        if (!('IntersectionObserver' in window)) return;
+        var links = Array.prototype.slice.call(document.querySelectorAll('.nav-menu .nav-anchor-link'));
+        if (!links.length) return;
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                links.forEach(function (l) { l.classList.toggle('is-active', l.getAttribute('href') === '#' + e.target.id); });
+            });
+        }, { rootMargin: '-45% 0px -50% 0px' });
+        links.forEach(function (l) {
+            var t = document.querySelector(l.getAttribute('href'));
+            if (t) io.observe(t);
+        });
+    }
+
+    /* ---------- 13. Split headings into masked words ---------- */
+    function splitWords(el) {
+        var text = el.textContent.trim();
+        el.setAttribute('aria-label', text);
+        el.textContent = '';
+        var inner = [];
+        text.split(/\s+/).forEach(function (word, i, arr) {
+            var w = document.createElement('span');
+            w.className = 'w';
+            w.setAttribute('aria-hidden', 'true');
+            var wi = document.createElement('span');
+            wi.className = 'wi';
+            wi.textContent = word;
+            w.appendChild(wi);
+            el.appendChild(w);
+            if (i < arr.length - 1) el.appendChild(document.createTextNode(' '));
+            inner.push(wi);
+        });
+        return inner;
+    }
+
+    function initHeadingSplit() {
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+        document.querySelectorAll('.section-head h2').forEach(function (h2) {
+            if (h2.closest('#hero')) return;
+            var words = splitWords(h2);
+            gsap.set(words, { yPercent: 115 });
+            ScrollTrigger.create({
+                trigger: h2, start: 'top 88%', once: true,
+                onEnter: function () {
+                    gsap.to(words, { yPercent: 0, duration: 0.9, ease: 'power3.out', stagger: 0.06 });
+                }
+            });
+        });
+    }
+
+    /* ---------- 14. Scroll-driven depth + storytelling (all scrubbed, transform/opacity only) ---------- */
+    function initScrollScenes() {
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+        var mm = gsap.matchMedia();
+
+        /* every size: deep-dive checklist lights up as you read it */
+        document.querySelectorAll('.deepdive-list li').forEach(function (li) {
+            ScrollTrigger.create({
+                trigger: li, start: 'top 62%', end: 'bottom 38%',
+                toggleClass: { targets: li, className: 'is-active' }
+            });
+        });
+
+        /* every size: metrics card "curtain" rises into place */
+        gsap.fromTo('.metrics-card', { scale: 0.92 }, {
+            scale: 1, ease: 'none',
+            scrollTrigger: { trigger: '.metrics-section', start: 'top 95%', end: 'top 35%', scrub: true }
+        });
+
+        /* every size: credits orbit spins with the scroll */
+        gsap.to('.credits-orbit', {
+            rotation: 360, ease: 'none',
+            scrollTrigger: { trigger: '.credits-section', start: 'top bottom', end: 'bottom top', scrub: true }
+        });
+
+        /* ≥760: connecting line draws through the 3 steps */
+        mm.add('(min-width: 760px)', function () {
+            gsap.to('.ship-line i', {
+                scaleX: 1, ease: 'none',
+                scrollTrigger: { trigger: '.ship-grid', start: 'top 75%', end: 'bottom 60%', scrub: true }
+            });
+        });
+
+        /* ≥900: hero depth, community art parallax, credits network drift */
+        mm.add('(min-width: 900px)', function () {
+            var heroST = { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true };
+            gsap.to('#hero .net', { yPercent: -9, ease: 'none', scrollTrigger: heroST });
+            gsap.to('.hero-mockup-wrapper', { y: -70, ease: 'none', scrollTrigger: heroST });
+            gsap.to('.hero-copy', { y: -46, opacity: 0.25, ease: 'none',
+                scrollTrigger: { trigger: '#hero', start: '20% top', end: 'bottom top', scrub: true } });
+
+            gsap.fromTo('.credits-section .net', { yPercent: 6 }, { yPercent: -6, ease: 'none',
+                scrollTrigger: { trigger: '.credits-section', start: 'top bottom', end: 'bottom top', scrub: true } });
+
+            if (!isLite) {
+                document.querySelectorAll('.community-card').forEach(function (card) {
+                    card.querySelectorAll('.art-bubble, .discover-chip, .story-ring, .people-stack, .search-orb').forEach(function (el, i) {
+                        var d = (i % 2 ? 1 : -1) * 18;
+                        gsap.fromTo(el, { y: -d }, { y: d, ease: 'none',
+                            scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 0.6 } });
+                    });
+                });
+            }
+
+            /* pointer parallax on the hero network */
+            var hero = document.getElementById('hero');
+            var inner = document.querySelector('#hero .net-inner');
+            if (!hero || !inner || !finePointer || isLite) return;
+            var qx = gsap.quickTo(inner, 'x', { duration: 0.9, ease: 'power3.out' });
+            var qy = gsap.quickTo(inner, 'y', { duration: 0.9, ease: 'power3.out' });
+            function onMove(e) {
+                var r = hero.getBoundingClientRect();
+                qx(((e.clientX - r.left) / r.width - 0.5) * -26);
+                qy(((e.clientY - r.top) / r.height - 0.5) * -18);
+            }
+            hero.addEventListener('mousemove', onMove, { passive: true });
+            return function () { hero.removeEventListener('mousemove', onMove); };
+        });
+
+        /* ≥1100: side decor — each 3D icon floats at its own depth and pops in */
+        mm.add('(min-width: 1100px)', function () {
+            document.querySelectorAll('.deco').forEach(function (el) {
+                var depth = parseFloat(el.getAttribute('data-depth')) || 0.3;
+                var rot = parseFloat(el.getAttribute('data-rot')) || 0;
+                gsap.set(el, { rotation: rot });
+                if (!isLite) {
+                    var host = el.closest('section') || el.parentElement;
+                    gsap.fromTo(el, { y: depth * -90 }, { y: depth * 90, rotation: rot + depth * 10, ease: 'none',
+                        scrollTrigger: { trigger: host, start: 'top bottom', end: 'bottom top', scrub: 0.7 } });
+                }
+                gsap.from(el, { opacity: 0, scale: 0.5, duration: 1, ease: 'back.out(1.5)',
+                    scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+            });
+        });
+
+        /* images/fonts change layout after first paint */
+        window.addEventListener('load', function () { ScrollTrigger.refresh(); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { ScrollTrigger.refresh(); });
+    }
+
     /* ---------- Bootstrap ---------- */
     function bootstrap() {
         initIcons();
@@ -369,14 +521,15 @@
         initSmoothScroll();
         initScrollProgress();
         initCounters();
-
-        if (!reduceMotion) {
-            setHeroInitialStates();
-            initHeroTimeline();
-            initScrollReveals();
-            initBentoTilt();
-            initLogoLetterFX();
-        }
+        setHeroInitialStates();
+        initHeroTimeline();
+        initScrollReveals();
+        initHeadingSplit();
+        initScrollScenes();
+        initBentoTilt();
+        initLogoLetterFX();
+        initPauseOffscreen();
+        initNavSpy();
     }
 
     if (document.readyState === 'loading') {

@@ -1,10 +1,20 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
 @* File: Sohba/Views/Landing/Partials/_DeepDive.cshtml — the three deep-dive sections share one template *@
 @{
     var sections = new[]
     {
         new
         {
-            Id = "realtime", Reverse = false,
+            Id = "realtime", Reverse = false, Corner = "3d-bell.webp", CornerIcon = "bell", Edge = "3d-heart.webp", EdgeIcon = "heart",
             Eyebrow = "Real-time everything",
             Heading = "Never miss a moment.",
             Intro = "Reactions, comments, and friend requests reach you the second they happen — notifications appear on their own, whether you're scrolling your feed or away from the page.",
@@ -26,7 +36,7 @@
         },
         new
         {
-            Id = "security", Reverse = true,
+            Id = "security", Reverse = true, Corner = "3d-shield.webp", CornerIcon = "shield-check", Edge = "3d-sparkle.webp", EdgeIcon = "sparkles",
             Eyebrow = "Privacy & safety",
             Heading = "You're in control, always.",
             Intro = "Sohba is privacy-first by design — your content, your circle, your rules. Safety features work quietly in the background, not as an afterthought.",
@@ -49,7 +59,7 @@
         },
         new
         {
-            Id = "admin", Reverse = false,
+            Id = "admin", Reverse = false, Corner = "3d-users.webp", CornerIcon = "users", Edge = "3d-shield.webp", EdgeIcon = "shield",
             Eyebrow = "Community health",
             Heading = "Spaces that stay welcoming.",
             Intro = "Behind every group and page are tools that keep conversations friendly — moderation that's fair, fast, and always accountable.",
@@ -73,7 +83,8 @@
 
 @foreach (var s in sections)
 {
-    <section class="deepdive-section" id="@s.Id">
+    <section class="deepdive-section has-deco" id="@s.Id">
+        @Deco(s.Edge, s.EdgeIcon, s.Reverse ? "left:-1%;bottom:8%;--d:120px" : "right:-1%;bottom:8%;--d:120px", "0.6", s.Reverse ? "-10" : "10")
         <div class="container">
             <div class="deepdive-row@(s.Reverse ? " reverse" : "")">
                 <div class="deepdive-copy" data-anim="@(s.Reverse ? "fade-left" : "fade-right")">
@@ -91,6 +102,7 @@
                     </ul>
                 </div>
                 <div class="deepdive-visual" data-anim="@(s.Reverse ? "fade-right" : "fade-left")">
+                    @Deco(s.Corner, s.CornerIcon, "top:-44px;right:-30px;--d:112px", "0.4", "8")
                     <div class="panel-card">
                         <div class="panel-head"><span></span><span></span><span></span></div>
                         @foreach (var row in s.Rows)

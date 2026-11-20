@@ -1,3 +1,13 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
 @* File: Sohba/Views/Landing/Partials/_Metrics.cshtml — animated product counters *@
 @{
     var stats = new[]
@@ -15,6 +25,9 @@
 
 <section class="metrics-section" id="metrics">
     <div class="container">
+        <div class="metrics-card has-deco">
+            @Deco("3d-sparkle.webp", "sparkles", "left:-12px;top:-30px;--d:110px", "0.3", "-10", dark: true)
+            @Deco("3d-heart.webp", "heart", "right:-10px;bottom:-26px;--d:120px", "0.4", "12", dark: true)
         <div class="metrics-grid">
             @foreach (var stat in stats)
             {
@@ -23,6 +36,7 @@
                     <div class="metric-label">@stat.Label</div>
                 </div>
             }
+        </div>
         </div>
     </div>
 </section>

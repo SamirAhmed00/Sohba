@@ -1,5 +1,17 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
 @* File: Sohba/Views/Landing/Partials/_Community.cshtml — community experience cards *@
-<section class="community-section" id="community">
+<section class="community-section has-deco" id="community">
+    @Deco("3d-users.webp", "users", "left:-1.5%;top:6%;--d:130px", "0.5", "-8")
+    @Deco("3d-sparkle.webp", "sparkles", "right:-1%;bottom:8%;--d:120px", "0.6", "10")
     <div class="container">
         <div class="section-head center" data-anim="fade-up">
             <span class="eyebrow">Find your people</span>
@@ -8,19 +20,19 @@
         </div>
         <div class="community-grid">
             <article class="community-card community-card-large" data-anim="reveal">
-                <div class="community-art feed-art"><span class="art-bubble bubble-one">A little moment worth sharing.</span><span class="art-bubble bubble-two"><i data-lucide="heart"></i> Loved by your circle</span><div class="art-orbit"></div></div>
+                <div class="community-art feed-art"><img class="art-photo" src="~/images/landing/community-feed.webp" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()" /><span class="art-bubble bubble-one">A little moment worth sharing.</span><span class="art-bubble bubble-two"><i data-lucide="heart"></i> Loved by your circle</span><div class="art-orbit"></div></div>
                 <div class="community-card-copy"><span class="bento-tag">Your feed</span><h3>Catch up in your own time.</h3><p>A chronological timeline brings together personal, group, and page posts, so updates are presented by time rather than an engagement ranking.</p></div>
             </article>
             <article class="community-card" data-anim="reveal">
-                <div class="community-art stories-art"><div class="story-ring"><i data-lucide="clock-3"></i></div><span class="story-label">24 hours</span></div>
+                <div class="community-art stories-art"><img class="art-photo" src="~/images/landing/community-stories.webp" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()" /><div class="story-ring"><i data-lucide="clock-3"></i></div><span class="story-label">24 hours</span></div>
                 <div class="community-card-copy"><span class="bento-tag">Stories</span><h3>Small updates, shared in the moment.</h3><p>Post photo, video, or text stories that are designed to expire after 24 hours — and only the people you choose can ever view them.</p></div>
             </article>
             <article class="community-card" data-anim="reveal">
-                <div class="community-art groups-art"><div class="people-stack"><span>J</span><span>N</span><span>M</span><span>+</span></div><div class="group-art-lines"><i></i><i></i><i></i></div></div>
+                <div class="community-art groups-art"><img class="art-photo" src="~/images/landing/community-groups.webp" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()" /><div class="people-stack"><span>J</span><span>N</span><span>M</span><span>+</span></div><div class="group-art-lines"><i></i><i></i><i></i></div></div>
                 <div class="community-card-copy"><span class="bento-tag">Groups &amp; pages</span><h3>Make room for shared interests.</h3><p>Join groups, follow pages, and take part in spaces with friendly roles for members, co-admins, admins, and owners.</p></div>
             </article>
             <article class="community-card community-card-wide" data-anim="reveal">
-                <div class="community-art discover-art"><div class="search-orb"><i data-lucide="search"></i></div><span class="discover-chip chip-a">People</span><span class="discover-chip chip-b">Groups</span><span class="discover-chip chip-c">Posts</span><span class="discover-chip chip-d">Pages</span><span class="discover-chip chip-e">Hashtags</span></div>
+                <div class="community-art discover-art"><img class="art-photo" src="~/images/landing/community-discover.webp" alt="" loading="lazy" decoding="async" onload="this.parentNode.classList.add('has-photo')" onerror="this.remove()" /><div class="search-orb"><i data-lucide="search"></i></div><span class="discover-chip chip-a">People</span><span class="discover-chip chip-b">Groups</span><span class="discover-chip chip-c">Posts</span><span class="discover-chip chip-d">Pages</span><span class="discover-chip chip-e">Hashtags</span></div>
                 <div class="community-card-copy"><span class="bento-tag">Discovery &amp; saved posts</span><h3>Find it now. Keep it for later.</h3><p>Search across posts, people, groups, and pages with privacy-aware results. Save posts into named collections to return to them when you need them.</p></div>
             </article>
         </div>

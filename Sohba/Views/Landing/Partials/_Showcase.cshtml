@@ -1,3 +1,13 @@
+@{
+    // 3D-icon / image slot. If the image is missing the CSS fallback tile (lucide icon) stays visible,
+    // so the sides are never empty. Positioning comes from the inline style.
+    Microsoft.AspNetCore.Html.IHtmlContent Deco(string file, string icon, string style, string depth = "0.3", string rot = "0", bool dark = false)
+    {
+        var src = Url.Content("~/images/landing/" + file);
+        return Html.Raw($"<span class=\"deco{(dark ? " deco-dark" : "")}\" style=\"{style}\" data-depth=\"{depth}\" data-rot=\"{rot}\" aria-hidden=\"true\"><span class=\"deco-in\"><span class=\"deco-fb\"><i data-lucide=\"{icon}\"></i></span><img src=\"{src}\" alt=\"\" loading=\"lazy\" decoding=\"async\" onload=\"this.parentNode.classList.add('has-img')\" onerror=\"this.remove()\" /></span></span>");
+    }
+}
+
 @* File: Sohba/Views/Landing/Partials/_Showcase.cshtml — bento feature grid *@
 @{
     var cards = new[]
@@ -29,7 +39,9 @@
     };
 }
 
-<section class="showcase-section" id="showcase">
+<section class="showcase-section has-deco" id="showcase">
+    @Deco("3d-bookmark.webp", "bookmark", "left:-1%;top:14%;--d:120px", "0.5", "-10")
+    @Deco("3d-hashtag.webp", "hash", "right:-1%;bottom:10%;--d:140px", "0.7", "12")
     <div class="container">
         <div class="section-head" data-anim="fade-up">
             <span class="eyebrow">The platform</span>
